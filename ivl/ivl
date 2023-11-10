@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+# TODO: add some command help functionality? something like a description of command
+
+set -euo pipefail
+
+if [ -z ${IVL_ROOT+x} ]
+then
+    IVL_ROOT="$(realpath $(pwd))" # TODO: remove realpath?
+fi
+
+# hash map containing available commands and what they do
+declare -A commands
+commands=()
+
+# adds to hash map ^
+function ivl_add_command(){
+    if [ $# -eq 1 ]
+    then
+        # registering a bash function with same name
+        commands["$1"]="$1"
+    elif [ $# -eq 2 ]
+    then
+         commands["$1"]="$2"
+    else
+        echo "IVL: ERROR ivl_add_command: bad arguments, expected 1 or 2, got [$@]"
+    fi
+}
+
+# return in var IVL_FOUND_DOT
+# returns empty string if not found, dir of .ivl otherwise
+function ivl_find_dot(){
+    local DIR="$1"
+    while ! [ -f "$DIR/.ivl" ] && [ "$DIR" != "/" ]
+    do
+        DIR="$(dirname $DIR)"
+    done
+    if [ -f "$DIR/.ivl" ]
+    then
+        IVL_FOUND_DOT="$DIR"
+    else
+        IVL_FOUND_DOT=""
+    fi
+}
+
+function ivl_load_dot(){
+    if [ $# -ne 1 ]
+    then
+        echo "IVL: ERROR ivl_load_dot: expected one argument, got [$@]"
+        exit 1
+    fi
+    IVL_DOT_LOCATION="$1" source "$1/.ivl"
+}
+
+# haven't implemented these bc not sure if i want them
+# # looks in parent folders for another .ivl and loads it
+# function ivl_load_parent_dot(){
+#     # TODO
+# }
+# # same as ^ except doesn't blow up if not found
+# function ivl_load_parent_dot_silent(){
+#     # TODO
+# }
+
+# need to find main .ivl
+ivl_find_dot "$IVL_ROOT"
+if [ "$IVL_FOUND_DOT" == "" ]
+then
+    echo "IVL: ERROR .ivl not found"
+    exit 1
+fi
+
+# gives location of main .ivl, usually corresponds to root of repository
+ivl_add_command "root" "echo $IVL_FOUND_DOT; :" # noop added to ignore any garbage passed as arg
+
+function help(){
+    echo "Usage: ${!commands[@]}"
+}
+ivl_add_command "help"
+
+function what(){
+    for command in "$@"
+    do
+        if [ "${commands[$command]+x}" ]
+        then
+            echo "$command --> ${commands[$command]}"
+        else
+            echo "$command --  invalid"
+        fi
+    done
+}
+ivl_add_command "what"
+
+ivl_add_command "type" "type"
+
+# load up whatever is in main .ivl
+ivl_load_dot "$IVL_FOUND_DOT"
+
+# time to parse args
+if [ $# -eq 0 ]
+then
+    echo "IVL: ERROR no args provided"
+    help
+    exit 1
+fi
+
+command="$1"
+shift
+
+if [ "${commands[$command]+x}" ]
+then
+    quoted_args=()
+    for arg in "$@"
+    do
+        quoted_args+=( "$(printf '%q' "$arg")" )
+    done
+    eval "${commands[$command]}" "${quoted_args[@]}"
+else
+    echo "IVL: ERROR invalid command \`$command\`"
+    help
+    exit 1
+fi
