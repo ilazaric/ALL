@@ -39,6 +39,7 @@
 #include <array>
 #include <iostream> // only used for `default_logger`, remove if unnecessary
 #include <string_view>
+#include <cstdint>
 
 namespace ivl::logger {
 

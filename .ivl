@@ -3,7 +3,13 @@ function build(){
     ${CXX:-g++} -O3 -std=c++23 -I"$LOC/include" $1.cpp -o $1
 }
 
+function render(){
+    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/include" $1.cpp > $1.rendered.cpp
+}
+
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
+
+ivl_add_command "render" "LOC=\"$IVL_DOT_LOCATION\" render"
 
 # function run(){
 #     PROG="$1"
