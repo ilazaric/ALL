@@ -43,34 +43,25 @@
 
 namespace ivl::logger {
 
-// inline not that important tbh but wtv
-inline static constexpr std::array<char, 3> opens = {'(', '\'', '"'};
-inline static constexpr std::array<char, 3> closes = {')', '\'', '"'};
-static_assert(opens.size() == closes.size());
-
 constexpr std::size_t find_comma(std::string_view names) {
-  std::size_t start = 0;
-  std::size_t commaloc;
-  while (true) {
-    commaloc = names.find(',', start);
-    if (commaloc == std::string_view::npos)
-      break;
-    std::pair<std::size_t, std::size_t> openloc = {std::string_view::npos, 0};
-    for (std::size_t i = 0; i < opens.size(); ++i)
-      openloc = std::min(
-          openloc, {names.substr(start, commaloc - start).find(opens[i]), i});
-    if (openloc.first == std::string_view::npos)
-      break;
-    std::size_t closeloc =
-        names.substr(start + openloc.first + 1).find(closes[openloc.second]);
-    start += openloc.first + closeloc + 1 + 1;
+  std::size_t openparencount = 0;
+  for (std::size_t idx = 0; idx < names.size(); ++idx){
+    if (names[idx] == ',' && openparencount == 0)
+      return idx;
+    if (names[idx] == '(')
+      ++openparencount;
+    if (names[idx] == ')')
+      --openparencount;
+    if (names[idx] == '\'' || names[idx] == '"')
+      idx = names.find(names[idx], idx+1);
   }
-  return commaloc;
+  return std::string_view::npos;
 }
 
 static_assert(find_comma("(,),x") == 3);
 static_assert(find_comma("',',x") == 3);
 static_assert(find_comma("\",\",x") == 3);
+  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
 
 constexpr void callback_names(std::string_view allnames, auto &callback) {
   while (true) {
@@ -124,7 +115,7 @@ template <fixed_string T> struct name_storage {
 };
 
 // a std::source_location that can be passed via template args
-  template <std::uint_least32_t linet, // std::uint_least32_t columnt,
+template <std::uint_least32_t linet, // std::uint_least32_t columnt,
           fixed_string file_namet, fixed_string function_namet>
 struct fixed_source_location {
   constexpr static inline auto line = linet;
@@ -145,7 +136,7 @@ namespace default_logger {
 template <typename NS, typename CSL> struct logger {
   template <typename... Args> static void print(const Args &...args) {
     static_assert(NS::namecount == sizeof...(Args));
-    std::cerr << "[LOG] " << CSL::file_name << "(" << CSL::line << "):";
+    std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
     std::size_t index = 0;
     (
         [](std::size_t &index, const Args &arg) {
