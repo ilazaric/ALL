@@ -202,7 +202,7 @@ function render_source_file(){
     prettycomment "FINISH $2 [$3]"
 }
 
-prettycomment 'RENDERED WITH `https://github.com/ilazaric/render-extra`'
+prettycomment 'RENDERED WITH `https://github.com/ilazaric/ALL` - `render-includes`'
 
 prettycomment 'ORIGINAL CODE:'
 
