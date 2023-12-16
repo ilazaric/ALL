@@ -7,18 +7,18 @@
 namespace ivl::nt {
 
 // this should give me some out-of-order execution perf boosts
-// TODO: this concept should be a bit more restrictive, bool and char are stupid
-template<std::integral auto ... Mods>
+template<std::uint32_t ... Mods>
 struct MultiMint {
   // `Mods` should be of reasonable size
   // `2*Mods` should fit in `std::uint32_t`
+  // TODO: ^ this might be relaxable to `2*(Mods-1)`
   static_assert((true && ... && (std::cmp_less(0, Mods) && std::cmp_less(Mods, 1_u64 << 31))));
   // `Mods` should all be different
   // important for the `ModIndex` hack
   // probably also for some CRT stuff in the future
   // TODO: maybe require relatively prime?
   static_assert([]{
-    std::array<std::uint32_t, sizeof...(Mods)> arr{static_cast<std::uint32_t>(Mods)...};
+    std::array<std::uint32_t, sizeof...(Mods)> arr{Mods...};
     std::ranges::sort(arr);
     // could use `adjacent<2>` if C++23
     for (auto idx : std::views::iota(1_u32, arr.size()))
@@ -27,7 +27,7 @@ struct MultiMint {
     return true;
   }());
   
-  static constexpr std::array<std::uint32_t, sizeof...(Mods)> ModsArray{static_cast<std::uint32_t>(Mods)...};
+  static constexpr std::array<std::uint32_t, sizeof...(Mods)> ModsArray{Mods...};
 
   template<std::uint32_t arg>
   static constexpr std::uint32_t ModIndex = std::distance(ModsArray.begin(), std::ranges::find(ModsArray, arg));
