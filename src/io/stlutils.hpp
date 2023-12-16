@@ -6,13 +6,13 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace ivl::io {
-
+// god forgive me, need this for ADL
+namespace std {
+  
   template<typename A, typename B>
   std::ostream& operator<<(std::ostream& out, const std::pair<A, B>& p){
     return out << p.first << " " << p.second;
   }
-
 
   template<typename A, typename B>
   std::istream& operator>>(std::istream& in, std::pair<A, B>& p){
@@ -43,6 +43,10 @@ namespace ivl::io {
     return in;
   }
 
+} // namespace std
+
+namespace ivl::io {
+  
   // this is useful if we want to read/write just the elements of something, no size
   template<typename T>
   struct Elems {
@@ -53,7 +57,7 @@ namespace ivl::io {
   Elems(T&&) -> Elems<T&&>;
 
   template<typename T>
-  std::ostream& operator<<(std::ostream& out, const Elems<T>& elems){
+  std::ostream& operator<<(std::ostream& out, Elems<T> elems){
     if (!elems.t.empty())
       out << *(elems.t.begin());
     for (auto& elem : elems.t | std::views::drop(1))
@@ -62,7 +66,7 @@ namespace ivl::io {
   }
 
   template<typename T>
-  std::istream& operator>>(std::istream& in, const Elems<T>& elems){
+  std::istream& operator>>(std::istream& in, Elems<T> elems){
     for (auto& elem : elems.t)
       in >> elem;
     return in;
