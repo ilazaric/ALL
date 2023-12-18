@@ -99,4 +99,14 @@ namespace ivl::fs {
 
   };
 
+
+  struct stat fstat(FD fd){
+    struct stat out;
+    if (fstat(fd.get(), &out)){
+      perror("fstat");
+      throw std::runtime_error("fstat failed");
+    }
+    return out;
+  }
+
 } // namespace ivl::fs

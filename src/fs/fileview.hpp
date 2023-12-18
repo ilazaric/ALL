@@ -24,15 +24,6 @@ namespace ivl::fs {
 
     static constexpr std::size_t page_size = 4096;
 
-    static std::size_t fstatlen(int fd){
-      struct stat stats;
-      if (fstat(fd, &stats)){
-        perror("fstat");
-        throw std::runtime_error("fstat failed");
-      }
-      return stats.st_size;
-    }
-
     FileView(ivl::str::NullStringView path) :
       FileView(OwnedFD::open(path, O_RDONLY)){}
     
@@ -50,7 +41,7 @@ namespace ivl::fs {
 
     FileView(FD fd,
              std::size_t offset) :
-      FileView(fd, offset, fstatlen(fd.get())){}
+      FileView(fd, offset, fstat(fd).st_size){}
 
     FileView(FD fd,
              std::size_t offset,
