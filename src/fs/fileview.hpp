@@ -11,6 +11,7 @@
 #include <unistd.h>
 
 #include <ivl/str/nullstringview.hpp>
+#include <ivl/fs/filedescriptor.hpp>
 
 namespace ivl::fs {
 
@@ -23,58 +24,42 @@ namespace ivl::fs {
 
     static constexpr std::size_t page_size = 4096;
 
-    static int openfd(ivl::str::NullStringView path){
-      int fd = open(path.data(), O_RDONLY);
-      if (fd == -1){
-        perror("open");
-        throw std::runtime_error("open failed");
-      }
-
-      return fd;
-    }
-
     static std::size_t fstatlen(int fd){
       struct stat stats;
       if (fstat(fd, &stats)){
         perror("fstat");
-        close(fd);
         throw std::runtime_error("fstat failed");
       }
       return stats.st_size;
     }
 
     FileView(ivl::str::NullStringView path) :
-      FileView(openfd(path)){}
+      FileView(OwnedFD::open(path, O_RDONLY)){}
     
     FileView(ivl::str::NullStringView path,
              std::size_t offset) :
-      FileView(openfd(path), offset){}
+      FileView(OwnedFD::open(path, O_RDONLY), offset){}
 
     FileView(ivl::str::NullStringView path,
              std::size_t offset,
              std::size_t length) :
-      FileView(openfd(path), offset, length){}
+      FileView(OwnedFD::open(path, O_RDONLY), offset, length){}
 
-    FileView(int fd) :
+    FileView(FD fd) :
       FileView(fd, 0){}
 
-    FileView(int fd,
+    FileView(FD fd,
              std::size_t offset) :
-      FileView(fd, offset, fstatlen(fd)){}
+      FileView(fd, offset, fstatlen(fd.get())){}
 
-    FileView(int fd,
+    FileView(FD fd,
              std::size_t offset,
              std::size_t length){
 
-      void* mapped_region = mmap(0, length, PROT_READ, MAP_PRIVATE, fd, offset);
+      void* mapped_region = mmap(0, length, PROT_READ, MAP_PRIVATE, fd.get(), offset);
       if (mapped_region == MAP_FAILED){
         perror("mmap");
-        close(fd);
         throw std::runtime_error("mmap failed");
-      }
-
-      if (close(fd)){
-        perror("close");
       }
 
       this->mapped_region = static_cast<const std::byte*>(mapped_region);
