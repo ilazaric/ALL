@@ -20,6 +20,10 @@ namespace ivl::fs {
     bool empty() const noexcept {
       return fd == nfd;
     }
+
+    explicit operator bool() const noexcept {
+      return fd != nfd;
+    }
   };
 
   // `std::unique_ptr`-esque
