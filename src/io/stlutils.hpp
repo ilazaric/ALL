@@ -5,6 +5,7 @@
 #include <vector>
 #include <cstddef>
 #include <type_traits>
+#include <valarray>
 
 // god forgive me, need this for ADL
 namespace std {
@@ -40,6 +41,25 @@ namespace std {
       // `emplace_back` does same thing here
       vec.push_back(std::move(value));
     }
+    return in;
+  }
+  
+  // size elem0 elem1 ... elemN-1
+  template<typename T>
+  std::ostream& operator<<(std::ostream& out, const std::valarray<T>& vec){
+    out << vec.size();
+    for (auto& elem : vec)
+      out << " " << elem;
+    return out;
+  }
+
+  template<typename T>
+  std::istream& operator>>(std::istream& in, std::valarray<T>& vec){
+    std::size_t len;
+    in >> len;
+    vec = std::valarray<T>(len);
+    for (std::size_t i = 0; i < len; ++i)
+      in >> vec[i];
     return in;
   }
 
