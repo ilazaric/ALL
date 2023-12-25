@@ -81,11 +81,11 @@ namespace ivl::nt {
     while (true){
       a %= b;
       if (a == 0)
-        return b >> final_shift;
+        return b << final_shift;
       a >>= std::countr_zero(a);
       b %= a;
       if (b == 0)
-        return a >> final_shift;
+        return a << final_shift;
       b >>= std::countr_zero(a);
     }
   }
