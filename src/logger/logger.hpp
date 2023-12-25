@@ -133,7 +133,7 @@ constexpr std::size_t length(const char *ptr) {
 
 namespace default_logger {
 
-template <typename NS, typename CSL> struct logger {
+template <typename NS, typename CSL> struct logger_hook {
   template <typename... Args> static void print(const Args &...args) {
     static_assert(NS::namecount == sizeof...(Args));
     std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
@@ -155,5 +155,5 @@ template <typename NS, typename CSL> struct logger {
   do {                                                                  \
     using csl_t = ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>; \
     using names_t = ivl::logger::name_storage<#__VA_ARGS__>;            \
-    logger<names_t, csl_t>::print(__VA_ARGS__);                         \
+    logger_hook<names_t, csl_t>::print(__VA_ARGS__);                         \
   } while (0)

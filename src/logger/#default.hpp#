@@ -1,0 +1,5 @@
+#pragma once
+
+namespace ivl::logger {
+
+} // namespace ivl
