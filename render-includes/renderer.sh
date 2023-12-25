@@ -209,7 +209,7 @@ prettycomment 'ORIGINAL CODE:'
 for FILE in "${SOURCEFILES[@]}"
 do
     prettycomment "$FILE"
-    while IHS= read -r LINE
+    while IFS= read -r LINE
     do
         echo "// $LINE"
     done <$FILE
