@@ -80,7 +80,7 @@ namespace ivl::io {
   std::ostream& operator<<(std::ostream& out, Elems<T> elems){
     if (!elems.t.empty())
       out << *(elems.t.begin());
-    for (auto& elem : elems.t | std::views::drop(1))
+    for (const auto& elem : elems.t | std::views::drop(1))
       out << " " << elem;
     return out;
   }
