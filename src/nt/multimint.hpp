@@ -4,6 +4,9 @@
 #include <array>
 #include <algorithm> // TODO: figure out how to kill dep
 
+#include "util.hpp"
+#include <ivl/io/stlutils.hpp>
+
 namespace ivl::nt {
 
 // this should give me some out-of-order execution perf boosts
@@ -33,6 +36,8 @@ struct MultiMint {
   static constexpr std::uint32_t ModIndex = std::distance(ModsArray.begin(), std::ranges::find(ModsArray, arg));
   
   std::array<std::uint32_t, sizeof...(Mods)> data;
+
+  constexpr auto operator<=>(const MultiMint&) const = default;
 
   constexpr MultiMint() : data{}{}
 
@@ -75,6 +80,10 @@ struct MultiMint {
        )...});
   }
 
+  friend constexpr MultiMint<Mods...> operator/(const MultiMint& a, const MultiMint& b){
+    return a * MultiMint::unsafe_create({(modular_inverse(b[ModIndex<Mods>], Mods))...});
+  }
+
   constexpr MultiMint& operator+=(const MultiMint& x){
     return *this = *this + x;
   }
@@ -87,10 +96,22 @@ struct MultiMint {
     return *this = *this * x;
   }
 
+  constexpr MultiMint& operator/=(const MultiMint& x){
+    return *this = *this / x;
+  }
+
   static constexpr MultiMint unsafe_create(std::array<std::uint32_t, sizeof...(Mods)> arg){
     MultiMint out;
     out.data = arg;
     return out;
+  }
+
+  constexpr explicit operator std::uint32_t() const noexcept requires(sizeof...(Mods) == 1){
+    return data[0];
+  }
+
+  friend std::ostream& operator<<(std::ostream& os, const MultiMint& x){
+    return os << ivl::io::Elems{x.data};
   }
   
 };

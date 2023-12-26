@@ -1,6 +1,6 @@
 
 function build(){
-    ${CXX:-g++} -O3 -std=c++23 -I"$LOC/include" $1.cpp -o $1
+    ${CXX:-g++} -DIVL_LOCAL -O3 -std=c++23 -I"$LOC/include" $1.cpp -o $1
 }
 
 function render(){
