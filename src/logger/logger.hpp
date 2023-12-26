@@ -131,19 +131,28 @@ constexpr std::size_t length(const char *ptr) {
   return len;
 }
 
+  template<typename T>
+  constexpr decltype(auto) discardable_forward(std::remove_reference_t<T>& t){
+    return std::forward<T>(t);
+  }
+
 namespace default_logger {
 
 template <typename NS, typename CSL> struct logger_hook {
-  template <typename... Args> static void print(const Args &...args) {
+  template <typename... Args> static decltype(auto) print(Args&& ...args) {
     static_assert(NS::namecount == sizeof...(Args));
     std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
     std::size_t index = 0;
-    (
-        [](std::size_t &index, const Args &arg) {
-          std::cerr << " " << NS::names[index++] << "=" << (arg);
-        }(index, args),
-        ...);
+    ( // should be easy to inline
+     [](std::size_t &index, const Args &arg) {
+       std::cerr << " " << NS::names[index++] << "=" << (arg);
+     }(index, args),
+     ...);
     std::cerr << std::endl;
+    // this makes `LOG` usable as a wrapper around sub-expressions
+    // wrapper around `std::forward` due to `[[nodiscard]]`
+    // technically not correct bc comma overloadable
+    return (discardable_forward<Args>(args), ...);
   };
 };
 
@@ -151,9 +160,11 @@ template <typename NS, typename CSL> struct logger_hook {
 
 } // namespace ivl::logger
 
+#ifdef IVL_LOCAL
 #define LOG(...)                                                        \
-  do {                                                                  \
-    using csl_t = ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>; \
-    using names_t = ivl::logger::name_storage<#__VA_ARGS__>;            \
-    logger_hook<names_t, csl_t>::print(__VA_ARGS__);                         \
-  } while (0)
+  logger_hook<ivl::logger::name_storage<#__VA_ARGS__>,                  \
+              ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
+  ::print(__VA_ARGS__)
+#else
+#define LOG(...) (__VA_ARGS__)
+#endif
