@@ -77,7 +77,7 @@ namespace ivl::io {
   Elems(T&&) -> Elems<T&&>;
 
   template<typename T>
-  std::ostream& operator<<(std::ostream& out, Elems<T> elems){
+  std::ostream& operator<<(std::ostream& out, const Elems<T>& elems){
     if (!elems.t.empty())
       out << *(elems.t.begin());
     for (const auto& elem : elems.t | std::views::drop(1))
@@ -86,7 +86,7 @@ namespace ivl::io {
   }
 
   template<typename T>
-  std::istream& operator>>(std::istream& in, Elems<T> elems){
+  std::istream& operator>>(std::istream& in, Elems<T>&& elems){
     for (auto& elem : elems.t)
       in >> elem;
     return in;
