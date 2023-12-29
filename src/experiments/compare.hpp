@@ -63,6 +63,12 @@ namespace std _GLIBCXX_VISIBILITY(default)
     // less=0xff, equiv=0x00, greater=0x01, unordered=0x02
     __cmp_cat::type _M_value;
 
+    enum class switch_enabler : __cmp_cat::type {};
+
+    constexpr operator switch_enabler() const {
+      return static_cast<switch_enabler>(_M_value);
+    }
+
     constexpr explicit
     partial_ordering(__cmp_cat::_Ord __v) noexcept
     : _M_value(__cmp_cat::type(__v))
@@ -166,6 +172,12 @@ namespace std _GLIBCXX_VISIBILITY(default)
   {
     __cmp_cat::type _M_value;
 
+    enum class switch_enabler : __cmp_cat::type {};
+
+    constexpr operator switch_enabler() const {
+      return static_cast<switch_enabler>(_M_value);
+    }
+
     constexpr explicit
     weak_ordering(__cmp_cat::_Ord __v) noexcept : _M_value(__cmp_cat::type(__v))
     { }
@@ -256,6 +268,12 @@ namespace std _GLIBCXX_VISIBILITY(default)
   class strong_ordering
   {
     __cmp_cat::type _M_value;
+
+    enum class switch_enabler : __cmp_cat::type {};
+
+    constexpr operator switch_enabler() const {
+      return static_cast<switch_enabler>(_M_value);
+    }
 
     constexpr explicit
     strong_ordering(__cmp_cat::_Ord __v) noexcept
