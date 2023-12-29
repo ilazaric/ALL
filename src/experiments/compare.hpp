@@ -282,10 +282,10 @@ namespace std _GLIBCXX_VISIBILITY(default)
     static const strong_ordering greater;
 
     enum class switch_enabler : __cmp_cat::type {
-      equivalent = static_cast<__smp_cat::type>(__cmp_cat::_Ord::equivalent),
-      equal = static_cast<__smp_cat::type>(__cmp_cat::_Ord::equal),
-      less = static_cast<__smp_cat::type>(__cmp_cat::_Ord::less),
-      greater = static_cast<__smp_cat::type>(__cmp_cat::_Ord::greater)
+      equivalent = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
+      equal = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equal),
+      less = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::less),
+      greater = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::greater)
     };
 
     constexpr operator switch_enabler() const {
