@@ -83,7 +83,13 @@ namespace std _GLIBCXX_VISIBILITY(default)
     static const partial_ordering greater;
     static const partial_ordering unordered;
 
-    enum class switch_enabler : __cmp_cat::type {};
+    // enumerators defined for better warnings
+    enum class switch_enabler : __cmp_cat::type {
+      less = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::less),
+      equivalent = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
+      greater = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::greater),
+      unordered = static_cast<__cmp_cat::type>(__cmp_cat::_Ncmp::_Unordered)
+    };
 
     constexpr operator switch_enabler() const {
       return static_cast<switch_enabler>(_M_value);
@@ -184,7 +190,12 @@ namespace std _GLIBCXX_VISIBILITY(default)
     static const weak_ordering equivalent;
     static const weak_ordering greater;
 
-    enum class switch_enabler : __cmp_cat::type {};
+    // enumerators defined for better warnings
+    enum class switch_enabler : __cmp_cat::type {
+      less = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::less),
+      equivalent = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
+      greater = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::greater)
+    };
 
     constexpr operator switch_enabler() const {
       return static_cast<switch_enabler>(_M_value);
@@ -281,10 +292,11 @@ namespace std _GLIBCXX_VISIBILITY(default)
     static const strong_ordering equivalent;
     static const strong_ordering greater;
 
+    // enumerators defined for better warnings
     enum class switch_enabler : __cmp_cat::type {
-      equivalent = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
-      equal = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equal),
       less = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::less),
+      equal = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
+      equivalent = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::equivalent),
       greater = static_cast<__cmp_cat::type>(__cmp_cat::_Ord::greater)
     };
 
