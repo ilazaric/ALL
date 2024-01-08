@@ -4,6 +4,19 @@ namespace ivl::refl {
 
   // represents a persistent and change-able state
   // for metaprogramming
+  // API:
+  // - load() -> info
+  // - store(info)
+  // each load() returns the info from the last store()
+  // load() before any store() is not supported (compilation error)
+  //
+  // recommended use:
+  // 1) using Cell = MemoryCell<>;
+  // - Cell::load();
+  // - Cell::store(i);
+  // 2) static constexpr MemoryCell<> cell;
+  // - cell.load();
+  // - cell.store(i);
   template<typename = decltype([]{})>
   struct MemoryCell {
   private:
