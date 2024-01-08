@@ -9,9 +9,18 @@ function render(){
     $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/include" $1.cpp > $1.rendered.cpp
 }
 
+# `cargo install cce` needed
+function refl-build(){
+    render "$1"
+    cce compile edg-experimental-reflection "$1.rendered.cpp"
+}
+
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
 
 ivl_add_command "render" "LOC=\"$IVL_DOT_LOCATION\" render"
+
+# `cargo install cce` needed
+ivl_add_command "refl-build" "LOC=\"$IVL_DOT_LOCATION\" refl-build"
 
 # function run(){
 #     PROG="$1"
