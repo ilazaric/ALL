@@ -11,9 +11,13 @@ namespace ivl::refl {
   // advance(): increments
   // get(): returns number of advances that happened
   //
-  // when used you probably want to alias it like:
-  // `using Inc = Incrementer<>;`
-  // due to the default you will get a unique instantiation
+  // recommended use:
+  // 1) using Inc = Incrementer<>;
+  // - Inc::advance();
+  // - Inc::get();
+  // 2) static constexpr Incrementer<> inc;
+  // - inc.advance();
+  // - inc.get();
   template<typename = decltype([]{})>
   struct Incrementer {
   private:
@@ -54,5 +58,9 @@ namespace ivl::refl {
       std::meta::define_class(classi, {});
     }
   };
+
+  // for now this broken, look at edg-bugs/CTAD.cpp
+  // template<typename T = decltype([]{})>
+  // Incrementer() -> Incrementer<T>;
 
 } // namespace ivl::refl
