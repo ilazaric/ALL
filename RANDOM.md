@@ -13,3 +13,6 @@
 https://github.com/rust-lang/rust-mode
 `package-install rust-mode`
 
+## cmake stuff
+
+https://cliutils.gitlab.io/modern-cmake/chapters/intro/installing.html
