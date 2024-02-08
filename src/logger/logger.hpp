@@ -43,27 +43,37 @@
 
 namespace ivl::logger {
 
-constexpr std::size_t find_comma(std::string_view names) {
-  std::size_t openparencount = 0;
-  for (std::size_t idx = 0; idx < names.size(); ++idx){
-    if (names[idx] == ',' && openparencount == 0)
-      return idx;
-    if (names[idx] == '(')
-      ++openparencount;
-    if (names[idx] == ')')
-      --openparencount;
-    if (names[idx] == '\'' || names[idx] == '"')
-      idx = names.find(names[idx], idx+1);
+  consteval std::size_t find_comma(std::string_view names) {
+    std::size_t openparencount = 0;
+    char instr = 0;
+    for (std::size_t idx = 0; idx < names.size(); ++idx){
+      if (!instr){
+        if (names[idx] == ',' && openparencount == 0)
+          return idx;
+        if (names[idx] == '(' || names[idx] == '[' || names[idx] == '{')
+          ++openparencount;
+        if (names[idx] == ')' || names[idx] == ']' || names[idx] == '}')
+          --openparencount;
+      }
+      if (names[idx] == '\'' || names[idx] == '"'){
+        if (!instr){
+          instr = names[idx];
+          continue;
+        }
+        if (instr != names[idx]) continue;
+        if (names[idx-1] == '\\') continue;
+        instr = 0;
+      }
+    }
+    return std::string_view::npos;
   }
-  return std::string_view::npos;
-}
 
 static_assert(find_comma("(,),x") == 3);
 static_assert(find_comma("',',x") == 3);
 static_assert(find_comma("\",\",x") == 3);
-  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
+static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
 
-constexpr void callback_names(std::string_view allnames, auto &callback) {
+consteval void callback_names(std::string_view allnames, auto &callback) {
   while (true) {
     std::size_t commaloc = find_comma(allnames);
     std::string_view name = allnames.substr(0, commaloc);
@@ -76,22 +86,22 @@ constexpr void callback_names(std::string_view allnames, auto &callback) {
   }
 }
 
-constexpr std::size_t count_names(std::string_view allnames) {
+consteval std::size_t count_names(std::string_view allnames) {
   struct {
     std::size_t count = 0;
-    constexpr void operator()(std::string_view) { ++count; }
+    consteval void operator()(std::string_view) { ++count; }
   } callback;
   callback_names(allnames, callback);
   return callback.count;
 }
 
-// `constexpr` has become pretty powerful, love to see it
+// constexpr has become pretty powerful, love to see it
 template <std::size_t N>
-constexpr auto generate_names(std::string_view allnames) {
+consteval auto generate_names(std::string_view allnames) {
   struct {
     std::size_t index = 0;
     std::array<std::string_view, N> names;
-    constexpr void operator()(std::string_view name) { names[index++] = name; }
+    consteval void operator()(std::string_view name) { names[index++] = name; }
   } callback;
   callback_names(allnames, callback);
   return callback.names;
@@ -100,36 +110,36 @@ constexpr auto generate_names(std::string_view allnames) {
 // a string that can be passed via template args
 template <unsigned N> struct fixed_string {
   char buf[N + 1]{};
-  constexpr fixed_string(char const *s) {
+  consteval fixed_string(char const *s) {
     for (unsigned i = 0; i != N; ++i)
       buf[i] = s[i];
   }
-  constexpr operator char const *() const { return buf; }
+  consteval operator char const *() const { return buf; }
 };
 template <unsigned N> fixed_string(char const (&)[N]) -> fixed_string<N - 1>;
 
+consteval std::size_t length(const char *ptr) {
+  std::size_t len = 0;
+  while (ptr[len])
+    ++len;
+  return len;
+}
+
 template <fixed_string T> struct name_storage {
-  static constexpr std::string_view allnames{(const char *)T};
-  static constexpr std::size_t namecount = count_names(allnames);
-  static constexpr auto names = generate_names<namecount>(allnames);
+  inline static constexpr std::string_view allnames{(const char*)T, length((const char*)T)};
+  inline static constexpr std::size_t namecount{count_names(allnames)};
+  inline static constexpr auto names{generate_names<namecount>(allnames)};
 };
 
 // a std::source_location that can be passed via template args
 template <std::uint_least32_t linet, // std::uint_least32_t columnt,
           fixed_string file_namet, fixed_string function_namet>
 struct fixed_source_location {
-  constexpr static inline auto line = linet;
+  inline constexpr static auto line = linet;
   // constexpr static inline auto column = columnt;
-  constexpr static inline auto file_name = file_namet;
-  constexpr static inline auto function_name = function_namet;
+  inline constexpr static auto file_name = file_namet;
+  inline constexpr static auto function_name = function_namet;
 };
-
-constexpr std::size_t length(const char *ptr) {
-  std::size_t len = 0;
-  while (ptr[len])
-    ++len;
-  return len;
-}
 
   template<typename T>
   constexpr decltype(auto) discardable_forward(std::remove_reference_t<T>& t){
@@ -162,8 +172,8 @@ template <typename NS, typename CSL> struct logger_hook {
 
 #ifdef IVL_LOCAL
 #define LOG(...)                                                        \
-  logger_hook<ivl::logger::name_storage<#__VA_ARGS__>,                  \
-              ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
+  logger_hook<::ivl::logger::name_storage<#__VA_ARGS__>,                \
+               ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
   ::print(__VA_ARGS__)
 #else
 #define LOG(...) (__VA_ARGS__)
