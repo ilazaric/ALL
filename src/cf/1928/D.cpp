@@ -30,6 +30,7 @@ struct ivl::alloc::GlobalAlloc : ivl::alloc::SmallPtrAllocator<T, AllocTraits> {
 // struct ivl::alloc::GlobalAlloc : std::allocator<T> {};
 
 int main(){
+  LOG(sizeof(ivl::alloc::spa_detail::Allocator<AllocTraits>::segment_tree_type));
   for (auto ti : std::views::iota(0, int{cin})){
     std::uint32_t n{cin}, b{cin}, x{cin};
     ivl::vector<std::uint32_t> cs(n);
