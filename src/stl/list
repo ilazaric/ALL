@@ -1,0 +1,13 @@
+#pragma once
+
+#include <ivl/alloc/global_alloc_fwd.hpp>
+
+#include <list>
+
+namespace ivl {
+
+  // TODO: check if this even works
+  template<typename T>
+  using list = std::list<T, ivl::alloc::GlobalAlloc<T>>;
+
+} // namespace ivl
