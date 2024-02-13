@@ -146,10 +146,14 @@ struct fixed_source_location {
     return std::forward<T>(t);
   }
 
+  constexpr decltype(auto) discardable_forward_last(auto&& ... ts){
+    return (discardable_forward<decltype(ts)>(ts), ...);
+  }
+
 namespace default_logger {
 
 template <typename NS, typename CSL> struct logger_hook {
-  template <typename... Args> static decltype(auto) print(Args&& ...args) {
+  template <typename... Args> [[maybe_unused]] static decltype(auto) print(Args&& ...args) {
     static_assert(NS::namecount == sizeof...(Args));
     std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
     std::size_t index = 0;
@@ -171,10 +175,10 @@ template <typename NS, typename CSL> struct logger_hook {
 } // namespace ivl::logger
 
 #ifdef IVL_LOCAL
-#define LOG(...)                                                        \
+# define LOG(...)                                                        \
   logger_hook<::ivl::logger::name_storage<#__VA_ARGS__>,                \
                ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
   ::print(__VA_ARGS__)
 #else
-#define LOG(...) (__VA_ARGS__)
+# define LOG(...) (ivl::logger::discardable_forward_last(__VA_ARGS__))
 #endif
