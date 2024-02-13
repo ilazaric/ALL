@@ -47,15 +47,12 @@ namespace ivl::alloc {
       static Pointer pointer_to(reference r){
         auto ri = reinterpret_cast<std::uintptr_t>(&r);
         Pointer out{};
-        auto zi = reinterpret_cast<std::uintptr_t>(&*out);
+        auto zi = reinterpret_cast<std::uintptr_t>(Traits::storage.data());
         IVL_DBG_ASSERT(ri >= zi && ri < zi + Traits::storage.size() && "bad reference, not from our alloc", zi, ri, zi+Traits::storage.size(), &r);
         auto delta = ri - zi;
         out.offset += delta;
         return out;
       }
-
-      // // libstdc++ and libc++ are buggy, this is to fix them
-      // explicit(false) Pointer(T* ptr) : Pointer(pointer_to(*ptr)){}
       
       static constexpr bool isConst = std::is_const_v<T>;
       static constexpr bool isVoid = std::is_void_v<T>;
@@ -63,8 +60,8 @@ namespace ivl::alloc {
       std::uint32_t offset;
 
       // TODO: check if needed
-      Pointer() : offset(0){}
-      // Pointer() = default;
+      // Pointer() : offset(0){}
+      Pointer() = default;
       Pointer(std::nullptr_t) : offset(0){}
 
       template<typename U>
@@ -102,7 +99,9 @@ namespace ivl::alloc {
       
       // TODO: should i cast to char* just in case?
       reference operator*() const {return *reinterpret_cast<T*>(Traits::storage.data() + offset);}
-      T* operator->() const {return &**this;}
+      // seems that `pointer{}.operator->()` does not actually have
+      // to be equal to `(T*)nullptr`, haven't seen anything in the standard
+      T* operator->() const {return /*offset == 0 ? nullptr :*/ &**this;}
     };
 
     template<typename T, typename Traits>
@@ -115,20 +114,24 @@ namespace ivl::alloc {
       using pointer = Pointer<void, Traits>;
 
       // -1 bc first chunk is not used bc nullptr lives there
-      using segment_tree_type = SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size - 1>;
+      using segment_tree_type = SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size>;
 
       static std::uint32_t chunk_count(std::uint32_t n){
         return (n + Traits::segment_tree_chunk_size - 1) / Traits::segment_tree_chunk_size;
       }
 
-      // static segment_tree_type& initialize_segment_tree(){
-      //   auto ptr = std::construct_at<segment_tree_type>(Traits::storage.data());
-      //   // this is kinda cute tbh
-      //   ptr->take(chunk_count(sizeof(segment_tree_type)));
-      //   return *ptr;
-      // }
+      // it turns out i prefer shoving metadata into the storage
+      // bc having a static variable bloats the executable size
+      static segment_tree_type& initialize_segment_tree(){
+        static_assert(sizeof(segment_tree_type) < Traits::storage.size());
+        // xD i suppose
+        auto ptr = std::construct_at<segment_tree_type>(static_cast<segment_tree_type*>(static_cast<void*>(Traits::storage.data())));
+        // this is kinda cute tbh
+        ptr->take(chunk_count(sizeof(segment_tree_type)));
+        return *ptr;
+      }
 
-      inline static segment_tree_type segment_tree{};
+      inline static segment_tree_type& segment_tree = initialize_segment_tree();
 
       static pointer segment_tree_allocate(std::uint32_t n){
         auto alloc = segment_tree.take(chunk_count(n));
@@ -136,12 +139,12 @@ namespace ivl::alloc {
           throw std::bad_alloc{};
         }
         pointer out;
-        out.offset = (alloc + 1) * Traits::segment_tree_chunk_size;
+        out.offset = alloc * Traits::segment_tree_chunk_size;
         return out;
       }
       
       static void segment_tree_deallocate(pointer p, std::uint32_t n){
-        auto x = p.offset / Traits::segment_tree_chunk_size - 1;
+        auto x = p.offset / Traits::segment_tree_chunk_size;
         segment_tree.give(x, chunk_count(n));
       }
 

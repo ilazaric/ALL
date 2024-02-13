@@ -49,8 +49,8 @@ namespace ivl::alloc {
         (INVALID_HANDLE_VALUE,
          nullptr,
          PAGE_READWRITE | SEC_COMMIT,// | SEC_LARGE_PAGES | SEC_COMMIT,
-         0,
-         1u<<20,
+         (std::uint32_t)(Size>>32),
+         (std::uint32_t)Size,
          nullptr);
       assert(handle);
       auto ret = MapViewOfFileEx
@@ -61,12 +61,13 @@ namespace ivl::alloc {
          0,
          reinterpret_cast<LPVOID>(Location));
       assert(ret);
+      assert(reinterpret_cast<std::uintptr_t>(ret) == Location);
 #endif
       
     }
 
-    static constexpr char* data(){return reinterpret_cast<char*>(Location);}
-    static constexpr std::size_t size(){return Size;}
+    constexpr char* data(){return reinterpret_cast<char*>(Location);}
+    constexpr std::size_t size(){return Size;}
 
     // TODO: dropped this for now, think about readding
     // // this is probably unnecessary, if static storage duration this
