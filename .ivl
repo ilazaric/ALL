@@ -1,12 +1,18 @@
 
+function dbg-build(){
+    FILE="$1"
+    shift
+    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -DIVL_DBG_MODE -O0 -g -ggdb -rdynamic -fsanitize=address,undefined -ldl -no-pie -fno-pie -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
+}
+
 function build(){
     FILE="$1"
     shift
-    ${CXX:-g++} -DIVL_LOCAL "$@" -O3 -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
+    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
 function render(){
-    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/include" $1.cpp > $1.rendered.cpp
+    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/include -I $LOC/include2" $1.cpp > $1.rendered.cpp
 }
 
 # `cargo install cce` needed
@@ -18,6 +24,8 @@ function refl-build(){
 function list-dir(){
     ls -lahnAB --color=always "${1:-.}" | grep -v rendered
 }
+
+ivl_add_command "dbg-build" "LOC=\"$IVL_DOT_LOCATION\" dbg-build"
 
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
 
