@@ -6,7 +6,6 @@
 
 #include "segment_tree2.hpp"
 
-#define IVL_DBG_MODE
 #include <ivl/debug>
 
 namespace ivl::alloc {
