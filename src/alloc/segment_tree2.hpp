@@ -120,7 +120,7 @@ template <std::size_t LeafCount> struct SegmentTree2 {
 
   template <std::size_t Level> std::uint64_t sum_level() {
     std::uint64_t res = 0;
-    LOG(LENGTH >> Level);
+    // LOG(LENGTH >> Level);
     for (std::uint32_t i = 0; i < (LENGTH >> Level); ++i) {
       res += LOG(i, std::get<Level>(data).load(i)).second;
     }
