@@ -122,6 +122,7 @@ namespace ivl::alloc {
 
       // it turns out i prefer shoving metadata into the storage
       // bc having a static variable bloats the executable size
+      // added benefit, it occupies nullptr slot
       static segment_tree_type& initialize_segment_tree(){
         static_assert(sizeof(segment_tree_type) < Traits::storage.size());
         // xD i suppose
