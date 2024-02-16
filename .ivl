@@ -25,6 +25,20 @@ function list-dir(){
     ls -lahnAB --color=always "${1:-.}" | grep -v rendered
 }
 
+function cf-submit(){
+    if [ "$LOC/src/cf" != "$(dirname "$(pwd)")" ]
+    then
+        echo "[IVL] ERR: cf-submit: wrong pwd"
+        exit 1
+    fi
+
+    FILE="$1"
+    shift
+    render "$FILE"
+
+    $LOC/src/cf/submit.py "$(basename "$(pwd)")" "$FILE"
+}
+
 ivl_add_command "dbg-build" "LOC=\"$IVL_DOT_LOCATION\" dbg-build"
 
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
@@ -35,6 +49,8 @@ ivl_add_command "render" "LOC=\"$IVL_DOT_LOCATION\" render"
 ivl_add_command "refl-build" "LOC=\"$IVL_DOT_LOCATION\" refl-build"
 
 ivl_add_command "ls" "LOC=\"$IVL_DOT_LOCATION\" list-dir"
+
+ivl_add_command "cf-submit" "LOC=\"$IVL_DOT_LOCATION\" cf-submit"
 
 # function run(){
 #     PROG="$1"
