@@ -53,6 +53,9 @@ function ivl_load_dot(){
 }
 
 # haven't implemented these bc not sure if i want them
+# after thinking, this might be a really bad idea atm to implement
+# usually i register bash functions that use LOC
+# multiple .ivl loaded -> LOC ambiguity
 # # looks in parent folders for another .ivl and loads it
 # function ivl_load_parent_dot(){
 #     # TODO
