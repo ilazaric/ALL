@@ -47,7 +47,7 @@ namespace ivl::fs {
              std::size_t offset,
              std::size_t length){
 
-      void* mapped_region = mmap(0, length, PROT_READ, MAP_PRIVATE, fd.get(), offset);
+      void* mapped_region = length ? mmap(0, length, PROT_READ, MAP_PRIVATE, fd.get(), offset) : nullptr;
       if (mapped_region == MAP_FAILED){
         perror("mmap");
         throw std::runtime_error("mmap failed");
