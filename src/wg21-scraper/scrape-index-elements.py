@@ -1,0 +1,50 @@
+#!/usr/bin/env python3
+
+import json
+import sys
+import logging
+import grequests
+import os
+
+log = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
+if not os.path.isdir("index-elements"):
+    os.mkdir("index-elements")
+
+out = grequests.map((grequests.get("https://wg21.link/index.json"),))[0]
+index = out.json()
+
+log.debug(f'{len(index) = }')
+
+no_link_elems = [k for k in index if "link" not in index[k]]
+log.debug(f'{len(no_link_elems) = }')
+if len(no_link_elems) != 0:
+    log.error("found elements with zero links, this is really bad")
+    log.error(f"{len(no_link_elems) = }")
+    log.error(f"{no_link_elems = }")
+    log.error("i refuse to continue")
+    # TODO: we probably should warn on these elements, filter them out, continue
+    exit(1)
+
+def chunks(l, n):
+    for i in range(0, len(l), n):
+        yield l[i:i+n]
+
+def solve(els):
+    urls = [index[el]["link"] for el in els]
+    rs = (grequests.get(u) for u in urls)
+    outs = grequests.map(rs)
+    for i in range(len(els)):
+        with open(f'index-elements/{els[i]}', 'wb') as f:
+            if hasattr(outs[i], 'content'):
+                f.write(outs[i].content)
+
+els = [el for el in index if not os.path.isfile(f'index-elements/{el}')]
+log.info(f'{len(els)=}')
+
+for i, chunk in enumerate(chunks(els, 100)):
+    log.info(f'solving chunk #{i} ...')
+    solve(chunk)
+        
