@@ -1,0 +1,3 @@
+[submodule "src/spoj"]
+	path = src/spoj
+	url = git@github.com:ilazaric/spoj.git
