@@ -1,25 +1,65 @@
+#include <string_view>
+
 #define FUSE_USE_VERSION 35
 #include <fuse3/fuse.h>
 
+#include <git2.h>
+
+#include <ivl/logger>
+
 #define EXPECT(cond, err) if (!(cond)) return -(err)
+
+#define check_lg2(...)                          \
+  do {                                          \
+    int error = (__VA_ARGS__);                  \
+    if (error < 0){                             \
+      LOG_RAW("error in git: ", #__VA_ARGS__);  \
+      auto e = git_error_last();                \
+      LOG(error, e->klass, e->message);         \
+      exit(1);                                  \
+    }                                           \
+  } while (0)
 
 namespace gitfs {
 
   constexpr auto DIRPERMS = 666;
 
-  struct Path {
-    
+  struct State {
+    State(){
+      check_lg2(git_libgit2_init());
+    }
+
+    size_t count_shown_commits(){
+      return 0;
+    }
+
+    ~State(){
+      check_lg2(git_libgit2_shutdown());
+    }
   };
 
+  // st_dev, st_blksize, st_ino are ignored
+  int getattr(const char* raw_path, struct stat* st, fuse_file_info*){
+    std::string_view path(raw_path);
+    EXPECT(raw_path[0] == '/', ENOENT);
 
-  int getattr(const char* path, stat* st, fuse_file_info*){
+    size_t last_slash_idx = 0;
+
+    fuse_context* ctx = fuse_get_context();
+    State* state = static_cast<State*>(ctx->private_data);
+    
     st->st_uid = getuid();
     st->st_gid = getgid();
 
-    auto last_slash = path;
+    // root
+    if (path.size() == 1){
+      st->st_mode = S_IFDIR | 00666;
+      st->st_nlink = 0;
+      return 0;
+    }
     
     
-    return 0;
+    return -ENOENT;
   }
   
   int readlink(const char *, char *, size_t);
@@ -51,9 +91,13 @@ namespace gitfs {
                struct fuse_file_info *, enum fuse_readdir_flags);
   int releasedir (const char *, struct fuse_file_info *);
   // int fsyncdir (const char *, int, struct fuse_file_info *);
-  void* init (struct fuse_conn_info *conn,
-              struct fuse_config *cfg);
-  void destroy (void *private_data);
+  // ilazaric: private_data done in main
+  // void* init (struct fuse_conn_info *conn,
+  //             struct fuse_config *cfg);
+  void destroy (void *private_data){
+    State* state = static_cast<State*>(private_data);
+    delete state;
+  }
   int access (const char *, int);
   // int create (const char *, mode_t, struct fuse_file_info *);
   int lock (const char *, struct fuse_file_info *, int cmd,
@@ -78,12 +122,12 @@ namespace gitfs {
   off_t lseek (const char *, off_t off, int whence, struct fuse_file_info *);
 
   fuse_operations ops{
-    .getattr = &getattr
+    .getattr = &getattr,
+    .destroy = &destroy
   };
   
 } // namespace gitfs
 
 int main(int argc, char* argv[]){
-
-  return fuse_main(argc, argv, &gitfs::ops, nullptr);
+  return fuse_main(argc, argv, &gitfs::ops, static_cast<void*>(new State()));
 }

@@ -5,13 +5,9 @@
 #include <utility>
 #include <vector>
 
-#include <ivl/alloc/mmap_fixed_storage.hpp>
-#include <ivl/alloc/single_element_allocator.hpp>
+#include <ivl/alloc/global_alloc_fwd.hpp>
 
-// should be used only on identifiers
-#define FWD(x) (std::forward<decltype(x)>(x))
-
-namespace ivl::trees {
+namespace ivl::structs {
 
   enum class Child {
     Left = 0,
@@ -26,97 +22,63 @@ namespace ivl::trees {
     }
   }
 
-  template<typename V>
-  struct SkeletonTree;
-
-  template<typename V>
-  struct SkeletonNode;
-
-  template<typename V>
-  struct SkeletonTree {
-    // using Alloc = MyAlloc<SkeletonNode<V>>;
-    using Alloc = ivl::alloc::SingleElementAllocator<SkeletonNode<V>, 0x0000'1030'0000'0000ULL, (1ULL << 32)>;
-    using Ptr = std::unique_ptr<SkeletonNode<V>, typename Alloc::Deleter>;
+  // ptr + side compressed into same thing
+  template<typename Ptr>
+  struct PackedPtr {
+    static_assert(ivl::extended_pointer_traits<Ptr>::is_faithfully_integral);
+    static_assert(ivl::extended_pointer_traits<Ptr>::unused_lower_bits >= 1);
     
-    Ptr data;
+  };
+
+  template<typename V, typename InAlloc = ivl::GlobalAlloc<V>>
+  struct BinaryTree {
+    struct Node;
+
+    using Alloc = std::allocator_traits<InAlloc>::rebind_alloc<Node>;
+    using Ptr = std::allocator_traits<Alloc>::pointer;
+
+    struct Node {
+      V value;
+      Ptr children[2];
+      Ptr parent;
+      Node(auto&& ... args) : value(std::forward<decltype(args)>(args)...), children{}, parent{}{}
+    };
     
-    // struct Node {
-    //   V value;
-    //   SkeletonTree children[2];
-    //   Node(auto&& ... args) : value(FWD(args)...), children{nullptr, nullptr}{}
-    // };
+    Ptr data{};
+    [[no_unique_address]] Alloc alloc{};
 
-    SkeletonTree() = default;
-
-    SkeletonTree(const SkeletonTree&) = delete;
-    SkeletonTree(SkeletonTree&& o) = default;
+    BinaryTree() = default;
+    BinaryTree(const BinaryTree&) = delete;
+    BinaryTree(BinaryTree&& o) = default;
+    BinaryTree& operator=(const BinaryTree&) = delete;
+    BinaryTree& operator=(BinaryTree&&) = default;
+    // ~BinaryTree() = default;
 
   private:
-    SkeletonTree(Ptr&& o) : data(std::move(o)){}
+    void destroy_all(Ptr p){
+      if (!p) return;
+      destroy_all(p->children[Child::Left]);
+      destroy_all(p->children[Child::Right]);
+      std::destroy_at(&*p);
+      alloc.deallocate(p, 1);
+    }
 
   public:
-    static SkeletonTree create_node(auto&& ... args){
-      auto ptr = Alloc::allocate();
-      std::construct_at(&*ptr, FWD(args)...);
-      return SkeletonTree(Ptr(ptr));
+    ~BinaryTree(){
+      destroy_all(data);
     }
 
-    SkeletonTree& operator=(const SkeletonTree&) = delete;
-    SkeletonTree& operator=(SkeletonTree&&) = default;
+    void link();
 
-    ~SkeletonTree() = default;
-
-    SkeletonTree carve(Child C){
-      assert(!empty());
-      return SkeletonTree(std::move(child(C)));
+    BinaryTree cut(Child child){
+      IVL_ASSERT(data);
+      auto p = data->children[child];
+      data->children[child] = nullptr;
+      if (p) p->parent = nullptr;
+      return {p, alloc};
     }
-
-    void attach(Child C, SkeletonTree&& t){
-      assert(!empty());
-      assert(child(C).empty());
-      child(C) = std::move(t);
-    }
-
-    SkeletonTree& child(Child C){
-      assert(!empty());
-      return data->children[(int)C];
-    }
-
-    const SkeletonTree& child(Child C) const {
-      assert(!empty());
-      return data->children[(int)C];
-    }
-
-    // this is a bit faster, no idea why xD
-    void rotate(Child C){
-      assert(!empty());
-      assert(!child(C).empty());
-      auto child = carve(C);
-      auto grandchild = child.carve(sibling(C));
-      attach(C, std::move(grandchild));
-      std::swap(child, *this);
-      attach(sibling(C), std::move(child));
-    }
-
-    // // should be implementable via carve and attach
-    // void rotate(Child C){
-    //   assert(!empty());
-    //   assert(!child(C).empty());
-    //   SkeletonTree tmp = std::move(child(C));
-    //   child(C) = std::move(tmp.child(sibling(C)));
-    //   tmp.child(sibling(C)) = std::move(*this);
-    //   *this = std::move(tmp);
-    // }
-
-    bool empty() const {return !data;}
     
   };
   
-  template<typename V>
-  struct SkeletonNode {
-    V value;
-    SkeletonTree<V> children[2];
-    SkeletonNode(auto&& ... args) : value(FWD(args)...), children{}{}
-  };
 
-} // namespace ivl::structs::basic_tree
+} // namespace ivl::structs

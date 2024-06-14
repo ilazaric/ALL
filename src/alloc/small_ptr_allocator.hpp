@@ -224,11 +224,11 @@ namespace ivl::alloc {
     };
 
     static pointer allocate(std::uint32_t n){
-      return LOG(n, static_cast<pointer>(spa_detail::Allocator<Traits>::allocate(n * sizeof(T))));
+      return (n, static_cast<pointer>(spa_detail::Allocator<Traits>::allocate(n * sizeof(T))));
     }
     
     static void deallocate(pointer p, std::uint32_t n){
-      LOG(p, n);
+      // LOG(p, n);
       spa_detail::Allocator<Traits>::deallocate(static_cast<void_pointer>(p), n * sizeof(T));
     }
   };

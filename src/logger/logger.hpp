@@ -41,6 +41,8 @@
 #include <string_view>
 #include <cstdint>
 
+#ifdef IVL_LOCAL
+
 namespace ivl::logger {
 
   consteval std::size_t find_comma(std::string_view names) {
@@ -142,12 +144,13 @@ struct fixed_source_location {
 };
 
   template<typename T>
-  constexpr decltype(auto) discardable_forward(std::remove_reference_t<T>& t){
-    return std::forward<T>(t);
+  constexpr T&& discardable_forward(std::remove_reference_t<T>& t){
+    return static_cast<T&&>(t);
   }
 
-  constexpr decltype(auto) discardable_forward_last(auto&& ... ts){
-    return (discardable_forward<decltype(ts)>(ts), ...);
+  template<typename T>
+  constexpr T&& discardable_forward(std::remove_reference_t<T>&& t){
+    return static_cast<T&&>(t);
   }
 
 namespace default_logger {
@@ -167,18 +170,29 @@ template <typename NS, typename CSL> struct logger_hook {
     // wrapper around `std::forward` due to `[[nodiscard]]`
     // technically not correct bc comma overloadable
     return (discardable_forward<Args>(args), ...);
-  };
+  }
+
+  template <typename... Args> [[maybe_unused]] static decltype(auto) print_raw(Args&& ...args) {
+    static_assert(NS::namecount == sizeof...(Args));
+    std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
+    ((std::cerr << " " << args), ...);
+    std::cerr << std::endl;
+    return (discardable_forward<Args>(args), ...);
+  }
 };
 
 } // namespace default_logger
 
 } // namespace ivl::logger
 
-#ifdef IVL_LOCAL
 # define LOG(...)                                                        \
   logger_hook<::ivl::logger::name_storage<#__VA_ARGS__>,                \
                ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
   ::print(__VA_ARGS__)
+# define LOG_RAW(...) \
+  logger_hook<::ivl::logger::name_storage<#__VA_ARGS__>,                \
+               ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>> \
+  ::print_raw(__VA_ARGS__)
 #else
-# define LOG(...) (ivl::logger::discardable_forward_last(__VA_ARGS__))
+# define LOG(...) (__VA_ARGS__)
 #endif

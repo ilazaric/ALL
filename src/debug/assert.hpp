@@ -38,5 +38,5 @@
     }} while (false)
 
 #else // IVL_DBG_MODE
-#define IVL_DBG_ASSERT(...)
+#define IVL_DBG_ASSERT(...) (0)
 #endif // IVL_DBG_MODE
