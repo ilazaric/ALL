@@ -11,7 +11,7 @@
 int main(){
   std::random_device dev;
   std::mt19937 rng(dev());
-  int n = 6;
+  int n = 30;
   std::uniform_int_distribution<int> dist(1,n);
   std::cout << n << std::endl;
   for (int i = 0; i < n; ++i)
