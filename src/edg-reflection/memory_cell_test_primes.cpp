@@ -23,7 +23,7 @@ private:
 
 public:
     static consteval std::size_t next(){
-        std::size_t curr = std::meta::value_of<std::size_t>(Cell::load());
+        std::size_t curr = std::meta::extract<std::size_t>(Cell::load());
         while (not is_prime(curr))
             ++curr;
         Cell::store(std::meta::reflect_value(curr+1));

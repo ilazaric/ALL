@@ -11,7 +11,7 @@ namespace ivl {
     assert(C == ^std::copyable);
     // assert(false);
     auto I = std::meta::substitute(C, {T});
-    return std::meta::value_of<bool>(I);
+    return std::meta::extract<bool>(I);
   }
 
   template<typename T, std::meta::info C>

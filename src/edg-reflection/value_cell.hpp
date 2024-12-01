@@ -13,7 +13,7 @@ namespace ivl::refl {
 
   public:
     static consteval T load(){
-      return std::meta::value_of<T>(cell.load());
+      return std::meta::extract<T>(cell.load());
     }
     
     static consteval void store(T t){

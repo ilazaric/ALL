@@ -35,7 +35,7 @@ namespace ivl::refl {
       auto mapi = map();
       auto wrapper = std::meta::type_of(std::meta::nonstatic_data_members_of(mapi)[0]);
       auto tmp = std::meta::template_arguments_of(wrapper)[0];
-      return std::meta::value_of<std::meta::info>(tmp);
+      return std::meta::extract<std::meta::info>(tmp);
     }
 
     static consteval void store(std::meta::info i){
