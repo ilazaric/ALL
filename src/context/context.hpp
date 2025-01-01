@@ -175,11 +175,11 @@ namespace ivl::ctx {
       return storage.template get<T>();
     }
 
-    template<typename... Us>
-    requires (std::is_same_v<typename detail::Type<Us>::type, typename detail::Tag2Type<typename detail::Tag<Us>::type, Ts...>::type> && ...)
-    operator Context<Us...>(){
-      return {this->get<typename detail::Tag<Us>::type>()...};
-    };
+    // template<typename... Us>
+    // requires (std::is_same_v<typename detail::Type<Us>::type, typename detail::Tag2Type<typename detail::Tag<Us>::type, Ts...>::type> && ...)
+    // operator Context<Us...>(){
+    //   return {this->get<typename detail::Tag<Us>::type>()...};
+    // };
   };
 
   template<typename... Ts>
