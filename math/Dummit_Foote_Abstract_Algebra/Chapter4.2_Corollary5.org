@@ -1,0 +1,96 @@
+* Corollary 5
+
+Claim:
+If $G$ is a finite group of order $n$ and $p$ is the smallest prime dividing $\#G$,
+then any subgroup of index $p$ is normal.
+
+** $p^2$ version
+First we prove a special claim:
+If $G$ is of size $p^2$, where $p$ is prime, $G$ is commutative.
+( either $C_{p^2}$ or ${C_p}^2$ )
+
+Suppose $G$ has an element $g$ of order $p^2$
+Then $G$ is obviously $C_{p^2}$
+Otherwise, order of each nontrivial element has to be $p$
+
+Consider the following partition of $G \setminus 1$
+$F = \left\{ \left\{ g^i \mid 1 \leq i \leq p-1 \right\} \mid g \in G \setminus 1 \right\}$
+Each element of $F$ is of size exactly $p-1$
+$\#F = p+1$
+
+Consider the action of $G$ on $F$ via conjugation
+$g f = g \cdot f \cdot g^{-1} = \{{g}{h}{g^{-1}} \mid h \in f\}$
+Easy to verify it is well defined
+Representation of $G$ action are permutations on $F$, a $p+1$ size set
+Since each non-trivial $g \in G$ is of order $p$ ,
+the corresponding permutation is either of order $p$ or $1$
+
+*** $\exists~g \neq 1 \in G$ such that the action permutation is trivial
+
+Let $h \neq 1 \in G$ such that $g$ and $h$ are not in the same $F$ partition.
+Obviously $\langle g \rangle \langle h \rangle = G$
+
+Action being trivial means:
+$g \langle h \rangle = \langle h \rangle$
+$\exists~i \in \mathbb{N}: g h g^{-1} = h^i$
+Consider the expression $g^p h g^{-p}$
+$h = g^p h h^{-p} = h^{i^p}$
+$1 = h^{i^p - 1}$
+$i^p \equiv i \pmod{p}$
+$1 = h^{i-1}$
+$i = 1$
+Therefore, $g$ and $h$ commute, so $G$ is ${C_p}^2$
+
+*** $\forall~g \neq 1 \in G$ action permutation is of order $p$
+
+Enumerate $F$ elements: $f_i : 1 \leq i \leq p+1$
+Consider action permutations as elements of $S_{p+1}$
+Every element $g \neq 1 \in G$ fixes $\langle g \rangle$
+There are $p$ leftover points to act on
+Since the order is $p$ the permutation has to be a full cycle
+Also note that for every $1 \leq 1 \leq p+1$, there are
+elements in $G$ which have $i$ as fixed point for permutation
+(elements of $f_i$)
+
+Take an element $g \neq 1 \in G$
+WLOG the permutation is $(2 \; 3 \; 4 \; ... \; p \; p+1)$
+(with $1$ being fixed point)
+Take an element $h \neq 1 \in G$ which has $p+1$ as fixed point
+permutation of h: $(1=h_0 \; h_1 \; h_2 \; ... \; h_{p-1})$
+$h$ maps $h_i$ onto $h_{i+1}$ (modulo $p$)
+
+$gh^i$ has to have a fixed point $\forall~ 1 \leq i \leq p-1$
+All fixed points are different
+They are also different from fixed points of $g$ and $h$
+(which are $1$ and $p+1$)
+So the set of the fixed points is $\{2, 3, ..., p\}$
+
+$\exists~j : gh^i (h_j) = g(h_{i+j})$
+If $h_{i+j}=1$, $g$ maps it on $1$, so $h_j=1$, impossible
+Also, $h_{i+j} \neq p+1$
+So $h_{i+j} \in \{2, 3, ..., p\}$
+
+So $g$ will just increment the value
+We are searching for solutions to $h_{i+j}+1 = h_j$
+For every $i$ there has to be exactly one $j$
+Note all $h_j$ have to be different
+Also, all $h_{i+j}$ have to be different
+Summing all $p-1$ equations we get:
+$H + p-1 = H$, contradiction
+
+** continuing
+
+Suppose $H \leq G$, $|G : H| = p$
+Consider double cosets $HgH$
+From previous exercises (4.2-10-(d,e)) we know:
+$|HgH| = |H| \cdot |H : H \cap g^{-1} H g|$
+Note $|H : H \cap g^{-1}Hg| \Big| |H| = \dfrac{n}{p}$
+So the index is either $1$ or at least $p$
+Assume it's not $1$ because otherwise it is normal
+
+$n = |G| \geq |HgH| = \dfrac{n}{p} \cdot |...| \geq \dfrac{n}{p} \cdot p = n$
+But double cosets partition $G$
+Yet $HgH = G$
+contradiction
+
+seems $p^2$ version was useless ...

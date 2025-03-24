@@ -1,10 +1,11 @@
 #include <ranges>
-#include <ivl/stl/vector>
-#include <ivl/alloc/small_ptr_allocator.hpp>
+// #include <ivl/stl/vector>
+// #include <ivl/alloc/small_ptr_allocator.hpp>
 #include <ivl/io/conversion>
-#include <ivl/logger>
+// #include <ivl/logger>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/alloc/mmap_fixed_storage.hpp>
+#include <vector>
 
 // template<std::size_t N>
 // struct DynArray {
@@ -12,28 +13,29 @@
 //   DynArray() : vec(N){}
 //   constexpr char* data(){return vec.data();}
 //   constexpr std::size_t size(){return N;}
+// };    
+
+// struct AllocTraits {
+//   // inline static DynArray<(128ULL<<20)> storage;
+//   // inline static std::array<char, (25ULL<<20)> storage;
+//   inline static ivl::alloc::MmapFixedStorage<0x0000'0300'0000'0000, (128ULL<<20)> storage;
+//   static constexpr std::size_t segment_tree_chunk_size = 64;
+//   static constexpr std::size_t free_list_limit = 256;
+//   static constexpr std::size_t free_list_steal_coef = 64;
 // };
 
-struct AllocTraits {
-  // inline static DynArray<(128ULL<<20)> storage;
-  // inline static std::array<char, (25ULL<<20)> storage;
-  inline static ivl::alloc::MmapFixedStorage<0x0000'0300'0000'0000, (128ULL<<20)> storage;
-  static constexpr std::size_t segment_tree_chunk_size = 64;
-  static constexpr std::size_t free_list_limit = 256;
-  static constexpr std::size_t free_list_steal_coef = 64;
-};
+// template<typename T>
+// struct ivl::alloc::GlobalAlloc : ivl::alloc::SmallPtrAllocator<T, AllocTraits> {};
 
 template<typename T>
-struct ivl::alloc::GlobalAlloc : ivl::alloc::SmallPtrAllocator<T, AllocTraits> {};
-
-// template<typename T>
-// struct ivl::alloc::GlobalAlloc : std::allocator<T> {};
+struct ivl::alloc::GlobalAlloc : std::allocator<T> {};
 
 int main(){
-  LOG(sizeof(ivl::alloc::spa_detail::Allocator<AllocTraits>::segment_tree_type));
+  // LOG(sizeof(ivl::alloc::spa_detail::Allocator<AllocTraits>::segment_tree_type));
+  // exit(1); 
   for (auto ti : std::views::iota(0, int{cin})){
     std::uint32_t n{cin}, b{cin}, x{cin};
-    ivl::vector<std::uint32_t> cs(n);
+    std::vector<std::uint32_t> cs(n);
     std::cin >> ivl::io::Elems{cs};
 
     auto eval = [&](std::uint32_t k){

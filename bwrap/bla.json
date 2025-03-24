@@ -1,0 +1,11 @@
+// how to run?
+{
+    "memory_limit": "100MB",
+    "time_limit": "5s"
+}
+
+// results
+{
+    "status": "TLE/MLE/AC/RTE",
+    ...
+}

@@ -1,0 +1,21 @@
+* Task
+
+$E_k(n) = \text{how many times is n! divisible by k}$
+Show:
+(a) infinitely many $n$ such that $E_{10}(n) > E_9(n)$
+(B) infinitely many $n$ such that $E_{10}(n) < E_9(n)$
+
+* Exploration
+
+$E_{10} = E_5$
+$E_9(n) = \left\lfloor \dfrac{E_3(n)}{2} \right\rfloor$
+
+$E_p(n) = \dfrac{n - d_p(n)}{p - 1}$
+Where $d_p(n) = \text{sum of digits of n in base p}$
+
+$E_{10}(n) = E_5(n) = \dfrac{n - d_5(n)}{4}$
+$E_9(n) = \left\lfloor \dfrac{n - d_3(n)}{4} \right\rfloor$
+
+this is obvious
+why am i solving this garbage
+why is this N3

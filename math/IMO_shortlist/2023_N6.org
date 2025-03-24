@@ -1,0 +1,62 @@
+* Task
+
+$a_0 = 0$
+$a_1 = 1$
+$a_{n+2} = 3a_{n+1} - 2a_n~\text{or}~4a_{n+1} - 3a_n$
+$S = \text{numbers reachable via kawaii sequence}$
+Prove:
+$m, m+1 \in S \implies 3 \mid m \land m/3 \in S$
+
+* Exploration
+
+0 1 3 7 15 31 ... $2^n-1$
+0 1 4 13 40 121 ... $\dfrac{3^n-1}{2}$
+
+0 1 3 9 21 57
+
+
+$a_{n+2} - a_{n+1} = (2~\text{or}~3) \cdot (a_{n+1} - a_n)$
+Given a string over $\{2,3\}$ alphabet,
+number is sum of prefix products
+
+Let $S$ be set of all such numbers
+Then $1 + 2S \subseteq S$
+and $1 + 3S \subseteq S$
+
+Prove via induction: $x \not\equiv 2 \pmod{3}~\forall~x \in S$
+$1 + 2 \cdot 0 \equiv 1 \pmod{3}$
+$1 + 2 \cdot 1 \equiv 0 \pmod{3}$
+$1 + 3 \cdot 0 \equiv 1 \pmod{3}$
+$1 + 3 \cdot 1 \equiv 1 \pmod{3}$
+
+From task $m$:
+Had $m$ come from $3$, $m+1$ would be $2 \pmod{3}$, contradiction
+Therefore $m$ came from $2$, $m+1$ came from $3$
+$m+1 = 3k+1, k \in S$
+Done
+
+
+
+Is path to a number unique?
+$x = 1 + 2y = 1 + 3z \colon x,y,z \in S$
+$6 \mid x-1$
+$3 \mid y \implies y = 1 + 2y' \colon y' \equiv 1 \pmod{3}, y' \in S$
+$2 \mid z \implies z = 1 + 3z' \colon z' \equiv 1 \pmod{2}$
+$x=6a+1$
+$y=3a$
+$z=2a$
+$3a=1+2y' \colon y' \equiv 1 \pmod{3}$
+
+
+Suppose $a$ $2$ steps, $b$ $3$ steps
+$x \stackrel{2}{\to} 1+2x \stackrel{3}{\to} 4+6x$
+$x \stackrel{3}{\to} 1+3x \stackrel{2}{\to} 3+6x$
+Therefore min number is all $3$ steps first, then $2$ steps
+
+$0 \stackrel{3^b}{\to} \dfrac{3^b-1}{2}$
+$0 \stackrel{2^a}{\to} 2^a-1$
+
+$x \stackrel{\text{steps}}{\to} x \cdot \text{steps product} + 0^{\text{steps}}$
+
+$3^b2^a \to \dfrac{3^b-1}{2} \cdot 2^a + 2^a - 1 = 2^{a-1}3^b + 2^{a-1} - 1 \geq 2^{a-1}3^b$
+$2^a3^b \to (2^a - 1) \cdot 3^b + \dfrac{3^b-1}{2} = 2^a3^b - \dfrac{3^b+1}{2} < 2^a3^b$

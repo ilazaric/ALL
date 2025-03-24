@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 #include <span>
+#include <cassert>
+#include <string_view>
 
 #include <sys/mman.h>
 #include <limits.h>
@@ -20,7 +22,7 @@ namespace ivl::fs {
     const std::byte* mapped_region;
     std::size_t offset;
     std::size_t length;
-    std::size_t dropped_prefix;
+    // std::size_t dropped_prefix;
 
     static constexpr std::size_t page_size = 4096;
 
@@ -56,18 +58,19 @@ namespace ivl::fs {
       this->mapped_region = static_cast<const std::byte*>(mapped_region);
       this->offset = offset;
       this->length = length;
-      this->dropped_prefix = 0;
+      // this->dropped_prefix = 0;
     }
 
     FileView(const FileView&) = delete;
     FileView(FileView&& o) :
       mapped_region(o.mapped_region),
       offset(o.offset),
-      length(o.length),
-      dropped_prefix(o.dropped_prefix){
+      length(o.length)
+      // ,dropped_prefix(o.dropped_prefix)
+    {
       // o.mapped_region = nullptr;
       o.length = 0;
-      o.dropped_prefix = 0;
+      // o.dropped_prefix = 0;
     }
 
     FileView& operator=(const FileView&) = delete;
@@ -76,19 +79,18 @@ namespace ivl::fs {
         std::swap(mapped_region, o.mapped_region);
         std::swap(offset, o.offset);
         std::swap(length, o.length);
-        std::swap(dropped_prefix, o.dropped_prefix);
+        // std::swap(dropped_prefix, o.dropped_prefix);
       }
       return *this;
     }
 
     ~FileView(){
-      if (length)
-        if (munmap(const_cast<void*>(static_cast<const void*>(mapped_region)), length))
-          perror("munmap");
+      if (length && munmap(const_cast<void*>(static_cast<const void*>(mapped_region)), length))
+        perror("munmap");
     }
 
     std::size_t size() const {
-      return length - dropped_prefix;
+      return length; // - dropped_prefix;
     }
 
     bool empty() const {
@@ -99,15 +101,25 @@ namespace ivl::fs {
       return std::span(mapped_region, length);
     }
 
-    void drop_prefix(std::size_t len){
-      dropped_prefix += len;
-      if (dropped_prefix > len)
-        throw std::runtime_error("dropped too much");
-      
-      if (dropped_prefix >= page_size){
-        
-      }
+    template<typename T>
+    std::span<const T> as_span(){
+      assert(length % sizeof(T) == 0);
+      return std::span<const T>(static_cast<const T*>(static_cast<const void*>(mapped_region)), length / sizeof(T));
     }
+
+    std::string_view as_string_view(){
+      return std::string_view(static_cast<const char*>(static_cast<const void*>(mapped_region)), length);
+    }
+
+    // void drop_prefix(std::size_t len){
+    //   dropped_prefix += len;
+    //   if (dropped_prefix > len)
+    //     throw std::runtime_error("dropped too much");
+      
+    //   if (dropped_prefix >= page_size){
+        
+    //   }
+    // }
     
   };
 

@@ -18,7 +18,12 @@ function render(){
 # `cargo install cce` needed
 function refl-build(){
     render "$1"
-    cce compile edg-experimental-reflection "$1.rendered.cpp"
+    cce compile edg-experimental-reflection "$1.rendered.cpp" -- --max_depth_constexpr_call=1000000
+}
+
+function cc-build(){
+    render "$1"
+    $LOC/src/edg-reflection/cc/callme $1.rendered.cpp --max_depth_constexpr_call=1000000
 }
 
 function bloom-build(){
@@ -52,6 +57,7 @@ ivl_add_command "render" "LOC=\"$IVL_DOT_LOCATION\" render"
 
 # `cargo install cce` needed
 ivl_add_command "refl-build" "LOC=\"$IVL_DOT_LOCATION\" refl-build"
+ivl_add_command "cc-build" "LOC=\"$IVL_DOT_LOCATION\" cc-build"
 ivl_add_command "bloom-build" "LOC=\"$IVL_DOT_LOCATION\" bloom-build"
 
 ivl_add_command "ls" "LOC=\"$IVL_DOT_LOCATION\" list-dir"

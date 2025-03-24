@@ -1,0 +1,17 @@
+munmap
+clock_nanosleep
+mmap
+mprotect
+brk
+execve
+uname
+readlink
+arch_prctl
+set_tid_address
+set_robust_list
+prlimit64
+getrandom
+rseq
+exit_group
+wait4
+write

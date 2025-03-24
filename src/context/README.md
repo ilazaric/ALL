@@ -30,3 +30,13 @@ fuck the design choice of deleters, that sucks
 but should we be able to do that?  
 maybe  
 context transformer?
+
+
+
+
+^ no idea what that was  
+BUT  
+we have an idea of a `Context`  
+furthermore, want a `Bind`  
+`Bind` would just own something, and expose it to the passthrough `Context`  
+`Bind<Alloc, LeanString>` should have the same behaviour as `std::string`

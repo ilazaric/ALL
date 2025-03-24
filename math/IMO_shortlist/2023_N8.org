@@ -1,0 +1,158 @@
+* Task
+
+Find all $f \colon \mathbb{N} \to \mathbb{N}$ such that
+$f^{bf(a)}(a+1) = (a+1)f(b)~\forall~a,b \in \mathbb{N}$
+Where $f^x$ represents composing $f$ with itself $x$ times
+
+* Exploration
+
+** No cycles
+
+Suppose $a \geq 2 \colon f^n(a) = a$
+Pretty obvious that $\text{Im}(f)$ is infinite
+Note that every element of $a~\text{Im}(f)$ is reachable from $a$
+Contradiction
+
+Suppose $a=1$
+If $n \geq 2$ do previous on $f(a)$
+
+Remaining $f(1) = 1$
+Plug in $a = b = 1$
+$f(2) = 2$
+Contradiction
+
+** $f^x(a) = f^y(a) \implies x = y$
+
+This is obvious from "No cycles"
+
+** $f$ is injective
+
+Suppose $f(b) = f(c)$
+Then $f^{bf(a)}(a+1) = f^{cf(a)}(a+1)$
+Then $bf(a) = cf(a)$
+Then $b = c$
+So we have injectivity!
+
+** $1 \not \in \text{Im}(f)$
+
+If it were, cycles would show up $f(b)=1$
+
+** $\text{Im}(f) = \mathbb{N} \setminus \{1\}$, everything is reachable from $1$
+
+$a+1 = f(x)$
+$f^{bf(f(x)-1)}(f(x)) = f(x)f(b)$
+$f^{bf(f(x)-1)+1}(x) = f^{xf(f(b)-1)+1}(b)$
+$f^{f(f(x)-1)+1}(x) = f^{xf(f(1)-1)+1}(1)$
+Since $1 \not \in \text{Im}(f)$ we know LHS exponent < RHS exponent when $x \neq 1$
+Therefore every element from $\mathbb{N} \setminus \{1\}$ is reachable from $1$
+
+** Unsorted
+
+Let $I(n) = \text{distance from 1 to n}$
+$f^{I(n)}(1) = n$
+
+$a = f(a) - 1$
+$f^{bf(f(a)-1)}(f(a)) = f(a)f(b)$
+$bf(f(a)-1) + I(a) = af(f(b)-1) + I(b)$
+
+$b=f^n(a)$
+$f^n(a)f(f(a)-1) + I(a) = af(f^{n+1}(a)-1) + I(a) + n$
+$f^n(a)f(f(a)-1) = af(f^{n+1}(a)-1) + n$
+$n=1$
+$f(a)f(f(a)-1) = af(f^2(a)-1)+1$
+Therefore:
+$M(a, f(a)) = 1$
+$M(a, f(f(a)-1)) = 1$
+
+$\lambda \mid a, n \implies \lambda \mid f^n(a)$
+$\lambda \mid a \implies \left[ \lambda \mid n \iff \lambda \mid f^n(a) \right]$
+This also works for negative $n$ as long as $a$ has the inverse
+
+Let $f^n(1) = 2$
+If $2 \mid n$ then $\lambda = 2, a = 2, n = -n$ implies $2 \mid 1$
+So $2 \nmid n$
+Suppose $n \geq 3$
+Therefore $f^n(1) = 2 \mid f^{n-2}(1)$
+Contradiction
+Therefore $n = 1, f(1) = 2$
+
+Induction
+Suppose we showed $f(i) = i+1~\forall~i = 1, \dots, k$
+We want to show $f(k+1) = k+2$
+Let $f^x(1) = k+2$
+$x \geq k+2 \implies f^x(1) \mid f^{x-k-2}(1)$ , contradiction
+Therefore $x \leq k+1$
+$f^k(1) = k+1$
+So $x > k$
+So $x = k+1$
+So $f(k+1) = k+2$
+Done!!
+
+$a \mid b \implies a~\text{reaches}~b$
+
+
+Suppose $f(x) = 2$
+$xf(a) + yf(2a+1) = yf(a) + xf((a+1)f(y)-1)$
+
+
+$f^{f(a)}(a+1) = (a+1)f(1)$
+$f^{f(a) + f((a+1)f(1)-1)}(a+1) = (a+1)f(1)^2$
+$f^{2f(a)}(a+1) = (a+1)f(2)$
+$f^{2f(a) + f((a+1)f(2)-1)}(a+1) = (a+1)f(2)f(1)$
+$f^{f(a) + 2f((a+1)f(1) - 1)}(a+1) = (a+1)f(1)f(2)$
+Therefore:
+$2f(a) + f((a+1)f(2)-1) = f(a) + 2f((a+1)f(1) - 1)$
+$f(a) + f((a+1)f(2)-1) = 2f((a+1)f(1)-1)$
+
+$f^{xf(a) + yf((a+1)f(x)-1)}(a+1) = f^{yf((a+1)f(x)-1)}((a+1)f(x)) = (a+1)f(x)f(y)$
+Therefore:
+$xf(a) + yf((a+1)f(x)-1) = yf(a) + xf((a+1)f(y)-1)$
+
+$\forall~x, y~\exists~z \colon xf(a) + yf((a+1)f(x)-1) = zf(a)$
+$z = f^{-1}(f(x) f(y))$
+$x + yf((a+1)f(x)-1)/f(a) = z$
+$f(x + yf((a+1)f(x)-1)/f(a)) = f(x)f(y)$
+
+There might be some sense in saying $f(0)=1$
+(comes from plugging in $b=0$)
+
+$a+1 \stackrel{f^{f(a)}}{\to} (a+1) f(1) \stackrel{f^{f(a)}}{\to} (a+1) f(2) \dots$
+
+Slight generalization:
+$f^{cf(a)}((a+1)f(b)) = (a+1)f(b+c)$
+
+
+# Suppose $f(a+1) = f(b+1)$
+# Then $f^k(a+1) = f^k(b+1)~\forall~k \in \mathbb{N}$
+# Let $k = kf(a)f(b)$
+# $f^{kf(a)f(b)}(a+1) = f^{kf(a)f(b)}(b+1)$
+# $(a+1)f(kf(b)) = (b+1)f(kf(a))$
+# Generalization:
+# $(a+1)^t f(kf(b)^t) = (b+1)^t f(kf(a)^t)$
+# WLOG $a > b$
+
+
+
+Suppose $f(a+1) = b+1$
+$f^t(a+1) = f^{t-1}(b+1)$
+Suppose $f(a) \mid t$ and $f(b) \mid t-1$
+$(a+1)f(t/f(a)) = (b+1)f((t-1)/f(b))$
+
+
+$f(a) = a+1$ is a solution
+
+
+If $n \in \text{Im}(f)$ then $nk \in \text{Im}(f)~\forall~k \in \mathbb{N}$
+
+
+
+
+** Case: $\exists~x \colon f(x)=1$
+
+$a=x \colon f^b(x+1) = (x+1)f(b)$
+
+$b=x \colon f^{xf(a)}(a+1) = a+1$
+Therefore $f$ is surjective
+
+TODO
+

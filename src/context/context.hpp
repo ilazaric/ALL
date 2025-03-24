@@ -2,6 +2,7 @@
 
 #include <type_traits>
 #include <cstddef>
+#include <tuple>
 
 namespace ivl::ctx {
 
@@ -58,21 +59,25 @@ namespace ivl::ctx {
 
     template<typename T>
     struct Type<Mutable<T>> {
+      // TODO: better msg
       static_assert(!IsOurType<T>::value, "You can't mix the ctx modifying types in this way");
       using type = T&;
     };
 
     template<typename T>
     struct Type<Value<T>> {
-      static_assert(std::is_trivially_copyable_v<T>, "Your class is pretty complex, I don't think you want to pass it by value, are you sure a `const T&` is not appropriate?");
+      // this is before is_trivially_copyable bc they are incomplete
+      // TODO: better msg
       static_assert(!IsOurType<T>::value, "You can't mix the ctx modifying types in this way");
+      static_assert(std::is_trivially_copyable_v<T>, "Your class is pretty complex, I don't think you want to pass it by value, are you sure a `const T&` is not appropriate?");
       using type = T;
     };
 
     template<typename T, typename U>
     struct Type<Tagged<T, U>> {
+      // TODO: better msg
       static_assert(!IsOurType<T>::value, "This just makes no sense at all");
-      // U can be Value<_> or Mutable<_>
+      // U can be Value<_> or Mutable<_> (or regular)
       static_assert(!IsTagged<U>::value, "Tagged<_, Tagged> makes no sense");
       using type = typename Type<U>::type;
     };
@@ -91,7 +96,7 @@ namespace ivl::ctx {
 
     template<typename...>
     struct Tag2Type {
-      static_assert(false, "This shouldn't get instantiated, yell at @ilazaric");
+      using type = void; // means "didn't find it :("
     };
 
     template<typename T, typename U, typename... Us>
@@ -100,14 +105,16 @@ namespace ivl::ctx {
     };
 
     template<typename...>
-    struct Tag2Index {};
+    struct Tag2Index {
+      static constexpr size_t value = (size_t)-1; // means "didn't find it :("
+    };
+    
     template<typename T, typename U, typename... Us>
     struct Tag2Index<T, U, Us...> {
-      static constexpr size_t value = std::conditional_t<std::is_same_v<T, typename Tag<U>::type>,
-                                                         std::integral_constant<size_t, (size_t)-1>,
-                                                         Tag2Index<T, Us...>>::value + 1;
+      static constexpr size_t value = std::is_same_v<T, typename Tag<U>::type> ? 0 : Tag2Index<T, Us...>::value + 1 ?: (size_t)-1;
     };
 
+    // TODO: revisit this
     template<typename... Ts>
     constexpr bool validate_tag_uniqueness(){
       size_t idx = 0;
@@ -125,6 +132,7 @@ namespace ivl::ctx {
 
       SingleStorage(typename Type<T>::type data) : data(data){}
 
+      // TODO: this should be simpler, revisit when you have buildtime benchmarks
       template<typename U>
       requires std::is_same_v<typename Tag<T>::type, U>
       typename Type<T>::type get(){return data;}
@@ -141,7 +149,8 @@ namespace ivl::ctx {
     };
 
     template<typename T, typename... Ts>
-    struct Storage<T, Ts...> : private SingleStorage<T>, private Storage<Ts...> {
+    struct Storage<T, Ts...> : SingleStorage<T>, Storage<Ts...> {
+      // TODO: can we do better?
       Storage(typename Type<T>::type head, typename Type<Ts>::type... tail) : SingleStorage<T>(head), Storage<Ts...>(tail...){}
 
       using SingleStorage<T>::get;
@@ -153,6 +162,7 @@ namespace ivl::ctx {
 
   template<typename... Ts>
   struct Context {
+    // TODO: better error msg
     static_assert(detail::validate_tag_uniqueness<Ts...>());
 
     detail::Storage<Ts...> storage;
@@ -164,16 +174,31 @@ namespace ivl::ctx {
     && (std::is_same_v<typename detail::Type<Ts>::type, typename detail::Tag2Type<typename detail::Tag<Ts>::type, Us...>::type> && ...)
     Context(Context<Us...> ctx) : Context(ctx.template get<typename detail::Tag<Ts>::type>()...){}
 
+    // TODO: want better constructors
+    // Context(ctx1, ctx2, bla, mutable(foo), ...)
+
     Context(const Context&) = default;
     Context(Context&&) = default;
 
     Context& operator=(const Context&) = delete;
     Context& operator=(Context&&) = delete;
 
+    // auto& ref = ctx.get<T>();
     template<typename T>
     typename detail::Tag2Type<T, Ts...>::type get(){
       return storage.template get<T>();
     }
+
+    // auto [foo, bar] = ctx.get<Foo, Bar>();
+    template<typename... Us>
+    requires(sizeof...(Us) >= 2)
+    auto get(){
+      return std::tuple<typename detail::Tag2Type<Us, Ts...>::type...>{
+        get<Us>()...
+      };
+    }
+
+    // TODO: put()
 
     // template<typename... Us>
     // requires (std::is_same_v<typename detail::Type<Us>::type, typename detail::Tag2Type<typename detail::Tag<Us>::type, Ts...>::type> && ...)
@@ -182,6 +207,9 @@ namespace ivl::ctx {
     // };
   };
 
+  // TODO: want different stuff for rvalue garbage
+  // if you give me an rvalue, i only work with rvalue ctxs
+  // think about this more
   template<typename... Ts>
   Context(Ts&&...) -> Context<std::remove_cvref_t<Ts>...>;
 

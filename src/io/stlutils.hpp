@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <type_traits>
 #include <valarray>
+#include <variant>
 
 // god forgive me, need this for ADL
 namespace std {
@@ -61,6 +62,12 @@ namespace std {
     for (std::size_t i = 0; i < len; ++i)
       in >> vec[i];
     return in;
+  }
+
+  template<typename... Ts> requires(sizeof...(Ts) > 0)
+  std::ostream& operator<<(std::ostream& out, const std::variant<Ts...>& var){
+    std::visit([&](const auto& el){out << el;}, var);
+    return out;
   }
 
 } // namespace std

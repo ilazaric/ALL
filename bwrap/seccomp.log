@@ -1,0 +1,7 @@
+Mar 22 16:31:27 server-1 audit[726474]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726474 comm="program" exe="/bin/program" sig=0 arch=c000003e syscall=231 compat=0 ip=0x4599c1 code=0x7ffc0000
+Mar 22 16:31:27 server-1 audit[726473]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726473 comm="bwrap" exe="/usr/bin/bwrap" sig=0 arch=c000003e syscall=1 compat=0 ip=0x7f5d3616c887 code=0x7ffc0000
+Mar 22 16:32:34 server-1 audit[726536]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726536 comm="bwrap" exe="/usr/bin/bwrap" sig=0 arch=c000003e syscall=61 compat=0 ip=0x7f06a1c953ea code=0x7ffc0000
+Mar 22 16:32:39 server-1 audit[726537]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726537 comm="program" exe="/bin/program" sig=0 arch=c000003e syscall=231 compat=0 ip=0x4599c1 code=0x7ffc0000
+Mar 22 16:32:39 server-1 audit[726536]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726536 comm="bwrap" exe="/usr/bin/bwrap" sig=0 arch=c000003e syscall=1 compat=0 ip=0x7f06a1cbf887 code=0x7ffc0000
+Mar 22 16:32:39 server-1 audit[726536]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726536 comm="bwrap" exe="/usr/bin/bwrap" sig=0 arch=c000003e syscall=61 compat=0 ip=0x7f06a1c953ea code=0x7ffc0000
+Mar 22 16:32:39 server-1 audit[726536]: SECCOMP auid=1000 uid=1000 gid=1000 ses=12259 subj=unconfined pid=726536 comm="bwrap" exe="/usr/bin/bwrap" sig=0 arch=c000003e syscall=231 compat=0 ip=0x7f06a1c95c31 code=0x7ffc0000

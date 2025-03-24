@@ -1,0 +1,65 @@
+* Task
+
+Find all $f \colon \mathbb{R}^+ \to \mathbb{R}^+$ such that:
+$P(x,y) \colon x(f(x) + f(y)) \geq (f(f(x)) + y)f(y) ~\forall~x,y \in \mathbb{R}^+$
+
+* Exploration
+
+** $Two(x) \colon x \geq f(f(x)) ~\forall~x \in \mathbb{R}^+$
+
+$P(x,x) \colon 2x f(x) \geq (f(f(x)) + x) f(x)$
+$2x \geq f(f(x)) + x$
+$Two(x) \colon x \geq f(f(x)) ~\forall~x \in \mathbb{R}^+$
+
+** $f(f(x)) = x~\forall~x \in \mathbb{R}^+$
+
+$P(f(y),y) \colon f(f(y)) + f(y) \geq f(f(f(y))) + y$
+Define sequence $\{a_n\}_{n=0}^\infty$
+$a_0 = y$
+$a_{n+1} = f(a_n)$
+Then the following is true:
+$a_{n+2} + a_{n+1} \geq a_{n+3} + a_n$
+$a_{n+2} + a_{n+1} - a_n \geq a_{n+3}$
+From $Two$ we know $a_n \geq a_{n+2}$
+
+$a_{n+4} \leq a_{n+3} + a_{n+2} - a_{n+1} \leq 2a_{n+2} - a_n$
+$a_{n+6} \leq 2a_{n+4} - a_{n+2} \leq 3a_{n+2} - 2a_n$
+
+Want to prove: $a_{n+2k} \leq ka_{n+2} - (k-1)a_n$ via induction
+$a_{n+2k+2} \leq ka_{n+4} - (k-1)a_{n+2} \leq 2ka_{n+2} - ka_n - (k-1)a_{n+2} = (k+1)a_{n+2} - ka_n$
+Good
+
+$0 < a_{2k} \leq kf(f(y)) - (k-1)y$
+$(k-1)y < kf(f(y))$
+$\dfrac{k-1}{k} < \dfrac{f(f(y))}{y}$
+Therefore $1 \leq \dfrac{f(f(y))}{y}$
+$y \leq f(f(y)) \stackrel{Two}{\leq} y$
+Therefore $f(f(y)) = y~\forall~y \in \mathbb{R}^+$
+
+** $f(x)=a/x~\forall~x \in \mathbb{R}+$
+
+$P \colon x(f(x) + f(y)) \geq (x + y) f(y)$
+$f(x) + f(y) \geq (x+y) \cdot \dfrac{f(y)}{x}$
+$x + y = f(f(x)) + f(f(y)) \geq (f(x) + f(y)) \cdot \dfrac{f(f(y))}{f(x)} \geq (x + y) \cdot \dfrac{f(y)}{x} \dfrac{y}{f(x)}$
+$xf(x) \geq yf(y)$
+Therefore $f(x) = a/x~\forall~x \in \mathbb{R}^+$
+
+$f(x) = a/x$ is a solution $\forall~a \in \mathbb{R}^+$
+
+
+** Unsorted
+
+$P(x,nx-f(f(x))) \colon x(f(x) + f(y)) \geq nx f(y)$
+$f(x) + f(y) \geq n f(y)$
+$f(x) \geq n f(nx - f(f(x)))$
+
+$P(x,y) \colon x(f(x) + f(y)) \geq (f(f(x)) + y)f(y)$
+$xf(x) + xf(y) \geq f(f(x))f(y) + yf(y)$
+$f(y) \cdot (f(f(x)) - x + y) \leq xf(x)$
+If  ----^-------- is positive:
+$f(y) \leq \dfrac{xf(x)}{f(f(x)) - x + y}~\forall~y > x - f(f(x))$
+
+$P\{f(x) = cf(x/c)\} \colon x(cf(x/c) + cf(y/c)) \stackrel{?}{\geq} (cf(f(x/c)) + y) cf(y/c)$
+$x = cx, y = cy \colon cx(cf(x) + cf(y)) \stackrel{?}{\geq} (cf(f(x)) + cy)cf(y)$
+$x(f(x) + f(y)) \stackrel{?}{\geq} (f(f(x)) + y)f(y)$
+Therefore, if $f$ is a solution, so is $x \to cf(x/c)$

@@ -1,0 +1,27 @@
+* Task
+
+Prove $2^n + 65 \nmid 5^n - 3^n~\forall~n \in \mathbb{N}$
+
+* Exploration
+
+$n \equiv 0 \pmod{2} \implies 3 \mid \text{RHS}$, done
+
+
+When $67 \mid \text{RHS}$ ?
+$2^n \equiv 2 \pmod{67}$
+$2^{n-1} \equiv 1 \pmod{67}$
+$66 = 2 \cdot 3 \cdot 11$
+$2^6 \not\equiv 1$
+$2^{22} = 2048^2 \equiv 38^2 = 1444 \not\equiv 1$
+$2^{33} \equiv 38^3 \equiv -1$
+Therefore $66 \mid n-1$
+$n \equiv 1 \pmod{66}$
+$5^n - 3^n \equiv 5-3 \not\equiv 0 \pmod{67}$
+Done here as well
+
+
+$n=3$
+$8+65=73$
+
+
+I am wondering if disjunctions of congruences would eventually cover all integers
