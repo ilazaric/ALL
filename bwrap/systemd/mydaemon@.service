@@ -1,0 +1,44 @@
+# /etc/systemd/system/mydaemon.service
+[Unit]
+Description=My Network Daemon
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/mydaemon-runner --from-systemd-socket
+User=mydaemon
+Group=mydaemon
+SyslogIdentifier=mydaemon
+StandardInput=socket
+StandardOutput=socket
+StandardError=journal
+
+MemoryAccounting=true
+MemoryMax=100M
+MemorySwapMax=0
+MemoryZSwapMax=0
+
+TasksAccounting=true
+TasksMax=100
+
+# IOAccounting=true
+# IOReadBandwidthMax=10M
+# IOWriteBandwidthMax=10M
+
+PrivateTmp=true
+PrivateDevices=true
+ProtectClock=true
+# ProtectKernelTunables=true # TODO: investigate why cant use
+ProtectKernelModules=true
+# ProtectKernelLogs=true # TODO: investigate why cant use
+
+# TODO: this is painful around bwrap
+# SystemCallFilter=@default @debug @basic-io @file-system @resources @sync @sandbox @ipc @process @io-event @signal capset
+# SystemCallErrorNumber=EPERM
+
+# dont run on core zero
+CPUAffinity=1-21
+
+# timing limits
+RuntimeMaxSec=5
+TimeoutStopSec=1

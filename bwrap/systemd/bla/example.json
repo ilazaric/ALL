@@ -1,0 +1,17 @@
+{
+    "bla": "truc",
+    "files": [
+        {
+            "path": "/bla/truc",
+            "size": "42"
+        },
+        {
+            "path": "/truc/bla",
+            "size": "10101"
+        },
+        {
+            "path": "/znj",
+            "size": "123"
+        }
+    ]
+}

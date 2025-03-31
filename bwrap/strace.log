@@ -1,0 +1,16 @@
+76791 execve("./allocate-memory", ["./allocate-memory"], 0x7ffdfa7e1398 /* 49 vars */) = 0
+76791 brk(NULL)                         = 0x8c62000
+76791 brk(0x8c62d00)                    = 0x8c62d00
+76791 arch_prctl(ARCH_SET_FS, 0x8c62380) = 0
+76791 set_tid_address(0x8c62650)        = 76791
+76791 set_robust_list(0x8c62660, 24)    = 0
+76791 rseq(0x8c62ca0, 0x20, 0, 0x53053053) = 0
+76791 prlimit64(0, RLIMIT_STACK, NULL, {rlim_cur=8192*1024, rlim_max=RLIM64_INFINITY}) = 0
+76791 readlinkat(AT_FDCWD, "/proc/self/exe", "/home/ilazaric/repos/ALL/bwrap/a"..., 4096) = 46
+76791 getrandom("\x23\x01\xe3\x42\xc8\x55\x68\x70", 8, GRND_NONBLOCK) = 8
+76791 brk(NULL)                         = 0x8c62d00
+76791 brk(0x8c83d00)                    = 0x8c83d00
+76791 brk(0x8c84000)                    = 0x8c84000
+76791 mprotect(0x4a5000, 20480, PROT_READ) = 0
+76791 exit_group(0)                     = ?
+76791 +++ exited with 0 +++

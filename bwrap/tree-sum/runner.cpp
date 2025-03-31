@@ -41,7 +41,8 @@ int main(){
   };
 
   auto start = timepoint();
-  
+
+  for (int j = 0; j < 20; ++j)
   for (uint64_t i = 0; i < N; ++i)
     results[i] = tree_sum(&experiments[i].nodes[0]);
 
