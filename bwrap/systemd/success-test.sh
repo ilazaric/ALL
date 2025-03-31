@@ -4,16 +4,23 @@ set -euo pipefail
 
 tmpdir=$(mktemp -d)
 cd $tmpdir
-echo "#!/usr/bin/env bash" >> init
-echo "set -euo pipefail"   >> init
-echo 'echo "stdout"'       >> init
-echo 'echo "stderr" 1>&2'  >> init
+echo "#!/usr/bin/env bash"    >> init
+echo "set -euo pipefail"      >> init
+echo 'echo "stdout"'          >> init
+echo 'echo "stderr" 1>&2'     >> init
+echo 'touch /outputs/done'    >> init
+echo 'echo 42 > /outputs/ans' >> init
 chmod +x init
 tar -c -f inball.tar init
-nc -N localhost 12345 < inball.tar > outball.tar.zst
-unzstd -q outball.tar.zst
-tar xf outball.tar
-diff stdout <(echo "stdout")
-diff stderr <(echo "stderr")
-rm -rf $tmpdir
+nc -N localhost 12345 < inball.tar > fullout
+
+echo "full output:"
+cat fullout
+echo
+
+diff <(cat fullout | grep STDOUT) <(echo "BWRAP-STDOUT: stdout")
+diff <(cat fullout | grep STDERR) <(echo "BWRAP-STDERR: stderr")
+diff <(cat fullout | grep EXIT) <(echo "BWRAP-EXITCODE: 0")
 echo "SUCCESS"
+rm -rf $tmpdir
+

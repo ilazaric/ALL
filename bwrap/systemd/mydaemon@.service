@@ -2,10 +2,11 @@
 [Unit]
 Description=My Network Daemon
 After=network.target
+CollectMode=inactive-or-failed
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/mydaemon-runner --from-systemd-socket
+ExecStart=/usr/local/bin/mydaemon-runner "%n"
 User=mydaemon
 Group=mydaemon
 SyslogIdentifier=mydaemon
