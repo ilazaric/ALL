@@ -5,7 +5,7 @@ Description=Socket for My Network Daemon
 [Socket]
 ListenStream=0.0.0.0:12345
 Accept=yes
-MaxConnections=200
+MaxConnections=1
 
 [Install]
 WantedBy=sockets.target

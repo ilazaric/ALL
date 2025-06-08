@@ -14,8 +14,13 @@ StandardInput=socket
 StandardOutput=socket
 StandardError=journal
 
+# AmbientCapabilities=CAP_SYS_NICE
+# CapabilityBoundingSet=CAP_SYS_NICE
+# NoNewPrivileges=no
+LimitRTPRIO=99
+
 MemoryAccounting=true
-MemoryMax=100M
+MemoryMax=1G
 MemorySwapMax=0
 MemoryZSwapMax=0
 
@@ -27,7 +32,7 @@ TasksMax=100
 # IOWriteBandwidthMax=10M
 
 PrivateTmp=true
-PrivateDevices=true
+# PrivateDevices=true
 ProtectClock=true
 # ProtectKernelTunables=true # TODO: investigate why cant use
 ProtectKernelModules=true
@@ -38,8 +43,8 @@ ProtectKernelModules=true
 # SystemCallErrorNumber=EPERM
 
 # dont run on core zero
-CPUAffinity=1-21
+CPUAffinity=2-3
 
 # timing limits
-RuntimeMaxSec=5
+RuntimeMaxSec=10
 TimeoutStopSec=1

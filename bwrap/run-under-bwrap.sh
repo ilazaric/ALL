@@ -14,6 +14,11 @@ set -x
 
 # program="$1" ; shift
 
+echo "sensors:"
+sensors
+echo "cpu freqs:"
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq
+
 systemd-run \
     --user --scope \
     -p MemoryAccounting=yes \
@@ -34,10 +39,16 @@ bwrap \
     --ro-bind taskset-and-exec /bin/taskset-and-exec \
     --ro-bind drop-syscalls /bin/drop-syscalls \
     --ro-bind tree-sum/recursive-bench /bin/bench \
-    --cap-drop ALL \
     --proc /proc \
     --chdir / \
     -- "$@" || echo "!!! FAILURE !!! EXIT_CODE: [$?]"
+
+echo "cpu freqs:"
+cat /sys/devices/system/cpu/cpu*/cpufreq/scaling_cur_freq
+echo "sensors:"
+sensors
+
+#    --cap-drop ALL \
 
 # killing access to a bunch of syscalls:
 #    --seccomp 3 \

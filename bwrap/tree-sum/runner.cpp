@@ -3,6 +3,8 @@
 #include <iostream>
 #include <vector>
 #include <time.h>
+#include <sys/resource.h>
+#include <cassert>
 
 struct Experiment {
   std::vector<Node> nodes;
@@ -40,6 +42,10 @@ int main(){
     return (double)ts.tv_sec + (double)ts.tv_nsec / 1e9;
   };
 
+  struct rusage usage;
+  assert(-1 != getrusage(RUSAGE_SELF, &usage));
+  auto start_vol_ctxt = usage.ru_nvcsw;
+  auto start_invol_ctxt = usage.ru_nivcsw;
   auto start = timepoint();
 
   for (int j = 0; j < 20; ++j)
@@ -47,8 +53,13 @@ int main(){
     results[i] = tree_sum(&experiments[i].nodes[0]);
 
   auto stop = timepoint();
+  assert(-1 != getrusage(RUSAGE_SELF, &usage));
+  auto end_vol_ctxt = usage.ru_nvcsw;
+  auto end_invol_ctxt = usage.ru_nivcsw;
 
   std::cout << "Duration: " << stop-start << " seconds" << std::endl;
+  std::cout << "Voluntary ctxt switches: " << end_vol_ctxt - start_vol_ctxt << std::endl;
+  std::cout << "Nonvoluntary ctxt switches: " << end_invol_ctxt - start_invol_ctxt << std::endl;
   
   return 0;
 }

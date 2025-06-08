@@ -1,0 +1,1 @@
+savedcmd_/home/ilazaric/repos/ALL/bwrap/km/Module.symvers :=  scripts/mod/modpost -M -m -a      -o /home/ilazaric/repos/ALL/bwrap/km/Module.symvers -T /home/ilazaric/repos/ALL/bwrap/km/modules.order -i Module.symvers -e 

@@ -16,4 +16,16 @@ constexpr std::string_view typestr(){
   return sv;
 }
 
+  // namespace detail {
+  //   template<typename T>
+  //   struct Piper {
+  //     T callable;
+  //     friend auto operator|(auto&& arg, const Piper& p){return p.callable(arg);}
+  //     friend auto operator|(auto&& arg, Piper& p){return p.callable(arg);}
+  //     friend auto operator|(auto&& arg, Piper&& p){return std::move(p).callable(arg);}
+  //   };
+  // } // namespace detail
+
 } // namespace ivl::util
+
+// #define EXTRACT(...) Piper{[](auto&& arg){}}
