@@ -1,8 +1,8 @@
-#include <ranges>
 #include <algorithm>
-#include <numeric>
-#include <span>
 #include <iomanip>
+#include <numeric>
+#include <ranges>
+#include <span>
 
 #include <ivl/logger/logger.hpp>
 using namespace ivl::logger::default_logger;
@@ -59,7 +59,7 @@ using namespace ivl::io;
 
   1/6 a + 1/6 b + 1/6 c + 1/6 3/4 d + 1/6 3/8 e
   1/6 a + 1/6 b + 1/6 c + 1/8 d + 1/16 e
-  
+
   N=2n+3:
   {[a] b c d e ...}
   1/N a
@@ -72,38 +72,40 @@ using namespace ivl::io;
   1/N * (a + 1/(N-2) * ((N-2) * sum{tail}))
   1/N * (a + sum{tail})
   1/N * sum !!! (for odd N)
-  
+
  */
 
-std::int64_t gcd(std::int64_t a, std::int64_t b){
-  while (b) a %= b, std::swap(a, b);
+std::int64_t gcd(std::int64_t a, std::int64_t b) {
+  while (b)
+    a %= b, std::swap(a, b);
   return abs(a);
 }
 
 struct Frac {
   std::int64_t num, den;
-  Frac() : num(0), den(1){}
-  Frac(std::int64_t num) : num(num), den(1){}
-  Frac(std::int64_t pnum, std::int64_t pden){
+  Frac() : num(0), den(1) {}
+  Frac(std::int64_t num) : num(num), den(1) {}
+  Frac(std::int64_t pnum, std::int64_t pden) {
     auto g = gcd(pnum, pden);
-    num = pnum / g;
-    den = pden / g;
+    num    = pnum / g;
+    den    = pden / g;
   }
 
-  friend Frac operator+(Frac a, Frac b){return {a.num*b.den + b.num*a.den, a.den*b.den};}
-  friend Frac operator-(Frac a, Frac b){return {a.num*b.den - b.num*a.den, a.den*b.den};}
-  friend Frac operator*(Frac a, Frac b){return {a.num*b.num, a.den*b.den};}
-  friend Frac operator/(Frac a, Frac b){return {a.num*b.den, a.den*b.num};}
+  friend Frac operator+(Frac a, Frac b) { return {a.num * b.den + b.num * a.den, a.den * b.den}; }
+  friend Frac operator-(Frac a, Frac b) { return {a.num * b.den - b.num * a.den, a.den * b.den}; }
+  friend Frac operator*(Frac a, Frac b) { return {a.num * b.num, a.den * b.den}; }
+  friend Frac operator/(Frac a, Frac b) { return {a.num * b.den, a.den * b.num}; }
 
-  Frac& operator+=(Frac a){return *this = *this + a;}
-  Frac& operator*=(Frac a){return *this = *this * a;}
-  Frac& operator/=(Frac a){return *this = *this / a;}
-  
+  Frac& operator+=(Frac a) { return *this = *this + a; }
+  Frac& operator*=(Frac a) { return *this = *this * a; }
+  Frac& operator/=(Frac a) { return *this = *this / a; }
 };
 
-std::ostream& operator<<(std::ostream& out, Frac f){
-  if (f.num) return out << f.num << "/" << f.den;
-  else return out << 0;
+std::ostream& operator<<(std::ostream& out, Frac f) {
+  if (f.num)
+    return out << f.num << "/" << f.den;
+  else
+    return out << 0;
 }
 
 /*
@@ -112,11 +114,10 @@ std::ostream& operator<<(std::ostream& out, Frac f){
 
   f(2n, 0) = 1/2n
   f(2n, k+1) = k/2n * f(2n-2, k-1) + (2n-2-k)/2n * f(2n-2, k)
-  
+
  */
 
-int main(){
-
+int main() {
 #define Frac double
 #if 0
   { std::vector<Frac> probs;
@@ -137,47 +138,50 @@ int main(){
   }
 #endif
 #undef Frac
-  
-  std::array<std::array<double, 5001>, 2501> fpre{}; {
+
+  std::array<std::array<double, 5001>, 2501> fpre {};
+  {
     // fpre[1][0] = 0.5;
     // fpre[1][1] = 0;
-    for (auto row : std::views::iota(1_u32, 2501_u32)){
-      double lam = 0.5 / row;
+    for (auto row : std::views::iota(1_u32, 2501_u32)) {
+      double lam   = 0.5 / row;
       fpre[row][0] = lam;
-      fpre[row][1] = (2*row-2) * lam * fpre[row-1][0];
-      for (auto col : std::views::iota(2_u32, 2*row))
-        fpre[row][col] = (col-1) * lam * fpre[row-1][col-2] + (2*row-2-col+1) * lam * fpre[row-1][col-1];
+      fpre[row][1] = (2 * row - 2) * lam * fpre[row - 1][0];
+      for (auto col : std::views::iota(2_u32, 2 * row))
+        fpre[row][col] = (col - 1) * lam * fpre[row - 1][col - 2] +
+                         (2 * row - 2 - col + 1) * lam * fpre[row - 1][col - 1];
       // if (row <= 5) std::cout << Elems{std::span(fpre[row].data(), row*2)} << std::endl;
     }
   }
 
   // return 0;
-  
-  for (auto ti : std::views::iota(0_u32, std::uint32_t{cin})){
-    std::uint32_t n{cin};
-    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges{cin};
+
+  for (auto ti : std::views::iota(0_u32, std::uint32_t {cin})) {
+    std::uint32_t                                        n {cin};
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges {cin};
 
     std::vector<std::vector<std::uint32_t>> outs(n);
     for (auto [x, y] : edges)
-      outs[x-1].push_back(y-1);
+      outs[x - 1].push_back(y - 1);
 
     std::vector<double> probs(n, 0.0);
-    probs[n-1] = 1.0;
+    probs[n - 1] = 1.0;
 
-    auto indexed_view = [](auto&& elems, auto&& indices){
-      return indices | std::views::transform([&elems](auto&& idx){return elems[idx];});
+    auto indexed_view = [](auto&& elems, auto&& indices) {
+      return indices | std::views::transform([&elems](auto&& idx) { return elems[idx]; });
     };
 
-    for (auto idx : std::views::iota(0_u32, n-1) | std::views::reverse){
-      if (outs[idx].empty()){
+    for (auto idx : std::views::iota(0_u32, n - 1) | std::views::reverse) {
+      if (outs[idx].empty()) {
         probs[idx] = 0.0;
         continue;
       }
 
       auto subview = indexed_view(probs, outs[idx]);
 
-      if (outs[idx].size() % 2 == 1){
-        probs[idx] = std::accumulate(subview.begin(), subview.end(), 0.0) / (double)outs[idx].size();
+      if (outs[idx].size() % 2 == 1) {
+        probs[idx] =
+          std::accumulate(subview.begin(), subview.end(), 0.0) / (double)outs[idx].size();
         continue;
       }
 
@@ -185,7 +189,7 @@ int main(){
       std::ranges::sort(vp);
       std::ranges::reverse(vp);
       for (std::uint32_t vi = 0; vi < vp.size(); ++vi)
-        vp[vi] *= fpre[vp.size()/2][vi];
+        vp[vi] *= fpre[vp.size() / 2][vi];
       std::ranges::sort(vp);
       probs[idx] = std::accumulate(vp.begin(), vp.end(), 0.0);
     }

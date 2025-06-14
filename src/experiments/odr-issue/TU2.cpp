@@ -1,1 +1,3 @@
-int fn(){return 2;}
+int fn() {
+  return 2;
+}

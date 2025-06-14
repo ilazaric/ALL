@@ -7,7 +7,7 @@
 namespace ivl {
 
   // TODO: check if this even works
-  template<typename T>
+  template <typename T>
   using forward_list = std::forward_list<T, ivl::alloc::GlobalAlloc<T>>;
 
 } // namespace ivl

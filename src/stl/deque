@@ -7,7 +7,7 @@
 namespace ivl {
 
   // TODO: check if this even works
-  template<typename T>
+  template <typename T>
   using deque = std::deque<T, ivl::alloc::GlobalAlloc<T>>;
 
 } // namespace ivl

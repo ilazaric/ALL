@@ -8,7 +8,7 @@ namespace ivl {
 
   // gcc and clang vector works nice with fancy pointers
   // nothing needs to be done
-  template<typename T>
+  template <typename T>
   using vector = std::vector<T, ivl::alloc::GlobalAlloc<T>>;
 
 } // namespace ivl

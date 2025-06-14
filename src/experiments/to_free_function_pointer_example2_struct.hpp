@@ -1,5 +1,5 @@
 #pragma once
 
 struct S {
-  void memfn(){}
+  void memfn() {}
 };

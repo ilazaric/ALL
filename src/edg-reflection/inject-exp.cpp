@@ -3,5 +3,7 @@
 struct S;
 
 consteval {
-  queue_injection(^S, ^{ int fn(); });
+  queue_injection(^S, ^{
+    int fn();
+  });
 }

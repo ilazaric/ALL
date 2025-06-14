@@ -1,7 +1,7 @@
-#include <iostream>
-#include <cstdint>
 #include <cstddef>
+#include <cstdint>
 #include <iomanip>
+#include <iostream>
 
 #include <unistd.h>
 
@@ -10,7 +10,7 @@
 //   close(fd);
 // }
 
-int main(){
+int main() {
   int (*ptr)(int) = close;
   std::cout << std::hex << reinterpret_cast<std::uintptr_t>(ptr) << std::endl;
 }

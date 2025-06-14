@@ -16,7 +16,11 @@
  '(markdown-command "pandoc --from markdown --to html5 --mathjax --standalone")
  '(org-support-shift-select t)
  '(package-selected-packages
-   '(ejson-mode magit default-text-scale org-modern exec-path-from-shell dockerfile-mode pdf-tools latex-preview-pane auctex-latexmk auctex impatient-mode rust-mode markdown-mode cmake-font-lock cmake-mode go-mode)))
+   '(auctex auctex-latexmk clang-format cmake-font-lock cmake-mode
+            default-text-scale dockerfile-mode ejson-mode
+            exec-path-from-shell go-mode impatient-mode
+            latex-preview-pane magit markdown-mode org-modern
+            pdf-tools rust-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -81,3 +85,26 @@ Removes LaTeX preview overlays in region or entire buffer."
 
   ;; Now bind our interactive wrapper to C-c C-x C-r in Org buffers
   (define-key org-mode-map (kbd "M-2") #'my/org-clear-latex-preview))
+
+
+;;  ─── ~/.emacs or ~/.config/emacs/init.el ───
+(require 'clang-format)                 ; make sure the function exists first
+
+(defun my-clang-format-and-save ()
+  "Format the current buffer with clang-format, then save it."
+  (interactive)
+  (clang-format-buffer)
+  (save-buffer))
+
+;; ;; *** place this near the very end of your init ***
+;; (global-set-key (kbd "M-1") #'my-clang-format-and-save)
+
+;; (add-hook 'c-mode-common-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "M-1") #'my-clang-format-and-save)))
+
+(add-hook 'c++-mode-hook ; runs when a C++ buffer starts	
+          (lambda ()
+            (local-set-key (kbd "M-1")
+                           #'my-clang-format-and-save)))
+

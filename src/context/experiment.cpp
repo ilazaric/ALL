@@ -1,10 +1,10 @@
 #include "context.hpp"
-#include <ivl/util>
 #include <ivl/logger>
+#include <ivl/util>
 
 #include <iostream>
 
-int main(){
+int main() {
   // int x;
   // float y;
   // ivl::ctx::Context<int, ivl::ctx::Mutable<float>, ivl::ctx::Value<long>> ctx(x, y, 12);
@@ -22,10 +22,8 @@ int main(){
     static_assert(std::is_same_v<typename ivl::ctx::detail::Tag<A>::type, stdout_t>);
     // LOG(ivl::util::typestr<typename ivl::ctx::detail::Type<A>::type>());
     static_assert(std::is_same_v<typename ivl::ctx::detail::Type<A>::type, std::ostream&>);
-    using Ctx = ivl::ctx::Context<
-      ivl::ctx::Tagged<stdout_t, ivl::ctx::Mutable<std::ostream>>,
-      ivl::ctx::Tagged<stderr_t, ivl::ctx::Mutable<std::ostream>>
-      >;
+    using Ctx = ivl::ctx::Context<ivl::ctx::Tagged<stdout_t, ivl::ctx::Mutable<std::ostream>>,
+                                  ivl::ctx::Tagged<stderr_t, ivl::ctx::Mutable<std::ostream>>>;
     // LOG(ivl::util::typestr<decltype(std::cout)>());
 
     static_assert(std::is_trivially_copyable_v<Ctx>);
@@ -35,5 +33,4 @@ int main(){
     ctx.get<stdout_t>() << "this is stdout!\n";
     ctx.get<stderr_t>() << "this is stderr!\n";
   }
-  
 }

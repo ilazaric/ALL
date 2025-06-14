@@ -1,5 +1,3 @@
 #pragma once
 
-namespace alloc {
-
-} // namespace alloc
+namespace alloc {} // namespace alloc

@@ -5,12 +5,12 @@
 
 long long x = 0;
 
-void task(){
+void task() {
   for (int i = 0; i < 1000000; ++i)
     ++x;
 }
 
-int main(){
+int main() {
   std::vector<std::thread> vec;
   for (int i = 0; i < 2; ++i)
     vec.emplace_back(task);

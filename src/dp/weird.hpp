@@ -22,7 +22,7 @@
   would probably need tuple apply,
   which might not be trivial to inline?
   maybe no ...
-  
+
   ```
   auto expression(auto&& Getter, <dp-params>){...}
   ```
@@ -65,7 +65,7 @@
   we would probably also prefer both dps "contained"
   in single class ?
   naming a bit of an issue ?
-  
+
  */
 
 #include <map>
@@ -74,65 +74,60 @@
 namespace ivl::dp {
 
   struct normal_tag_type {};
-  constexpr normal_tag_type normal{};
+  constexpr normal_tag_type normal {};
 
-  template<std::size_t Depth>
+  template <std::size_t Depth>
   struct debug_tag_type {};
-  template<std::size_t Depth = 1>
-  constexpr debug_tag_type<Depth> debug{};
+  template <std::size_t Depth = 1>
+  constexpr debug_tag_type<Depth> debug {};
 
-  template<typename RT, typename ... Ts>
+  template <typename RT, typename... Ts>
   struct DefaultCache {
-    using KeyType = std::tuple<Ts...>;
+    using KeyType   = std::tuple<Ts...>;
     using ValueType = RT;
-    
+
     std::map<KeyType, ValueType> cache;
 
     // this is shitty for expensive types
     // TODO ^
     // can probably be made better with tuples of
     // references and a transparent comparator
-    bool contains(Ts ... args) const {
-      return cache.contains(KeyType{std::move(args)...});
-    }
+    bool contains(Ts... args) const { return cache.contains(KeyType {std::move(args)...}); }
 
-    RT& set(Ts ... args, RT value){
-      auto [it, status] = cache.try_emplace(KeyType{std::move(args)...}, std::move(value));
+    RT& set(Ts... args, RT value) {
+      auto [it, status] = cache.try_emplace(KeyType {std::move(args)...}, std::move(value));
       if (!status)
         throw std::runtime_error("DefaultCache: tried to set twice");
       return it->second;
     }
 
-    const RT& get(Ts ... args) const {
-      return cache.at(KeyType{std::move(args)...});
-    }
+    const RT& get(Ts... args) const { return cache.at(KeyType {std::move(args)...}); }
   };
 
-  template<typename T>
+  template <typename T>
   struct DebugExpression {
     // TODO
 
-    T value;
+    T           value;
     std::string expression;
 
-    template<typename TT>
-    explicit DebugExpression(TT arg) : value(arg){}
+    template <typename TT>
+    explicit DebugExpression(TT arg) : value(arg) {}
 
-    operator T() const {return value;}
+    operator T() const { return value; }
   };
 
-  template<typename T, typename Shape, template<typename...> typename Cache = DefaultCache>
+  template <typename T, typename Shape, template <typename...> typename Cache = DefaultCache>
   struct Helper;
 
-  template<typename T, typename ShapeRT, typename ... ShapeTs, template<typename...> typename Cache>
+  template <typename T, typename ShapeRT, typename... ShapeTs,
+            template <typename...> typename Cache>
   struct Helper<T, ShapeRT(ShapeTs...), Cache> {
     Cache<ShapeRT, ShapeTs...> cache;
 
-    T& get_parent(){
-      return *static_cast<T*>(this);
-    }
+    T& get_parent() { return *static_cast<T*>(this); }
 
-    ShapeRT compute(ShapeTs ... args, normal_tag_type tag){
+    ShapeRT compute(ShapeTs... args, normal_tag_type tag) {
       if (cache.contains(args...))
         return cache.get(args...);
       ShapeRT ret = get_parent().recursive_expression(args..., tag);
@@ -140,12 +135,12 @@ namespace ivl::dp {
       return ret;
     }
 
-    template<std::size_t Depth>
-    DebugExpression<ShapeRT> compute(ShapeTs ... args, debug_tag_type<Depth>){
-      using next_tag_type = std::conditional_t<Depth == 0, normal_tag_type, debug_tag_type<Depth-1>>;
-      return get_parent().recursive_expression(args..., next_tag_type{});
+    template <std::size_t Depth>
+    DebugExpression<ShapeRT> compute(ShapeTs... args, debug_tag_type<Depth>) {
+      using next_tag_type =
+        std::conditional_t<Depth == 0, normal_tag_type, debug_tag_type<Depth - 1>>;
+      return get_parent().recursive_expression(args..., next_tag_type {});
     }
-    
   };
 
 } // namespace ivl::dp

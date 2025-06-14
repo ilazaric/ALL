@@ -1,9 +1,9 @@
-#include <ranges>
-#include <vector>
 #include <algorithm>
 #include <functional>
-#include <numeric>
 #include <map>
+#include <numeric>
+#include <ranges>
+#include <vector>
 
 #include <ivl/literals/ints.hpp>
 using namespace ivl::literals::ints_exact;
@@ -19,12 +19,12 @@ using namespace ivl::logger::default_logger;
 #include <ivl/nt/multimint.hpp>
 
 constexpr std::uint32_t Mod = 998'244'353;
-using Mint = ivl::nt::MultiMint<Mod>;
+using Mint                  = ivl::nt::MultiMint<Mod>;
 
-int main(){
-  for (auto ti : std::views::iota(0, (int)cin)){
-    std::vector<std::uint32_t> a{cin};
-    std::uint32_t n = a.size();
+int main() {
+  for (auto ti : std::views::iota(0, (int)cin)) {
+    std::vector<std::uint32_t> a {cin};
+    std::uint32_t              n = a.size();
     a.insert(a.begin(), 0);
 
     if (a.back() != n)
@@ -32,22 +32,22 @@ int main(){
 
     {
       Mint out = 1;
-      for (auto i : std::views::iota(0_u32, n)){
-        switch (a[i+1]-a[i]){
+      for (auto i : std::views::iota(0_u32, n)) {
+        switch (a[i + 1] - a[i]) {
         case 0:
           break;
         case 1:
-          out *= 2*(i-a[i])+1;
+          out *= 2 * (i - a[i]) + 1;
           break;
         case 2:
-          out *= i-a[i];
-          out *= i-a[i];
+          out *= i - a[i];
+          out *= i - a[i];
           break;
         default:
           goto label_zero;
         }
       }
-      
+
       std::cout << out[0] << std::endl;
       goto label_done;
     }

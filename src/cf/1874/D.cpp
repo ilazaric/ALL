@@ -1,6 +1,5 @@
 
 
-
 /*
 
   f(0) = 1 + f(1)
@@ -175,11 +174,11 @@
 
  */
 
-#include <iostream>
-#include <iomanip>
-#include <ranges>
-#include <queue>
 #include <array>
+#include <iomanip>
+#include <iostream>
+#include <queue>
+#include <ranges>
 
 #include <ivl/logger/logger.hpp>
 using namespace ivl::logger::default_logger;
@@ -190,48 +189,49 @@ using ivl::io::conversion::cin;
 #include <ivl/literals/ints.hpp>
 using namespace ivl::literals::ints_exact;
 
-constexpr auto MAXN = 3000_u32;
-constexpr auto MAXM = 3000_u32;
-constexpr auto INF = 1e100;
-std::array<std::array<double, MAXM+1>, MAXN+1> F;
-std::array<std::array<double, MAXM+1>, MAXN+1> T;
+constexpr auto                                     MAXN = 3000_u32;
+constexpr auto                                     MAXM = 3000_u32;
+constexpr auto                                     INF  = 1e100;
+std::array<std::array<double, MAXM + 1>, MAXN + 1> F;
+std::array<std::array<double, MAXM + 1>, MAXN + 1> T;
 
-int main(){
-
+int main() {
   {
-    auto C = [](std::uint32_t a, std::uint32_t b){
-      if (a >= b) return INF;
-      return 2.0*(double)b/(double)(b-a)-1.0;
+    auto C = [](std::uint32_t a, std::uint32_t b) {
+      if (a >= b)
+        return INF;
+      return 2.0 * (double)b / (double)(b - a) - 1.0;
     };
 
     F[0].fill(0.0);
-    for (auto n : std::views::iota(1_u32, MAXN+1)){
+    for (auto n : std::views::iota(1_u32, MAXN + 1)) {
       F[n].fill(INF);
       std::queue<std::array<std::uint32_t, 4>> Q;
       Q.push({n, MAXM, 0_u32, MAXM});
 
-      while (!Q.empty()){
+      while (!Q.empty()) {
         auto [mlo, mhi, tlo, thi] = Q.front();
         Q.pop();
         auto m = (mlo + mhi) / 2;
         auto t = 0_u32;
         auto e = INF;
-        for (auto ct : std::views::iota(tlo, thi+1)){
-          auto ce = F[n-1][ct] + C(ct, m);
-          if (ce < e) e = ce, t = ct;
+        for (auto ct : std::views::iota(tlo, thi + 1)) {
+          auto ce = F[n - 1][ct] + C(ct, m);
+          if (ce < e)
+            e = ce, t = ct;
         }
 
         F[n][m] = e;
         T[n][m] = t;
         if (m != mlo)
-          Q.push({mlo, m-1, tlo, t});
+          Q.push({mlo, m - 1, tlo, t});
         if (m != mhi)
-          Q.push({m+1, mhi, t, thi});
+          Q.push({m + 1, mhi, t, thi});
       }
     }
   }
-  
-  std::uint32_t n{cin}, m{cin};
+
+  std::uint32_t n {cin}, m {cin};
   std::cout << std::setprecision(15) << F[n][m] << std::endl;
 
   // while (n){
@@ -239,5 +239,4 @@ int main(){
   //   m = T[n][m];
   //   --n;
   // }
-  
 }

@@ -1,0 +1,56 @@
+# -------- .clang-format (version 18) --------
+### Core style
+BasedOnStyle: LLVM           # Starts from LLVM’s 2‑space style
+Language:        Cpp
+Standard:        Latest       # Tell clang-format to parse with C++23 rules
+
+### Indentation & whitespace
+IndentWidth:     2
+TabWidth:        2
+UseTab:          Never       # Always spaces
+ContinuationIndentWidth: 2   # Keeps long template / param lines compact
+NamespaceIndentation: All    # Indent inside namespaces
+
+### Braces & layout
+BreakBeforeBraces: Attach    # int foo() {   // like LLVM
+BraceWrapping:
+  AfterCaseLabel:  true      # switch (x) { case 1: { /* ... */ }
+  AfterEnum:       true
+  AfterFunction:   true
+  AfterNamespace:  true
+  SplitEmptyFunction: true   # `void f() {}` → split across lines
+
+### Column & line breaking
+ColumnLimit: 100             # Wider than LLVM (80) but still restrains lines
+AllowShortFunctionsOnASingleLine: InlineOnly     # Keep trivial one‑liners compact
+AllowShortIfStatementsOnASingleLine: false
+PenaltyReturnTypeOnItsOwnLine: 100               # Encourage `auto` on one line
+
+### Alignment
+AlignConsecutiveAssignments: true
+AlignConsecutiveDeclarations: true
+AlignAfterOpenBracket: Align
+AlignOperands:       true
+PointerAlignment:    Left     # `int* ptr`, not `int *ptr`
+ReferenceAlignment:  Left
+
+### Includes
+SortIncludes: true
+IncludeBlocks: Preserve    # Preserve user‑grouped blank lines
+IncludeCategories:         # Groups: std / other‑libs / project
+  - Regex:           '^<.*\.h>$'
+    Priority:        1
+  - Regex:           '^"(external|third_party)/'
+    Priority:        2
+  - Regex:           '^".*'
+    Priority:        3
+
+### Misc modern tweaks
+DerivePointerAlignment: false
+SpaceAroundPointerQualifiers: Default
+SpaceBeforeCpp11BracedList: true
+# RequireBracedInitializerList: false
+Cpp11BracedListStyle: true
+AlwaysBreakTemplateDeclarations: Yes
+KeepEmptyLinesAtTheStartOfBlocks: false
+# -------------------------------------------

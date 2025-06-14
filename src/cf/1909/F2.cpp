@@ -1,8 +1,8 @@
-#include <ranges>
-#include <vector>
 #include <algorithm>
 #include <functional>
 #include <numeric>
+#include <ranges>
+#include <vector>
 
 #include <ivl/literals/ints.hpp>
 using namespace ivl::literals::ints_exact;
@@ -18,32 +18,34 @@ using namespace ivl::logger::default_logger;
 #include <ivl/nt/multimint.hpp>
 
 constexpr std::uint32_t Mod = 998'244'353;
-using Mint = ivl::nt::MultiMint<Mod>;
+using Mint                  = ivl::nt::MultiMint<Mod>;
 
-auto factorials_storage = []{
-  std::array<Mint, 200'005> out{};
+auto factorials_storage = [] {
+  std::array<Mint, 200'005> out {};
   out[0] = 1;
   for (auto i : std::views::iota(1_u32, out.size()))
-    out[i] = out[i-1] * i;
+    out[i] = out[i - 1] * i;
   return out;
- }();
+}();
 
-Mint factorials(std::int32_t n){
-  if (n < 0) return 0;
+Mint factorials(std::int32_t n) {
+  if (n < 0)
+    return 0;
   return factorials_storage[n];
 }
 
-Mint choose(std::int32_t a, std::int32_t b){
-  if (a < 0) return 0;
-  if (b < 0) return 0;
-  if (b > a) return 0;
+Mint choose(std::int32_t a, std::int32_t b) {
+  if (a < 0)
+    return 0;
+  if (b < 0)
+    return 0;
+  if (b > a)
+    return 0;
   // LOG(a, b);
-  return factorials(a) / factorials(b) / factorials(a-b);
+  return factorials(a) / factorials(b) / factorials(a - b);
 }
 
-Mint magic(std::int32_t full,
-           std::int32_t banned,
-           std::int32_t count){
+Mint magic(std::int32_t full, std::int32_t banned, std::int32_t count) {
   // LOG(full, banned, count);
   if (count == 0)
     return 1;
@@ -74,11 +76,11 @@ Mint magic(std::int32_t full,
     (full-a choose banned) (banned choose a) (full-banned choose b) =
    */
 
-  for (auto a : std::views::iota(0, count+1))
-    for (auto b : std::views::iota(count-a, count-a+1))
-      out += choose(full-a, banned) * choose(banned, a) * choose(full-banned, b);
-  out *= factorials(banned) * factorials(full-banned) / factorials(full-count);
-  
+  for (auto a : std::views::iota(0, count + 1))
+    for (auto b : std::views::iota(count - a, count - a + 1))
+      out += choose(full - a, banned) * choose(banned, a) * choose(full - banned, b);
+  out *= factorials(banned) * factorials(full - banned) / factorials(full - count);
+
   // for (auto a : std::views::iota(0, count+1))
   //   for (auto b : std::views::iota(count-a, count-a+1))
   //     // LOG(a,b,c);
@@ -165,7 +167,7 @@ Mint magic(std::int32_t full,
 
     wow all this time this was fast enough, thought i needed closed form
     whoops
-    
+
    */
 
   return out;
@@ -173,7 +175,7 @@ Mint magic(std::int32_t full,
   /*
 
     left=full-banned
-    
+
     sum[a,b,c;a+b+c==count]
     (banned choose a) (left choose a)
     (banned choose b) (left choose b)
@@ -203,7 +205,7 @@ Mint magic(std::int32_t full,
     (banned choose b)
     (left choose a,c)
     (left choose b,c)
-    
+
     (x choose y,z) =
     (x choose y+z) (y+z choose y)
 
@@ -371,17 +373,17 @@ Mint magic(std::int32_t full,
     sum[a+b == count] of
     (banned choose a) (full-banned choose a) a!
     (full-a choose b) (full-banned choose b) b!
-    
+
    */
 }
 
-int main(){
+int main() {
   // for (auto c : std::views::iota(0, 20))
   //   LOG(c, (std::uint32_t)magic(5, 2, c));
   // exit(0);
-  
-  for (auto ti : std::views::iota(0, (int)cin)){
-    std::vector<std::int32_t> a{cin};
+
+  for (auto ti : std::views::iota(0, (int)cin)) {
+    std::vector<std::int32_t> a {cin};
     // if (ti != 3) continue;
     std::uint32_t n = a.size();
     a.insert(a.begin(), 0);
@@ -389,24 +391,24 @@ int main(){
     if (a.back() == -1)
       a.back() = n;
 
-    if (a.back() != n){
+    if (a.back() != n) {
       std::cout << 0 << std::endl;
       continue;
     }
 
-    Mint out = 1;
+    Mint          out      = 1;
     std::uint32_t last_pos = 0;
 
-    for (auto pos : std::views::iota(1_u32, n+1))
-      if (a[pos] != -1){
-        if (a[pos] > pos){
+    for (auto pos : std::views::iota(1_u32, n + 1))
+      if (a[pos] != -1) {
+        if (a[pos] > pos) {
           out = 0;
           break;
         }
 
-        std::uint32_t full = pos - a[last_pos];
+        std::uint32_t full   = pos - a[last_pos];
         std::uint32_t banned = last_pos - a[last_pos];
-        std::uint32_t count = a[pos] - a[last_pos];
+        std::uint32_t count  = a[pos] - a[last_pos];
         out *= magic(full, banned, count);
         last_pos = pos;
       }

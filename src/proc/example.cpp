@@ -1,7 +1,7 @@
-#include <ivl/proc>
 #include <ivl/logger>
+#include <ivl/proc>
 
-int main(){
+int main() {
   auto counts = ivl::proc::CtxtSwitchCounts::self();
   LOG(counts.voluntary);
   LOG(counts.nonvoluntary);

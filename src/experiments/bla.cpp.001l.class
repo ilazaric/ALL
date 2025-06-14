@@ -9,4 +9,3 @@ Class MyStruct
    base size=13 base align=8
 MyStruct (0x0x7fe1bd059420) 0
     vptr=((& MyStruct::_ZTV8MyStruct) + 16)
-

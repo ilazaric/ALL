@@ -1,18 +1,18 @@
 #pragma once
 
-#include <variant>
-#include <ostream>
 #include <memory>
 #include <optional>
+#include <ostream>
+#include <variant>
 
 namespace ivl::pp {
 
-  template<typename... Ts>
+  template <typename... Ts>
   struct Or {};
 
-  template<typename... Ts>
+  template <typename... Ts>
   struct And {};
 
   struct PreprocessingFile
-  
+
 } // namespace ivl::pp

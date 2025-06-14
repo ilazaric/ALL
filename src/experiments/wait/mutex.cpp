@@ -2,7 +2,7 @@
 
 std::mutex m;
 
-int main(){
+int main() {
   m.lock();
   m.lock();
 }

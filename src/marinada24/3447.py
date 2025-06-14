@@ -2,11 +2,11 @@ from collections import defaultdict
 
 dist = defaultdict(lambda: 0)
 start = defaultdict(lambda: 0)
-# dist = {-1: 0.2, +1: 0.8}
+#dist   = {-1 : 0.2, +1 : 0.8 }
 dist[5] = 2/3
 dist[7] = 1/3
 
-# start = {0: 1}
+#start   = {0 : 1 }
 start[0] = 1
 
 def convolve(a, b):

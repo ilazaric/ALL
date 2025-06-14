@@ -1,6 +1,5 @@
 #include <ivl/game-theory/impartial.hpp>
 
-int main(){
-
+int main() {
   return 0;
 }

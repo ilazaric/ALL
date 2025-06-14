@@ -7,7 +7,7 @@
 namespace ivl {
 
   // TODO: check if this even works
-  template<typename T>
+  template <typename T>
   using list = std::list<T, ivl::alloc::GlobalAlloc<T>>;
 
 } // namespace ivl

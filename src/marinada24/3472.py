@@ -22,4 +22,3 @@ def phi(n):
 for n in range(1,100):
     if tau(n) + phi(n) == n:
         print(n)
-        

@@ -1,9 +1,9 @@
 #pragma once
 
+#include <cassert>
+#include <cstdint>
 #include <ranges>
 #include <vector>
-#include <cstdint>
-#include <cassert>
 
 #include <ivl/literals/ints.hpp>
 using namespace ivl::literals::ints_exact;
@@ -17,51 +17,41 @@ namespace ivl::graphs {
 
   // vec[x] == vec[y] iff x and y in same component
   // colors = 0..#
-  std::vector<std::uint32_t> SCC(const DirectedGraph& G){
-
+  std::vector<std::uint32_t> SCC(const DirectedGraph& G) {
     struct Engine {
-      enum class Color {
-        not_visited,
-        on_stack,
-        finished
-      };
+      enum class Color { not_visited, on_stack, finished };
 
       struct NodeState {
         std::uint32_t time_seen;
         std::uint32_t time_done;
         std::uint32_t back_lo;
         std::uint32_t back_hi;
-        Color color = Color::not_visited;
+        Color         color = Color::not_visited;
       };
 
-      const DirectedGraph& G;
-      std::vector<NodeState> states;
+      const DirectedGraph&       G;
+      std::vector<NodeState>     states;
       std::vector<std::uint32_t> stack;
       std::vector<std::uint32_t> partition;
-      std::uint32_t partition_count;
-      std::uint32_t time;
+      std::uint32_t              partition_count;
+      std::uint32_t              time;
 
       Engine(const DirectedGraph& G)
-        : G(G)
-        , states(G.node_count())
-        , stack()
-        , partition(G.node_count())
-        , partition_count(0)
-        , time(0)
-      {
+          : G(G), states(G.node_count()), stack(), partition(G.node_count()), partition_count(0),
+            time(0) {
         stack.reserve(G.node_count());
       }
 
-      void process(std::uint32_t node){
+      void process(std::uint32_t node) {
         states[node].time_seen = time;
-        states[node].back_lo = time;
-        states[node].back_hi = time;
+        states[node].back_lo   = time;
+        states[node].back_hi   = time;
         ++time;
         states[node].color = Color::on_stack;
         stack.push_back(node);
 
-        for (auto next : G.outs(node)){
-          switch (states[next].color){
+        for (auto next : G.outs(node)) {
+          switch (states[next].color) {
           case Color::not_visited:
             process(next);
           case Color::on_stack:
@@ -72,22 +62,21 @@ namespace ivl::graphs {
           }
         }
 
-        states[node].time_done = time-1;
+        states[node].time_done = time - 1;
 
         // found scc
         if (states[node].time_seen <= states[node].back_lo &&
-            states[node].time_done >= states[node].back_hi){
+            states[node].time_done >= states[node].back_hi) {
           auto partition_index = partition_count++;
-          while (true){
+          while (true) {
             auto curr = stack.back();
             stack.pop_back();
-            partition[curr] = partition_index;
+            partition[curr]    = partition_index;
             states[curr].color = Color::finished;
             if (curr == node)
               break;
           }
         }
-        
       }
     };
 

@@ -1,7 +1,7 @@
 stl allocator concept sucks  
-we introduce different stuff  
+we introduce different stuff
 
-# single object allocators  
+#single object allocators  
 
 a type `T` is a single object allocator for type `U` if  
 informally we can generate `U`-sized&aligned memory (and nothing else)  
@@ -26,9 +26,9 @@ API for regular, non-fancy:
 ```cpp
 T alloc;
 std::same_as<T::value_type, U>;
-alloc.can_allocate() -> bool;
-alloc.allocate() -> U*; // can throw, can't throw if can_allocate() said true right before
-alloc.deallocate(U*) -> void; // prereq: arg came from allocate(), wasn't deallocate()'d before
+alloc.can_allocate()->bool;
+alloc.allocate()->U*;       // can throw, can't throw if can_allocate() said true right before
+alloc.deallocate(U*)->void; // prereq: arg came from allocate(), wasn't deallocate()'d before
 ```
 
 should it be able to say more?  
@@ -48,41 +48,37 @@ allocator_interface::can_allocate(T&) -> bool;
 // N times in a row must never throw
 // TODO: probably elaborate somehow that deallocate() doesn't break this chain
 // TODO: should this fallback onto can_allocate() to get a bit of info?
-allocator_interface::can_allocate_number(T&) -> size_t;
+allocator_interface::can_allocate_number(T&)->size_t;
 
-allocator_interface::allocate(T&) -> U*; // this one being optional sounds weird, but kinda works i guess, just throw
-allocator_interface::deallocate(T&, U*) -> void; // even this could be optional haha
+allocator_interface::allocate(T&)
+  ->U*; // this one being optional sounds weird, but kinda works i guess, just throw
+allocator_interface::deallocate(T&, U*)->void; // even this could be optional haha
 ```
 
-should allocator_interface be a namespace?  
-a class?  
-lets go with class with static fns, but unsure this is better
+  should allocator_interface be a namespace
+  ? a class
+  ? lets go with class with static fns,
+  but unsure this is better
 
+    what about fancy ptrs
+  ? probably want 2 kinds nullable and non - nullable nullable subset of non -
+      nullable nullable iff default constructible wait need to remember `T t {};
+` is not same as `T t;
+`
 
-what about fancy ptrs?  
-probably want 2 kinds  
-nullable and non-nullable  
-nullable subset of non-nullable  
-nullable iff default constructible  
-wait  
-need to remember `T t{};` is not same as `T t;`  
-
-fancy pointer API:  
-```cpp
-Ptr::value_type;
-*ptr -> Ptr::value_type;
-operator->() -> Ptr::value_type*;
-copyable
-equality-comparable
+  fancy pointer API :  
+```cpp Ptr::value_type;
+*ptr->Ptr::value_type;
+operator->()->Ptr::value_type*;
+copyable equality -
+  comparable
 ```
 
-nullable ptr API:  
-```cpp
-value-initializable;
-pointer API (* and -> prereq: non-default);
+  nullable ptr API :  
+```cpp value -
+    initializable;
+pointer API(*and->prereq : non - default);
 ```
 
-should i just require nullability always?  
-lets go with yes
-
-
+  should i just require nullability always
+  ? lets go                         with yes

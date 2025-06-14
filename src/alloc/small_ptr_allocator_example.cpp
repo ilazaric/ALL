@@ -1,34 +1,35 @@
-#include <vector>
 #include <map>
 #include <memory>
+#include <vector>
 
 #include "small_ptr_allocator.hpp"
 
 #include <ivl/logger>
 
 struct Traits {
-  inline static std::array<char, (1ULL<<20)> storage;
-  static constexpr std::size_t segment_tree_chunk_size = 64;
-  static constexpr std::size_t free_list_limit = 256;
-  static constexpr std::size_t free_list_steal_coef = 64;
+  inline static std::array<char, (1ULL << 20)> storage;
+  static constexpr std::size_t                 segment_tree_chunk_size = 64;
+  static constexpr std::size_t                 free_list_limit         = 256;
+  static constexpr std::size_t                 free_list_steal_coef    = 64;
 };
 
 using Alloc = ivl::alloc::SmallPtrAllocator<char, Traits>;
 
 ivl::alloc::SmallPtrAllocator<float, Traits> alloc;
 
-int main(){
+int main() {
   LOG(123);
 
-  {int stackptr;
+  {
+    int stackptr;
     LOG(&stackptr);
   }
-  
+
   {
     auto p = alloc.allocate(20);
     alloc.deallocate(p, 20);
   }
-  
+
   std::vector<int, ivl::alloc::SmallPtrAllocator<int, Traits>> vec;
   LOG(sizeof(vec));
   for (int i = 0; i < 1000; ++i)
@@ -50,4 +51,3 @@ int main(){
   std::destroy_at(&*m);
   Alloc::rebind<Map>::other::deallocate(m, 1);
 }
-

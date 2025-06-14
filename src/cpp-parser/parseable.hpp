@@ -5,7 +5,7 @@
 
 namespace ivl::cppp {
 
-  template<typename T>
+  template <typename T>
   struct Parseable {
     std::optional<T> parse(
   };

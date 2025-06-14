@@ -9,7 +9,7 @@ using namespace ivl::refl;
 
 constexpr ValueCell<std::unique_ptr<int>> cell;
 
-bool initialize(){
+bool initialize() {
   cell.store(nullptr);
   return true;
 }

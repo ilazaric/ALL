@@ -1,10 +1,7 @@
 #pragma once
 
-template<auto Value>
+template <auto Value>
 struct ConstexprWrapper {
   static constexpr auto value = Value;
-  constexpr operator decltype(Value)() const noexcept {
-    return value;
-  };
+  constexpr             operator decltype(Value)() const noexcept { return value; };
 };
-

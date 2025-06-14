@@ -1,17 +1,21 @@
 
-template<typename... Ts> requires (sizeof...(Ts) > 0)
+template <typename... Ts>
+  requires(sizeof...(Ts) > 0)
 struct Var {};
 
 // Var<> is problematic
 
-void consume(auto&&){}
+void consume(auto&&) {
+}
 
-template<typename... Ts>
-void consume(const Var<Ts...>&){}
+template <typename... Ts>
+void consume(const Var<Ts...>&) {
+}
 
-template<typename = void>
-void noop(){}
+template <typename = void>
+void noop() {
+}
 
-int main(){
+int main() {
   consume(&noop);
 }

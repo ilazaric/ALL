@@ -94,7 +94,7 @@
 
   pq = ac r2 + (ad+bc) r + bd
   pq = X r2 + Y r + Z
-  
+
   ac = X
   bd = Z
   (a+b)(c+d) = ac+ad+bc+bd = X+Y+Z
@@ -103,18 +103,18 @@
 
  */
 
-#include <vector>
-#include <ranges>
-#include <iomanip>
-#include <complex>
-#include <numbers>
-#include <concepts>
-#include <utility>
-#include <span>
-#include <set>
+#include <algorithm>
 #include <bit>
 #include <bitset>
-#include <algorithm>
+#include <complex>
+#include <concepts>
+#include <iomanip>
+#include <numbers>
+#include <ranges>
+#include <set>
+#include <span>
+#include <utility>
+#include <vector>
 
 #include <ivl/io/stlutils.hpp>
 using namespace ivl::io;
@@ -132,68 +132,67 @@ using namespace ivl::literals::ints_exact;
 #include <ivl/nt/multimint.hpp>
 #include <ivl/nt/util.hpp>
 
-constexpr std::array<std::uint32_t, 3> Primes{
-  1000112129,
-  1000210433,
-  1000308737,
+constexpr std::array<std::uint32_t, 3> Primes {
+  1000112129, 1000210433, 1000308737,
   // 1000800257
 };
 
-constexpr std::uint32_t NttLen = 1<<15;
+constexpr std::uint32_t NttLen = 1 << 15;
 
-constexpr std::array<std::uint32_t, Primes.size()> Generators = []{
-  std::array<std::uint32_t, Primes.size()> out{};
-  for (auto idx : std::views::iota(0_u32, Primes.size())){
+constexpr std::array<std::uint32_t, Primes.size()> Generators = [] {
+  std::array<std::uint32_t, Primes.size()> out {};
+  for (auto idx : std::views::iota(0_u32, Primes.size())) {
     if (Primes[idx] % NttLen != 1)
       throw "whoops";
 
-    for (auto candidate : std::views::iota(2_u32, Primes[idx])){
-      auto mul = ivl::nt::multiplies{Primes[idx]};
-      auto r = ivl::nt::power(candidate, (Primes[idx]-1) / NttLen, mul);
-      auto a = ivl::nt::power(r, NttLen/2, mul);
+    for (auto candidate : std::views::iota(2_u32, Primes[idx])) {
+      auto mul = ivl::nt::multiplies {Primes[idx]};
+      auto r   = ivl::nt::power(candidate, (Primes[idx] - 1) / NttLen, mul);
+      auto a   = ivl::nt::power(r, NttLen / 2, mul);
       if (a == 1)
         continue;
-      if (ivl::nt::power(candidate, Primes[idx]-1, mul) != 1)
+      if (ivl::nt::power(candidate, Primes[idx] - 1, mul) != 1)
         throw "whoops4";
       if (mul(a, a) != 1)
         throw "whoops3";
       out[idx] = r;
       break;
     }
-    
+
     if (out[idx] == 0)
       throw "whoops2";
   }
   return out;
- }();
+}();
 
-std::array<std::uint32_t, Primes.size()> GenInverses = []{
+std::array<std::uint32_t, Primes.size()> GenInverses = [] {
   std::array<std::uint32_t, Primes.size()> out;
-  for (auto idx : std::views::iota(0_u32, Primes.size())){
-    auto e = Primes[idx]-2;
+  for (auto idx : std::views::iota(0_u32, Primes.size())) {
+    auto          e = Primes[idx] - 2;
     std::uint64_t a = Generators[idx];
-    auto r = 1_u64;
-    while (e){
-      if (e & 1) r = (a * r) % Primes[idx];
+    auto          r = 1_u64;
+    while (e) {
+      if (e & 1)
+        r = (a * r) % Primes[idx];
       a = (a * a) % Primes[idx];
       e >>= 1;
     }
     out[idx] = (std::uint32_t)r;
   }
   return out;
- }();
+}();
 
 constexpr std::uint32_t Mod = 1'000'000'007;
 
 // could be MultiMint<Primes.[:]> if brevzin generalized packs get accepted
-using FMint = ivl::nt::MultiMint<Primes[0], Primes[1], Primes[2]>;//, Primes[3]>;
+using FMint = ivl::nt::MultiMint<Primes[0], Primes[1], Primes[2]>; //, Primes[3]>;
 
-FMint Generator = FMint::unsafe_create(Generators);
+FMint Generator  = FMint::unsafe_create(Generators);
 FMint GenInverse = FMint::unsafe_create(GenInverses);
 
 using Mint = ivl::nt::MultiMint<Mod>;
 
-void convert_to_dft(std::span<const Mint, NttLen> in, std::span<FMint, NttLen> out){
+void convert_to_dft(std::span<const Mint, NttLen> in, std::span<FMint, NttLen> out) {
   SCOPE_TIMER;
   std::array<FMint, NttLen> mid;
   for (auto idx : std::views::iota(0_u32, NttLen))
@@ -202,55 +201,56 @@ void convert_to_dft(std::span<const Mint, NttLen> in, std::span<FMint, NttLen> o
 }
 
 constexpr FMint NttLenInverse = FMint::unsafe_create({
-    ivl::nt::modular_inverse(NttLen, Primes[0]),
-    ivl::nt::modular_inverse(NttLen, Primes[1]),
-    ivl::nt::modular_inverse(NttLen, Primes[2]),
-    // ivl::nt::modular_inverse(NttLen, Primes[3])
-  });
+  ivl::nt::modular_inverse(NttLen, Primes[0]), ivl::nt::modular_inverse(NttLen, Primes[1]),
+  ivl::nt::modular_inverse(NttLen, Primes[2]),
+  // ivl::nt::modular_inverse(NttLen, Primes[3])
+});
 
 ivl::nt::GarnerTable gt(Primes);
 
-void convert_from_dft(std::span<const FMint, NttLen> in, std::span<Mint, NttLen> out){
+void convert_from_dft(std::span<const FMint, NttLen> in, std::span<Mint, NttLen> out) {
   SCOPE_TIMER;
   std::array<FMint, NttLen> mid;
   ivl::algos::fft<FMint>(in.data(), mid.data(), NttLen, GenInverse);
   for (auto& el : mid)
     el *= NttLenInverse;
-  for (auto idx : std::views::iota(0_u32, NttLen)){
-    auto gv = gt.convert_representation(mid[idx].data.data());
+  for (auto idx : std::views::iota(0_u32, NttLen)) {
+    auto gv  = gt.convert_representation(mid[idx].data.data());
     out[idx] = gt.template apply<Mint>(gv);
   }
 }
 
-int main(){
-
+int main() {
   constexpr auto MAXN = 200_u32;
 
-  std::array<std::array<Mint, MAXN+1>, MAXN+1> C{};
-  for (auto a : std::views::iota(0_u32, MAXN+1))
-    for (auto b : std::views::iota(0_u32, MAXN+1)){
-      if (b == 0 || b == a) C[a][b] = 1;
-      else if (b > a) C[a][b] = 0;
-      else C[a][b] = C[a-1][b-1] + C[a-1][b];
+  std::array<std::array<Mint, MAXN + 1>, MAXN + 1> C {};
+  for (auto a : std::views::iota(0_u32, MAXN + 1))
+    for (auto b : std::views::iota(0_u32, MAXN + 1)) {
+      if (b == 0 || b == a)
+        C[a][b] = 1;
+      else if (b > a)
+        C[a][b] = 0;
+      else
+        C[a][b] = C[a - 1][b - 1] + C[a - 1][b];
     }
 
-  std::array<std::array<FMint, MAXN+1>, MAXN+1> FC;
-  for (auto a : std::views::iota(0_u32, MAXN+1))
-    for (auto b : std::views::iota(0_u32, MAXN+1))
+  std::array<std::array<FMint, MAXN + 1>, MAXN + 1> FC;
+  for (auto a : std::views::iota(0_u32, MAXN + 1))
+    for (auto b : std::views::iota(0_u32, MAXN + 1))
       FC[a][b] = C[a][b][0];
 
-  std::array<std::array<Mint, NttLen>, MAXN+1> genfns{};
-  std::array<std::array<FMint, NttLen>, MAXN+1> dfts{};
+  std::array<std::array<Mint, NttLen>, MAXN + 1>  genfns {};
+  std::array<std::array<FMint, NttLen>, MAXN + 1> dfts {};
 
   genfns[0][0] = 1;
   convert_to_dft(genfns[0], dfts[0]);
 
-  for (auto n : std::views::iota(1_u32, MAXN+1)){
+  for (auto n : std::views::iota(1_u32, MAXN + 1)) {
     {
       SCOPE_TIMER;
       for (auto k : std::views::iota(0_u32, n))
         for (auto idx : std::views::iota(0_u32, NttLen))
-          dfts[n][idx] += dfts[k][idx] * dfts[n-1-k][idx];// * FC[n-1][k];
+          dfts[n][idx] += dfts[k][idx] * dfts[n - 1 - k][idx]; // * FC[n-1][k];
     }
 
     /*
@@ -261,23 +261,23 @@ int main(){
       gn n = sum gk g(n-1-k)
       gn = 1/n * sum
      */
-    
+
     convert_from_dft(dfts[n], genfns[n]);
 
     for (auto idx : std::views::iota(n, NttLen) | std::views::reverse)
-      genfns[n][idx] = genfns[n][idx-n];
+      genfns[n][idx] = genfns[n][idx - n];
     for (auto idx : std::views::iota(0_u32, n))
       genfns[n][idx] = 0;
 
     Mint n_inv = ivl::nt::modular_inverse(n, Mod);
     for (auto& el : genfns[n])
       el *= n_inv;
-    
+
     convert_to_dft(genfns[n], dfts[n]);
   }
 
-  std::uint32_t n{cin};
-  std::uint32_t lim{cin};
+  std::uint32_t n {cin};
+  std::uint32_t lim {cin};
 
   Mint acc = 0;
 
@@ -285,9 +285,8 @@ int main(){
     for (auto idx : std::views::iota(lim, NttLen))
       acc += genfns[n][idx];
 
-  for (auto idx : std::views::iota(1_u32, n+1))
+  for (auto idx : std::views::iota(1_u32, n + 1))
     acc *= idx;
 
   std::cout << acc[0] << std::endl;
-  
 }

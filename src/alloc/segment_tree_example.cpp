@@ -7,7 +7,6 @@
 #include <ivl/io/stlutils.hpp>
 
 int main() {
-
   LOG(sizeof(ivl::alloc::SegmentTree<(1ULL << 10)>));
   LOG(sizeof(ivl::alloc::SegmentTree2<(1ULL << 10)>));
 

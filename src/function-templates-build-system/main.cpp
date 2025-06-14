@@ -2,7 +2,7 @@
 void fnA();
 void fnB();
 
-int main(){
+int main() {
   fnA();
   fnB();
 }

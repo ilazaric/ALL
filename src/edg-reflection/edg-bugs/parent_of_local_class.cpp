@@ -1,12 +1,14 @@
 // parent_of(^local class) gives garbage
 
 #include <experimental/meta>
-#include <string_view>
 #include <string>
+#include <string_view>
 
-consteval void describe(std::meta::info i){
+consteval void describe(std::meta::info i) {
   std::__report_constexpr_value("satisfies:\n");
-#define X(f) if (f(i)) std::__report_constexpr_value(#f "\n");
+#define X(f)                                                                                       \
+  if (f(i))                                                                                        \
+    std::__report_constexpr_value(#f "\n");
   // X(is_public);
   // X(is_protected);
   // X(is_private);
@@ -41,15 +43,15 @@ consteval void describe(std::meta::info i){
   std::__report_constexpr_value("description done\n\n");
 }
 
-consteval void print(std::meta::info i){
-  std::string str{name_of(i)};
+consteval void print(std::meta::info i) {
+  std::string str {name_of(i)};
   std::__report_constexpr_value(str.data());
   std::__report_constexpr_value("\n");
 }
 
-consteval bool fn(){
+consteval bool fn() {
   struct L {};
-  auto i = ^L;
+  auto i  = ^L;
   auto pi = parent_of(i); // this is some garbage
   print(pi);
   describe(pi);

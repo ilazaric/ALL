@@ -13,17 +13,11 @@ namespace ivl::fs {
 
     static constexpr int nfd = -1;
 
-    int get() const noexcept {
-      return fd;
-    }
+    int get() const noexcept { return fd; }
 
-    bool empty() const noexcept {
-      return fd == nfd;
-    }
+    bool empty() const noexcept { return fd == nfd; }
 
-    explicit operator bool() const noexcept {
-      return fd != nfd;
-    }
+    explicit operator bool() const noexcept { return fd != nfd; }
   };
 
   // `std::unique_ptr`-esque
@@ -34,16 +28,13 @@ namespace ivl::fs {
   public:
     static constexpr int nfd = -1;
 
-    OwnedFD() : fd(nfd){}
+    OwnedFD() : fd(nfd) {}
 
     OwnedFD(const OwnedFD&) = delete;
-    OwnedFD(OwnedFD&& o) noexcept
-      : fd(o.fd){
-      o.fd = nfd;
-    }
+    OwnedFD(OwnedFD&& o) noexcept : fd(o.fd) { o.fd = nfd; }
 
   private:
-    OwnedFD(int fd) noexcept : fd(fd){}
+    OwnedFD(int fd) noexcept : fd(fd) {}
 
   public:
     OwnedFD& operator=(const OwnedFD&) = delete;
@@ -52,9 +43,7 @@ namespace ivl::fs {
       return *this;
     }
 
-    void swap(OwnedFD& o) noexcept {
-      std::swap(fd, o.fd);
-    }
+    void swap(OwnedFD& o) noexcept { std::swap(fd, o.fd); }
 
     // this feels like i dont want it
     // int release() noexcept;
@@ -65,31 +54,22 @@ namespace ivl::fs {
           perror("close");
     }
 
-    int get() const noexcept {
-      return fd;
-    }
+    int get() const noexcept { return fd; }
 
-    explicit operator bool() const noexcept {
-      return fd != nfd;
-    }
+    explicit operator bool() const noexcept { return fd != nfd; }
 
-    operator FD() const noexcept {
-      return FD{fd};
-    }
+    operator FD() const noexcept { return FD {fd}; }
 
-    ~OwnedFD() noexcept {
-      reset();
-    }
+    ~OwnedFD() noexcept { reset(); }
 
     // TODO: make `flags` not an `int`, a bit more type-safe
     // TODO?: should this be noexcept?
     // - OwnedFD is kinda std::optional,
     // - nfd represents empty / invalid
     // - so failure could just return OwnedFD()
-    static OwnedFD open(ivl::str::NullStringView pathname,
-                               int flags){
+    static OwnedFD open(ivl::str::NullStringView pathname, int flags) {
       int fd = ::open(pathname.data(), flags);
-      if (fd == -1){
+      if (fd == -1) {
         perror("open");
         throw std::runtime_error("open failed");
       }
@@ -97,16 +77,12 @@ namespace ivl::fs {
     }
 
     // use this only if you know what you're doing
-    static OwnedFD unsafe_create(int fd) noexcept {
-      return OwnedFD(fd);
-    }
-
+    static OwnedFD unsafe_create(int fd) noexcept { return OwnedFD(fd); }
   };
 
-
-  struct stat fstat(FD fd){
+  struct stat fstat(FD fd) {
     struct stat out;
-    if (fstat(fd.get(), &out)){
+    if (fstat(fd.get(), &out)) {
       perror("fstat");
       throw std::runtime_error("fstat failed");
     }

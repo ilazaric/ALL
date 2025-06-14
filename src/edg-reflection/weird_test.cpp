@@ -5,8 +5,9 @@ struct S {
 };
 
 consteval {
-  queue_injection(S::injection_scope, ^{constexpr int fn(){return 12;}});
+  queue_injection(S::injection_scope, ^{constexpr int fn(){return 12;
+}
+});
 }
 
-static_assert(S{}.fn() == 12);
-
+static_assert(S {}.fn() == 12);

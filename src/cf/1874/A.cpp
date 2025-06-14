@@ -1,8 +1,8 @@
-#include <iostream>
-#include <vector>
-#include <ranges>
 #include <algorithm>
+#include <iostream>
 #include <numeric>
+#include <ranges>
+#include <vector>
 
 #include <ivl/io/conversion.hpp>
 using ivl::io::conversion::cin;
@@ -13,16 +13,16 @@ using namespace ivl::io::vector_elems;
 #include <ivl/literals/ints.hpp>
 using namespace ivl::literals::ints_exact;
 
-int main(){
-  for (auto ti : std::views::iota(0_u32, std::uint32_t{cin})){
-    std::uint32_t n{cin}, m{cin}, k{cin};
+int main() {
+  for (auto ti : std::views::iota(0_u32, std::uint32_t {cin})) {
+    std::uint32_t              n {cin}, m {cin}, k {cin};
     std::vector<std::uint32_t> a(n), b(m);
     std::cin >> a >> b;
 
     if (k > 2)
       k = k % 2 + 2;
 
-    for (auto ki : std::views::iota(0_u32, k)){
+    for (auto ki : std::views::iota(0_u32, k)) {
       auto ait = std::ranges::min_element(a);
       auto bit = std::ranges::max_element(b);
       if (*ait < *bit)
