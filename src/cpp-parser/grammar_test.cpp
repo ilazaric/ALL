@@ -61,9 +61,18 @@ void test4() {
   attempt<Number>("10010110");
 }
 
+ENTITY(Number2, Or<Zero, And<One, List<Digit>>>);
+
+void test5() {
+  attempt<Number2>("1010");
+  attempt<Number2>("0101");
+  attempt<Number2>("10010110");
+}
+
 int main() {
   test1();
   test2();
   test3();
   test4();
+  test5();
 }

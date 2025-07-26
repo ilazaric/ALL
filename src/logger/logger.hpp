@@ -40,6 +40,7 @@
 #include <cstdint>
 #include <iostream> // only used for `default_logger`, remove if unnecessary
 #include <string_view>
+#include <ivl/util/fixed_string.hpp>
 
 #ifdef IVL_LOCAL
 
@@ -112,19 +113,6 @@ namespace ivl::logger {
     return callback.names;
   }
 
-  // a string that can be passed via template args
-  template <unsigned N>
-  struct fixed_string {
-    char buf[N + 1] {};
-    consteval fixed_string(char const* s) {
-      for (unsigned i = 0; i != N; ++i)
-        buf[i] = s[i];
-    }
-    consteval operator char const*() const { return buf; }
-  };
-  template <unsigned N>
-  fixed_string(char const (&)[N]) -> fixed_string<N - 1>;
-
   consteval std::size_t length(const char* ptr) {
     std::size_t len = 0;
     while (ptr[len])
@@ -132,7 +120,7 @@ namespace ivl::logger {
     return len;
   }
 
-  template <fixed_string T>
+  template <util::fixed_string T>
   struct name_storage {
     inline static constexpr std::string_view allnames {(const char*)T, length((const char*)T)};
     inline static constexpr std::size_t      namecount {count_names(allnames)};
@@ -141,7 +129,7 @@ namespace ivl::logger {
 
   // a std::source_location that can be passed via template args
   template <std::uint_least32_t linet, // std::uint_least32_t columnt,
-            fixed_string file_namet, fixed_string function_namet>
+            util::fixed_string file_namet, util::fixed_string function_namet>
   struct fixed_source_location {
     inline constexpr static auto line = linet;
     // constexpr static inline auto column = columnt;

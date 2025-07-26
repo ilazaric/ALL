@@ -50,8 +50,8 @@ struct DefinitionRow {
 
 struct Definition {
   std::string                term;
-  bool                       error;
-  bool                       one_of;
+  bool                       error = false;
+  bool                       one_of = false;
   std::vector<DefinitionRow> disjunction;
 };
 
@@ -293,15 +293,33 @@ void normalize_one_of(Definition& def) {
     assert(false);
   }
 
+  // if (def.term == "operator-or-punctuator"){
+  //   dump(def);
+  //   std::cout << std::endl;
+  // }
+
   std::vector<DefinitionRow> new_rows;
   for (auto& dis : def.disjunction) {
     for (auto& con : dis.conjunction) {
       auto& comm = std::get<DefinitionCommand>(con.kind);
       assert(comm.name == "terminal");
       for (auto& el : comm.contents) {
-        auto& text = std::get<DefinitionText>(el.kind);
+        if (auto text = std::get_if<DefinitionText>(&el.kind)){
+          new_rows.emplace_back(DefinitionRow {
+              {DefinitionElem {DefinitionCommand {"terminal", {DefinitionElem {*text}}}}}});
+          continue;
+        }
+
+        // if (def.term == "operator-or-punctuator"){ dump(el); std::cout << std::endl; }
+        
+        auto& comm2 = std::get<DefinitionCommand>(el.kind);
+        assert(comm2.name == "keyword");
+        assert(comm2.contents.size() == 1);
+        auto& text = std::get<DefinitionText>(comm2.contents[0].kind);
         new_rows.emplace_back(DefinitionRow {
-          {DefinitionElem {DefinitionCommand {"terminal", {DefinitionElem {text}}}}}});
+            {DefinitionElem {DefinitionCommand {"keyword", {DefinitionElem {text}}}}}});
+
+        // if (def.term == "operator-or-punctuator"){ dump(el); std::cout << std::endl; }
       }
     }
   }
@@ -497,6 +515,42 @@ const auto trim_whitespace =
             },
             [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
 
+// const auto split_terminal = Overload {
+//   [](this auto&& self, Latex& latex) {
+//     for (auto& el : latex.elems)
+//       self(el);
+//     // meat and potatoes
+//     for (size_t idx = 0; idx < latex.elems.size(); ++idx) {
+//       auto comm = std::get_if<LatexCommand>(&latex.elems[idx].kind);
+//       if (!comm || comm->name != "terminal")
+//         continue;
+//       assert(comm->args.size() == 1);
+//       assert(comm->args[0].kind == LatexArg::Kind::CURLY);
+//       auto& arg_elems = comm->args[0].contents.elems;
+//       if (arg_elems.size() == 1){
+//         dump_latex(*comm); std::cerr << std::endl;
+//         continue;
+//       }
+//       assert(arg_elems.size() != 0);
+//       std::vector<LatexElem> new_stuff;
+//       for (size_t arg_idx = 1; arg_idx < arg_elems.size(); ++arg_idx) {
+//         LatexCommand new_comm {"terminal", {}};
+//         new_comm.args.emplace_back(LatexArg {LatexArg::CURLY, Latex {}});
+//         new_comm.args.back().contents.elems.emplace_back(std::move(arg_elems[arg_idx]));
+//         new_stuff.emplace_back(std::move(new_comm));
+//       }
+//       arg_elems.resize(1);
+//       latex.elems.insert(latex.elems.begin() + idx + 1, new_stuff.begin(), new_stuff.end());
+//     }
+//   },
+//   [](this auto&& self, LatexElem& elem) { std::visit(self, elem.kind); },
+//   [](this auto&& self, LatexText&) {},
+//   [](this auto&& self, LatexCommand& command) {
+//     for (auto& arg : command.args)
+//       self(arg);
+//   },
+//   [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+
 const auto count_commands =
   Overload {[](this auto&& self, Latex& latex, auto& out) {
               for (auto& el : latex.elems)
@@ -532,29 +586,186 @@ const auto count_def_commands =
                 self(elem, counts);
             }};
 
+constexpr auto fix_name = [](std::string name) {
+  for (auto& c : name)
+    if (c == '-')
+      c = '_';
+  return "entity_" + name;
+};
+
+constexpr auto escape_doublequote = [](std::string s){
+  return "R\"raw(" + s + ")raw\"";
+ };
+
+void dump_as_cpp(const Definition& def) {
+  assert(!def.error);
+  assert(!def.one_of);
+  assert(!def.disjunction.empty());
+  for (auto&& d : def.disjunction)
+    assert(!d.conjunction.empty());
+
+  // if (def.term == "operator-or-punctuator"){
+  //   dump(def);
+  //   std::cout << std::endl;
+  // }
+
+  {
+    if (def.disjunction.size() >= 3)
+      goto list_end;
+    if (def.disjunction.size() == 1) {
+      auto&& dis = def.disjunction[0];
+      // A = B opt(A)
+      if (dis.conjunction.size() != 2)
+        goto list_end;
+      auto bla  = std::get_if<DefinitionText>(&dis.conjunction[0].kind);
+      auto truc = std::get_if<DefinitionCommand>(&dis.conjunction[1].kind);
+      if (!bla || !truc || truc->name != "opt" || truc->contents.size() != 1)
+        goto list_end;
+      auto znj = std::get_if<DefinitionText>(&truc->contents[0].kind);
+      if (!znj || znj->text != def.term)
+        goto list_end;
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
+      return;
+    }
+    // A = B | B A
+    auto&& d1 = def.disjunction[0].conjunction.size() == 1 ? def.disjunction[0].conjunction
+                                                           : def.disjunction[1].conjunction;
+    auto&& d2 = def.disjunction[0].conjunction.size() == 1 ? def.disjunction[1].conjunction
+                                                           : def.disjunction[0].conjunction;
+    if (d1.size() != 1 || d2.size() != 2)
+      goto list_end;
+    auto bla   = std::get_if<DefinitionText>(&d1[0].kind);
+    auto truc1 = std::get_if<DefinitionText>(&d2[0].kind);
+    auto truc2 = std::get_if<DefinitionText>(&d2[1].kind);
+    if (!bla || !truc1 || !truc2)
+      goto list_end;
+    if (bla->text == truc1->text && def.term == truc2->text ||
+        bla->text == truc2->text && def.term == truc1->text) {
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
+      return;
+    }
+  }
+list_end:;
+
+  {
+    bool has_self_start = false;
+    for (auto&& dis : def.disjunction){
+      assert(dis.conjunction.size() >= 1);
+      auto&& first = dis.conjunction[0];
+      auto text = std::get_if<DefinitionText>(&first.kind);
+      if (!text) continue;
+      if (text->text == def.term) has_self_start = true;
+    }
+    if (!has_self_start) goto self_start_end;
+    Definition def_start;
+    Definition def_continue;
+    def_start.term = def.term + "-impl-start";
+    def_continue.term = def.term + "-impl-continue";
+    std::cout << "ENTITY(" << fix_name(def.term) << ", And<Entity<" << fix_name(def_start.term) << ">, List<Entity<" << fix_name(def_continue.term) << ">, 0>>);" << std::endl;
+    for (auto&& dis : def.disjunction){
+      auto text = std::get_if<DefinitionText>(&dis.conjunction[0].kind);
+      if (text && text->text == def.term){
+        def_continue.disjunction.emplace_back(dis);
+        def_continue.disjunction.back().conjunction.erase(def_continue.disjunction.back().conjunction.begin());
+      } else {
+        def_start.disjunction.emplace_back(dis);
+      }
+    }
+    dump_as_cpp(def_start);
+    dump_as_cpp(def_continue);
+    return;
+  }
+ self_start_end:;
+
+  std::cout << "ENTITY(" << fix_name(def.term) << ", Or<";
+  bool dis_first = true;
+  for (auto&& dis : def.disjunction) {
+    if (!dis_first)
+      std::cout << ", ";
+    dis_first = false;
+    std::cout << "And<";
+    bool con_first = true;
+    for (auto&& con : dis.conjunction) {
+      if (!con_first)
+        std::cout << ", ";
+      con_first         = false;
+      const auto dumper = Overload {
+        [](this auto&& self, const DefinitionElem& elem) { std::visit(self, elem.kind); },
+        [](this auto&& self, const DefinitionText& text) { std::cout << "Entity<" << fix_name(text.text) << ">"; },
+        [](this auto&& self, const DefinitionCommand& comm) {
+          if (comm.name == "opt") {
+            assert(comm.contents.size() == 1);
+            std::cout << "Opt<";
+            self(comm.contents[0]);
+            std::cout << ">";
+            return;
+          }
+          if (comm.name == "terminal" || comm.name == "keyword") {
+            auto name = comm.name;
+            name[0] = toupper(name[0]);
+            bool znj = true;
+            for (auto&& content : comm.contents) {
+              if (!znj) std::cout << ", ";
+              znj = false;
+              auto x = std::get_if<DefinitionText>(&content.kind);
+              if (!x) {
+                std::cout << "UnimplementedTODO<> /* ";
+                dump(content);
+                std::cout << " */";
+              } else {
+                std::cout << name << "<" << escape_doublequote(x->text) << ">";
+              }
+            }
+            return;
+          }
+        dumper_fail: {
+          std::cout << "UnimplementedTODO<> /* ";
+          dump(DefinitionElem {comm});
+          std::cout << " */";
+        }
+        },
+      };
+      dumper(con);
+    }
+    std::cout << ">";
+  }
+  std::cout << ">);\n";
+
+  // std::cout << "ENTITY(" << fix_name(def.term) << ", UnimplementedTODO);\n";
+}
+
 int main() {
   std::filesystem::path file {"/home/ilazaric/repos/draft/source/std-gram.ext"};
-  Latex                 latex = parse_latex_file(file);
+  // std::filesystem::path file {"/home/ilazaric/repos/draft/source/small.ext"};
+  Latex latex = parse_latex_file(file);
   kill_caret(latex);
   kill_escapes(latex);
   kill_textbackslash(latex);
   drop_space_commands(latex);
+  // trim_whitespace(latex);
   concat_texts(latex);
   kill_rlap(latex);
   concat_texts(latex);
-  kill_keyword(latex);
-  concat_texts(latex);
+  // kill_keyword(latex);
+  // concat_texts(latex);
   trim_whitespace(latex);
   concat_texts(latex); // to remove empty strings
+  // split_terminal(latex);
   auto envs = find_environments(latex);
   LOG(envs.size());
   std::map<std::string, size_t> counts;
   for (auto&& env : envs) {
     Definition def = parse_bnf(env);
+    LOG(def.term);
+    if (def.term == "new-line") continue;
+    // if (def.term == "identifier") continue;
+    // if (def.term == "identifier-start") continue;
+    // if (def.term == "identifier-continue") continue;
     assert(!def.error);
     normalize_one_of(def);
     count_def_commands(def, counts);
-    dump(def);
+    // dump(def);
+    dump_as_cpp(def);
   }
   for (auto [command, count] : counts)
     LOG(command, count);

@@ -8,7 +8,7 @@ function dbg-build(){
 function build(){
     FILE="$1"
     shift
-    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
+    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
 function render(){
