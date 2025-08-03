@@ -29,6 +29,7 @@ endfunction()
 
 add_exe(mygame)
 add_exe(myearth)
+add_exe(gameoflife)
 
 # add_executable(mygame game.cpp)
 # target_link_libraries(mygame PRIVATE raylib)
