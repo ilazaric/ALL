@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.20)
 project(mygame LANGUAGES CXX)
 
+set (CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXECUTABLE_SUFFIX ".html")   # ← add this
 
 # file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -30,6 +31,7 @@ endfunction()
 add_exe(mygame)
 add_exe(myearth)
 add_exe(gameoflife)
+add_exe(rts)
 
 # add_executable(mygame game.cpp)
 # target_link_libraries(mygame PRIVATE raylib)

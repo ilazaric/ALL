@@ -1,0 +1,6 @@
+// hello world
+hello /* NOT */ world
+hello /*
+1
+2
+3 */ world

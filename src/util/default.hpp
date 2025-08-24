@@ -2,6 +2,8 @@
 
 #include <string_view>
 #include <utility>
+#include <string>
+#include <sstream>
 
 #define FWD(x) std::forward<decltype(x)>(x)
 
@@ -16,6 +18,20 @@ namespace ivl::util {
     return sv;
   }
 
+  constexpr std::string str(auto&&... args){
+    std::stringstream ss;
+    // (ss << FWD(args), ...);
+    (ss << ... << FWD(args));
+    return std::move(ss).str();
+  }
+
+  template<typename... Ts>
+  struct Overload : Ts... {
+    using Ts::operator()...;
+  };
+  template<typename... Ts>
+  Overload(const Ts&...) -> Overload<Ts...>;
+  
   // namespace detail {
   //   template<typename T>
   //   struct Piper {
