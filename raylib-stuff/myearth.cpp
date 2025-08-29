@@ -12,7 +12,7 @@ int main(void)
   // DisableCursor();
   SetTargetFPS(60);
 
-  Image img = LoadImage("assets/earth_2k.jpg");
+  Image img = LoadImage("assets/8k_earth_daymap.jpg");
   ImageFormat(&img, PIXELFORMAT_UNCOMPRESSED_R8G8B8);
   ImageRotate(&img, 90); // don't ask
   ImageFlipHorizontal(&img);

@@ -5,7 +5,7 @@ set (CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXECUTABLE_SUFFIX ".html")   # ← add this
 
 # file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
-file(GLOB_RECURSE ASSETS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
+file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
 add_custom_target(copy_assets ALL
     # 1) be sure the dest dir exists
     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/assets
