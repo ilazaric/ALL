@@ -210,6 +210,7 @@ namespace ivl::langs::tiny {
 	out.emplace_back(number_start{});
 	while (!file.empty() && isdigit(file[0])){
 	  static constexpr auto rg = std::views::iota(0, 9+1);
+	  static_assert(std::ranges::size(rg) == 10);
 	  template for (constexpr auto c : rg){
 	    if (file[0]-'0' == c){
 	      out.emplace_back(number_digit<c>{});
@@ -221,13 +222,14 @@ namespace ivl::langs::tiny {
 	if (!file.empty() && isalpha(file[0]))
 	  throw std::runtime_error("number + alpha");
 	out.emplace_back(number_end{});
+	continue;
       }
 
       // remaining is keyword or identifier
       assert(std::isalpha(file[0]));
 
       // keywords
-#define X(kw, type) if (file.starts_with(kw) && (file.size() == std::string_view(kw).size() || !std::isalnum(file[std::string_view(kw).size()])){ out.emplace_back(type{}); file.remove_prefix(std::string_view(kw).size()); continue;}
+#define X(kw, type) if (file.starts_with(kw) && (file.size() == std::string_view(kw).size() || !std::isalnum(file[std::string_view(kw).size()]))){ out.emplace_back(type{}); file.remove_prefix(std::string_view(kw).size()); continue;}
       X("let", kw_let);
       X("print", kw_print);
       X("if", kw_if);
@@ -239,7 +241,9 @@ namespace ivl::langs::tiny {
       // only identifier makes sense now
       out.emplace_back(identifier_start{});
       while (!file.empty() && std::isalnum(file[0])){
-	template for (constexpr auto c : std::views::concat(std::views::iota('a', (char)('z'+1)), std::views::iota('A', (char)('Z'+1)), std::views::iota('0', (char)('9'+1)))){
+	static constexpr auto rg = std::views::concat(std::views::iota('a', (char)('z'+1)), std::views::iota('A', (char)('Z'+1)), std::views::iota('0', (char)('9'+1)));
+	static_assert(std::ranges::size(rg) == 62);
+	template for (constexpr auto c : rg){
 	  if (c == file[0]){
 	    out.emplace_back(identifier_char<c>{});
 	    file.remove_prefix(1);

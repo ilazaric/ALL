@@ -31,6 +31,12 @@ namespace ivl::util {
   };
   template<typename... Ts>
   Overload(const Ts&...) -> Overload<Ts...>;
+
+  template<typename Fn>
+  struct AtScopeEnd {
+    Fn fn;
+    ~AtScopeEnd(){ fn(); }
+  };
   
   // namespace detail {
   //   template<typename T>
