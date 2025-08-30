@@ -1,7 +1,10 @@
 #pragma once
 
 #include "parse.hpp"
+#include <cstdint>
+#include <iostream>
 #include <map>
+#include <variant>
 
 namespace ivl::langs::tiny {
 

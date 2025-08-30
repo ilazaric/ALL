@@ -1,6 +1,7 @@
 #pragma once
 
 #include <concepts>
+#include <cstddef>
 #include <type_traits>
 
 namespace ivl::langs::tiny::meta {

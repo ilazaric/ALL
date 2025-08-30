@@ -87,6 +87,9 @@ namespace ivl::langs::tiny {
       assert(!empty());
       ++current;
     }
+
+    template <typename T>
+    T parse();
   };
 
   struct Statement;
@@ -126,82 +129,35 @@ namespace ivl::langs::tiny {
       kind;
   };
 
-  template <typename T>
-  T parse(ParserState&);
-
-  // struct ParenExpression;
-  // struct PrimaryExpression;
-  // struct UnaryExpression;
-  // struct FactorExpression;
-  // struct TermExpression;
-  // struct ComparisonExpression;
-  // struct EqualsExpression;
-  // struct AndExpression;
-  // struct OrExpression;
-  // struct Expression;
-  // struct LetStatement;
-  // struct AssignStatement;
-  // struct PrintStatement;
-  // struct IfStatement;
-  // struct WhileStatement;
-  // struct BlockStatement;
-  // struct Statement;
-
   template <>
-  Identifier parse(ParserState& state);
-  template <>
-  ParenExpression parse(ParserState& state);
-  template <>
-  PrimaryExpression parse(ParserState& state);
-  template <>
-  UnaryExpression parse(ParserState& state);
-  template <>
-  FactorExpression parse(ParserState& state);
-  template <>
-  TermExpression parse(ParserState& state);
-  template <>
-  ComparisonExpression parse(ParserState& state);
-  template <>
-  EqualsExpression parse(ParserState& state);
-  template <>
-  AndExpression parse(ParserState& state);
-  template <>
-  OrExpression parse(ParserState& state);
-  template <>
-  Expression parse(ParserState& state);
-  template <>
-  LetStatement parse(ParserState& state);
-  template <>
-  AssignStatement parse(ParserState& state);
-  template <>
-  PrintStatement parse(ParserState& state);
-  template <>
-  IfStatement parse(ParserState& state);
-  template <>
-  WhileStatement parse(ParserState& state);
-  template <>
-  BlockStatement parse(ParserState& state);
-  template <>
-  Statement parse(ParserState& state);
-
-  template <>
-  Identifier parse(ParserState& state) {
-    assert(state.consume_if<identifier_start>());
+  Identifier ParserState::parse() {
+    assert(consume_if<identifier_start>());
     Identifier identifier;
-    while (!state.consume_if<identifier_end>()) {
-      assert(!state.empty());
-      state.top().with(util::Overload {[&]<auto c>(identifier_char<c>) { identifier.name += c; },
-                                       [](auto&&) { throw std::runtime_error("??? identifier"); }});
-      state.pop();
+    while (!consume_if<identifier_end>()) {
+      assert(!empty());
+      top().with(util::Overload {[&]<auto c>(identifier_char<c>) { identifier.name += c; },
+                                 [](auto&&) { throw std::runtime_error("??? identifier"); }});
+      pop();
     }
     return identifier;
+  }
+
+  template <>
+  Expression ParserState::parse();
+
+  template <>
+  ParenExpression ParserState::parse() {
+    assert(consume_if<op_paren_open>());
+    util::AtScopeEnd _ {[&] { assert(consume_if<op_paren_close>()); }};
+    return ParenExpression {std::make_unique<Expression>(parse<Expression>())};
   }
 
   template <typename T, typename... Ops>
   T parse_generic_2(ParserState& state) {
     T ret;
     while (true) {
-      ret.expressions.emplace_back(parse<std::remove_cvref_t<decltype(ret.expressions[0])>>(state));
+      ret.expressions.emplace_back(
+        state.parse<std::remove_cvref_t<decltype(ret.expressions[0])>>());
       if (!state.has<Ops...>())
         break;
       ret.operators.push_back(state.top());
@@ -211,180 +167,160 @@ namespace ivl::langs::tiny {
   }
 
   template <>
-  ParenExpression parse(ParserState& state) {
-    assert(state.consume_if<op_paren_open>());
-    util::AtScopeEnd _ {[&] { assert(state.consume_if<op_paren_close>()); }};
-    return ParenExpression {std::make_unique<Expression>(parse<Expression>(state))};
-  }
-
-  template <>
-  PrimaryExpression parse(ParserState& state) {
-    if (state.has<kw_false>()) {
-      state.pop();
+  PrimaryExpression ParserState::parse() {
+    if (consume_if<kw_false>())
       return PrimaryExpression {False {}};
-    }
-    if (state.has<kw_true>()) {
-      state.pop();
+    if (consume_if<kw_true>())
       return PrimaryExpression {True {}};
-    }
-    if (state.has<identifier_start>()) {
-      return PrimaryExpression {parse<Identifier>(state)};
-    }
+    if (has<identifier_start>())
+      return PrimaryExpression {parse<Identifier>()};
 
-    if (state.has<number_start>()) {
-      state.pop();
+    if (consume_if<number_start>()) {
       Number number;
-      while (!state.consume_if<number_end>()) {
-        assert(!state.empty());
-        state.top().with(
+      while (!consume_if<number_end>()) {
+        assert(!empty());
+        top().with(
           util::Overload {[&]<auto c>(number_digit<c>) { number.number = number.number * 10 + c; },
                           [](auto&&) { throw std::runtime_error("??? number"); }});
-        state.pop();
+        pop();
       }
       return PrimaryExpression {number};
     }
 
-    return PrimaryExpression {parse<ParenExpression>(state)};
+    return PrimaryExpression {parse<ParenExpression>()};
   }
 
   template <>
-  UnaryExpression parse(ParserState& state) {
+  UnaryExpression ParserState::parse() {
     std::vector<Token> operators;
-    while (state.has<op_not, op_minus>()) {
-      operators.push_back(state.top());
-      state.pop();
+    while (has<op_not, op_minus>()) {
+      operators.push_back(top());
+      pop();
     }
-    return UnaryExpression {operators, parse<PrimaryExpression>(state)};
+    return UnaryExpression {operators, parse<PrimaryExpression>()};
   }
 
   template <>
-  FactorExpression parse(ParserState& state) {
-    return parse_generic_2<FactorExpression, op_mul, op_div, op_mod>(state);
+  FactorExpression ParserState::parse() {
+    return parse_generic_2<FactorExpression, op_mul, op_div, op_mod>(*this);
   }
 
   template <>
-  TermExpression parse(ParserState& state) {
-    return parse_generic_2<TermExpression, op_plus, op_minus>(state);
+  TermExpression ParserState::parse() {
+    return parse_generic_2<TermExpression, op_plus, op_minus>(*this);
   }
 
   template <>
-  ComparisonExpression parse(ParserState& state) {
-    return parse_generic_2<ComparisonExpression, op_lt, op_le, op_gt, op_ge>(state);
+  ComparisonExpression ParserState::parse() {
+    return parse_generic_2<ComparisonExpression, op_lt, op_le, op_gt, op_ge>(*this);
   }
 
   template <>
-  EqualsExpression parse(ParserState& state) {
-    return parse_generic_2<EqualsExpression, op_eq, op_ne>(state);
+  EqualsExpression ParserState::parse() {
+    return parse_generic_2<EqualsExpression, op_eq, op_ne>(*this);
   }
 
   template <>
-  AndExpression parse(ParserState& state) {
+  AndExpression ParserState::parse() {
     AndExpression ret;
     do {
-      ret.expressions.emplace_back(parse<EqualsExpression>(state));
-    } while (state.consume_if<op_and>());
+      ret.expressions.emplace_back(parse<EqualsExpression>());
+    } while (consume_if<op_and>());
     return ret;
   }
 
   template <>
-  OrExpression parse(ParserState& state) {
+  OrExpression ParserState::parse() {
     OrExpression ret;
     do {
-      ret.expressions.emplace_back(parse<AndExpression>(state));
-    } while (state.consume_if<op_or>());
+      ret.expressions.emplace_back(parse<AndExpression>());
+    } while (consume_if<op_or>());
     return ret;
   }
 
   template <>
-  Expression parse(ParserState& state) {
-    return Expression {parse<OrExpression>(state)};
+  Expression ParserState::parse() {
+    return Expression {parse<OrExpression>()};
   };
 
-  // struct Statement;
-  // struct LetStatement;
-  // struct AssignStatement;
-  // struct PrintStatement;
-  // struct IfStatement;
-  // struct WhileStatement;
-  // struct BlockStatement;
+  template <>
+  Statement ParserState::parse();
 
   template <>
-  LetStatement parse(ParserState& state) {
-    assert(state.consume_if<kw_let>());
-    auto i = parse<Identifier>(state);
-    assert(state.consume_if<op_assign>());
-    auto e = parse<Expression>(state);
-    assert(state.consume_if<op_semicolon>());
+  LetStatement ParserState::parse() {
+    assert(consume_if<kw_let>());
+    auto i = parse<Identifier>();
+    assert(consume_if<op_assign>());
+    auto e = parse<Expression>();
+    assert(consume_if<op_semicolon>());
     return LetStatement {std::move(i), std::move(e)};
   }
 
   template <>
-  AssignStatement parse(ParserState& state) {
-    auto i = parse<Identifier>(state);
-    assert(state.consume_if<op_assign>());
-    auto e = parse<Expression>(state);
-    assert(state.consume_if<op_semicolon>());
+  AssignStatement ParserState::parse() {
+    auto i = parse<Identifier>();
+    assert(consume_if<op_assign>());
+    auto e = parse<Expression>();
+    assert(consume_if<op_semicolon>());
     return AssignStatement {std::move(i), std::move(e)};
   }
 
   template <>
-  PrintStatement parse(ParserState& state) {
-    assert(state.consume_if<kw_print>());
-    assert(state.consume_if<op_paren_open>());
-    auto e = parse<Expression>(state);
-    assert(state.consume_if<op_paren_close>());
-    assert(state.consume_if<op_semicolon>());
+  PrintStatement ParserState::parse() {
+    assert(consume_if<kw_print>());
+    assert(consume_if<op_paren_open>());
+    auto e = parse<Expression>();
+    assert(consume_if<op_paren_close>());
+    assert(consume_if<op_semicolon>());
     return PrintStatement {std::move(e)};
   }
 
   template <>
-  IfStatement parse(ParserState& state) {
-    assert(state.consume_if<kw_if>());
-    assert(state.consume_if<op_paren_open>());
-    auto e = parse<Expression>(state);
-    assert(state.consume_if<op_paren_close>());
-    auto                       tb = std::make_unique<Statement>(parse<Statement>(state));
+  IfStatement ParserState::parse() {
+    assert(consume_if<kw_if>());
+    assert(consume_if<op_paren_open>());
+    auto e = parse<Expression>();
+    assert(consume_if<op_paren_close>());
+    auto                       tb = std::make_unique<Statement>(parse<Statement>());
     std::unique_ptr<Statement> fb;
-    if (state.has<kw_else>()) {
-      state.pop();
-      fb = std::make_unique<Statement>(parse<Statement>(state));
-    }
+    if (consume_if<kw_else>())
+      fb = std::make_unique<Statement>(parse<Statement>());
     return IfStatement {std::move(e), std::move(tb), std::move(fb)};
   }
 
   template <>
-  WhileStatement parse(ParserState& state) {
-    assert(state.consume_if<kw_while>());
-    assert(state.consume_if<op_paren_open>());
-    auto e = parse<Expression>(state);
-    assert(state.consume_if<op_paren_close>());
-    auto b = std::make_unique<Statement>(parse<Statement>(state));
+  WhileStatement ParserState::parse() {
+    assert(consume_if<kw_while>());
+    assert(consume_if<op_paren_open>());
+    auto e = parse<Expression>();
+    assert(consume_if<op_paren_close>());
+    auto b = std::make_unique<Statement>(parse<Statement>());
     return WhileStatement {std::move(e), std::move(b)};
   }
 
   template <>
-  BlockStatement parse(ParserState& state) {
-    assert(state.consume_if<op_curly_open>());
+  BlockStatement ParserState::parse() {
+    assert(consume_if<op_curly_open>());
     std::vector<Statement> statements;
-    while (!state.consume_if<op_curly_close>()) {
-      statements.emplace_back(parse<Statement>(state));
+    while (!consume_if<op_curly_close>()) {
+      statements.emplace_back(parse<Statement>());
     }
     return BlockStatement {std::move(statements)};
   }
 
   template <>
-  Statement parse(ParserState& state) {
-    if (state.has<kw_let>())
-      return Statement {parse<LetStatement>(state)};
-    if (state.has<kw_while>())
-      return Statement {parse<WhileStatement>(state)};
-    if (state.has<kw_if>())
-      return Statement {parse<IfStatement>(state)};
-    if (state.has<op_curly_open>())
-      return Statement {parse<BlockStatement>(state)};
-    if (state.has<kw_print>())
-      return Statement {parse<PrintStatement>(state)};
-    return Statement {parse<AssignStatement>(state)};
+  Statement ParserState::parse() {
+    if (has<kw_let>())
+      return Statement {parse<LetStatement>()};
+    if (has<kw_while>())
+      return Statement {parse<WhileStatement>()};
+    if (has<kw_if>())
+      return Statement {parse<IfStatement>()};
+    if (has<op_curly_open>())
+      return Statement {parse<BlockStatement>()};
+    if (has<kw_print>())
+      return Statement {parse<PrintStatement>()};
+    return Statement {parse<AssignStatement>()};
   }
 
   struct Program {
@@ -394,9 +330,10 @@ namespace ivl::langs::tiny {
   Program parse_program(std::vector<Token> tokens) {
     ParserState state;
     state.token_storage = std::move(tokens);
-    state.token_storage.emplace(state.token_storage.begin(), op_curly_open {});
-    state.token_storage.emplace(state.token_storage.end(), op_curly_close {});
-    return Program {parse<BlockStatement>(state).statements};
+    Program program;
+    while (!state.empty())
+      program.statements.emplace_back(state.parse<Statement>());
+    return program;
   }
 
 } // namespace ivl::langs::tiny

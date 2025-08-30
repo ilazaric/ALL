@@ -2,6 +2,7 @@
 
 #include "meta.hpp"
 #include <algorithm>
+#include <cassert>
 #include <cctype>
 #include <ivl/util>
 #include <ranges>
