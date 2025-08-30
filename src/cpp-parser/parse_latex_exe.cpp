@@ -50,7 +50,7 @@ struct DefinitionRow {
 
 struct Definition {
   std::string                term;
-  bool                       error = false;
+  bool                       error  = false;
   bool                       one_of = false;
   std::vector<DefinitionRow> disjunction;
 };
@@ -304,20 +304,20 @@ void normalize_one_of(Definition& def) {
       auto& comm = std::get<DefinitionCommand>(con.kind);
       assert(comm.name == "terminal");
       for (auto& el : comm.contents) {
-        if (auto text = std::get_if<DefinitionText>(&el.kind)){
+        if (auto text = std::get_if<DefinitionText>(&el.kind)) {
           new_rows.emplace_back(DefinitionRow {
-              {DefinitionElem {DefinitionCommand {"terminal", {DefinitionElem {*text}}}}}});
+            {DefinitionElem {DefinitionCommand {"terminal", {DefinitionElem {*text}}}}}});
           continue;
         }
 
         // if (def.term == "operator-or-punctuator"){ dump(el); std::cout << std::endl; }
-        
+
         auto& comm2 = std::get<DefinitionCommand>(el.kind);
         assert(comm2.name == "keyword");
         assert(comm2.contents.size() == 1);
         auto& text = std::get<DefinitionText>(comm2.contents[0].kind);
         new_rows.emplace_back(DefinitionRow {
-            {DefinitionElem {DefinitionCommand {"keyword", {DefinitionElem {text}}}}}});
+          {DefinitionElem {DefinitionCommand {"keyword", {DefinitionElem {text}}}}}});
 
         // if (def.term == "operator-or-punctuator"){ dump(el); std::cout << std::endl; }
       }
@@ -593,9 +593,7 @@ constexpr auto fix_name = [](std::string name) {
   return "entity_" + name;
 };
 
-constexpr auto escape_doublequote = [](std::string s){
-  return "R\"raw(" + s + ")raw\"";
- };
+constexpr auto escape_doublequote = [](std::string s) { return "R\"raw(" + s + ")raw\""; };
 
 void dump_as_cpp(const Definition& def) {
   assert(!def.error);
@@ -624,7 +622,8 @@ void dump_as_cpp(const Definition& def) {
       auto znj = std::get_if<DefinitionText>(&truc->contents[0].kind);
       if (!znj || znj->text != def.term)
         goto list_end;
-      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text)
+                << ">>);\n";
       return;
     }
     // A = B | B A
@@ -641,7 +640,8 @@ void dump_as_cpp(const Definition& def) {
       goto list_end;
     if (bla->text == truc1->text && def.term == truc2->text ||
         bla->text == truc2->text && def.term == truc1->text) {
-      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text)
+                << ">>);\n";
       return;
     }
   }
@@ -649,24 +649,29 @@ list_end:;
 
   {
     bool has_self_start = false;
-    for (auto&& dis : def.disjunction){
+    for (auto&& dis : def.disjunction) {
       assert(dis.conjunction.size() >= 1);
       auto&& first = dis.conjunction[0];
-      auto text = std::get_if<DefinitionText>(&first.kind);
-      if (!text) continue;
-      if (text->text == def.term) has_self_start = true;
+      auto   text  = std::get_if<DefinitionText>(&first.kind);
+      if (!text)
+        continue;
+      if (text->text == def.term)
+        has_self_start = true;
     }
-    if (!has_self_start) goto self_start_end;
+    if (!has_self_start)
+      goto self_start_end;
     Definition def_start;
     Definition def_continue;
-    def_start.term = def.term + "-impl-start";
+    def_start.term    = def.term + "-impl-start";
     def_continue.term = def.term + "-impl-continue";
-    std::cout << "ENTITY(" << fix_name(def.term) << ", And<Entity<" << fix_name(def_start.term) << ">, List<Entity<" << fix_name(def_continue.term) << ">, 0>>);" << std::endl;
-    for (auto&& dis : def.disjunction){
+    std::cout << "ENTITY(" << fix_name(def.term) << ", And<Entity<" << fix_name(def_start.term)
+              << ">, List<Entity<" << fix_name(def_continue.term) << ">, 0>>);" << std::endl;
+    for (auto&& dis : def.disjunction) {
       auto text = std::get_if<DefinitionText>(&dis.conjunction[0].kind);
-      if (text && text->text == def.term){
+      if (text && text->text == def.term) {
         def_continue.disjunction.emplace_back(dis);
-        def_continue.disjunction.back().conjunction.erase(def_continue.disjunction.back().conjunction.begin());
+        def_continue.disjunction.back().conjunction.erase(
+          def_continue.disjunction.back().conjunction.begin());
       } else {
         def_start.disjunction.emplace_back(dis);
       }
@@ -675,7 +680,7 @@ list_end:;
     dump_as_cpp(def_continue);
     return;
   }
- self_start_end:;
+self_start_end:;
 
   std::cout << "ENTITY(" << fix_name(def.term) << ", Or<";
   bool dis_first = true;
@@ -691,7 +696,9 @@ list_end:;
       con_first         = false;
       const auto dumper = Overload {
         [](this auto&& self, const DefinitionElem& elem) { std::visit(self, elem.kind); },
-        [](this auto&& self, const DefinitionText& text) { std::cout << "Entity<" << fix_name(text.text) << ">"; },
+        [](this auto&& self, const DefinitionText& text) {
+          std::cout << "Entity<" << fix_name(text.text) << ">";
+        },
         [](this auto&& self, const DefinitionCommand& comm) {
           if (comm.name == "opt") {
             assert(comm.contents.size() == 1);
@@ -702,11 +709,12 @@ list_end:;
           }
           if (comm.name == "terminal" || comm.name == "keyword") {
             auto name = comm.name;
-            name[0] = toupper(name[0]);
-            bool znj = true;
+            name[0]   = toupper(name[0]);
+            bool znj  = true;
             for (auto&& content : comm.contents) {
-              if (!znj) std::cout << ", ";
-              znj = false;
+              if (!znj)
+                std::cout << ", ";
+              znj    = false;
               auto x = std::get_if<DefinitionText>(&content.kind);
               if (!x) {
                 std::cout << "UnimplementedTODO<> /* ";
@@ -757,7 +765,8 @@ int main() {
   for (auto&& env : envs) {
     Definition def = parse_bnf(env);
     LOG(def.term);
-    if (def.term == "new-line") continue;
+    if (def.term == "new-line")
+      continue;
     // if (def.term == "identifier") continue;
     // if (def.term == "identifier-start") continue;
     // if (def.term == "identifier-continue") continue;

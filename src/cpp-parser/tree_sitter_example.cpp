@@ -4,8 +4,8 @@
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <sstream>
 #include <ivl/logger>
+#include <sstream>
 
 extern "C" const TSLanguage* tree_sitter_latex(); // generated symbol
 
@@ -39,11 +39,10 @@ int main(int argc, char** argv) {
   LOG(ts_node_named_child_count(root_node));
 
   auto root_node_child_count = ts_node_named_child_count(root_node);
-  for (uint32_t root_child_idx = 0; root_child_idx < root_node_child_count;
-       ++root_child_idx){
+  for (uint32_t root_child_idx = 0; root_child_idx < root_node_child_count; ++root_child_idx) {
     LOG(root_child_idx);
-    const auto printer = [&](this auto&& self, const TSNode node, size_t depth = 0){
-      if (ts_node_named_child_count(node) == 0){
+    const auto printer = [&](this auto&& self, const TSNode node, size_t depth = 0) {
+      if (ts_node_named_child_count(node) == 0) {
         size_t from = ts_node_start_byte(node);
         size_t to   = ts_node_end_byte(node);
         std::cout << std::string(depth, '+');
@@ -75,17 +74,16 @@ int main(int argc, char** argv) {
     // }
     std::cout << "\n";
   }
-  
+
   ts_tree_delete(tree);
   ts_parser_delete(parser);
   return 0;
-  
-  const char *query_source =
-  "(generic_environment                     "   // whole block
-  "  (begin                                 "   // its \begin
-  "    (curly_group_text) @env_name)        "   //   {bnf}, {ncbnf}, …
-  ") @env";                                    // capture the whole env
-  
+
+  const char* query_source = "(generic_environment                     " // whole block
+                             "  (begin                                 " // its \begin
+                             "    (curly_group_text) @env_name)        " //   {bnf}, {ncbnf}, …
+                             ") @env";                                   // capture the whole env
+
   // -------- create the query with proper diagnostics ------------
   uint32_t     error_offset = 0;
   TSQueryError error_type   = TSQueryErrorNone;
@@ -101,25 +99,24 @@ int main(int argc, char** argv) {
   TSQueryCursor* qcur = ts_query_cursor_new();
   ts_query_cursor_exec(qcur, query, ts_tree_root_node(tree));
 
-  size_t env_count = 0;
+  size_t       env_count = 0;
   TSQueryMatch m;
   while (ts_query_cursor_next_match(qcur, &m)) {
     ++env_count;
     std::string env_name;
-    TSNode      env_node{};
+    TSNode      env_node {};
 
     // Walk the captures for this match
     for (uint32_t i = 0; i < m.capture_count; ++i) {
-      const TSQueryCapture &cap = m.captures[i];
-      uint32_t length = -1;
-      const char *cap_name =
-        ts_query_capture_name_for_id(query, cap.index, &length);
+      const TSQueryCapture& cap      = m.captures[i];
+      uint32_t              length   = -1;
+      const char*           cap_name = ts_query_capture_name_for_id(query, cap.index, &length);
 
       if (strcmp(cap_name, "env_name") == 0) {
         env_name.assign(tex.data() + ts_node_start_byte(cap.node),
                         ts_node_end_byte(cap.node) - ts_node_start_byte(cap.node));
       } else if (strcmp(cap_name, "env") == 0) {
-        env_node = cap.node;           // whole \begin…\end block
+        env_node = cap.node; // whole \begin…\end block
       }
     }
 

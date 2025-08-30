@@ -11,73 +11,83 @@
 #include <vector>
 
 struct NewLine;
-template<typename> struct Entity;
+template <typename>
+struct Entity;
 
 namespace ivl::cppp::grammar {
 
-  template<typename> struct Opt;
-  template<typename, size_t = 1> struct List;
-  template<typename...> struct And;
-  template<typename...> struct Or;
-  template<util::fixed_string> struct Terminal;
-  template<util::fixed_string> struct Keyword;
-  template<typename> struct UnimplementedTODO;
+  template <typename>
+  struct Opt;
+  template <typename, size_t = 1>
+  struct List;
+  template <typename...>
+  struct And;
+  template <typename...>
+  struct Or;
+  template <util::fixed_string>
+  struct Terminal;
+  template <util::fixed_string>
+  struct Keyword;
+  template <typename>
+  struct UnimplementedTODO;
 
-template <typename... Ts>
-struct Overload : Ts... {
-  using Ts::operator()...;
-};
-template <typename... Ts>
-Overload(Ts...) -> Overload<Ts...>;
+  template <typename... Ts>
+  struct Overload : Ts... {
+    using Ts::operator()...;
+  };
+  template <typename... Ts>
+  Overload(Ts...) -> Overload<Ts...>;
 
-std::string X(size_t n){return std::string(n, '.');}
-
-template <typename T>
-concept Flat = requires { typename T::flat; };
-  
-const auto dump_grammar = Overload {
-  []<typename E>(this const auto& self, const Entity<E>& e, size_t depth) {
-    std::cerr << X(depth) << " -- entity(" << util::typestr<E>() << ")" << std::endl;
-    if constexpr (Flat<E>) {
-      self(e.data, depth + 1);
-    } else {
-      self(*e.data, depth + 1);
-    }
-  },
-  []<typename... Ts>(this const auto& self, const And<Ts...>& a, size_t depth) {
-    std::cerr << X(depth) << " -- conjunction" << std::endl;
-    [&]<size_t... Idxs>(std::index_sequence<Idxs...>) {
-      (self(std::get<Idxs>(a.data), depth + 1), ...);
-    }(std::make_index_sequence<sizeof...(Ts)> {});
-    std::cerr << X(depth) << " -- conjunction done" << std::endl;
-  },
-  [](std::monostate, size_t){},
-  []<typename T>(this const auto& self, const Opt<T>& o, size_t depth){
-    std::cerr << X(depth) << " -- opt(" << util::typestr<T>() << ")" << std::endl;
-    if (o.data) self(*o.data, depth+1);
-    else std::cerr << X(depth) << " -- empty" << std::endl;
-  },
-  []<typename T>(const UnimplementedTODO<T>&, size_t){},
-  []<typename... Ts>(this const auto& self, const Or<Ts...>& o, size_t depth) {
-    std::cerr << X(depth) << " -- variant entry " << o.data.index() << std::endl;
-    std::visit([&](auto&& x) { return self(x, depth + 1); }, o.data);
-  },
-  []<typename T, size_t N>(this const auto& self, const List<T, N>& l, size_t depth) {
-    std::cerr << X(depth) << " -- list(" << util::typestr<T>() << ", " << N << ")" << std::endl;
-    for (auto&& el : l.data)
-      self(el, depth + 1);
-    std::cerr << X(depth) << " -- list done" << std::endl;
-  },
-  []<util::fixed_string Str>(this const auto& self, const Terminal<Str>& t, size_t depth) {
-    std::cerr << X(depth) << " -- terminal(" << Str.view() << ")" << std::endl;
-  },
-  []<util::fixed_string Str>(this const auto& self, const Keyword<Str>& t, size_t depth) {
-    std::cerr << X(depth) << " -- keyword(" << Str.view() << ")" << std::endl;
-  },
-  [](const NewLine&, size_t depth){
-    std::cerr << X(depth) << " -- \\n" << std::endl;
+  std::string X(size_t n) {
+    return std::string(n, '.');
   }
-};
+
+  template <typename T>
+  concept Flat = requires { typename T::flat; };
+
+  const auto dump_grammar = Overload {
+    []<typename E>(this const auto& self, const Entity<E>& e, size_t depth) {
+      std::cerr << X(depth) << " -- entity(" << util::typestr<E>() << ")" << std::endl;
+      if constexpr (Flat<E>) {
+        self(e.data, depth + 1);
+      } else {
+        self(*e.data, depth + 1);
+      }
+    },
+    []<typename... Ts>(this const auto& self, const And<Ts...>& a, size_t depth) {
+      std::cerr << X(depth) << " -- conjunction" << std::endl;
+      [&]<size_t... Idxs>(std::index_sequence<Idxs...>) {
+        (self(std::get<Idxs>(a.data), depth + 1), ...);
+      }(std::make_index_sequence<sizeof...(Ts)> {});
+      std::cerr << X(depth) << " -- conjunction done" << std::endl;
+    },
+    [](std::monostate, size_t) {},
+    []<typename T>(this const auto& self, const Opt<T>& o, size_t depth) {
+      std::cerr << X(depth) << " -- opt(" << util::typestr<T>() << ")" << std::endl;
+      if (o.data)
+        self(*o.data, depth + 1);
+      else
+        std::cerr << X(depth) << " -- empty" << std::endl;
+    },
+    []<typename T>(const UnimplementedTODO<T>&, size_t) {},
+    []<typename... Ts>(this const auto& self, const Or<Ts...>& o, size_t depth) {
+      std::cerr << X(depth) << " -- variant entry " << o.data.index() << std::endl;
+      std::visit([&](auto&& x) { return self(x, depth + 1); }, o.data);
+    },
+    []<typename T, size_t N>(this const auto& self, const List<T, N>& l, size_t depth) {
+      std::cerr << X(depth) << " -- list(" << util::typestr<T>() << ", " << N << ")" << std::endl;
+      for (auto&& el : l.data)
+        self(el, depth + 1);
+      std::cerr << X(depth) << " -- list done" << std::endl;
+    },
+    []<util::fixed_string Str>(this const auto& self, const Terminal<Str>& t, size_t depth) {
+      std::cerr << X(depth) << " -- terminal(" << Str.view() << ")" << std::endl;
+    },
+    []<util::fixed_string Str>(this const auto& self, const Keyword<Str>& t, size_t depth) {
+      std::cerr << X(depth) << " -- keyword(" << Str.view() << ")" << std::endl;
+    },
+    [](const NewLine&, size_t depth) { std::cerr << X(depth) << " -- \\n"
+                                                 << std::endl; }};
 
   template <typename T>
   struct Consumed {
@@ -116,7 +126,7 @@ const auto dump_grammar = Overload {
               throw "ded";
             }
             found                 = true;
-            found_idx = I;
+            found_idx             = I;
             res.value().data.data = std::move(std::get<I>(candidates).value().data);
             res.value().consumed  = std::get<I>(candidates).value().consumed;
           }.template operator()<Is>(),

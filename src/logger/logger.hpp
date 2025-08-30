@@ -39,8 +39,8 @@
 #include <array>
 #include <cstdint>
 #include <iostream> // only used for `default_logger`, remove if unnecessary
-#include <string_view>
 #include <ivl/util/fixed_string.hpp>
+#include <string_view>
 
 #ifdef IVL_LOCAL
 

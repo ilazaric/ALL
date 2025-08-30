@@ -37,11 +37,13 @@ FLAT_WRAP(entity_export_keyword, Keyword<"export">);
 // };
 
 struct NewLine {
-  static Result<NewLine> try_parse(std::string_view sv){
+  static Result<NewLine> try_parse(std::string_view sv) {
     size_t cnt = 0;
-    while (!sv.empty() && sv[0] != '\n' && isspace(sv[0])) ++cnt, sv.remove_prefix(1);
-    if (sv.empty() || sv[0] != '\n') return std::unexpected("not newline");
-    return Consumed{NewLine{}, cnt+1};
+    while (!sv.empty() && sv[0] != '\n' && isspace(sv[0]))
+      ++cnt, sv.remove_prefix(1);
+    if (sv.empty() || sv[0] != '\n')
+      return std::unexpected("not newline");
+    return Consumed {NewLine {}, cnt + 1};
   }
 };
 
