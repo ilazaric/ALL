@@ -4,6 +4,7 @@
 #include "tokenize.hpp"
 #include <ivl/logger>
 #include "parse.hpp"
+#include "eval.hpp"
 
 int main(){
   // std::cout << ivl::langs::tiny::meta::tl_length<
@@ -17,4 +18,5 @@ int main(){
   //   token.with([](auto token){LOG(ivl::util::typestr<decltype(token)>());});
 
   auto program = ivl::langs::tiny::parse_program(std::move(tokens));
+  evaluate(program);
 }

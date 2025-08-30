@@ -13,7 +13,10 @@
 
 namespace ivl::langs::tiny {
 
-  struct Identifier { std::string name; };
+  struct Identifier {
+    std::string name;
+    auto operator<=>(const Identifier&) const = default;
+  };
 
   struct Number { std::int64_t number; };
 
