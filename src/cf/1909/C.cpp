@@ -14,9 +14,9 @@ using namespace ivl::logger::default_logger;
 
 int main() {
   for (auto ti : std::views::iota(0, (int)cin)) {
-    std::uint32_t              n {cin};
+    std::uint32_t              n{cin};
     std::vector<std::uint32_t> l(n), r(n), c(n);
-    std::cin >> ivl::io::Elems {l} >> ivl::io::Elems {r} >> ivl::io::Elems {c};
+    std::cin >> ivl::io::Elems{l} >> ivl::io::Elems{r} >> ivl::io::Elems{c};
     std::ranges::sort(l);
     std::ranges::sort(r);
     std::ranges::sort(c);

@@ -11,8 +11,7 @@ namespace ivl::cppp {
 
   std::vector<UChar32> phase2(std::span<const UChar32> code) {
     bool source_is_empty = code.empty();
-    if (!code.empty() && code[0] == 0xFEFF)
-      code = code.subspan(1);
+    if (!code.empty() && code[0] == 0xFEFF) code = code.subspan(1);
 
     std::vector<UChar32> ret;
     bool                 backslash = false;
@@ -53,8 +52,7 @@ namespace ivl::cppp {
     for (auto pt : code)
       parse_pt(pt);
 
-    if (!source_is_empty && (ret.empty() || ret.back() == UNICODE_NEWLINE))
-      parse_pt(UNICODE_NEWLINE);
+    if (!source_is_empty && (ret.empty() || ret.back() == UNICODE_NEWLINE)) parse_pt(UNICODE_NEWLINE);
 
     return ret;
   }

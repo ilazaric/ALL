@@ -4,7 +4,7 @@ namespace ivl {
 
   template <typename T>
   struct DefaultTombstoner {
-    static bool is_tombstone(void* ptr) { return *static_cast<T*>(ptr) == T {}; }
+    static bool is_tombstone(void* ptr) { return *static_cast<T*>(ptr) == T{}; }
 
     static void tombstoneify(void* ptr) { new (ptr) T; }
 
@@ -23,7 +23,7 @@ namespace ivl {
   struct NullOpt_t {
     constexpr explicit NullOpt_t(int) {}
   };
-  inline constexpr NullOpt {0};
+  inline constexpr NullOpt{0};
 
   template <typename T, Tombstoney Tombstoner = DefaultTombstoner<T>>
   struct SmallOptional {
@@ -90,26 +90,22 @@ namespace ivl {
     explicit operator bool() const { return has_value(); }
 
     T& value() & {
-      if (not has_value())
-        throw std::bad_optional_access {};
+      if (not has_value()) throw std::bad_optional_access{};
       return data;
     }
 
     const T& value() const& {
-      if (not has_value())
-        throw std::bad_optional_access {};
+      if (not has_value()) throw std::bad_optional_access{};
       return data;
     }
 
     T&& value() && {
-      if (not has_value())
-        throw std::bad_optional_access {};
+      if (not has_value()) throw std::bad_optional_access{};
       return data;
     }
 
     const T&& value() const&& {
-      if (not has_value())
-        throw std::bad_optional_access {};
+      if (not has_value()) throw std::bad_optional_access{};
       return data;
     }
 

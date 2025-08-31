@@ -33,7 +33,7 @@ struct Experiment {
 
   size_t run(Alloc& alloc, size_t seed, size_t repcount) {
     srand(seed);
-    Map<size_t, Str> vec(std::less<size_t> {}, alloc);
+    Map<size_t, Str> vec(std::less<size_t>{}, alloc);
     vec.emplace(0, Str(alloc));
 
     while (--repcount) {

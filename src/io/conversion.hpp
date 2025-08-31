@@ -17,6 +17,6 @@ namespace ivl::io::conversion {
     }
   };
 
-  istream_wrapper cin {std::cin};
+  istream_wrapper cin{std::cin};
 
 } // namespace ivl::io::conversion

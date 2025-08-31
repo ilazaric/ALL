@@ -27,29 +27,24 @@ std::vector<std::uint64_t> sieve(std::uint64_t bound) {
         marked[rem] = true;
     }
   for (; idx < bound; ++idx)
-    if (!marked[idx])
-      out.push_back(idx);
+    if (!marked[idx]) out.push_back(idx);
   return out;
 }
 
-auto range2vec(auto&& r) {
-  return std::vector(r.begin(), r.end());
-}
+auto range2vec(auto&& r) { return std::vector(r.begin(), r.end()); }
 
 auto primes3k2 = range2vec(sieve(1e8) | std::views::filter([](auto x) { return x % 3 == 2; }));
 
 bool valid(std::uint64_t k) {
   while (k % 3 == 0)
     k /= 3;
-  if (k % 3 == 2)
-    return false;
+  if (k % 3 == 2) return false;
   for (std::uint64_t d = 2; d * d <= k; ++d)
     if (k % d == 0) {
       std::uint32_t count = 0;
       while (k % d == 0)
         k /= d, ++count;
-      if (d % 3 == 2 && count % 2 == 1)
-        return false;
+      if (d % 3 == 2 && count % 2 == 1) return false;
     }
   return true;
 }
@@ -57,17 +52,14 @@ bool valid(std::uint64_t k) {
 bool valid2(std::uint64_t k) {
   while (k % 3 == 0)
     k /= 3;
-  if (k % 3 == 2)
-    return false;
+  if (k % 3 == 2) return false;
 
   for (auto p : primes3k2) {
-    if (p * p > k)
-      break;
+    if (p * p > k) break;
     auto count = 0_u32;
     while (k % p == 0)
       k /= p, ++count;
-    if (count % 2 == 1)
-      return false;
+    if (count % 2 == 1) return false;
   }
   return true;
 }
@@ -75,8 +67,7 @@ bool valid2(std::uint64_t k) {
 std::uint64_t compute_f_slow(std::uint64_t m) {
   std::uint64_t count = 0;
   for (auto k : std::views::iota(m * m + 1, (m + 1) * (m + 1))) {
-    if (valid(k))
-      ++count;
+    if (valid(k)) ++count;
   }
   return count;
 }
@@ -84,8 +75,7 @@ std::uint64_t compute_f_slow(std::uint64_t m) {
 std::uint64_t compute_f_bit_faster(std::uint64_t m) {
   std::uint64_t count = 0;
   for (auto k : std::views::iota(m * m + 1, (m + 1) * (m + 1))) {
-    if (valid2(k))
-      ++count;
+    if (valid2(k)) ++count;
   }
   return count;
 }
@@ -94,8 +84,7 @@ std::uint32_t vp(std::uint64_t n, std::uint64_t p) {
   auto count = 0_u32;
   while (true) {
     auto div = n / p;
-    if (div * p != n)
-      break;
+    if (div * p != n) break;
     ++count;
     n = div;
   }
@@ -113,8 +102,7 @@ std::uint64_t compute_f_more_faster(std::uint64_t m) {
   const auto        hi = (m + 1) * (m + 1);
   std::vector<char> dead(hi - lo, false);
   for (auto idx : std::views::iota(lo, hi))
-    if (reduce(idx, 3) % 3 == 2)
-      dead[idx - lo] = true;
+    if (reduce(idx, 3) % 3 == 2) dead[idx - lo] = true;
   for (auto p : primes3k2 | std::views::take_while([m](auto x) { return x <= m + 1; })) {
     auto p2     = p * p;
     auto start  = (lo + p - 1) / p * p;
@@ -122,8 +110,7 @@ std::uint64_t compute_f_more_faster(std::uint64_t m) {
 
     while (start < hi) {
       if (start == start2) {
-        if (!dead[start - lo] && vp(start / p2, p) % 2 == 1)
-          dead[start - lo] = true;
+        if (!dead[start - lo] && vp(start / p2, p) % 2 == 1) dead[start - lo] = true;
         start += p;
         start2 += p2;
       } else {
@@ -160,7 +147,7 @@ std::uint64_t compute_f_more_faster(std::uint64_t m) {
     //     dead[k - lo] = true;
     // }
   }
-  return hi - lo - std::ranges::fold_left(dead, 0_u64, std::plus {});
+  return hi - lo - std::ranges::fold_left(dead, 0_u64, std::plus{});
 }
 
 int main() {

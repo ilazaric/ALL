@@ -1,9 +1,9 @@
 #pragma once
 
-#include <time.h>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <time.h>
 #include <vector>
 
 #ifdef IVL_USE_RDTSC
@@ -19,7 +19,7 @@ namespace ivl::timer {
     // a string that can be passed via template args
     template <unsigned N>
     struct fixed_string {
-      char buf[N + 1] {};
+      char buf[N + 1]{};
       consteval fixed_string(char const* s) {
         for (unsigned i = 0; i != N; ++i)
           buf[i] = s[i];
@@ -31,8 +31,9 @@ namespace ivl::timer {
     fixed_string(char const (&)[N]) -> fixed_string<N - 1>;
 
     // a std::source_location that can be passed via template args
-    template <std::uint_least32_t linet, // std::uint_least32_t columnt,
-              fixed_string file_namet, fixed_string function_namet>
+    template <
+      std::uint_least32_t linet, // std::uint_least32_t columnt,
+      fixed_string file_namet, fixed_string function_namet>
     struct fixed_source_location {
       inline constexpr static auto line = linet;
       // constexpr static inline auto column = columnt;
@@ -111,11 +112,11 @@ namespace ivl::timer {
 } // namespace ivl::timer
 
 #ifndef IVL_GLOBAL_SCOPE
-#define SCOPE_TIMER                                                                                \
-  static ::ivl::timer::StaticCollection timer_static_collection(__FILE__, __func__, __LINE__);     \
+#define SCOPE_TIMER                                                                                                    \
+  static ::ivl::timer::StaticCollection timer_static_collection(__FILE__, __func__, __LINE__);                         \
   ::ivl::timer::ScopeTimer              timer_scope_timer(timer_static_collection);
 #else
-#define SCOPE_TIMER                                                                                \
-  using BLA = ::ivl::timer::detail::fixed_source_location<__LINE__, __FILE__, __func__>;           \
+#define SCOPE_TIMER                                                                                                    \
+  using BLA = ::ivl::timer::detail::fixed_source_location<__LINE__, __FILE__, __func__>;                               \
   ::ivl::timer::ScopeTimer timer_scope_timer(::ivl::timer::global_better_collection<BLA>);
 #endif

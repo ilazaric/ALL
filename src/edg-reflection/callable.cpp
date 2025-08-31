@@ -34,32 +34,40 @@ public:
 
   static consteval std::vector<std::meta::info> get(std::size_t idx) {
     assert(idx < length());
-    auto slot = substitute(^IndexToTypes, {
-                                            std::meta::reflect_value(idx)});
+    auto slot = substitute(
+      ^IndexToTypes, {
+                       std::meta::reflect_value(idx)
+                     }
+    );
     return template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]));
   }
 
   static consteval std::size_t find(std::vector<std::meta::info> is) {
     auto slot = substitute(^TypesToIndex, is);
-    if (is_incomplete_type(slot))
-      return NOT_FOUND;
-    return extract<std::size_t>(
-      template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]))[0]);
+    if (is_incomplete_type(slot)) return NOT_FOUND;
+    return extract<std::size_t>(template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]))[0]);
   }
 
   static consteval void push(std::vector<std::meta::info> is) {
-    if (find(is) != NOT_FOUND)
-      return;
+    if (find(is) != NOT_FOUND) return;
     auto idx = Inc::get();
     Inc::advance();
-    define_class(substitute(^IndexToTypes,
-                            {
-                              std::meta::reflect_value(idx)}),
-                 {std::meta::nsdm_description(substitute(^Types, is))});
     define_class(
-      substitute(^TypesToIndex, is),
-      {std::meta::nsdm_description(substitute(^Index, {
-                                                        std::meta::reflect_value(idx)}))});
+      substitute(
+        ^IndexToTypes,
+        {
+          std::meta::reflect_value(idx)
+        }
+      ),
+      {std::meta::nsdm_description(substitute(^Types, is))}
+    );
+    define_class(
+      substitute(^TypesToIndex, is), {std::meta::nsdm_description(substitute(
+                                       ^Index, {
+                                                 std::meta::reflect_value(idx)
+                                               }
+                                     ))}
+    );
   }
 };
 
@@ -94,9 +102,7 @@ using Drop = B;
 // cv qualifiers returned in unerase_invoke() so hopefully good?
 // i think we are allowed to remove cv as long as we return
 // them before using the thingy
-auto remove_cv_from_ptr(auto* ptr) {
-  return const_cast<void*>(reinterpret_cast<const volatile void*>(ptr));
-}
+auto remove_cv_from_ptr(auto* ptr) { return const_cast<void*>(reinterpret_cast<const volatile void*>(ptr)); }
 
 struct Callable {
   void* underlying;
@@ -122,8 +128,7 @@ struct Callable {
 
   Callable& operator=(const Callable&) = delete;
   Callable& operator=(Callable&& o) {
-    if (this == &o)
-      return *this;
+    if (this == &o) return *this;
     std::swap(underlying, o.underlying);
     std::swap(destroyer, o.destroyer);
     std::swap(invokers, o.invokers);
@@ -131,18 +136,16 @@ struct Callable {
   }
 
   void operator()(auto&&... args)
-    requires((TL::push(std::vector {^decltype(args)...}), true))
+    requires((TL::push(std::vector{^decltype(args)...}), true))
   {
     auto idx = TL::find({^decltype(args)...});
     assert(idx < invokers.size());
-    auto type_erased_callable =
-      reinterpret_cast<void (*)(void*, Drop<decltype(args), void*>...)>(invokers[idx]);
+    auto type_erased_callable = reinterpret_cast<void (*)(void*, Drop<decltype(args), void*>...)>(invokers[idx]);
     type_erased_callable(underlying, remove_cv_from_ptr(&args)...);
   }
 
   ~Callable() {
-    if (underlying != nullptr)
-      destroyer(underlying);
+    if (underlying != nullptr) destroyer(underlying);
   }
 };
 
@@ -178,9 +181,7 @@ void unerase_invoke(void* fn, Drop<Args, void*>... args) {
   // Callable b = [](std::string){};
   // alternative (probably better) design would be to shove nullptr info invokers
   // if it is not callable, and assert in Callable::operator()
-  if constexpr (requires {
-                  (*fptr)(static_cast<Args>(*reinterpret_cast<std::add_pointer_t<Args>>(args))...);
-                }) {
+  if constexpr (requires { (*fptr)(static_cast<Args>(*reinterpret_cast<std::add_pointer_t<Args>>(args))...); }) {
     (*fptr)(static_cast<Args>(*reinterpret_cast<std::add_pointer_t<Args>>(args))...);
   }
 }

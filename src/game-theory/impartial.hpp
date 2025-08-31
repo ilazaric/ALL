@@ -31,8 +31,7 @@ namespace ivl::gt {
 
       std::vector<char> mex(moves_grundys.size() + 1, 0);
       for (auto mg : moves_grundys)
-        if (mg < mex.size())
-          mex[mg] = 1;
+        if (mg < mex.size()) mex[mg] = 1;
 
       for (std::size_t idx : std::views::iota(0ull, mex.size()))
         if (mex[idx] == 0) {

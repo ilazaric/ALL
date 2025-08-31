@@ -1,8 +1,8 @@
-#include <cassert>
-#include <iostream>
 #include <ivl/fs/fileview.hpp>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
+#include <cassert>
+#include <iostream>
 #include <memory>
 #include <ranges>
 #include <set>
@@ -80,10 +80,8 @@ std::vector<Elem> parse_latex(std::string_view& latex) {
   std::vector<Elem> ret;
   while (true) {
     skip_whitespace(latex);
-    if (latex.empty())
-      break;
-    if (latex[0] == '}')
-      break;
+    if (latex.empty()) break;
+    if (latex[0] == '}') break;
     if (latex[0] == '\\') {
       ret.emplace_back(parse_comm(latex));
     } else if (latex[0] == '{') {
@@ -95,18 +93,16 @@ std::vector<Elem> parse_latex(std::string_view& latex) {
   return ret;
 }
 
-std::vector<std::vector<Elem>> parse_file(ivl::str::NullStringView path,
-                                          std::string_view         section_name) {
+std::vector<std::vector<Elem>> parse_file(ivl::str::NullStringView path, std::string_view section_name) {
   std::string       begin_section = std::string("\\begin{") + std::string(section_name) + "}";
   std::string       end_section   = std::string("\\end{") + std::string(section_name) + "}";
-  ivl::fs::FileView fv {path};
+  ivl::fs::FileView fv{path};
   std::string_view  latex((const char*)fv.mapped_region, fv.size());
   // LOG(latex);
   std::vector<std::vector<Elem>> ret;
   while (true) {
     auto beginpos = latex.find(begin_section);
-    if (beginpos == std::string_view::npos)
-      break;
+    if (beginpos == std::string_view::npos) break;
     auto endpos = latex.find(end_section);
     // LOG(beginpos, endpos);
     assert(endpos != std::string_view::npos);

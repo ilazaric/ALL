@@ -37,7 +37,7 @@ namespace ivl::algos {
     }
 
     std::vector<T> es(len);
-    es[0] = T {1};
+    es[0] = T{1};
     for (auto idx : std::views::iota(1_u32, len))
       es[idx] = e * es[idx - 1];
 
@@ -48,8 +48,8 @@ namespace ivl::algos {
       for (auto off : std::views::iota(0_u32, len / curr_len)) {
         // T pe = 1;
         for (auto idx : std::views::iota(0_u32, curr_len / 2)) {
-          T x = out[off * curr_len + idx];
-          T y = out[off * curr_len + idx + curr_len / 2] * es[delta * idx]; // pe;
+          T x                                      = out[off * curr_len + idx];
+          T y                                      = out[off * curr_len + idx + curr_len / 2] * es[delta * idx]; // pe;
           out[off * curr_len + idx]                = x + y;
           out[off * curr_len + idx + curr_len / 2] = x - y;
           // pe *= ce;

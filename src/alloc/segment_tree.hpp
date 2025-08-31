@@ -88,8 +88,7 @@ namespace ivl::alloc {
       std::uint32_t idx = 1;
       std::uint32_t lo  = 0;
       std::uint32_t hi  = LENGTH - 1;
-      if (data[idx].max_free < reqlen)
-        return FAILURE;
+      if (data[idx].max_free < reqlen) return FAILURE;
 
       while (true) {
         if (data[idx].left_free >= reqlen) {

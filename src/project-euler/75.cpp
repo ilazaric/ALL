@@ -20,14 +20,11 @@ size_t gcd(size_t a, size_t b) {
 int main() {
   for (size_t m = 1; m * m <= maxl; ++m)
     for (size_t n = 1; n < m; ++n) {
-      if (gcd(m, n) != 1)
-        continue;
-      if (m % 2 == n % 2)
-        continue;
+      if (gcd(m, n) != 1) continue;
+      if (m % 2 == n % 2) continue;
       for (size_t d = m * m - n * n + 2 * m * n + m * m + n * n, s = d; s <= maxl; s += d) {
         // if (s == 24) LOG(m, n);
-        if (clrs[s] != 2)
-          ++clrs[s];
+        if (clrs[s] != 2) ++clrs[s];
       }
     }
 

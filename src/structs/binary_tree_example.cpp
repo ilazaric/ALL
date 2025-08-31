@@ -15,13 +15,11 @@ struct IdiotSplay : ivl::trees::SkeletonTree<V> {
     }
 
     auto cmp = tree.data->value <=> value;
-    if (cmp == 0)
-      return false;
+    if (cmp == 0) return false;
     auto side = cmp > 0 ? ivl::trees::Child::Left : ivl::trees::Child::Right;
     auto ret  = insert(tree.child(side), value);
     cmp       = tree.child(side).data->value <=> value;
-    if (cmp == 0)
-      return ret;
+    if (cmp == 0) return ret;
     auto sidebot = cmp > 0 ? ivl::trees::Child::Left : ivl::trees::Child::Right;
     if (side == sidebot) {
       tree.rotate(side);
@@ -36,8 +34,7 @@ struct IdiotSplay : ivl::trees::SkeletonTree<V> {
   static void splay(ivl::trees::SkeletonTree<V>& tree, const V& value) {
     while (true) {
       auto cmp1 = tree.data->value <=> value;
-      if (cmp1 == 0)
-        return;
+      if (cmp1 == 0) return;
       auto side1 = cmp1 > 0 ? ivl::trees::Child::Left : ivl::trees::Child::Right;
 
       auto cmp2 = tree.child(side1).data->value <=> value;
@@ -64,10 +61,8 @@ struct IdiotSplay : ivl::trees::SkeletonTree<V> {
   }
 
   static std::size_t depth(const ivl::trees::SkeletonTree<V>& tree) {
-    if (tree.empty())
-      return 0;
-    return 1 + std::max(depth(tree.child(ivl::trees::Child::Left)),
-                        depth(tree.child(ivl::trees::Child::Right)));
+    if (tree.empty()) return 0;
+    return 1 + std::max(depth(tree.child(ivl::trees::Child::Left)), depth(tree.child(ivl::trees::Child::Right)));
   }
 
   std::size_t depth() const { return depth(*this); }

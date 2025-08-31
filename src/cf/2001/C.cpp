@@ -18,7 +18,7 @@ void answer(const auto& edges) {
 }
 
 void one() {
-  uint32_t                           n {cin};
+  uint32_t                           n{cin};
   std::vector<std::vector<uint32_t>> edges(n);
 
   std::vector<bool> seen(n, false);
@@ -35,12 +35,9 @@ void one() {
     uint32_t end   = curr;
     while (true) {
       auto ans = query(start, end);
-      if (ans == start)
-        break;
-      if (seen[ans])
-        start = ans;
-      else
-        end = ans;
+      if (ans == start) break;
+      if (seen[ans]) start = ans;
+      else end = ans;
     }
     edges[start].push_back(end);
     seen[end] = true;
@@ -50,7 +47,7 @@ void one() {
 }
 
 int main() {
-  for (uint32_t t {cin}; t--;) {
+  for (uint32_t t{cin}; t--;) {
     one();
   }
 

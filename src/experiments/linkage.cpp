@@ -1,7 +1,6 @@
 
 template <typename T>
-void fn() {
-}
+void fn() {}
 
 template void fn<int>();
 using L = decltype([] {});

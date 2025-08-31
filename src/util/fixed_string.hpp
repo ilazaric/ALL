@@ -5,7 +5,7 @@ namespace ivl::util {
   // a string that can be passed via template args
   template <unsigned N>
   struct fixed_string {
-    char buf[N + 1] {};
+    char buf[N + 1]{};
     consteval fixed_string(char const* s) {
       for (unsigned i = 0; i != N; ++i)
         buf[i] = s[i];

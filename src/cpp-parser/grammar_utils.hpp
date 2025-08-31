@@ -1,10 +1,10 @@
 #pragma once
 
-#include <concepts>
-#include <expected>
 #include <ivl/logger>
 #include <ivl/util/fixed_string.hpp>
 #include <ivl/util>
+#include <concepts>
+#include <expected>
 #include <memory>
 #include <optional>
 #include <type_traits>
@@ -38,14 +38,12 @@ namespace ivl::cppp::grammar {
   template <typename... Ts>
   Overload(Ts...) -> Overload<Ts...>;
 
-  std::string X(size_t n) {
-    return std::string(n, '.');
-  }
+  std::string X(size_t n) { return std::string(n, '.'); }
 
   template <typename T>
   concept Flat = requires { typename T::flat; };
 
-  const auto dump_grammar = Overload {
+  const auto dump_grammar = Overload{
     []<typename E>(this const auto& self, const Entity<E>& e, size_t depth) {
       std::cerr << X(depth) << " -- entity(" << util::typestr<E>() << ")" << std::endl;
       if constexpr (Flat<E>) {
@@ -58,16 +56,14 @@ namespace ivl::cppp::grammar {
       std::cerr << X(depth) << " -- conjunction" << std::endl;
       [&]<size_t... Idxs>(std::index_sequence<Idxs...>) {
         (self(std::get<Idxs>(a.data), depth + 1), ...);
-      }(std::make_index_sequence<sizeof...(Ts)> {});
+      }(std::make_index_sequence<sizeof...(Ts)>{});
       std::cerr << X(depth) << " -- conjunction done" << std::endl;
     },
     [](std::monostate, size_t) {},
     []<typename T>(this const auto& self, const Opt<T>& o, size_t depth) {
       std::cerr << X(depth) << " -- opt(" << util::typestr<T>() << ")" << std::endl;
-      if (o.data)
-        self(*o.data, depth + 1);
-      else
-        std::cerr << X(depth) << " -- empty" << std::endl;
+      if (o.data) self(*o.data, depth + 1);
+      else std::cerr << X(depth) << " -- empty" << std::endl;
     },
     []<typename T>(const UnimplementedTODO<T>&, size_t) {},
     []<typename... Ts>(this const auto& self, const Or<Ts...>& o, size_t depth) {
@@ -87,7 +83,8 @@ namespace ivl::cppp::grammar {
       std::cerr << X(depth) << " -- keyword(" << Str.view() << ")" << std::endl;
     },
     [](const NewLine&, size_t depth) { std::cerr << X(depth) << " -- \\n"
-                                                 << std::endl; }};
+                                                 << std::endl; }
+  };
 
   template <typename T>
   struct Consumed {
@@ -104,15 +101,14 @@ namespace ivl::cppp::grammar {
 
     // xTODO: change, 0 matches = soft error, 1 match = success, 2+ = hard error
     static Result<Or> try_parse(std::string_view sv) {
-      std::tuple<Result<Ts>...> candidates {Ts::try_parse(sv)...};
+      std::tuple<Result<Ts>...> candidates{Ts::try_parse(sv)...};
       bool                      found     = false;
       size_t                    found_idx = 0;
-      Result<Or>                res {Consumed<Or> {}};
+      Result<Or>                res{Consumed<Or>{}};
       [&]<size_t... Is>(std::index_sequence<Is...>) {
         (
           [&]<size_t I>() {
-            if (!std::get<I>(candidates))
-              return;
+            if (!std::get<I>(candidates)) return;
             if (found) {
               LOG("multiple matches");
               LOG(util::typestr<Or>());
@@ -130,10 +126,10 @@ namespace ivl::cppp::grammar {
             res.value().data.data = std::move(std::get<I>(candidates).value().data);
             res.value().consumed  = std::get<I>(candidates).value().consumed;
           }.template operator()<Is>(),
-          ...);
-      }(std::make_index_sequence<sizeof...(Ts)> {});
-      if (!found)
-        res = std::unexpected("no matches");
+          ...
+        );
+      }(std::make_index_sequence<sizeof...(Ts)>{});
+      if (!found) res = std::unexpected("no matches");
       return res;
     }
   };
@@ -150,10 +146,8 @@ namespace ivl::cppp::grammar {
       [&]<size_t... Is>(std::index_sequence<Is...>) {
         (
           [&]<size_t I>() {
-            if (failed)
-              return;
-            auto x =
-              std::tuple_element<I, std::tuple<Ts...>>::type::try_parse(sv.substr(total_consumed));
+            if (failed) return;
+            auto x = std::tuple_element<I, std::tuple<Ts...>>::type::try_parse(sv.substr(total_consumed));
             if (!x) {
               failed     = true;
               first_fail = x.error();
@@ -162,11 +156,11 @@ namespace ivl::cppp::grammar {
             std::get<I>(obj.data) = std::move(x.value().data);
             total_consumed += x.value().consumed;
           }.template operator()<Is>(),
-          ...);
-      }(std::make_index_sequence<sizeof...(Ts)> {});
-      if (failed)
-        return std::unexpected(first_fail);
-      return Consumed {std::move(obj), total_consumed};
+          ...
+        );
+      }(std::make_index_sequence<sizeof...(Ts)>{});
+      if (failed) return std::unexpected(first_fail);
+      return Consumed{std::move(obj), total_consumed};
     }
   };
 
@@ -182,7 +176,7 @@ namespace ivl::cppp::grammar {
         opt.data = std::move(x.value().data);
         consumed = x.value().consumed;
       }
-      return Consumed {std::move(opt), consumed};
+      return Consumed{std::move(opt), consumed};
     }
   };
 
@@ -200,11 +194,10 @@ namespace ivl::cppp::grammar {
           consumed += x.value().consumed;
           continue;
         }
-        if (i < MinCount)
-          return std::unexpected(x.error());
+        if (i < MinCount) return std::unexpected(x.error());
         break;
       }
-      return Consumed {List {std::move(data)}, consumed};
+      return Consumed{List{std::move(data)}, consumed};
     }
   };
 
@@ -214,9 +207,8 @@ namespace ivl::cppp::grammar {
       size_t cnt = 0;
       while (!sv.empty() && ::isspace(sv[0]) && sv[0] != '\n')
         ++cnt, sv.remove_prefix(1);
-      if (!sv.starts_with(Str.view()))
-        return std::unexpected("nope");
-      return Consumed {Terminal {}, Str.size() + cnt};
+      if (!sv.starts_with(Str.view())) return std::unexpected("nope");
+      return Consumed{Terminal{}, Str.size() + cnt};
     }
   };
 
@@ -226,9 +218,8 @@ namespace ivl::cppp::grammar {
       size_t cnt = 0;
       while (!sv.empty() && ::isspace(sv[0]) && sv[0] != '\n')
         ++cnt, sv.remove_prefix(1);
-      if (!sv.starts_with(Str.view()))
-        return std::unexpected("nope");
-      return Consumed {Keyword {}, Str.size() + cnt};
+      if (!sv.starts_with(Str.view())) return std::unexpected("nope");
+      return Consumed{Keyword{}, Str.size() + cnt};
     }
   };
 
@@ -247,9 +238,7 @@ namespace ivl::cppp::grammar {
 
   template <typename = decltype([] {})>
   struct UnimplementedTODO {
-    static Result<UnimplementedTODO> try_parse(std::string_view) {
-      return std::unexpected("not implemented TODO");
-    }
+    static Result<UnimplementedTODO> try_parse(std::string_view) { return std::unexpected("not implemented TODO"); }
   };
 
   // #define FLAT_WRAP(name, ...)                                                                       \

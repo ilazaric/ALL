@@ -1,10 +1,10 @@
 // ---------------- src/gram.cpp ----------------------------------------
+#include <ivl/logger>
 #include "tree-sitter/api.h"
 #include <cstdio>
 #include <cstring>
 #include <fstream>
 #include <iostream>
-#include <ivl/logger>
 #include <sstream>
 
 extern "C" const TSLanguage* tree_sitter_latex(); // generated symbol
@@ -30,8 +30,10 @@ int main(int argc, char** argv) {
   TSParser* parser = ts_parser_new();
   ts_parser_set_language(parser, tree_sitter_latex());
 
-  TSTree* tree = ts_parser_parse_string(parser, // keep NULL because we do a full parse
-                                        NULL, tex.c_str(), tex.size());
+  TSTree* tree = ts_parser_parse_string(
+    parser, // keep NULL because we do a full parse
+    NULL, tex.c_str(), tex.size()
+  );
 
   auto root_node = ts_tree_root_node(tree);
 
@@ -88,8 +90,8 @@ int main(int argc, char** argv) {
   uint32_t     error_offset = 0;
   TSQueryError error_type   = TSQueryErrorNone;
 
-  TSQuery* query = ts_query_new(tree_sitter_latex(), query_source, std::strlen(query_source),
-                                &error_offset, &error_type);
+  TSQuery* query =
+    ts_query_new(tree_sitter_latex(), query_source, std::strlen(query_source), &error_offset, &error_type);
 
   if (!query) {
     std::cerr << "TSQuery compile error at byte " << error_offset << " (" << (error_type) << ")\n";
@@ -104,7 +106,7 @@ int main(int argc, char** argv) {
   while (ts_query_cursor_next_match(qcur, &m)) {
     ++env_count;
     std::string env_name;
-    TSNode      env_node {};
+    TSNode      env_node{};
 
     // Walk the captures for this match
     for (uint32_t i = 0; i < m.capture_count; ++i) {
@@ -113,8 +115,9 @@ int main(int argc, char** argv) {
       const char*           cap_name = ts_query_capture_name_for_id(query, cap.index, &length);
 
       if (strcmp(cap_name, "env_name") == 0) {
-        env_name.assign(tex.data() + ts_node_start_byte(cap.node),
-                        ts_node_end_byte(cap.node) - ts_node_start_byte(cap.node));
+        env_name.assign(
+          tex.data() + ts_node_start_byte(cap.node), ts_node_end_byte(cap.node) - ts_node_start_byte(cap.node)
+        );
       } else if (strcmp(cap_name, "env") == 0) {
         env_node = cap.node; // whole \begin…\end block
       }

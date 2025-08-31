@@ -1,3 +1,5 @@
+#include <ivl/logger>
+#include <ivl/util>
 #include "book.hpp"
 #include <algorithm>
 #include <cassert>
@@ -5,8 +7,6 @@
 #include <compare>
 #include <cstdlib>
 #include <iomanip>
-#include <ivl/logger>
-#include <ivl/util>
 #include <random>
 
 using namespace ivl::books;
@@ -40,22 +40,21 @@ std::vector<Book> carve_up(const Book& book) {
   std::vector<Book> res;
 
   while (bids.size() > 1 && asks.size() > 1) {
-    res.emplace_back(
-      Book {{{bids.back().price, bids.back().qty}}, {{asks.back().price, asks.back().qty}}});
+    res.emplace_back(Book{{{bids.back().price, bids.back().qty}}, {{asks.back().price, asks.back().qty}}});
     bids.pop_back();
     asks.pop_back();
   }
 
   if (bids.size() == 1) {
     for (auto ask : asks) {
-      res.emplace_back(Book {{{bids[0].price, bids[0].qty / asks.size()}}, {{ask.price, ask.qty}}});
+      res.emplace_back(Book{{{bids[0].price, bids[0].qty / asks.size()}}, {{ask.price, ask.qty}}});
     }
     return res;
   }
 
   if (asks.size() == 1) {
     for (auto bid : bids) {
-      res.emplace_back(Book {{{bid.price, bid.qty}}, {{asks[0].price, asks[0].qty / bids.size()}}});
+      res.emplace_back(Book{{{bid.price, bid.qty}}, {{asks[0].price, asks[0].qty / bids.size()}}});
     }
     return res;
   }
@@ -92,8 +91,7 @@ std::vector<Book> carve_up(const Book& book) {
 // returns TRUE_ANSWER <=> ans
 Ordering try_ans(Book book, const auto& partial_fn, const double ans) {
   while (true) {
-    if (book.size() <= 3)
-      return partial_fn(book) <=> ans;
+    if (book.size() <= 3) return partial_fn(book) <=> ans;
 
     auto subbooks = carve_up(book);
     for (auto& subbook : subbooks)
@@ -108,8 +106,7 @@ Ordering try_ans(Book book, const auto& partial_fn, const double ans) {
         break;
       }
     }
-    if (found_idx == 0)
-      return start;
+    if (found_idx == 0) return start;
 
     // book is sum of subbooks _previously_
     // book is convex combination of subbooks _now_ /* * subbooks.size() */
@@ -120,7 +117,7 @@ Ordering try_ans(Book book, const auto& partial_fn, const double ans) {
     const auto right = subbooks[found_idx];
     // const auto right_bid = Book{right.bids, {}};
     // const auto right_ask = Book{{}, right.asks};
-    const auto mid_book = Book {left.bids, right.asks};
+    const auto mid_book = Book{left.bids, right.asks};
     const auto mix      = [&](const double lambda) {
       if (lambda < 1. / 2) {
         const auto a = lambda * 2;
@@ -177,14 +174,12 @@ Ordering try_ans(Book book, const auto& partial_fn, const double ans) {
     for (auto [p, q] : eqbook.bids) {
       book.bids[p] -= q;
       assert(book.bids[p] > -1e5);
-      if (book.bids[p] < 1e-5)
-        book.bids.erase(p);
+      if (book.bids[p] < 1e-5) book.bids.erase(p);
     }
     for (auto [p, q] : eqbook.asks) {
       book.asks[p] -= q;
       assert(book.asks[p] > -1e5);
-      if (book.asks[p] < 1e-5)
-        book.asks.erase(p);
+      if (book.asks[p] < 1e-5) book.asks.erase(p);
     }
   }
 }
@@ -271,8 +266,8 @@ void experiment(const Book& book, const auto& partial_fn, const std::string_view
 #define EXPERIMENT(book, ...) experiment(book, __VA_ARGS__, #__VA_ARGS__)
 
 void experiment2(const auto& partial_fn, const std::string_view fn_name) {
-  Book        left {{{10, 100}}, {{30, 57}}};
-  Book        right {{{19, 131}}, {{30, 57}}};
+  Book        left{{{10, 100}}, {{30, 57}}};
+  Book        right{{{19, 131}}, {{30, 57}}};
   const auto& mix = [&](double lambda) { return left * (1 - lambda) + right * lambda; };
 
   LOG(fn_name);
@@ -358,9 +353,7 @@ int main() {
     return pq / (book.bid_qty() + book.ask_qty());
   });
 
-  const auto compose = [](const auto& a, const auto& b) {
-    return [&](auto&&... args) { return a(b(FWD(args)...)); };
-  };
+  const auto compose = [](const auto& a, const auto& b) { return [&](auto&&... args) { return a(b(FWD(args)...)); }; };
 
   const auto exp_price_mean = [](auto&& side, const double e) {
     double a = 0, b = 0;
@@ -397,10 +390,8 @@ int main() {
       assert(book.size() >= 2);
       assert(book.bids.size() >= 1);
       assert(book.asks.size() >= 1);
-      if (book.bids.size() == 2)
-        return bigbid(book);
-      if (book.asks.size() == 2)
-        return bigask(book);
+      if (book.bids.size() == 2) return bigbid(book);
+      if (book.asks.size() == 2) return bigask(book);
       Book bid_copy                                 = book;
       bid_copy.bids[book.bids.begin()->first * 1.5] = 0;
       Book ask_copy                                 = book;
@@ -425,10 +416,10 @@ int main() {
       auto [pa1, qa1] = *book.asks.begin();
       auto [pa2, qa2] = *++book.asks.begin();
       auto [pb, qb]   = *book.bids.begin();
-      auto qa =
-        ((1 / pa1) * qa1 * qa1 + (1 / pa2) * qa2 * qa2) / ((1 / pa1) * qa1 + (1 / pa2) * qa2);
+      auto qa         = ((1 / pa1) * qa1 * qa1 + (1 / pa2) * qa2 * qa2) / ((1 / pa1) * qa1 + (1 / pa2) * qa2);
       return (qb - qa) / (qb + qa);
-    }));
+    }
+  ));
 
   const auto book2 = random_book();
 

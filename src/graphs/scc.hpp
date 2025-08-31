@@ -37,8 +37,7 @@ namespace ivl::graphs {
       std::uint32_t              time;
 
       Engine(const DirectedGraph& G)
-          : G(G), states(G.node_count()), stack(), partition(G.node_count()), partition_count(0),
-            time(0) {
+          : G(G), states(G.node_count()), stack(), partition(G.node_count()), partition_count(0), time(0) {
         stack.reserve(G.node_count());
       }
 
@@ -65,16 +64,14 @@ namespace ivl::graphs {
         states[node].time_done = time - 1;
 
         // found scc
-        if (states[node].time_seen <= states[node].back_lo &&
-            states[node].time_done >= states[node].back_hi) {
+        if (states[node].time_seen <= states[node].back_lo && states[node].time_done >= states[node].back_hi) {
           auto partition_index = partition_count++;
           while (true) {
             auto curr = stack.back();
             stack.pop_back();
             partition[curr]    = partition_index;
             states[curr].color = Color::finished;
-            if (curr == node)
-              break;
+            if (curr == node) break;
           }
         }
       }
@@ -83,8 +80,7 @@ namespace ivl::graphs {
     Engine engine(G);
 
     for (auto node : std::views::iota(0_u32, G.node_count()))
-      if (engine.states[node].color == Engine::Color::not_visited)
-        engine.process(node);
+      if (engine.states[node].color == Engine::Color::not_visited) engine.process(node);
 
     return engine.partition;
   }

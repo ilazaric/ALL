@@ -1,14 +1,14 @@
-#include <cassert>
-#include <deque>
 #include <ivl/io/conversion>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
+#include <cassert>
+#include <deque>
 #include <map>
 #include <ranges>
 #include <set>
 
 int main() {
-  std::vector<uint32_t> a {cin};
+  std::vector<uint32_t> a{cin};
   uint32_t              n = a.size();
 
   uint32_t target_len = std::set(a.begin(), a.end()).size();
@@ -20,28 +20,20 @@ int main() {
   while (true) {
     while (start < n && seen[a[start]])
       ++start;
-    if (start == n)
-      break;
+    if (start == n) break;
 
     for (int i = start; i < n; ++i) {
-      if (seen[a[i]])
-        continue;
+      if (seen[a[i]]) continue;
       for (auto j = i; j < n; ++j)
-        if (!seen[a[j]])
-          seen[a[j]] = 2;
+        if (!seen[a[j]]) seen[a[j]] = 2;
       uint32_t cnt = 0;
       for (int j = 0; j <= n; ++j) {
-        if (seen[j])
-          ++cnt;
-        if (seen[j] == 2)
-          seen[j] = 0;
+        if (seen[j]) ++cnt;
+        if (seen[j] == 2) seen[j] = 0;
       }
-      if (cnt != target_len)
-        continue;
-      if (ans.size() % 2 == 0 && a[start] < a[i])
-        start = i;
-      if (ans.size() % 2 == 1 && a[start] > a[i])
-        start = i;
+      if (cnt != target_len) continue;
+      if (ans.size() % 2 == 0 && a[start] < a[i]) start = i;
+      if (ans.size() % 2 == 1 && a[start] > a[i]) start = i;
     }
 
     seen[a[start]] = 1;
@@ -49,5 +41,5 @@ int main() {
   }
 
   std::cout << target_len << std::endl;
-  std::cout << ivl::io::Elems {ans} << std::endl;
+  std::cout << ivl::io::Elems{ans} << std::endl;
 }

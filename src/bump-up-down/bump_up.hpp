@@ -57,8 +57,7 @@ namespace ivl::bump {
       // low becomes smallest number >= low that is divisible by alignof(T)
       low = ((low - 1) & ~(alignof(T) - 1)) + alignof(T);
 
-      if (low + sizeof(T) > high)
-        throw std::bad_alloc();
+      if (low + sizeof(T) > high) throw std::bad_alloc();
 
       range->low = reinterpret_cast<std::byte*>(low + sizeof(T) * n);
       return reinterpret_cast<T*>(low);

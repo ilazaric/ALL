@@ -9,8 +9,7 @@ size_t maxprime[maxn + 1];
 size_t pow(size_t x, size_t e) {
   size_t r = 1;
   while (e) {
-    if (e & 1)
-      r *= x;
+    if (e & 1) r *= x;
     x *= x;
     e >>= 1;
   }
@@ -49,8 +48,7 @@ int main() {
   for (size_t i = 2; i < maxn; ++i) {
     auto p = phi(i);
     if (digits(i) == digits(p))
-      if (besti * p > i * bestphi)
-        besti = i, bestphi = p;
+      if (besti * p > i * bestphi) besti = i, bestphi = p;
   }
   LOG(besti);
 }

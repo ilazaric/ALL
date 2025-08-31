@@ -8,9 +8,7 @@ int main() {
 
   for (uint32_t i = 0; i < width; ++i) {
     for (uint32_t j = 0; j < height; ++j) {
-      std::cout << ivl::color::bg24(i * 255 / (width - 1), j * 255 / (height - 1),
-                                    255 - i * 255 / (width - 1))
-                << " ";
+      std::cout << ivl::color::bg24(i * 255 / (width - 1), j * 255 / (height - 1), 255 - i * 255 / (width - 1)) << " ";
     }
     std::cout << ivl::color::rst << std::endl;
   }

@@ -4,9 +4,7 @@ struct S {
   int64_t x;
   int64_t sum;
   S(int64_t x) : x(x), sum(x) {}
-  void refresh_state(S* left, S* right) {
-    sum = x + (left ? left->sum : 0) + (right ? right->sum : 0);
-  }
+  void refresh_state(S* left, S* right) { sum = x + (left ? left->sum : 0) + (right ? right->sum : 0); }
 
   auto operator<=>(const S& o) const noexcept { return x <=> o.x; }
   bool operator==(const S& o) const noexcept { return x == o.x; }
@@ -17,8 +15,7 @@ struct S {
 
 void validate_state(ivl::structs::SplayTree<S>& s) {
   using Side = ivl::structs::SplayTree<S>::Side;
-  if (!s)
-    return;
+  if (!s) return;
   validate_state(s.child(Side::Left));
   validate_state(s.child(Side::Right));
   auto prev_sum = s.value_ptr()->sum;

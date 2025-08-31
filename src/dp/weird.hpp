@@ -74,12 +74,12 @@
 namespace ivl::dp {
 
   struct normal_tag_type {};
-  constexpr normal_tag_type normal {};
+  constexpr normal_tag_type normal{};
 
   template <std::size_t Depth>
   struct debug_tag_type {};
   template <std::size_t Depth = 1>
-  constexpr debug_tag_type<Depth> debug {};
+  constexpr debug_tag_type<Depth> debug{};
 
   template <typename RT, typename... Ts>
   struct DefaultCache {
@@ -92,16 +92,15 @@ namespace ivl::dp {
     // TODO ^
     // can probably be made better with tuples of
     // references and a transparent comparator
-    bool contains(Ts... args) const { return cache.contains(KeyType {std::move(args)...}); }
+    bool contains(Ts... args) const { return cache.contains(KeyType{std::move(args)...}); }
 
     RT& set(Ts... args, RT value) {
-      auto [it, status] = cache.try_emplace(KeyType {std::move(args)...}, std::move(value));
-      if (!status)
-        throw std::runtime_error("DefaultCache: tried to set twice");
+      auto [it, status] = cache.try_emplace(KeyType{std::move(args)...}, std::move(value));
+      if (!status) throw std::runtime_error("DefaultCache: tried to set twice");
       return it->second;
     }
 
-    const RT& get(Ts... args) const { return cache.at(KeyType {std::move(args)...}); }
+    const RT& get(Ts... args) const { return cache.at(KeyType{std::move(args)...}); }
   };
 
   template <typename T>
@@ -120,16 +119,14 @@ namespace ivl::dp {
   template <typename T, typename Shape, template <typename...> typename Cache = DefaultCache>
   struct Helper;
 
-  template <typename T, typename ShapeRT, typename... ShapeTs,
-            template <typename...> typename Cache>
+  template <typename T, typename ShapeRT, typename... ShapeTs, template <typename...> typename Cache>
   struct Helper<T, ShapeRT(ShapeTs...), Cache> {
     Cache<ShapeRT, ShapeTs...> cache;
 
     T& get_parent() { return *static_cast<T*>(this); }
 
     ShapeRT compute(ShapeTs... args, normal_tag_type tag) {
-      if (cache.contains(args...))
-        return cache.get(args...);
+      if (cache.contains(args...)) return cache.get(args...);
       ShapeRT ret = get_parent().recursive_expression(args..., tag);
       cache.set(args..., ret);
       return ret;
@@ -137,9 +134,8 @@ namespace ivl::dp {
 
     template <std::size_t Depth>
     DebugExpression<ShapeRT> compute(ShapeTs... args, debug_tag_type<Depth>) {
-      using next_tag_type =
-        std::conditional_t<Depth == 0, normal_tag_type, debug_tag_type<Depth - 1>>;
-      return get_parent().recursive_expression(args..., next_tag_type {});
+      using next_tag_type = std::conditional_t<Depth == 0, normal_tag_type, debug_tag_type<Depth - 1>>;
+      return get_parent().recursive_expression(args..., next_tag_type{});
     }
   };
 

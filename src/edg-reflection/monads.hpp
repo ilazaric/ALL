@@ -15,21 +15,16 @@ namespace ivl::refl {
   using namespace std::literals::string_view_literals;
 
   consteval bool namechar(char c) {
-    if (c >= 'a' && c <= 'z')
-      return true;
-    if (c >= 'A' && c <= 'Z')
-      return true;
-    if (c >= '0' && c <= '9')
-      return true;
-    if (c == '_')
-      return true;
+    if (c >= 'a' && c <= 'z') return true;
+    if (c >= 'A' && c <= 'Z') return true;
+    if (c >= '0' && c <= '9') return true;
+    if (c == '_') return true;
     return false;
   }
 
   consteval bool is_identifier(const std::string_view& sv) {
     for (auto c : sv)
-      if (!namechar(c))
-        return false;
+      if (!namechar(c)) return false;
     return true;
   }
 
@@ -42,7 +37,7 @@ namespace ivl::refl {
     using Ret = decltype(FWD(fn)(FWD(args)...));
     if constexpr (std::is_same_v<Ret, void>) {
       FWD(fn)(FWD(args)...);
-      return void_t {};
+      return void_t{};
     } else {
       return FWD(fn)(FWD(args)...);
     }
@@ -53,40 +48,30 @@ namespace ivl::refl {
   }
 
   consteval std::vector<std::meta::info> shallow_public_member_functions_of(std::meta::info type) {
-    if (!type_is_class(type))
-      return {};
+    if (!type_is_class(type)) return {};
     std::vector<std::meta::info> ret;
     for (std::meta::info mem : members_of(type)) {
-      if (!is_public(mem))
-        continue;
-      if (!is_function(mem) && !is_function_template(mem))
-        continue;
-      if (is_static_member(mem))
-        continue;
-      if (!has_identifier(mem))
-        continue;
-      if (is_constructor(mem))
-        continue;
-      if (is_destructor(mem))
-        continue;
-      if (!is_identifier(identifier_of(mem)))
-        continue;
+      if (!is_public(mem)) continue;
+      if (!is_function(mem) && !is_function_template(mem)) continue;
+      if (is_static_member(mem)) continue;
+      if (!has_identifier(mem)) continue;
+      if (is_constructor(mem)) continue;
+      if (is_destructor(mem)) continue;
+      if (!is_identifier(identifier_of(mem))) continue;
       ret.push_back(mem);
     }
     return ret;
   }
 
   consteval std::vector<std::meta::info> deep_public_member_functions_of(std::meta::info type) {
-    if (!type_is_class(type))
-      return {};
+    if (!type_is_class(type)) return {};
     std::vector<std::meta::info> ret;
-    std::vector<std::meta::info> types {type};
+    std::vector<std::meta::info> types{type};
     for (size_t idx = 0; idx < types.size(); ++idx) {
       auto add = shallow_public_member_functions_of(types[idx]);
       ret.insert(ret.end(), add.begin(), add.end());
       for (auto base : bases_of(types[idx])) {
-        if (!is_public(base))
-          continue;
+        if (!is_public(base)) continue;
         types.push_back(type_of(base));
       }
     }
@@ -94,8 +79,7 @@ namespace ivl::refl {
   }
 
   consteval void monad_complete(std::meta::info type, std::meta::info under) {
-    if (!type_is_class(under))
-      return;
+    if (!type_is_class(under)) return;
     std::vector<std::meta::info>  memfns = deep_public_member_functions_of(under);
     std::vector<std::string_view> names;
     for (auto memfn : memfns)
@@ -131,7 +115,7 @@ struct Opt : std::optional<T> {
 #define monad_expr fix_invoke(FWD(fn), *FWD(self))
   constexpr auto monad_map(this auto&& self, auto&& fn) -> Opt<decltype(monad_expr)> {
     if (self) {
-      return Opt<decltype(monad_expr)> {monad_expr};
+      return Opt<decltype(monad_expr)>{monad_expr};
     } else {
       return std::nullopt;
     }

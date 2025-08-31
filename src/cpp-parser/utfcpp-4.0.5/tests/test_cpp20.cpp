@@ -7,7 +7,7 @@ using namespace std;
 
 TEST(CPP20APITests, test_utf16tou8) {
   u16string      utf16string = {0x41, 0x0448, 0x65e5, 0xd834, 0xdd1e};
-  u16string_view utf16stringview {utf16string};
+  u16string_view utf16stringview{utf16string};
   u8string       u = utf16tou8(utf16string);
   EXPECT_EQ(u.size(), 10);
   u = utf16tou8(utf16stringview);
@@ -15,7 +15,7 @@ TEST(CPP20APITests, test_utf16tou8) {
 }
 
 TEST(CPP20APITests, tes20t_utf8to16) {
-  u8string  utf8_with_surrogates {u8"\xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e"};
+  u8string  utf8_with_surrogates{u8"\xe6\x97\xa5\xd1\x88\xf0\x9d\x84\x9e"};
   u16string utf16result = utf8to16(utf8_with_surrogates);
   EXPECT_EQ(utf16result.size(), 4);
   EXPECT_EQ(utf16result[2], 0xd834);
@@ -24,7 +24,7 @@ TEST(CPP20APITests, tes20t_utf8to16) {
 
 TEST(CPP20APITests, test_utf32tou8) {
   u32string      utf32string = {0x448, 0x65E5, 0x10346};
-  u32string_view utf32stringview {utf32string};
+  u32string_view utf32stringview{utf32string};
   u8string       utf8result = utf32tou8(utf32stringview);
   EXPECT_EQ(utf8result.size(), 9);
 }

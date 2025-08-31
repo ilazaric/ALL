@@ -10,4 +10,4 @@ consteval {
 });
 }
 
-static_assert(S {}.fn() == 12);
+static_assert(S{}.fn() == 12);

@@ -16,10 +16,10 @@ struct Entity;
 #include "generated.hpp"
 #undef ENTITY
 
-#define FLAT_WRAP(name, ...)                                                                       \
-  struct name {                                                                                    \
-    using type = __VA_ARGS__;                                                                      \
-    using flat = void;                                                                             \
+#define FLAT_WRAP(name, ...)                                                                                           \
+  struct name {                                                                                                        \
+    using type = __VA_ARGS__;                                                                                          \
+    using flat = void;                                                                                                 \
   }
 
 // missing entities
@@ -41,9 +41,8 @@ struct NewLine {
     size_t cnt = 0;
     while (!sv.empty() && sv[0] != '\n' && isspace(sv[0]))
       ++cnt, sv.remove_prefix(1);
-    if (sv.empty() || sv[0] != '\n')
-      return std::unexpected("not newline");
-    return Consumed {NewLine {}, cnt + 1};
+    if (sv.empty() || sv[0] != '\n') return std::unexpected("not newline");
+    return Consumed{NewLine{}, cnt + 1};
   }
 };
 
@@ -52,9 +51,9 @@ struct entity_new_line {
   using type = NewLine;
 };
 
-#define ENTITY(name, ...)                                                                          \
-  struct name {                                                                                    \
-    using type = __VA_ARGS__;                                                                      \
+#define ENTITY(name, ...)                                                                                              \
+  struct name {                                                                                                        \
+    using type = __VA_ARGS__;                                                                                          \
   }
 #include "generated.hpp"
 #undef ENTITY
@@ -85,10 +84,8 @@ struct Entity<E> {
 
   static Result<Entity> try_parse(std::string_view sv) {
     auto x = E::type::try_parse(sv);
-    if (!x)
-      return std::unexpected(x.error());
-    return Consumed {Entity {std::make_unique<typename E::type>(std::move(x.value().data))},
-                     x.value().consumed};
+    if (!x) return std::unexpected(x.error());
+    return Consumed{Entity{std::make_unique<typename E::type>(std::move(x.value().data))}, x.value().consumed};
   }
 };
 
@@ -99,15 +96,14 @@ struct Entity<E> {
 
   static Result<Entity> try_parse(std::string_view sv) {
     auto x = E::type::try_parse(sv);
-    if (!x)
-      return std::unexpected(x.error());
-    return Consumed {Entity {std::move(x.value().data)}, x.value().consumed};
+    if (!x) return std::unexpected(x.error());
+    return Consumed{Entity{std::move(x.value().data)}, x.value().consumed};
   }
 };
 
 int main(int argc, char** argv) {
   assert(argc == 2);
-  ivl::fs::FileView fv {argv[1]};
+  ivl::fs::FileView fv{argv[1]};
   auto              sv = fv.as_string_view();
   LOG(sv);
   auto res = Entity<entity_preprocessing_file>::try_parse(sv);
@@ -116,6 +112,5 @@ int main(int argc, char** argv) {
   if (res) {
     LOG(res.value().consumed);
     dump_grammar(res.value().data, 0);
-  } else
-    LOG(res.error());
+  } else LOG(res.error());
 }

@@ -77,12 +77,11 @@ consteval void magic_impl(std::meta::info base) {
 
     consteval void magic(std::string_view name, std::meta::info body) {
       queue_injection(^{
-        struct \id(name, "_magic_detail"sv) { \tokens(body)};
+        struct \id(name, "_magic_detail"sv){ \tokens(body)};
       });
 
   queue_injection(^{
-    struct \id(name)
-        : \id(name, "_magic_detail"sv) {consteval {magic_impl(^\id(name, "_magic_detail"sv)); }
+    struct \id(name) : \id(name, "_magic_detail"sv){consteval {magic_impl(^\id(name, "_magic_detail"sv)); }
     };
     });
     }

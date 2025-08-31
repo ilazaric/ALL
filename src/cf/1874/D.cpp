@@ -198,8 +198,7 @@ std::array<std::array<double, MAXM + 1>, MAXN + 1> T;
 int main() {
   {
     auto C = [](std::uint32_t a, std::uint32_t b) {
-      if (a >= b)
-        return INF;
+      if (a >= b) return INF;
       return 2.0 * (double)b / (double)(b - a) - 1.0;
     };
 
@@ -217,21 +216,18 @@ int main() {
         auto e = INF;
         for (auto ct : std::views::iota(tlo, thi + 1)) {
           auto ce = F[n - 1][ct] + C(ct, m);
-          if (ce < e)
-            e = ce, t = ct;
+          if (ce < e) e = ce, t = ct;
         }
 
         F[n][m] = e;
         T[n][m] = t;
-        if (m != mlo)
-          Q.push({mlo, m - 1, tlo, t});
-        if (m != mhi)
-          Q.push({m + 1, mhi, t, thi});
+        if (m != mlo) Q.push({mlo, m - 1, tlo, t});
+        if (m != mhi) Q.push({m + 1, mhi, t, thi});
       }
     }
   }
 
-  std::uint32_t n {cin}, m {cin};
+  std::uint32_t n{cin}, m{cin};
   std::cout << std::setprecision(15) << F[n][m] << std::endl;
 
   // while (n){

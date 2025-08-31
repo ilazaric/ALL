@@ -14,8 +14,7 @@ namespace test1 {
   struct H {};
   struct I {};
 
-  using Ctx =
-    Context<A, Mutable<B>, Value<C>, Tagged<D, E>, Tagged<F, Mutable<G>>, Tagged<H, Value<I>>>;
+  using Ctx = Context<A, Mutable<B>, Value<C>, Tagged<D, E>, Tagged<F, Mutable<G>>, Tagged<H, Value<I>>>;
 
   static_assert(std::is_same_v<decltype(std::declval<Ctx>().get<A>()), const A&>);
   static_assert(std::is_same_v<decltype(std::declval<Ctx>().get<B>()), B&>);
@@ -33,10 +32,8 @@ namespace test2 {
   struct B {};
   struct C {};
 
-  void bla(Context<A, B, C>) {
-  }
-  void bla2(Context<C>) {
-  }
+  void bla(Context<A, B, C>) {}
+  void bla2(Context<C>) {}
   void truc(Context<C, A, B> ctx) {
     bla(ctx);
     bla2(ctx);
@@ -56,8 +53,7 @@ namespace test3 {
   struct H {};
   struct I {};
 
-  using Ctx =
-    Context<A, Mutable<B>, Value<C>, Tagged<D, E>, Tagged<F, Mutable<G>>, Tagged<H, Value<I>>>;
+  using Ctx = Context<A, Mutable<B>, Value<C>, Tagged<D, E>, Tagged<F, Mutable<G>>, Tagged<H, Value<I>>>;
 
   void use(Ctx ctx) {
     auto [a, b, c, d, f, h] = ctx.get<A, B, C, D, F, H>();

@@ -8,10 +8,6 @@ std::array<int, 500000000> arr = [] {
   return out;
 }();
 
-void print_first() {
-  std::cout << arr[0] << std::endl;
-}
+void print_first() { std::cout << arr[0] << std::endl; }
 
-int main() {
-  print_first();
-}
+int main() { print_first(); }

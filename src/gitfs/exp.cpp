@@ -3,15 +3,15 @@
 #include <ivl/logger>
 #include <ivl/str/nullstringview.hpp>
 
-#define check_lg2(...)                                                                             \
-  do {                                                                                             \
-    int error = (__VA_ARGS__);                                                                     \
-    if (error < 0) {                                                                               \
-      LOG_RAW("error in git: ", #__VA_ARGS__);                                                     \
-      auto e = git_error_last();                                                                   \
-      LOG(error, e->klass, e->message);                                                            \
-      exit(1);                                                                                     \
-    }                                                                                              \
+#define check_lg2(...)                                                                                                 \
+  do {                                                                                                                 \
+    int error = (__VA_ARGS__);                                                                                         \
+    if (error < 0) {                                                                                                   \
+      LOG_RAW("error in git: ", #__VA_ARGS__);                                                                         \
+      auto e = git_error_last();                                                                                       \
+      LOG(error, e->klass, e->message);                                                                                \
+      exit(1);                                                                                                         \
+    }                                                                                                                  \
   } while (0)
 
 struct Init {
@@ -21,19 +21,15 @@ struct Init {
 
 struct Repo {
   Repo() noexcept : ptr(nullptr) {}
-  Repo(ivl::str::NullStringView sv) noexcept(false) {
-    check_lg2(git_repository_open(&ptr, sv.data()));
-  }
+  Repo(ivl::str::NullStringView sv) noexcept(false) { check_lg2(git_repository_open(&ptr, sv.data())); }
 
   Repo(const Repo&) = delete;
   Repo(Repo&& o) noexcept : ptr(std::exchange(o.ptr, nullptr)) {}
 
   Repo& operator=(const Repo&) = delete;
   Repo& operator=(Repo&& o) noexcept {
-    if (this == &o)
-      return *this;
-    if (ptr)
-      git_repository_free(ptr);
+    if (this == &o) return *this;
+    if (ptr) git_repository_free(ptr);
     ptr = std::exchange(o.ptr, nullptr);
     return *this;
   }

@@ -1,9 +1,9 @@
-#include <cassert>
-#include <deque>
 #include <ivl/io/conversion>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
 #include <ivl/nt/rtmint.hpp>
+#include <cassert>
+#include <deque>
 #include <map>
 #include <ranges>
 #include <set>
@@ -16,8 +16,7 @@ void one(uint32_t n, uint32_t k, uint32_t p) {
   auto pow = [](RTMint a, uint32_t b) {
     RTMint ret = 1;
     while (b) {
-      if (b & 1)
-        ret *= a;
+      if (b & 1) ret *= a;
       a *= a;
       b >>= 1;
     }
@@ -69,10 +68,10 @@ void one(uint32_t n, uint32_t k, uint32_t p) {
 }
 
 int main() {
-  for (uint32_t t {cin}; t--;) {
-    uint32_t n {cin};
-    uint32_t k {cin};
-    uint32_t p {cin};
+  for (uint32_t t{cin}; t--;) {
+    uint32_t n{cin};
+    uint32_t k{cin};
+    uint32_t p{cin};
     one(n, k, p);
   }
 

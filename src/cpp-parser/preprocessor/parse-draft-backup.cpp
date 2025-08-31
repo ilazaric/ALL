@@ -1,7 +1,7 @@
-#include <cassert>
 #include <ivl/fs/fileview.hpp>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
+#include <cassert>
 #include <memory>
 #include <ranges>
 #include <set>
@@ -78,10 +78,8 @@ std::vector<Elem> parse_latex(std::string_view latex) {
   std::vector<Elem> ret;
   while (true) {
     skip_whitespace(latex);
-    if (latex.empty())
-      break;
-    if (latex[0] == '}')
-      break;
+    if (latex.empty()) break;
+    if (latex[0] == '}') break;
     if (latex[0] == '\\') {
       ret.emplace_back(parse_comm(latex));
     } else if (latex[0] == '{') {
@@ -115,12 +113,8 @@ struct CommArg {
 };
 
 std::ostream& operator<<(std::ostream& out, const Node& el);
-std::ostream& operator<<(std::ostream& out, const Text& el) {
-  return out << '"' << el.text << '"';
-}
-std::ostream& operator<<(std::ostream& out, const Comm& el) {
-  return out << '\\' << el.comm;
-}
+std::ostream& operator<<(std::ostream& out, const Text& el) { return out << '"' << el.text << '"'; }
+std::ostream& operator<<(std::ostream& out, const Comm& el) { return out << '\\' << el.comm; }
 std::ostream& operator<<(std::ostream& out, const CommArg& el) {
   return out << '\\' << el.comm << "{ " << el.arg << '}';
 }
@@ -136,11 +130,9 @@ void rmws(std::string_view& sv) {
 }
 
 std::string_view consumestr(std::string_view& sv) {
-  if (sv.empty())
-    return {};
+  if (sv.empty()) return {};
   std::size_t idx = 0;
-  while (idx < sv.size() && !std::isspace(sv[idx]) && sv[idx] != '\\' && sv[idx] != '{' &&
-         sv[idx] != '}')
+  while (idx < sv.size() && !std::isspace(sv[idx]) && sv[idx] != '\\' && sv[idx] != '{' && sv[idx] != '}')
     ++idx;
   auto ret = sv.substr(0, idx);
   sv.remove_prefix(idx);
@@ -153,8 +145,7 @@ Node parse(std::string_view& sv) {
   while (true) {
     LOG(sv.substr(0, 100));
     rmws(sv);
-    if (sv.empty())
-      break;
+    if (sv.empty()) break;
     if (sv[0] == '}') {
       sv.remove_prefix(1);
       break;
@@ -189,10 +180,8 @@ Def normalize(Node&& node) {
   { // name
     auto it = std::ranges::find_if(node.elems, [](auto&& el) {
       auto ptr = std::get_if<CommArg>(&el);
-      if (ptr == nullptr)
-        return false;
-      if (ptr->comm != "nontermdef")
-        return false;
+      if (ptr == nullptr) return false;
+      if (ptr->comm != "nontermdef") return false;
       return true;
     });
     assert(it != node.elems.end());
@@ -204,8 +193,7 @@ Def normalize(Node&& node) {
   { // vars
     auto br = [](auto&& var) {
       auto ptr = std::get_if<Comm>(&var);
-      if (ptr == nullptr)
-        return false;
+      if (ptr == nullptr) return false;
       return ptr->comm == "br";
     };
     for (auto it = std::ranges::find_if(node.elems, br); it != node.elems.end();) {
@@ -235,13 +223,11 @@ void print_terminal_components(auto&& el, bool& first) {
   std::visit(
     [&]<typename T>(const T& x) {
       if constexpr (std::same_as<T, Text>) {
-        if (!first)
-          std::cout << ", ";
+        if (!first) std::cout << ", ";
         first = false;
         std::cout << "\"" << x.text << "\"";
       } else if constexpr (std::same_as<T, Comm>) {
-        if (!first)
-          std::cout << ", ";
+        if (!first) std::cout << ", ";
         first = false;
         if (x.comm == "#") {
           std::cout << "\"" << x.comm << "\"";
@@ -254,26 +240,24 @@ void print_terminal_components(auto&& el, bool& first) {
           assert(x.arg.elems.size() == 1);
           auto y = std::get_if<Text>(&x.arg.elems[0]);
           assert(y);
-          if (!first)
-            std::cout << ", ";
+          if (!first) std::cout << ", ";
           first = false;
           std::cout << "\"__" << y->text << "\"";
         } else if (x.comm == "mname") {
           assert(x.arg.elems.size() == 1);
           auto y = std::get_if<Text>(&x.arg.elems[0]);
           assert(y);
-          if (!first)
-            std::cout << ", ";
+          if (!first) std::cout << ", ";
           first = false;
           std::cout << "\"__" << y->text << "__\"";
         } else {
           LOG(x);
           assert(false);
         }
-      } else
-        static_assert(false);
+      } else static_assert(false);
     },
-    el);
+    el
+  );
 }
 
 void print_single(auto&& el) {
@@ -300,25 +284,23 @@ void print_single(auto&& el) {
           auto y = std::get_if<Text>(&x.arg.elems[0]);
           assert(y);
           std::cout << "Keyword<\"" << y->text << "\">";
-        } else
-          std::cout << x;
-      } else
-        static_assert(false);
+        } else std::cout << x;
+      } else static_assert(false);
     },
-    el);
+    el
+  );
 }
 
 std::vector<Def> parse_file(ivl::str::NullStringView path) {
   ivl::fs::FileView fv(path);
   auto              span = fv.get_remaining();
-  std::string_view  sv {(const char*)span.data(), span.size()};
+  std::string_view  sv{(const char*)span.data(), span.size()};
 
   std::vector<Def> defs;
 
   while (true) {
     auto begin = sv.find(BEGIN);
-    if (begin == sv.npos)
-      break;
+    if (begin == sv.npos) break;
     begin += BEGIN.size();
     auto end = sv.find(END, begin);
     assert(end != sv.npos);
@@ -350,25 +332,22 @@ int main() {
 
   std::cout << std::endl;
 
-  std::set<std::string> skip {"lparen", "new-line", "h-preprocessing-token"};
+  std::set<std::string> skip{"lparen", "new-line", "h-preprocessing-token"};
 
   for (auto&& def : defs) {
-    if (skip.contains(def.name))
-      continue;
+    if (skip.contains(def.name)) continue;
     std::cout << "struct " << camel_case(def.name) << " {" << std::endl;
     std::cout << "  std::unique_ptr<" << std::endl;
     std::cout << "    " << "std::variant<";
     bool first = true;
     for (auto&& var : def.vars) {
-      if (!first)
-        std::cout << ",";
+      if (!first) std::cout << ",";
       first = false;
       std::cout << std::endl;
       std::cout << "      " << "std::tuple<";
       bool first = true;
       for (auto&& el : var.elems) {
-        if (!first)
-          std::cout << ",";
+        if (!first) std::cout << ",";
         first = false;
         std::cout << std::endl;
         std::cout << "        ";

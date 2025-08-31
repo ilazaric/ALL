@@ -4,8 +4,8 @@
 #include <array>
 #include <cstdint>
 
-#include "util.hpp"
 #include <ivl/io/stlutils.hpp>
+#include "util.hpp"
 
 namespace ivl::nt {
 
@@ -21,30 +21,28 @@ namespace ivl::nt {
     // probably also for some CRT stuff in the future
     // TODO: maybe require relatively prime?
     static_assert([] {
-      std::array<std::uint32_t, sizeof...(Mods)> arr {Mods...};
+      std::array<std::uint32_t, sizeof...(Mods)> arr{Mods...};
       std::ranges::sort(arr);
       // could use `adjacent<2>` if C++23
       for (auto idx : std::views::iota(1_u32, arr.size()))
-        if (arr[idx] == arr[idx - 1])
-          return false;
+        if (arr[idx] == arr[idx - 1]) return false;
       return true;
     }());
 
-    static constexpr std::array<std::uint32_t, sizeof...(Mods)> ModsArray {Mods...};
+    static constexpr std::array<std::uint32_t, sizeof...(Mods)> ModsArray{Mods...};
 
     template <std::uint32_t arg>
-    static constexpr std::uint32_t ModIndex =
-      std::distance(ModsArray.begin(), std::ranges::find(ModsArray, arg));
+    static constexpr std::uint32_t ModIndex = std::distance(ModsArray.begin(), std::ranges::find(ModsArray, arg));
 
     std::array<std::uint32_t, sizeof...(Mods)> data;
 
     constexpr auto operator<=>(const MultiMint&) const = default;
 
-    constexpr MultiMint() : data {} {}
+    constexpr MultiMint() : data{} {}
 
     // hopefully compiler recognises stupidity of this and only mods once
     constexpr MultiMint(std::integral auto arg)
-        : data {static_cast<std::uint32_t>(arg % Mods < 0 ? arg % Mods + Mods : arg % Mods)...} {}
+        : data{static_cast<std::uint32_t>(arg % Mods < 0 ? arg % Mods + Mods : arg % Mods)...} {}
 
     // constexpr MultiMint(std::integral auto ... args) requires(sizeof...(args) != 1 &&
     // sizeof...(args) == sizeof...(Mods))
@@ -62,21 +60,23 @@ namespace ivl::nt {
 
     // TODO: should these really be crefs, not just values?
     friend constexpr MultiMint<Mods...> operator+(const MultiMint& a, const MultiMint& b) {
-      return MultiMint::unsafe_create({(a[ModIndex<Mods>] + b[ModIndex<Mods>] < Mods
-                                          ? a[ModIndex<Mods>] + b[ModIndex<Mods>]
-                                          : a[ModIndex<Mods>] + b[ModIndex<Mods>] - Mods)...});
+      return MultiMint::unsafe_create(
+        {(a[ModIndex<Mods>] + b[ModIndex<Mods>] < Mods ? a[ModIndex<Mods>] + b[ModIndex<Mods>]
+                                                       : a[ModIndex<Mods>] + b[ModIndex<Mods>] - Mods)...}
+      );
     }
 
     friend constexpr MultiMint<Mods...> operator-(const MultiMint& a, const MultiMint& b) {
-      return MultiMint::unsafe_create({(a[ModIndex<Mods>] >= b[ModIndex<Mods>]
-                                          ? a[ModIndex<Mods>] - b[ModIndex<Mods>]
-                                          : a[ModIndex<Mods>] - b[ModIndex<Mods>] + Mods)...});
+      return MultiMint::unsafe_create(
+        {(a[ModIndex<Mods>] >= b[ModIndex<Mods>] ? a[ModIndex<Mods>] - b[ModIndex<Mods>]
+                                                 : a[ModIndex<Mods>] - b[ModIndex<Mods>] + Mods)...}
+      );
     }
 
     friend constexpr MultiMint<Mods...> operator*(const MultiMint& a, const MultiMint& b) {
-      return MultiMint::unsafe_create(
-        {(static_cast<std::uint32_t>(static_cast<std::uint64_t>(a[ModIndex<Mods>]) *
-                                     static_cast<std::uint64_t>(b[ModIndex<Mods>]) % Mods))...});
+      return MultiMint::unsafe_create({(static_cast<std::uint32_t>(
+        static_cast<std::uint64_t>(a[ModIndex<Mods>]) * static_cast<std::uint64_t>(b[ModIndex<Mods>]) % Mods
+      ))...});
     }
 
     friend constexpr MultiMint<Mods...> operator/(const MultiMint& a, const MultiMint& b) {
@@ -103,9 +103,7 @@ namespace ivl::nt {
       return data[0];
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const MultiMint& x) {
-      return os << ivl::io::Elems {x.data};
-    }
+    friend std::ostream& operator<<(std::ostream& os, const MultiMint& x) { return os << ivl::io::Elems{x.data}; }
   };
 
 } // namespace ivl::nt

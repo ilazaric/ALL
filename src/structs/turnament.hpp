@@ -1,9 +1,9 @@
 #pragma once
 
+#include <ivl/util>
 #include <bit>
 #include <functional>
 #include <iterator>
-#include <ivl/util>
 #include <optional>
 #include <vector>
 
@@ -16,9 +16,8 @@ namespace ivl::structs {
     std::vector<T>             data;
 
     template <typename Rg, typename Pl = Plus>
-    Turnament(Rg&& rg, Pl&& plus = Pl {})
-        : plus(FWD(plus)), length(std::bit_ceil((std::size_t)std::ranges::distance(rg))),
-          data(length * 2) {
+    Turnament(Rg&& rg, Pl&& plus = Pl{})
+        : plus(FWD(plus)), length(std::bit_ceil((std::size_t)std::ranges::distance(rg))), data(length * 2) {
       std::size_t idx = 0;
       for (auto&& el : FWD(rg)) {
         data[length + idx++] = FWD(el);
@@ -43,11 +42,9 @@ namespace ivl::structs {
       // TODO: try some TMP unrolling
       while (true) {
         // TODO: kill opt, return hi
-        if (lo == hi)
-          return std::nullopt;
-        const auto bit_width =
-          std::min(std::countr_zero(side == Side::Left ? lo : hi), std::bit_width(hi - lo) - 1);
-        auto idx = ((side == Side::Left ? lo : hi - 1) + length) >> bit_width;
+        if (lo == hi) return std::nullopt;
+        const auto bit_width = std::min(std::countr_zero(side == Side::Left ? lo : hi), std::bit_width(hi - lo) - 1);
+        auto       idx       = ((side == Side::Left ? lo : hi - 1) + length) >> bit_width;
         if (pred(data[idx])) {
           // TODO: try to change into bit_width for-loop
           while (idx < length) {
@@ -57,10 +54,8 @@ namespace ivl::structs {
           }
           return idx - length;
         } else {
-          if constexpr (side == Side::Left)
-            lo += (1uz << bit_width);
-          else
-            hi -= (1uz << bit_width);
+          if constexpr (side == Side::Left) lo += (1uz << bit_width);
+          else hi -= (1uz << bit_width);
         }
       }
     }

@@ -1,6 +1,6 @@
-#include <complex>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
+#include <complex>
 #include <vector>
 
 using namespace std::literals::complex_literals;
@@ -18,10 +18,10 @@ std::vector<T> mul(const std::vector<T>& a, const std::vector<T>& b) {
   return out;
 }
 
-CPoly euler_basic {1, 1i};
+CPoly euler_basic{1, 1i};
 
 CPoly euler(uint32_t n) {
-  CPoly out {1};
+  CPoly out{1};
   for (uint32_t i = 0; i < n; ++i)
     out = mul(out, euler_basic);
   return out;

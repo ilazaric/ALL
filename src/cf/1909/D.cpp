@@ -16,10 +16,10 @@ using namespace ivl::logger::default_logger;
 
 int main() {
   for (auto ti : std::views::iota(0, (int)cin)) {
-    std::uint32_t             n {cin};
-    std::int64_t              k {cin};
+    std::uint32_t             n{cin};
+    std::int64_t              k{cin};
     std::vector<std::int64_t> a(n);
-    std::cin >> ivl::io::Elems {a};
+    std::cin >> ivl::io::Elems{a};
     for (auto& el : a)
       el -= k;
 
@@ -40,8 +40,7 @@ int main() {
       for (auto& el : a)
         el = -el;
 
-    auto g =
-      std::accumulate(a.begin(), a.end(), 0ULL, [](auto x, auto y) { return ivl::nt::gcd(x, y); });
+    auto g = std::accumulate(a.begin(), a.end(), 0ULL, [](auto x, auto y) { return ivl::nt::gcd(x, y); });
 
     // LOG(n, k, a, g);
 

@@ -4,7 +4,7 @@
 
 struct Node {
   uint64_t data;
-  Node* children[2]{};
+  Node*    children[2]{};
 };
 
 // users implement this

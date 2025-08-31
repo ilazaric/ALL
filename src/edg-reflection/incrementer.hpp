@@ -32,9 +32,7 @@ namespace ivl::refl {
       return classi;
     }
 
-    static consteval bool test(std::size_t a, std::size_t b) {
-      return not std::meta::is_incomplete_type(get(a, b));
-    }
+    static consteval bool test(std::size_t a, std::size_t b) { return not std::meta::is_incomplete_type(get(a, b)); }
 
     static consteval std::size_t find_first_unset() {
       std::size_t exp = 0;
@@ -42,8 +40,7 @@ namespace ivl::refl {
         ++exp;
       std::size_t res = 0;
       for (; exp != (std::size_t)-1; --exp)
-        if (test(res, exp))
-          res += (1ull << exp);
+        if (test(res, exp)) res += (1ull << exp);
       return res;
     }
 

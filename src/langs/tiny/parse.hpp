@@ -1,8 +1,8 @@
 #pragma once
 
+#include <ivl/util>
 #include "tokenize.hpp"
 #include <cstdint>
-#include <ivl/util>
 #include <memory>
 #include <stdexcept>
 #include <string>
@@ -78,8 +78,7 @@ namespace ivl::langs::tiny {
     }
     template <typename T>
     bool consume_if() {
-      if (!has<T>())
-        return false;
+      if (!has<T>()) return false;
       pop();
       return true;
     }
@@ -124,9 +123,7 @@ namespace ivl::langs::tiny {
   };
 
   struct Statement {
-    std::variant<LetStatement, AssignStatement, PrintStatement, IfStatement, WhileStatement,
-                 BlockStatement>
-      kind;
+    std::variant<LetStatement, AssignStatement, PrintStatement, IfStatement, WhileStatement, BlockStatement> kind;
   };
 
   template <>
@@ -135,8 +132,12 @@ namespace ivl::langs::tiny {
     Identifier identifier;
     while (!consume_if<identifier_end>()) {
       assert(!empty());
-      top().with(util::Overload {[&]<auto c>(identifier_char<c>) { identifier.name += c; },
-                                 [](auto&&) { throw std::runtime_error("??? identifier"); }});
+      top().with(
+        util::Overload{
+          [&]<auto c>(identifier_char<c>) { identifier.name += c; },
+          [](auto&&) { throw std::runtime_error("??? identifier"); }
+        }
+      );
       pop();
     }
     return identifier;
@@ -148,18 +149,16 @@ namespace ivl::langs::tiny {
   template <>
   ParenExpression ParserState::parse() {
     assert(consume_if<op_paren_open>());
-    util::AtScopeEnd _ {[&] { assert(consume_if<op_paren_close>()); }};
-    return ParenExpression {std::make_unique<Expression>(parse<Expression>())};
+    util::AtScopeEnd _{[&] { assert(consume_if<op_paren_close>()); }};
+    return ParenExpression{std::make_unique<Expression>(parse<Expression>())};
   }
 
   template <typename T, typename... Ops>
   T parse_generic_2(ParserState& state) {
     T ret;
     while (true) {
-      ret.expressions.emplace_back(
-        state.parse<std::remove_cvref_t<decltype(ret.expressions[0])>>());
-      if (!state.has<Ops...>())
-        break;
+      ret.expressions.emplace_back(state.parse<std::remove_cvref_t<decltype(ret.expressions[0])>>());
+      if (!state.has<Ops...>()) break;
       ret.operators.push_back(state.top());
       state.pop();
     }
@@ -168,26 +167,26 @@ namespace ivl::langs::tiny {
 
   template <>
   PrimaryExpression ParserState::parse() {
-    if (consume_if<kw_false>())
-      return PrimaryExpression {False {}};
-    if (consume_if<kw_true>())
-      return PrimaryExpression {True {}};
-    if (has<identifier_start>())
-      return PrimaryExpression {parse<Identifier>()};
+    if (consume_if<kw_false>()) return PrimaryExpression{False{}};
+    if (consume_if<kw_true>()) return PrimaryExpression{True{}};
+    if (has<identifier_start>()) return PrimaryExpression{parse<Identifier>()};
 
     if (consume_if<number_start>()) {
       Number number;
       while (!consume_if<number_end>()) {
         assert(!empty());
         top().with(
-          util::Overload {[&]<auto c>(number_digit<c>) { number.number = number.number * 10 + c; },
-                          [](auto&&) { throw std::runtime_error("??? number"); }});
+          util::Overload{
+            [&]<auto c>(number_digit<c>) { number.number = number.number * 10 + c; },
+            [](auto&&) { throw std::runtime_error("??? number"); }
+          }
+        );
         pop();
       }
-      return PrimaryExpression {number};
+      return PrimaryExpression{number};
     }
 
-    return PrimaryExpression {parse<ParenExpression>()};
+    return PrimaryExpression{parse<ParenExpression>()};
   }
 
   template <>
@@ -197,7 +196,7 @@ namespace ivl::langs::tiny {
       operators.push_back(top());
       pop();
     }
-    return UnaryExpression {operators, parse<PrimaryExpression>()};
+    return UnaryExpression{operators, parse<PrimaryExpression>()};
   }
 
   template <>
@@ -240,7 +239,7 @@ namespace ivl::langs::tiny {
 
   template <>
   Expression ParserState::parse() {
-    return Expression {parse<OrExpression>()};
+    return Expression{parse<OrExpression>()};
   };
 
   template <>
@@ -253,7 +252,7 @@ namespace ivl::langs::tiny {
     assert(consume_if<op_assign>());
     auto e = parse<Expression>();
     assert(consume_if<op_semicolon>());
-    return LetStatement {std::move(i), std::move(e)};
+    return LetStatement{std::move(i), std::move(e)};
   }
 
   template <>
@@ -262,7 +261,7 @@ namespace ivl::langs::tiny {
     assert(consume_if<op_assign>());
     auto e = parse<Expression>();
     assert(consume_if<op_semicolon>());
-    return AssignStatement {std::move(i), std::move(e)};
+    return AssignStatement{std::move(i), std::move(e)};
   }
 
   template <>
@@ -272,7 +271,7 @@ namespace ivl::langs::tiny {
     auto e = parse<Expression>();
     assert(consume_if<op_paren_close>());
     assert(consume_if<op_semicolon>());
-    return PrintStatement {std::move(e)};
+    return PrintStatement{std::move(e)};
   }
 
   template <>
@@ -283,9 +282,8 @@ namespace ivl::langs::tiny {
     assert(consume_if<op_paren_close>());
     auto                       tb = std::make_unique<Statement>(parse<Statement>());
     std::unique_ptr<Statement> fb;
-    if (consume_if<kw_else>())
-      fb = std::make_unique<Statement>(parse<Statement>());
-    return IfStatement {std::move(e), std::move(tb), std::move(fb)};
+    if (consume_if<kw_else>()) fb = std::make_unique<Statement>(parse<Statement>());
+    return IfStatement{std::move(e), std::move(tb), std::move(fb)};
   }
 
   template <>
@@ -295,7 +293,7 @@ namespace ivl::langs::tiny {
     auto e = parse<Expression>();
     assert(consume_if<op_paren_close>());
     auto b = std::make_unique<Statement>(parse<Statement>());
-    return WhileStatement {std::move(e), std::move(b)};
+    return WhileStatement{std::move(e), std::move(b)};
   }
 
   template <>
@@ -305,22 +303,17 @@ namespace ivl::langs::tiny {
     while (!consume_if<op_curly_close>()) {
       statements.emplace_back(parse<Statement>());
     }
-    return BlockStatement {std::move(statements)};
+    return BlockStatement{std::move(statements)};
   }
 
   template <>
   Statement ParserState::parse() {
-    if (has<kw_let>())
-      return Statement {parse<LetStatement>()};
-    if (has<kw_while>())
-      return Statement {parse<WhileStatement>()};
-    if (has<kw_if>())
-      return Statement {parse<IfStatement>()};
-    if (has<op_curly_open>())
-      return Statement {parse<BlockStatement>()};
-    if (has<kw_print>())
-      return Statement {parse<PrintStatement>()};
-    return Statement {parse<AssignStatement>()};
+    if (has<kw_let>()) return Statement{parse<LetStatement>()};
+    if (has<kw_while>()) return Statement{parse<WhileStatement>()};
+    if (has<kw_if>()) return Statement{parse<IfStatement>()};
+    if (has<op_curly_open>()) return Statement{parse<BlockStatement>()};
+    if (has<kw_print>()) return Statement{parse<PrintStatement>()};
+    return Statement{parse<AssignStatement>()};
   }
 
   struct Program {

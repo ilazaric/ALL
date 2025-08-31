@@ -23,12 +23,12 @@ namespace ivl::refl {
 
 consteval void getters_setters(std::string_view name, std::meta::info body) {
   queue_injection(^{
-    struct \id(name, "_getters_setters_detail"sv) { \tokens(body)};
+    struct \id(name, "_getters_setters_detail"sv){ \tokens(body)};
   });
 
   queue_injection(^{
     struct \id(name)
-        : \id(name, "_getters_setters_detail"sv) {
+        : \id(name, "_getters_setters_detail"sv){
           consteval {getters_setters_impl(^\id(name, "_getters_setters_detail"sv)); }
 };
 });

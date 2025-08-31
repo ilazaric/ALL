@@ -102,10 +102,8 @@ struct Frac {
 };
 
 std::ostream& operator<<(std::ostream& out, Frac f) {
-  if (f.num)
-    return out << f.num << "/" << f.den;
-  else
-    return out << 0;
+  if (f.num) return out << f.num << "/" << f.den;
+  else return out << 0;
 }
 
 /*
@@ -139,7 +137,7 @@ int main() {
 #endif
 #undef Frac
 
-  std::array<std::array<double, 5001>, 2501> fpre {};
+  std::array<std::array<double, 5001>, 2501> fpre{};
   {
     // fpre[1][0] = 0.5;
     // fpre[1][1] = 0;
@@ -148,17 +146,17 @@ int main() {
       fpre[row][0] = lam;
       fpre[row][1] = (2 * row - 2) * lam * fpre[row - 1][0];
       for (auto col : std::views::iota(2_u32, 2 * row))
-        fpre[row][col] = (col - 1) * lam * fpre[row - 1][col - 2] +
-                         (2 * row - 2 - col + 1) * lam * fpre[row - 1][col - 1];
+        fpre[row][col] =
+          (col - 1) * lam * fpre[row - 1][col - 2] + (2 * row - 2 - col + 1) * lam * fpre[row - 1][col - 1];
       // if (row <= 5) std::cout << Elems{std::span(fpre[row].data(), row*2)} << std::endl;
     }
   }
 
   // return 0;
 
-  for (auto ti : std::views::iota(0_u32, std::uint32_t {cin})) {
-    std::uint32_t                                        n {cin};
-    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges {cin};
+  for (auto ti : std::views::iota(0_u32, std::uint32_t{cin})) {
+    std::uint32_t                                        n{cin};
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges{cin};
 
     std::vector<std::vector<std::uint32_t>> outs(n);
     for (auto [x, y] : edges)
@@ -180,8 +178,7 @@ int main() {
       auto subview = indexed_view(probs, outs[idx]);
 
       if (outs[idx].size() % 2 == 1) {
-        probs[idx] =
-          std::accumulate(subview.begin(), subview.end(), 0.0) / (double)outs[idx].size();
+        probs[idx] = std::accumulate(subview.begin(), subview.end(), 0.0) / (double)outs[idx].size();
         continue;
       }
 

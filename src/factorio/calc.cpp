@@ -13,7 +13,7 @@ T& unmove(T&& t) {
 }
 
 // const json recipes = json::parse(std::ifstream{"recipes.json"});
-const json recipes = json::parse(std::ifstream {"factorio-recipes.json"});
+const json recipes = json::parse(std::ifstream{"factorio-recipes.json"});
 // const json all = json::parse(std::ifstream{"all.json"});
 
 int main() {

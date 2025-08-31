@@ -1,8 +1,8 @@
-#include <new>
 #include <cassert>
 #include <cstdlib>
-#include <unistd.h>
 #include <iostream>
+#include <new>
+#include <unistd.h>
 
 // int main(int argc, char** argv){
 //   // return 0;
@@ -16,7 +16,7 @@
 //   return 0;
 // }
 
-int main(){
+int main() {
   size_t size;
   std::cin >> size;
   auto memory = new char[size];

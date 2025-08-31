@@ -2,7 +2,7 @@
 
 template <unsigned N>
 struct fixed_string {
-  char buf[N + 1] {};
+  char buf[N + 1]{};
   consteval fixed_string(char const* s) {
     for (unsigned i = 0; i != N; ++i)
       buf[i] = s[i];
@@ -15,7 +15,7 @@ fixed_string(char const (&)[N]) -> fixed_string<N - 1>;
 
 template <fixed_string Str>
 struct storage {
-  inline static constexpr std::string_view sv {Str};
+  inline static constexpr std::string_view sv{Str};
   inline static constexpr bool             hasA = sv.find('A') != std::string_view::npos;
 };
 

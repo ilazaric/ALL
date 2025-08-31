@@ -23,12 +23,11 @@ using Mint                  = ivl::nt::MultiMint<Mod>;
 
 int main() {
   for (auto ti : std::views::iota(0, (int)cin)) {
-    std::vector<std::uint32_t> a {cin};
+    std::vector<std::uint32_t> a{cin};
     std::uint32_t              n = a.size();
     a.insert(a.begin(), 0);
 
-    if (a.back() != n)
-      goto label_zero;
+    if (a.back() != n) goto label_zero;
 
     {
       Mint out = 1;

@@ -5,7 +5,7 @@
 #include <ranges>
 
 void one() {
-  std::vector<int> vec {cin};
+  std::vector<int> vec{cin};
 
   LOG(vec);
 
@@ -19,7 +19,7 @@ void one() {
 }
 
 int main() {
-  for (int t {cin}; t--;) {
+  for (int t{cin}; t--;) {
     one();
   }
 

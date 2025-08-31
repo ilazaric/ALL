@@ -118,10 +118,10 @@ namespace ivl::alloc {
       using Word                                    = std::uint64_t;
       inline static constexpr std::size_t WordWidth = sizeof(Word) * CHAR_BIT;
       // small memory pessimization
-      inline static constexpr std::size_t FixedW        = std::bit_ceil(W);
-      inline static constexpr std::size_t ElemWidth     = 2 * FixedW;
-      inline static constexpr std::size_t TotalBitCount = N * ElemWidth;
-      inline static constexpr std::size_t WordCount = (TotalBitCount + WordWidth - 1) / WordWidth;
+      inline static constexpr std::size_t FixedW           = std::bit_ceil(W);
+      inline static constexpr std::size_t ElemWidth        = 2 * FixedW;
+      inline static constexpr std::size_t TotalBitCount    = N * ElemWidth;
+      inline static constexpr std::size_t WordCount        = (TotalBitCount + WordWidth - 1) / WordWidth;
       inline static constexpr std::size_t ElemCountPerWord = WordWidth / ElemWidth;
 
       std::array<Word, WordCount> words;
@@ -246,8 +246,7 @@ namespace ivl::alloc {
     template <std::size_t Level, bool Kind>
     void modify_prefix(std::uint32_t idx, std::uint32_t leftlen) {
       if constexpr (Level == 0) {
-        if (leftlen)
-          modify_single<0, Kind>(idx);
+        if (leftlen) modify_single<0, Kind>(idx);
         refresh_upwards<1>(idx / 2);
       } else {
         if (leftlen >= (1u << (Level - 1))) {
@@ -268,8 +267,7 @@ namespace ivl::alloc {
           return idx << Level;
         }
         if constexpr (Level != 0) {
-          return take_impl<Level - 1>(
-            idx * 2 + (std::get<Level - 1>(data).load(idx * 2).second < reqlen), reqlen);
+          return take_impl<Level - 1>(idx * 2 + (std::get<Level - 1>(data).load(idx * 2).second < reqlen), reqlen);
         } else {
           return -1;
         }
@@ -281,8 +279,7 @@ namespace ivl::alloc {
     }
 
     std::uint32_t take(std::uint32_t reqlen) {
-      if (std::get<std::countr_zero(LENGTH)>(data).load(0).second < reqlen)
-        return FAILURE;
+      if (std::get<std::countr_zero(LENGTH)>(data).load(0).second < reqlen) return FAILURE;
       return take_impl<std::countr_zero(LENGTH)>(0, reqlen);
     }
 
@@ -304,9 +301,7 @@ namespace ivl::alloc {
       }
     }
 
-    void give(std::uint32_t reqlen, std::uint32_t loc) {
-      give_impl<std::countr_zero(LENGTH)>(0, reqlen, loc);
-    }
+    void give(std::uint32_t reqlen, std::uint32_t loc) { give_impl<std::countr_zero(LENGTH)>(0, reqlen, loc); }
   };
 
 } // namespace ivl::alloc
@@ -387,22 +382,17 @@ namespace ivl::logger {
     char        instr          = 0;
     for (std::size_t idx = 0; idx < names.size(); ++idx) {
       if (!instr) {
-        if (names[idx] == ',' && openparencount == 0)
-          return idx;
-        if (names[idx] == '(' || names[idx] == '[' || names[idx] == '{')
-          ++openparencount;
-        if (names[idx] == ')' || names[idx] == ']' || names[idx] == '}')
-          --openparencount;
+        if (names[idx] == ',' && openparencount == 0) return idx;
+        if (names[idx] == '(' || names[idx] == '[' || names[idx] == '{') ++openparencount;
+        if (names[idx] == ')' || names[idx] == ']' || names[idx] == '}') --openparencount;
       }
       if (names[idx] == '\'' || names[idx] == '"') {
         if (!instr) {
           instr = names[idx];
           continue;
         }
-        if (instr != names[idx])
-          continue;
-        if (names[idx - 1] == '\\')
-          continue;
+        if (instr != names[idx]) continue;
+        if (names[idx - 1] == '\\') continue;
         instr = 0;
       }
     }
@@ -412,18 +402,15 @@ namespace ivl::logger {
   static_assert(find_comma("(,),x") == 3);
   static_assert(find_comma("',',x") == 3);
   static_assert(find_comma("\",\",x") == 3);
-  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") ==
-                std::string_view::npos);
+  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
 
   consteval void callback_names(std::string_view allnames, auto& callback) {
     while (true) {
       std::size_t      commaloc = find_comma(allnames);
       std::string_view name     = allnames.substr(0, commaloc);
-      if (name.starts_with(' '))
-        name = name.substr(1);
+      if (name.starts_with(' ')) name = name.substr(1);
       callback(name);
-      if (commaloc == std::string_view::npos)
-        return;
+      if (commaloc == std::string_view::npos) return;
       allnames = allnames.substr(commaloc + 1);
     }
   }
@@ -452,7 +439,7 @@ namespace ivl::logger {
   // a string that can be passed via template args
   template <unsigned N>
   struct fixed_string {
-    char buf[N + 1] {};
+    char buf[N + 1]{};
     consteval fixed_string(char const* s) {
       for (unsigned i = 0; i != N; ++i)
         buf[i] = s[i];
@@ -471,14 +458,15 @@ namespace ivl::logger {
 
   template <fixed_string T>
   struct name_storage {
-    inline static constexpr std::string_view allnames {(const char*)T, length((const char*)T)};
-    inline static constexpr std::size_t      namecount {count_names(allnames)};
-    inline static constexpr auto             names {generate_names<namecount>(allnames)};
+    inline static constexpr std::string_view allnames{(const char*)T, length((const char*)T)};
+    inline static constexpr std::size_t      namecount{count_names(allnames)};
+    inline static constexpr auto             names{generate_names<namecount>(allnames)};
   };
 
   // a std::source_location that can be passed via template args
-  template <std::uint_least32_t linet, // std::uint_least32_t columnt,
-            fixed_string file_namet, fixed_string function_namet>
+  template <
+    std::uint_least32_t linet, // std::uint_least32_t columnt,
+    fixed_string file_namet, fixed_string function_namet>
   struct fixed_source_location {
     inline constexpr static auto line = linet;
     // constexpr static inline auto column = columnt;
@@ -502,14 +490,14 @@ namespace ivl::logger {
       template <typename... Args>
       [[maybe_unused]] static decltype(auto) print(Args&&... args) {
         static_assert(NS::namecount == sizeof...(Args));
-        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line
-                  << "):";
+        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
         std::size_t index = 0;
         ( // should be easy to inline
           [](std::size_t& index, const Args& arg) {
             std::cerr << " " << NS::names[index++] << "=" << (arg);
           }(index, args),
-          ...);
+          ...
+        );
         std::cerr << std::endl;
         // this makes `LOG` usable as a wrapper around sub-expressions
         // wrapper around `std::forward` due to `[[nodiscard]]`
@@ -523,9 +511,9 @@ namespace ivl::logger {
 } // namespace ivl::logger
 
 #ifdef IVL_LOCAL
-#define LOG(...)                                                                                   \
-  logger_hook<                                                                                     \
-    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                     \
+#define LOG(...)                                                                                                       \
+  logger_hook<                                                                                                         \
+    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                                         \
     ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>>::print(__VA_ARGS__)
 #else
 #define LOG(...) (ivl::logger::discardable_forward_last(__VA_ARGS__))
@@ -545,27 +533,25 @@ using namespace ivl::logger::default_logger;
 
 #if __has_include(<stacktrace>)
 #include <stacktrace>
-#define IVL_DBG_ASSERT_STACKTRACE                                                                  \
-  std::cerr << "[IVL] stacktrace:\n" << std::stacktrace::current() << "\n"
+#define IVL_DBG_ASSERT_STACKTRACE std::cerr << "[IVL] stacktrace:\n" << std::stacktrace::current() << "\n"
 #elif __has_include(<boost/stacktrace.hpp>)
 #include <boost/stacktrace.hpp>
-#define IVL_DBG_ASSERT_STACKTRACE                                                                  \
-  std::cerr << "[IVL] stacktrace:\n" << boost::stacktrace::stacktrace() << "\n"
+#define IVL_DBG_ASSERT_STACKTRACE std::cerr << "[IVL] stacktrace:\n" << boost::stacktrace::stacktrace() << "\n"
 #else
 #define IVL_DBG_ASSERT_STACKTRACE
 #endif
 
 #include <iostream>
-#define IVL_DBG_ASSERT(expr, ...)                                                                  \
-  do {                                                                                             \
-    if (!(expr)) [[unlikely]] {                                                                    \
-      std::cerr << "[IVL] ERROR: ASSERTION FAILED\n"                                               \
-                << "[IVL] LINE: " << __LINE__ << "\n"                                              \
-                << "[IVL] EXPR: " << #expr << "\n";                                                \
-      IVL_DBG_ASSERT_STACKTRACE;                                                                   \
-      LOG("data" __VA_OPT__(, ) __VA_ARGS__);                                                      \
-      exit(-1);                                                                                    \
-    }                                                                                              \
+#define IVL_DBG_ASSERT(expr, ...)                                                                                      \
+  do {                                                                                                                 \
+    if (!(expr)) [[unlikely]] {                                                                                        \
+      std::cerr << "[IVL] ERROR: ASSERTION FAILED\n"                                                                   \
+                << "[IVL] LINE: " << __LINE__ << "\n"                                                                  \
+                << "[IVL] EXPR: " << #expr << "\n";                                                                    \
+      IVL_DBG_ASSERT_STACKTRACE;                                                                                       \
+      LOG("data" __VA_OPT__(, ) __VA_ARGS__);                                                                          \
+      exit(-1);                                                                                                        \
+    }                                                                                                                  \
   } while (false)
 
 #else // IVL_DBG_MODE
@@ -612,17 +598,18 @@ namespace ivl::alloc {
       // using pointer = Pointer;
       // TODO: should this be a proxy that is convertible to T& ?
       // contiguous_iterator concept seems to indicate "NO"
-      using reference = std::add_lvalue_reference_t<std::conditional_t<std::is_void_v<T>, int, T>>;
+      using reference         = std::add_lvalue_reference_t<std::conditional_t<std::is_void_v<T>, int, T>>;
       using iterator_category = std::random_access_iterator_tag;
       using iterator_concept  = std::contiguous_iterator_tag;
 
       static Pointer pointer_to(reference r) {
         auto    ri = reinterpret_cast<std::uintptr_t>(&r);
-        Pointer out {};
+        Pointer out{};
         auto    zi = reinterpret_cast<std::uintptr_t>(Traits::storage.data());
-        IVL_DBG_ASSERT(ri >= zi && ri < zi + Traits::storage.size() &&
-                         "bad reference, not from our alloc",
-                       zi, ri, zi + Traits::storage.size(), &r);
+        IVL_DBG_ASSERT(
+          ri >= zi && ri < zi + Traits::storage.size() && "bad reference, not from our alloc", zi, ri,
+          zi + Traits::storage.size(), &r
+        );
         auto delta = ri - zi;
         out.offset += delta;
         return out;
@@ -639,8 +626,7 @@ namespace ivl::alloc {
       Pointer(std::nullptr_t) : offset(0) {}
 
       template <typename U>
-        requires(!std::is_same_v<T, U> && isConst >= std::is_const_v<U> &&
-                 isVoid >= std::is_void_v<U>)
+        requires(!std::is_same_v<T, U> && isConst >= std::is_const_v<U> && isVoid >= std::is_void_v<U>)
       Pointer(Pointer<U, Traits> p) : offset(p.offset) {}
 
       // oof :'(
@@ -719,8 +705,7 @@ namespace ivl::alloc {
       using pointer = Pointer<void, Traits>;
 
       // -1 bc first chunk is not used bc nullptr lives there
-      using segment_tree_type =
-        SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size>;
+      using segment_tree_type = SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size>;
 
       static std::uint32_t chunk_count(std::uint32_t n) {
         return (n + Traits::segment_tree_chunk_size - 1) / Traits::segment_tree_chunk_size;
@@ -733,7 +718,8 @@ namespace ivl::alloc {
         static_assert(sizeof(segment_tree_type) < Traits::storage.size());
         // xD i suppose
         auto ptr = std::construct_at<segment_tree_type>(
-          static_cast<segment_tree_type*>(static_cast<void*>(Traits::storage.data())));
+          static_cast<segment_tree_type*>(static_cast<void*>(Traits::storage.data()))
+        );
         // this is kinda cute tbh
         ptr->take(chunk_count(sizeof(segment_tree_type)));
         return *ptr;
@@ -744,7 +730,7 @@ namespace ivl::alloc {
       static pointer segment_tree_allocate(std::uint32_t n) {
         auto alloc = segment_tree.take(chunk_count(n));
         if (alloc == segment_tree_type::FAILURE) [[unlikely]] {
-          throw std::bad_alloc {};
+          throw std::bad_alloc{};
         }
         pointer out;
         out.offset = alloc * Traits::segment_tree_chunk_size;
@@ -756,7 +742,7 @@ namespace ivl::alloc {
         segment_tree.give(x, chunk_count(n));
       }
 
-      inline static std::array<pointer, Traits::free_list_limit + 1> free_list_heads {};
+      inline static std::array<pointer, Traits::free_list_limit + 1> free_list_heads{};
 
       static pointer free_list_allocate(std::uint32_t n) {
         pointer& head = free_list_heads[n];
@@ -873,33 +859,37 @@ namespace ivl::alloc {
 
 #ifdef __unix__
       fprintf(stderr, "IVL: linux\n");
-      void* mmap_ret = mmap(base_ptr, Size, PROT_READ | PROT_WRITE,
-                            MAP_PRIVATE |
-                              MAP_ANONYMOUS
-                              //| MAP_HUGETLB// | MAP_HUGE_2MB
-                              | MAP_FIXED_NOREPLACE,
-                            -1, 0);
+      void* mmap_ret = mmap(
+        base_ptr, Size, PROT_READ | PROT_WRITE,
+        MAP_PRIVATE |
+          MAP_ANONYMOUS
+          //| MAP_HUGETLB// | MAP_HUGE_2MB
+          | MAP_FIXED_NOREPLACE,
+        -1, 0
+      );
       if (mmap_ret == MAP_FAILED) {
         auto copy = errno;
         perror("mmap");
         fprintf(stderr, "ERR: %s\n", strerror(copy));
         fprintf(stderr, "ERR: %s\n", strerrorname_np(copy));
-        fprintf(stderr,
-                "ERR: maybe set /proc/sys/vm/overcommit_memory to 1 if size > total memory\n");
+        fprintf(stderr, "ERR: maybe set /proc/sys/vm/overcommit_memory to 1 if size > total memory\n");
         throw std::runtime_error("failed to secure storage");
       }
 #endif
 
 #ifdef _WIN32
       fprintf(stderr, "IVL: windows\n");
-      auto handle =
-        CreateFileMappingA(INVALID_HANDLE_VALUE, nullptr,
-                           PAGE_READWRITE | SEC_COMMIT, // | SEC_LARGE_PAGES | SEC_COMMIT,
-                           (std::uint32_t)(Size >> 32), (std::uint32_t)Size, nullptr);
+      auto handle = CreateFileMappingA(
+        INVALID_HANDLE_VALUE, nullptr,
+        PAGE_READWRITE | SEC_COMMIT, // | SEC_LARGE_PAGES | SEC_COMMIT,
+        (std::uint32_t)(Size >> 32), (std::uint32_t)Size, nullptr
+      );
       assert(handle);
-      auto ret = MapViewOfFileEx(handle,
-                                 FILE_MAP_WRITE, // | FILE_MAP_LARGE_PAGES,
-                                 0, 0, 0, reinterpret_cast<LPVOID>(Location));
+      auto ret = MapViewOfFileEx(
+        handle,
+        FILE_MAP_WRITE, // | FILE_MAP_LARGE_PAGES,
+        0, 0, 0, reinterpret_cast<LPVOID>(Location)
+      );
       assert(ret);
       assert(reinterpret_cast<std::uintptr_t>(ret) == Location);
 #endif
@@ -942,9 +932,9 @@ struct DynArray {
 struct AllocTraits {
   // inline static DynArray<(128ULL<<20)> storage;
   inline static ivl::alloc::MmapFixedStorage<0x0000'0300'0000'0000, (128ULL << 20)> storage;
-  static constexpr std::size_t segment_tree_chunk_size = 64;
-  static constexpr std::size_t free_list_limit         = 256;
-  static constexpr std::size_t free_list_steal_coef    = 64;
+  static constexpr std::size_t                                                      segment_tree_chunk_size = 64;
+  static constexpr std::size_t                                                      free_list_limit         = 256;
+  static constexpr std::size_t                                                      free_list_steal_coef    = 64;
 };
 
 struct AllocDynTraits {

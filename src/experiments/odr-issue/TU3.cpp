@@ -1,4 +1,2 @@
 int fn();
-int main() {
-  return fn();
-}
+int main() { return fn(); }

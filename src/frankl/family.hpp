@@ -35,26 +35,25 @@ struct Family : Underlying<N> {
     std::size_t operator*() const { return idx; }
   };
 
-  auto begin() { return ++Iterator {this, -1uz}; }
-  auto end() { return Iterator {this, (1uz << N)}; }
+  auto begin() { return ++Iterator{this, -1uz}; }
+  auto end() { return Iterator{this, (1uz << N)}; }
 
-  auto begin() const { return ++Iterator {this, -1uz}; }
-  auto end() const { return Iterator {this, (1uz << N)}; }
+  auto begin() const { return ++Iterator{this, -1uz}; }
+  auto end() const { return Iterator{this, (1uz << N)}; }
 };
 
 template <std::size_t N>
 bool compatible(const Family<N>& a, const Family<N>& b) {
   for (auto ai : a)
     for (auto bi : b)
-      if (!b.test(ai | bi))
-        return false;
+      if (!b.test(ai | bi)) return false;
   return true;
 }
 
 template <std::size_t N>
 std::vector<Family<N>> generate() {
   if constexpr (N == 0) {
-    return {Family<0> {}, Family<0> {1}};
+    return {Family<0>{}, Family<0>{1}};
   } else {
     auto                   smaller = generate<N - 1>();
     std::vector<Family<N>> out;
@@ -84,8 +83,7 @@ std::ostream& operator<<(std::ostream& out, const Family<N>& f) {
       continue;
     }
     for (std::size_t idx = 0; idx < N; ++idx)
-      if (set & (1uz << idx))
-        out << (char)('a' + idx);
+      if (set & (1uz << idx)) out << (char)('a' + idx);
     out << " ";
   }
   out << "}";

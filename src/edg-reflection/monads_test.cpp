@@ -31,13 +31,10 @@ void test2() {
 
 consteval bool haha() {
   auto i = ^Vec<S>;
-  if (bases_of(i).size() != 1)
-    return false;
+  if (bases_of(i).size() != 1) return false;
   auto j = type_of(bases_of(i)[0]);
-  if (j != ^std::vector<S>)
-    return false;
-  if (bases_of(j).size() > 5)
-    return false;
+  if (j != ^std::vector<S>) return false;
+  if (bases_of(j).size() > 5) return false;
   return true;
 }
 

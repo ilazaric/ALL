@@ -10,8 +10,8 @@ struct S {
 };
 
 constexpr bool fn() {
-  T t {12};
-  S s {.x = t};
+  T t{12};
+  S s{.x = t};
   return s.x.x == s.y.x;
 }
 

@@ -16,8 +16,8 @@ using namespace ivl::logger::default_logger;
 int main() {
   std::ios_base::sync_with_stdio(false);
 
-  for (auto ti : std::views::iota(0_u32, std::uint32_t {cin})) {
-    std::uint32_t a {cin}, b {cin}, c {cin}, d {cin}, m {cin};
+  for (auto ti : std::views::iota(0_u32, std::uint32_t{cin})) {
+    std::uint32_t a{cin}, b{cin}, c{cin}, d{cin}, m{cin};
 
     {
       bool                         early_fail = false;
@@ -37,8 +37,7 @@ int main() {
           values[code] = value;
           interesting_bit_indices.push_back(idx);
         }
-        if (values[code] != value)
-          early_fail = true;
+        if (values[code] != value) early_fail = true;
       }
 
       if (early_fail) {
@@ -79,10 +78,8 @@ int main() {
         bool          mbit  = ((m >> idx) & 1);
         std::uint32_t code  = 4 * xbit + 2 * ybit + mbit;
         std::uint32_t value = 2 * cbit + dbit;
-        if (values[code] == dead_value)
-          values[code] = value;
-        if (values[code] != value)
-          return false;
+        if (values[code] == dead_value) values[code] = value;
+        if (values[code] != value) return false;
       }
       return true;
     };
@@ -98,10 +95,8 @@ int main() {
     bool                                                found_target = false;
 
     auto add = [&](std::uint32_t x, std::uint32_t y) {
-      if (!could_reach(x, y))
-        return;
-      if (seen[(x << 8) | y])
-        return;
+      if (!could_reach(x, y)) return;
+      if (seen[(x << 8) | y]) return;
       seen[(x << 8) | y] = true;
       Q2.emplace(x, y);
     };
@@ -126,17 +121,13 @@ int main() {
 
       // LOG(x, y);
 
-      if ((x & y) != x)
-        add(x & y, y);
-      if ((x | y) != x)
-        add(x | y, y);
+      if ((x & y) != x) add(x & y, y);
+      if ((x | y) != x) add(x | y, y);
       add(x, x ^ y);
       add(x, y ^ m);
     }
 
-    if (found_target)
-      std::cout << curr_dist << std::endl;
-    else
-      std::cout << -1 << std::endl;
+    if (found_target) std::cout << curr_dist << std::endl;
+    else std::cout << -1 << std::endl;
   }
 }

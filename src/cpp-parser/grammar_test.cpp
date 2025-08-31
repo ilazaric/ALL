@@ -1,17 +1,17 @@
-#include "grammar_utils.hpp"
 #include <ivl/logger>
 #include <ivl/util>
+#include "grammar_utils.hpp"
 
 using namespace ivl;
 using namespace cppp;
 using namespace grammar;
 
-#define STR(type, str)                                                                             \
-  struct type {                                                                                    \
-    static Result<type> try_parse(std::string_view sv) {                                           \
-      return sv.starts_with(str) ? Result<type> {Consumed {type {}, std::string_view(str).size()}} \
-                                 : Result<type> {std::unexpected("not " str "?")};                 \
-    }                                                                                              \
+#define STR(type, str)                                                                                                 \
+  struct type {                                                                                                        \
+    static Result<type> try_parse(std::string_view sv) {                                                               \
+      return sv.starts_with(str) ? Result<type>{Consumed{type{}, std::string_view(str).size()}}                        \
+                                 : Result<type>{std::unexpected("not " str "?")};                                      \
+    }                                                                                                                  \
   }
 
 STR(Hello, "hello");
@@ -31,10 +31,8 @@ void attempt(std::string_view sv) {
   LOG(sv);
   auto bla = T::try_parse(sv);
   LOG((bool)bla);
-  if (bla)
-    LOG(bla.value().consumed);
-  else
-    LOG(bla.error());
+  if (bla) LOG(bla.value().consumed);
+  else LOG(bla.error());
   std::cerr << std::endl;
 }
 

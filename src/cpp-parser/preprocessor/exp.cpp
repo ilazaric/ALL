@@ -5,17 +5,12 @@ struct Var {};
 
 // Var<> is problematic
 
-void consume(auto&&) {
-}
+void consume(auto&&) {}
 
 template <typename... Ts>
-void consume(const Var<Ts...>&) {
-}
+void consume(const Var<Ts...>&) {}
 
 template <typename = void>
-void noop() {
-}
+void noop() {}
 
-int main() {
-  consume(&noop);
-}
+int main() { consume(&noop); }

@@ -29,8 +29,11 @@ namespace ivl::refl {
     static consteval std::meta::info map() {
       std::size_t idx  = Inc::get();
       auto        idxi = std::meta::reflect_value(idx);
-      return std::meta::substitute(^Map, {
-                                           idxi});
+      return std::meta::substitute(
+        ^Map, {
+                idxi
+              }
+      );
     }
 
   public:
@@ -44,8 +47,11 @@ namespace ivl::refl {
     static consteval void store(std::meta::info i) {
       Inc::advance();
       auto mapi    = map();
-      auto wrapper = std::meta::substitute(^Data, {
-                                                    std::meta::reflect_value(i)});
+      auto wrapper = std::meta::substitute(
+        ^Data, {
+                 std::meta::reflect_value(i)
+               }
+      );
       std::meta::define_class(mapi, {std::meta::nsdm_description(wrapper)});
     }
   };

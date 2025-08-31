@@ -53,9 +53,9 @@ constexpr Mint P = 13337;
 int main() {
   std::ios_base::sync_with_stdio(false);
 
-  std::uint32_t    n {cin}, m {cin};
-  std::string      sdata {cin}, tdata {cin};
-  std::string_view s {sdata}, t {tdata};
+  std::uint32_t    n{cin}, m{cin};
+  std::string      sdata{cin}, tdata{cin};
+  std::string_view s{sdata}, t{tdata};
 
   {
     auto prefix = common_prefix(s, t);
@@ -87,9 +87,7 @@ int main() {
   for (auto i : std::views::iota(0_u32, t.size()))
     Ppows[i + 1] = Ppows[i] * P;
 
-  auto shash = [&](std::uint32_t lo, std::uint32_t hi) {
-    return shashes[hi] - shashes[lo] * Ppows[hi - lo];
-  };
+  auto shash = [&](std::uint32_t lo, std::uint32_t hi) { return shashes[hi] - shashes[lo] * Ppows[hi - lo]; };
 
   std::size_t sol = 0;
 
@@ -98,12 +96,10 @@ int main() {
 
   auto test_len = [&](std::uint32_t ylen) {
     LOG(ylen);
-    if (ylen > s.size())
-      return;
+    if (ylen > s.size()) return;
 
     // #y-periodic test
-    if (shash(0, s.size() - ylen) != shash(ylen, s.size()))
-      return;
+    if (shash(0, s.size() - ylen) != shash(ylen, s.size())) return;
     LOG(ylen);
 
     std::uint32_t rep = (t.size() - s.size()) / ylen;
@@ -114,16 +110,14 @@ int main() {
     LOG((std::uint32_t)hash);
     LOG((std::uint32_t)thash);
 
-    if (hash == thash)
-      sol += s.size() - ylen + 1;
+    if (hash == thash) sol += s.size() - ylen + 1;
   };
 
   std::uint32_t delta = t.size() - s.size();
   for (std::uint32_t d = 1; d * d <= delta; ++d)
     if (delta % d == 0) {
       test_len(d);
-      if (delta / d != d)
-        test_len(delta / d);
+      if (delta / d != d) test_len(delta / d);
     }
 
   std::cout << sol << std::endl;

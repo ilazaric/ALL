@@ -25,29 +25,26 @@ int main() {
           for (auto j = i; j <= n; j += i)
             divs[j] ^= 1;
       auto cnt = std::ranges::count(divs, 1);
-      if (cnt <= n / 5)
-        valid_masks[n].push_back(mask);
+      if (cnt <= n / 5) valid_masks[n].push_back(mask);
     }
 
   for (auto ti : std::views::iota(0, (int)cin)) {
-    std::uint32_t                                        n {cin};
-    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges {cin};
+    std::uint32_t                                        n{cin};
+    std::vector<std::pair<std::uint32_t, std::uint32_t>> edges{cin};
 
     if (n >= valid_masks.size()) {
       std::cout << n << std::endl;
-      std::cout << ivl::io::Elems {std::views::iota(1_u32, n + 1)} << std::endl;
+      std::cout << ivl::io::Elems{std::views::iota(1_u32, n + 1)} << std::endl;
       continue;
     }
 
     for (auto mask : valid_masks[n]) {
       for (auto [x, y] : edges)
-        if ((mask & (1_u32 << (x - 1))) && !(mask & (1_u32 << (y - 1))))
-          goto label_mask_failure;
+        if ((mask & (1_u32 << (x - 1))) && !(mask & (1_u32 << (y - 1)))) goto label_mask_failure;
 
       std::cout << std::popcount(mask) << std::endl;
       for (auto i : std::views::iota(0_u32, n))
-        if (mask & (1_u32 << i))
-          std::cout << i + 1 << " ";
+        if (mask & (1_u32 << i)) std::cout << i + 1 << " ";
       std::cout << std::endl;
       goto label_success;
 

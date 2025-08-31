@@ -1,10 +1,10 @@
 #pragma once
 
+#include <ivl/util>
 #include "meta.hpp"
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <ivl/util>
 #include <ranges>
 #include <stdexcept>
 #include <string_view>
@@ -62,20 +62,17 @@ namespace ivl::langs::tiny {
   };
   template <auto L, auto R, template <auto> typename TT>
   struct tl_range {
-    using type =
-      meta::tl_concat<meta::tl<TT<L>>, typename tl_range<decltype(L)(L + 1), R, TT>::type>::type;
+    using type = meta::tl_concat<meta::tl<TT<L>>, typename tl_range<decltype(L)(L + 1), R, TT>::type>::type;
   };
 
   using kw_tokens = meta::tl<kw_let, kw_print, kw_if, kw_else, kw_while, kw_true, kw_false>;
 
-  using op_tokens =
-    meta::tl<op_or, op_and, op_eq, op_ne, op_le, op_lt, op_ge, op_gt, op_plus, op_minus, op_mul,
-             op_div, op_not, op_paren_open, op_paren_close, op_curly_open, op_curly_close,
-             op_semicolon, op_comma, op_mod, op_assign>;
+  using op_tokens = meta::tl<
+    op_or, op_and, op_eq, op_ne, op_le, op_lt, op_ge, op_gt, op_plus, op_minus, op_mul, op_div, op_not, op_paren_open,
+    op_paren_close, op_curly_open, op_curly_close, op_semicolon, op_comma, op_mod, op_assign>;
 
   // TODO: num 0-9 and lit 0-9 can be same
-  using number_tokens =
-    meta::tl_concat<meta::tl<number_start, number_end>, tl_range<0, 9, number_digit>::type>::type;
+  using number_tokens = meta::tl_concat<meta::tl<number_start, number_end>, tl_range<0, 9, number_digit>::type>::type;
 
   using identifier_tokens = meta::tl_concat<
     meta::tl<identifier_start, identifier_end>, tl_range<'a', 'z', identifier_char>::type,
@@ -83,8 +80,8 @@ namespace ivl::langs::tiny {
 
   struct not_a_token {};
 
-  using all_tokens = meta::tl_concat<meta::tl<not_a_token>, kw_tokens, op_tokens, number_tokens,
-                                     identifier_tokens>::type;
+  using all_tokens =
+    meta::tl_concat<meta::tl<not_a_token>, kw_tokens, op_tokens, number_tokens, identifier_tokens>::type;
 
   static_assert(meta::tl_length<all_tokens>::value < 256);
   static_assert(meta::tl_is_unique<all_tokens>::value);
@@ -111,8 +108,7 @@ namespace ivl::langs::tiny {
   struct Token {
     unsigned char index = 0;
 
-    explicit Token(const auto& arg)
-        : index(meta::tl_find<std::remove_cvref_t<decltype(arg)>, all_tokens>::value) {}
+    explicit Token(const auto& arg) : index(meta::tl_find<std::remove_cvref_t<decltype(arg)>, all_tokens>::value) {}
 
     template <typename T>
       requires(meta::tl_contains<T, all_tokens>::value)
@@ -124,14 +120,14 @@ namespace ivl::langs::tiny {
 
     decltype(auto) with(auto&& callable) const {
       return []<typename... Ts>(meta::tl<Ts...>, auto&& callable, unsigned char index) {
-        template for (constexpr auto tag : {meta::tag<Ts> {}...}) {
+        template for (constexpr auto tag : {meta::tag<Ts>{}...}) {
           if (index == meta::tl_find<typename decltype(tag)::type, all_tokens>::value) {
-            return FWD(callable)(typename decltype(tag)::type {});
+            return FWD(callable)(typename decltype(tag)::type{});
           }
         }
         throw std::runtime_error(util::str("bad index: ", index));
         std::unreachable();
-      }(all_tokens {}, FWD(callable), index);
+      }(all_tokens{}, FWD(callable), index);
       std::unreachable();
     }
   };
@@ -156,11 +152,11 @@ namespace ivl::langs::tiny {
       }
 
       // all ops
-#define X(str, type)                                                                               \
-  if (file.starts_with(str)) {                                                                     \
-    out.emplace_back(type {});                                                                     \
-    file.remove_prefix(std::string_view(str).size());                                              \
-    continue;                                                                                      \
+#define X(str, type)                                                                                                   \
+  if (file.starts_with(str)) {                                                                                         \
+    out.emplace_back(type{});                                                                                          \
+    file.remove_prefix(std::string_view(str).size());                                                                  \
+    continue;                                                                                                          \
   }
       X("||", op_or);
       X("&&", op_and);
@@ -187,21 +183,20 @@ namespace ivl::langs::tiny {
 
       // number
       if (isdigit(file[0])) {
-        out.emplace_back(number_start {});
+        out.emplace_back(number_start{});
         while (!file.empty() && isdigit(file[0])) {
           static constexpr auto rg = std::views::iota(0, 9 + 1);
           static_assert(std::ranges::size(rg) == 10);
           template for (constexpr auto c : rg) {
             if (file[0] - '0' == c) {
-              out.emplace_back(number_digit<c> {});
+              out.emplace_back(number_digit<c>{});
               file.remove_prefix(1);
               break;
             }
           }
         }
-        if (!file.empty() && isalpha(file[0]))
-          throw std::runtime_error("number + alpha");
-        out.emplace_back(number_end {});
+        if (!file.empty() && isalpha(file[0])) throw std::runtime_error("number + alpha");
+        out.emplace_back(number_end{});
         continue;
       }
 
@@ -209,12 +204,12 @@ namespace ivl::langs::tiny {
       assert(std::isalpha(file[0]));
 
       // keywords
-#define X(kw, type)                                                                                \
-  if (file.starts_with(kw) && (file.size() == std::string_view(kw).size() ||                       \
-                               !std::isalnum(file[std::string_view(kw).size()]))) {                \
-    out.emplace_back(type {});                                                                     \
-    file.remove_prefix(std::string_view(kw).size());                                               \
-    continue;                                                                                      \
+#define X(kw, type)                                                                                                    \
+  if (file.starts_with(kw) &&                                                                                          \
+      (file.size() == std::string_view(kw).size() || !std::isalnum(file[std::string_view(kw).size()]))) {              \
+    out.emplace_back(type{});                                                                                          \
+    file.remove_prefix(std::string_view(kw).size());                                                                   \
+    continue;                                                                                                          \
   }
       X("let", kw_let);
       X("print", kw_print);
@@ -225,21 +220,22 @@ namespace ivl::langs::tiny {
       X("false", kw_false);
 
       // only identifier makes sense now
-      out.emplace_back(identifier_start {});
+      out.emplace_back(identifier_start{});
       while (!file.empty() && std::isalnum(file[0])) {
-        static constexpr auto rg = std::views::concat(std::views::iota('a', (char)('z' + 1)),
-                                                      std::views::iota('A', (char)('Z' + 1)),
-                                                      std::views::iota('0', (char)('9' + 1)));
+        static constexpr auto rg = std::views::concat(
+          std::views::iota('a', (char)('z' + 1)), std::views::iota('A', (char)('Z' + 1)),
+          std::views::iota('0', (char)('9' + 1))
+        );
         static_assert(std::ranges::size(rg) == 62);
         template for (constexpr auto c : rg) {
           if (c == file[0]) {
-            out.emplace_back(identifier_char<c> {});
+            out.emplace_back(identifier_char<c>{});
             file.remove_prefix(1);
             break;
           }
         }
       }
-      out.emplace_back(identifier_end {});
+      out.emplace_back(identifier_end{});
     }
 
     return out;

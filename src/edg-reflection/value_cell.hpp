@@ -14,9 +14,7 @@ namespace ivl::refl {
   public:
     static consteval T load() { return std::meta::extract<T>(cell.load()); }
 
-    static consteval void store(T t) {
-      return cell.store(std::meta::reflect_value<T>(std::move(t)));
-    }
+    static consteval void store(T t) { return cell.store(std::meta::reflect_value<T>(std::move(t))); }
   };
 
 } // namespace ivl::refl

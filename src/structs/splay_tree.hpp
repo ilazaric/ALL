@@ -20,7 +20,7 @@ namespace ivl::structs {
       T          value;
       SplayTree  children[2];
       SplayTree* parent;
-      Node(auto&&... args) : value(std::forward<decltype(args)>(args)...), children {}, parent {} {}
+      Node(auto&&... args) : value(std::forward<decltype(args)>(args)...), children{}, parent{} {}
     };
 
     std::unique_ptr<Node> root;
@@ -41,12 +41,10 @@ namespace ivl::structs {
     ~SplayTree() = default;
 
     void fixup() noexcept {
-      if (empty())
-        return;
+      if (empty()) return;
       parent() = nullptr;
       for (auto s : {Side::Left, Side::Right})
-        if (child(s))
-          child(s).parent() = this;
+        if (child(s)) child(s).parent() = this;
     }
 
     bool     empty() const noexcept { return !root; }
@@ -62,8 +60,7 @@ namespace ivl::structs {
     void link(SplayTree&& new_child, Side side) {
       IVL_DBG_ASSERT(root);
       child(side) = std::move(new_child);
-      if (child(side))
-        child(side).parent() = this;
+      if (child(side)) child(side).parent() = this;
       refresh_state();
     }
 
@@ -151,12 +148,10 @@ namespace ivl::structs {
     void debug_print_shape(int depth = 0) {
       std::cerr << std::string(depth * 2, ' ');
       std::cerr << this << " ";
-      if (empty())
-        std::cerr << 'e' << std::endl;
+      if (empty()) std::cerr << 'e' << std::endl;
       else {
         std::cerr << root->value << " " << parent() << std::endl;
-        if (!child(Side::Left) && !child(Side::Right))
-          return;
+        if (!child(Side::Left) && !child(Side::Right)) return;
         child(Side::Left).debug_print_shape(depth + 1);
         child(Side::Right).debug_print_shape(depth + 1);
       }
@@ -180,8 +175,7 @@ namespace ivl::structs {
     }
 
     int max_depth() {
-      if (empty())
-        return 0;
+      if (empty()) return 0;
       return 1 + std::max(child(Side::Left).max_depth(), child(Side::Right).max_depth());
     }
   };

@@ -34,8 +34,7 @@ std::ostream& operator<<(std::ostream& out, const Fam& af) {
   for (std::size_t set = 1; set < MAXSIZE; ++set)
     if (f[set]) {
       for (std::size_t idx = 0; idx < N; ++idx)
-        if (set & (1uz << idx))
-          out << (char)('a' + idx);
+        if (set & (1uz << idx)) out << (char)('a' + idx);
       out << " ";
     }
   return out;
@@ -79,23 +78,22 @@ Set random_set() {
  */
 
 struct Generator {
-  Fam           family {1};
-  std::set<Fam> seen {Fam {1}};
+  Fam           family{1};
+  std::set<Fam> seen{Fam{1}};
 
   const Fam& get() {
     do {
       if (family.count() == MAXSIZE) {
-        family = Fam {1};
+        family = Fam{1};
       }
 
-      Set set {};
+      Set set{};
 
       while (family.test(set))
         set = random_set();
 
       for (std::size_t idx = 0; idx < MAXSIZE; ++idx)
-        if (family.test(idx))
-          family.set(idx | set);
+        if (family.test(idx)) family.set(idx | set);
     } while (seen.count(family));
 
     seen.insert(family);
@@ -110,12 +108,11 @@ bool timeout() {
 }
 
 bool test_frankl(const Fam& f) {
-  std::array<std::size_t, N> counts {};
+  std::array<std::size_t, N> counts{};
   for (std::size_t set = 0; set < MAXSIZE; ++set)
     if (f.test(set)) {
       for (std::size_t idx = 0; idx < N; ++idx)
-        if (set & (1uz << idx))
-          ++counts[idx];
+        if (set & (1uz << idx)) ++counts[idx];
     }
   return std::ranges::max(counts) * 2 >= f.count();
 }
@@ -158,18 +155,15 @@ Fam reduce(const Fam& f) {
   for (std::size_t set = 0; set < MAXSIZE; ++set)
     if (f[set])
       for (std::size_t idx = 0; idx < N; ++idx)
-        if (set & (1uz << idx))
-          masks[idx] &= set;
+        if (set & (1uz << idx)) masks[idx] &= set;
 
   std::size_t mask = 0;
   for (std::size_t idx = 0; idx < N; ++idx)
-    if (std::countr_zero(masks[idx]) == idx)
-      mask |= (1uz << idx);
+    if (std::countr_zero(masks[idx]) == idx) mask |= (1uz << idx);
 
-  Fam out {};
+  Fam out{};
   for (std::size_t set = 0; set < MAXSIZE; ++set)
-    if (f[set])
-      out[set & mask] = true;
+    if (f[set]) out[set & mask] = true;
 
   return out;
 }
@@ -181,11 +175,9 @@ bool test_esize(const Fam& af) {
   std::size_t count = 0;
   std::size_t mask  = 0;
   for (std::size_t set = 0; set < MAXSIZE; ++set)
-    if (f[set])
-      ++count, sum += std::popcount(set), mask |= set;
+    if (f[set]) ++count, sum += std::popcount(set), mask |= set;
 
-  if (2 * sum >= count * std::popcount(mask))
-    return true;
+  if (2 * sum >= count * std::popcount(mask)) return true;
 
   return false;
 }
@@ -197,8 +189,7 @@ double eval(const Fam& af) {
   std::size_t count = 0;
   std::size_t mask  = 0;
   for (std::size_t set = 0; set < MAXSIZE; ++set)
-    if (f[set])
-      ++count, sum += std::popcount(set), mask |= set;
+    if (f[set]) ++count, sum += std::popcount(set), mask |= set;
 
   return (double)sum / count / std::popcount(mask);
 }
@@ -220,8 +211,7 @@ int main() {
     for (; not timeout(); ++repcount) {
       auto& cf = gen.get();
       auto  co = eval(cf);
-      if (co < out)
-        out = co, bestf = cf;
+      if (co < out) out = co, bestf = cf;
     }
     std::cout << "repcount: " << repcount << std::endl;
     std::cout << "low eval: " << out << std::endl;

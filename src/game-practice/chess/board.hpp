@@ -6,12 +6,8 @@ namespace ivl::games::chess {
     std::int8_t data;
 
     bool empty() const {return data == 0;}
-  bool white() const {
-    return data > 0;
-  }
-  bool black() const {
-    return data < 0;
-  }
+  bool white() const { return data > 0; }
+  bool black() const { return data < 0; }
 
 }; // namespace ivl::games::chess
 

@@ -132,7 +132,7 @@ using namespace ivl::literals::ints_exact;
 #include <ivl/nt/multimint.hpp>
 #include <ivl/nt/util.hpp>
 
-constexpr std::array<std::uint32_t, 3> Primes {
+constexpr std::array<std::uint32_t, 3> Primes{
   1000112129, 1000210433, 1000308737,
   // 1000800257
 };
@@ -140,27 +140,22 @@ constexpr std::array<std::uint32_t, 3> Primes {
 constexpr std::uint32_t NttLen = 1 << 15;
 
 constexpr std::array<std::uint32_t, Primes.size()> Generators = [] {
-  std::array<std::uint32_t, Primes.size()> out {};
+  std::array<std::uint32_t, Primes.size()> out{};
   for (auto idx : std::views::iota(0_u32, Primes.size())) {
-    if (Primes[idx] % NttLen != 1)
-      throw "whoops";
+    if (Primes[idx] % NttLen != 1) throw "whoops";
 
     for (auto candidate : std::views::iota(2_u32, Primes[idx])) {
-      auto mul = ivl::nt::multiplies {Primes[idx]};
+      auto mul = ivl::nt::multiplies{Primes[idx]};
       auto r   = ivl::nt::power(candidate, (Primes[idx] - 1) / NttLen, mul);
       auto a   = ivl::nt::power(r, NttLen / 2, mul);
-      if (a == 1)
-        continue;
-      if (ivl::nt::power(candidate, Primes[idx] - 1, mul) != 1)
-        throw "whoops4";
-      if (mul(a, a) != 1)
-        throw "whoops3";
+      if (a == 1) continue;
+      if (ivl::nt::power(candidate, Primes[idx] - 1, mul) != 1) throw "whoops4";
+      if (mul(a, a) != 1) throw "whoops3";
       out[idx] = r;
       break;
     }
 
-    if (out[idx] == 0)
-      throw "whoops2";
+    if (out[idx] == 0) throw "whoops2";
   }
   return out;
 }();
@@ -172,8 +167,7 @@ std::array<std::uint32_t, Primes.size()> GenInverses = [] {
     std::uint64_t a = Generators[idx];
     auto          r = 1_u64;
     while (e) {
-      if (e & 1)
-        r = (a * r) % Primes[idx];
+      if (e & 1) r = (a * r) % Primes[idx];
       a = (a * a) % Primes[idx];
       e >>= 1;
     }
@@ -223,15 +217,12 @@ void convert_from_dft(std::span<const FMint, NttLen> in, std::span<Mint, NttLen>
 int main() {
   constexpr auto MAXN = 200_u32;
 
-  std::array<std::array<Mint, MAXN + 1>, MAXN + 1> C {};
+  std::array<std::array<Mint, MAXN + 1>, MAXN + 1> C{};
   for (auto a : std::views::iota(0_u32, MAXN + 1))
     for (auto b : std::views::iota(0_u32, MAXN + 1)) {
-      if (b == 0 || b == a)
-        C[a][b] = 1;
-      else if (b > a)
-        C[a][b] = 0;
-      else
-        C[a][b] = C[a - 1][b - 1] + C[a - 1][b];
+      if (b == 0 || b == a) C[a][b] = 1;
+      else if (b > a) C[a][b] = 0;
+      else C[a][b] = C[a - 1][b - 1] + C[a - 1][b];
     }
 
   std::array<std::array<FMint, MAXN + 1>, MAXN + 1> FC;
@@ -239,8 +230,8 @@ int main() {
     for (auto b : std::views::iota(0_u32, MAXN + 1))
       FC[a][b] = C[a][b][0];
 
-  std::array<std::array<Mint, NttLen>, MAXN + 1>  genfns {};
-  std::array<std::array<FMint, NttLen>, MAXN + 1> dfts {};
+  std::array<std::array<Mint, NttLen>, MAXN + 1>  genfns{};
+  std::array<std::array<FMint, NttLen>, MAXN + 1> dfts{};
 
   genfns[0][0] = 1;
   convert_to_dft(genfns[0], dfts[0]);
@@ -276,8 +267,8 @@ int main() {
     convert_to_dft(genfns[n], dfts[n]);
   }
 
-  std::uint32_t n {cin};
-  std::uint32_t lim {cin};
+  std::uint32_t n{cin};
+  std::uint32_t lim{cin};
 
   Mint acc = 0;
 

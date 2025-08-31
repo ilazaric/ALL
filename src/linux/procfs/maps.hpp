@@ -35,29 +35,24 @@ namespace ivl::linux::procfs {
       buffer << inf.rdbuf();
       return std::move(buffer.str());
     };
-    if (str.empty())
-      return std::nullopt; // probably file doesnt exist
+    if (str.empty()) return std::nullopt; // probably file doesnt exist
     for (auto& c : str)
-      if (c == '\n')
-        c = '\0';
+      if (c == '\n') c = '\0';
     Maps maps;
     for (auto line : std::views::split(sv, '\0')) {
-      if (line.empty())
-        continue;
+      if (line.empty()) continue;
       maps.emplace_back();
-      if (line.size() >= 72)
-        maps.back().pathname = line.substr(72);
-#define EXPECT(c)                                                                                  \
-  do {                                                                                             \
-    if (line.empty() || line[0] != c)                                                              \
-      return std::nullopt;                                                                         \
-    line.remove_prefix(1);                                                                         \
+      if (line.size() >= 72) maps.back().pathname = line.substr(72);
+#define EXPECT(c)                                                                                                      \
+  do {                                                                                                                 \
+    if (line.empty() || line[0] != c) return std::nullopt;                                                             \
+    line.remove_prefix(1);                                                                                             \
   } while (0)
-#define READHEX(e)                                                                                 \
-  do {                                                                                             \
-    auto& r = e;                                                                                   \
-    r       = {};                                                                                  \
-    for (int cnt = 0; cnt < 2 * sizeof(r) && !line.empty() && ishex(line[0]); ++cnt) {             \
+#define READHEX(e)                                                                                                     \
+  do {                                                                                                                 \
+    auto& r = e;                                                                                                       \
+    r       = {};                                                                                                      \
+    for (int cnt = 0; cnt < 2 * sizeof(r) && !line.empty() && ishex(line[0]); ++cnt) {                                 \
       r = r * 16 + TODO
     }
     while (0)

@@ -33,10 +33,10 @@ struct ivl::alloc::GlobalAlloc : std::allocator<T> {};
 int main() {
   // LOG(sizeof(ivl::alloc::spa_detail::Allocator<AllocTraits>::segment_tree_type));
   // exit(1);
-  for (auto ti : std::views::iota(0, int {cin})) {
-    std::uint32_t              n {cin}, b {cin}, x {cin};
+  for (auto ti : std::views::iota(0, int{cin})) {
+    std::uint32_t              n{cin}, b{cin}, x{cin};
     std::vector<std::uint32_t> cs(n);
-    std::cin >> ivl::io::Elems {cs};
+    std::cin >> ivl::io::Elems{cs};
 
     auto eval = [&](std::uint32_t k) {
       std::int64_t out = -(std::int64_t(k - 1)) * x;
@@ -63,7 +63,6 @@ int main() {
       }
     }
 
-    std::cout << std::ranges::max(std::views::iota(lo, hi + 1) | std::views::transform(eval))
-              << std::endl;
+    std::cout << std::ranges::max(std::views::iota(lo, hi + 1) | std::views::transform(eval)) << std::endl;
   }
 }

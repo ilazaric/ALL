@@ -34,32 +34,40 @@ public:
 
   static consteval std::vector<std::meta::info> get(std::size_t idx) {
     assert(idx < length());
-    auto slot = substitute(^IndexToTypes, {
-                                            std::meta::reflect_value(idx)});
+    auto slot = substitute(
+      ^IndexToTypes, {
+                       std::meta::reflect_value(idx)
+                     }
+    );
     return template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]));
   }
 
   static consteval std::size_t find(std::vector<std::meta::info> is) {
     auto slot = substitute(^TypesToIndex, is);
-    if (is_incomplete_type(slot))
-      return NOT_FOUND;
-    return extract<std::size_t>(
-      template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]))[0]);
+    if (is_incomplete_type(slot)) return NOT_FOUND;
+    return extract<std::size_t>(template_arguments_of(type_of(nonstatic_data_members_of(slot)[0]))[0]);
   }
 
   static consteval void push(std::vector<std::meta::info> is) {
-    if (find(is) != NOT_FOUND)
-      return;
+    if (find(is) != NOT_FOUND) return;
     auto idx = Inc::get();
     Inc::advance();
-    define_class(substitute(^IndexToTypes,
-                            {
-                              std::meta::reflect_value(idx)}),
-                 {std::meta::nsdm_description(substitute(^Types, is))});
     define_class(
-      substitute(^TypesToIndex, is),
-      {std::meta::nsdm_description(substitute(^Index, {
-                                                        std::meta::reflect_value(idx)}))});
+      substitute(
+        ^IndexToTypes,
+        {
+          std::meta::reflect_value(idx)
+        }
+      ),
+      {std::meta::nsdm_description(substitute(^Types, is))}
+    );
+    define_class(
+      substitute(^TypesToIndex, is), {std::meta::nsdm_description(substitute(
+                                       ^Index, {
+                                                 std::meta::reflect_value(idx)
+                                               }
+                                     ))}
+    );
   }
 };
 
@@ -98,7 +106,7 @@ struct Callable {
   }
 
   void operator()(auto&& arg)
-    requires((TL::push(std::vector {^decltype(arg)}), true))
+    requires((TL::push(std::vector{^decltype(arg)}), true))
   {
     auto idx = TL::find({^decltype(arg)});
     assert(idx < invokers.size());
@@ -130,8 +138,7 @@ void fill_vec(std::vector<void (*)(void*, void*)>& vec) {
     fill_vec<Idx - 1, Fn>(vec);
     vec.push_back([](void* a, void* b) {
       using ArgType = [:Callable::TL::get(Idx - 1)[0]:];
-      (*reinterpret_cast<Fn*>(a))(
-        static_cast<ArgType>(*reinterpret_cast<std::add_pointer_t<ArgType>>(b)));
+      (*reinterpret_cast<Fn*>(a))(static_cast<ArgType>(*reinterpret_cast<std::add_pointer_t<ArgType>>(b)));
     });
   }
 }
@@ -141,6 +148,4 @@ void fill_vec_end(std::vector<void (*)(void*, void*)>& vec) {
   fill_vec<Callable::TL::length(), Fn>(vec);
 }
 
-void ender() {
-  std::cerr << "type list len: " << Callable::TL::length() << std::endl;
-}
+void ender() { std::cerr << "type list len: " << Callable::TL::length() << std::endl; }

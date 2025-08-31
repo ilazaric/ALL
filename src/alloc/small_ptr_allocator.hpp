@@ -40,17 +40,18 @@ namespace ivl::alloc {
       // using pointer = Pointer;
       // TODO: should this be a proxy that is convertible to T& ?
       // contiguous_iterator concept seems to indicate "NO"
-      using reference = std::add_lvalue_reference_t<std::conditional_t<std::is_void_v<T>, int, T>>;
+      using reference         = std::add_lvalue_reference_t<std::conditional_t<std::is_void_v<T>, int, T>>;
       using iterator_category = std::random_access_iterator_tag;
       using iterator_concept  = std::contiguous_iterator_tag;
 
       static Pointer pointer_to(reference r) {
         auto    ri = reinterpret_cast<std::uintptr_t>(&r);
-        Pointer out {};
+        Pointer out{};
         auto    zi = reinterpret_cast<std::uintptr_t>(Traits::storage.data());
-        IVL_DBG_ASSERT(ri >= zi && ri < zi + Traits::storage.size() &&
-                         "bad reference, not from our alloc",
-                       zi, ri, zi + Traits::storage.size(), &r);
+        IVL_DBG_ASSERT(
+          ri >= zi && ri < zi + Traits::storage.size() && "bad reference, not from our alloc", zi, ri,
+          zi + Traits::storage.size(), &r
+        );
         auto delta = ri - zi;
         out.offset += delta;
         return out;
@@ -67,8 +68,7 @@ namespace ivl::alloc {
       Pointer(std::nullptr_t) : offset(0) {}
 
       template <typename U>
-        requires(!std::is_same_v<T, U> && isConst >= std::is_const_v<U> &&
-                 isVoid >= std::is_void_v<U>)
+        requires(!std::is_same_v<T, U> && isConst >= std::is_const_v<U> && isVoid >= std::is_void_v<U>)
       Pointer(Pointer<U, Traits> p) : offset(p.offset) {}
 
       // oof :'(
@@ -147,8 +147,7 @@ namespace ivl::alloc {
       using pointer = Pointer<void, Traits>;
 
       // -1 bc first chunk is not used bc nullptr lives there
-      using segment_tree_type =
-        SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size>;
+      using segment_tree_type = SegmentTree2<Traits::storage.size() / Traits::segment_tree_chunk_size>;
 
       static std::uint32_t chunk_count(std::uint32_t n) {
         return (n + Traits::segment_tree_chunk_size - 1) / Traits::segment_tree_chunk_size;
@@ -161,7 +160,8 @@ namespace ivl::alloc {
         static_assert(sizeof(segment_tree_type) < Traits::storage.size());
         // xD i suppose
         auto ptr = std::construct_at<segment_tree_type>(
-          static_cast<segment_tree_type*>(static_cast<void*>(Traits::storage.data())));
+          static_cast<segment_tree_type*>(static_cast<void*>(Traits::storage.data()))
+        );
         // this is kinda cute tbh
         ptr->take(chunk_count(sizeof(segment_tree_type)));
         return *ptr;
@@ -172,7 +172,7 @@ namespace ivl::alloc {
       static pointer segment_tree_allocate(std::uint32_t n) {
         auto alloc = segment_tree.take(chunk_count(n));
         if (alloc == segment_tree_type::FAILURE) [[unlikely]] {
-          throw std::bad_alloc {};
+          throw std::bad_alloc{};
         }
         pointer out;
         out.offset = alloc * Traits::segment_tree_chunk_size;
@@ -184,7 +184,7 @@ namespace ivl::alloc {
         segment_tree.give(x, chunk_count(n));
       }
 
-      inline static std::array<pointer, Traits::free_list_limit + 1> free_list_heads {};
+      inline static std::array<pointer, Traits::free_list_limit + 1> free_list_heads{};
 
       static pointer free_list_allocate(std::uint32_t n) {
         pointer& head = free_list_heads[n];

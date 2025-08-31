@@ -9,24 +9,24 @@ namespace ivl {
   struct to_free_function_pointer_helper : std::false_type {};
 
 // qualifiers to member functions are annoying
-#define IVLGEN_PARTIAL(QUALS)                                                                      \
-  template <typename Class, typename Ret, typename... Args>                                        \
-  struct to_free_function_pointer_helper<Ret (Class::*)(Args...) QUALS> : std::true_type {         \
-    template <Ret (Class::*mfp)(Args...) QUALS>                                                    \
-    static Ret free_function(std::conditional_t<std::is_reference_v<Class QUALS>, Class QUALS,     \
-                                                std::add_lvalue_reference_t<Class QUALS>>          \
-                               arg,                                                                \
-                             Args... args) {                                                       \
-      return (std::forward<decltype(arg)>(arg).*mfp)(std::forward<Args>(args)...);                 \
-    }                                                                                              \
+#define IVLGEN_PARTIAL(QUALS)                                                                                          \
+  template <typename Class, typename Ret, typename... Args>                                                            \
+  struct to_free_function_pointer_helper<Ret (Class::*)(Args...) QUALS> : std::true_type {                             \
+    template <Ret (Class::*mfp)(Args...) QUALS>                                                                        \
+    static Ret free_function(                                                                                          \
+      std::conditional_t<std::is_reference_v<Class QUALS>, Class QUALS, std::add_lvalue_reference_t<Class QUALS>> arg, \
+      Args... args                                                                                                     \
+    ) {                                                                                                                \
+      return (std::forward<decltype(arg)>(arg).*mfp)(std::forward<Args>(args)...);                                     \
+    }                                                                                                                  \
   };
 
-#define IVLGEN_CONST(QUALS)                                                                        \
-  IVLGEN_PARTIAL(QUALS)                                                                            \
+#define IVLGEN_CONST(QUALS)                                                                                            \
+  IVLGEN_PARTIAL(QUALS)                                                                                                \
   IVLGEN_PARTIAL(const QUALS)
 
-#define IVLGEN_VOLATILE(QUALS)                                                                     \
-  IVLGEN_CONST(QUALS)                                                                              \
+#define IVLGEN_VOLATILE(QUALS)                                                                                         \
+  IVLGEN_CONST(QUALS)                                                                                                  \
   IVLGEN_CONST(volatile QUALS)
 
   IVLGEN_VOLATILE()

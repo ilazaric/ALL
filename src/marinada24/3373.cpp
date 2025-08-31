@@ -1,9 +1,7 @@
 #include <ivl/logger>
 
 const uint64_t N = 999;
-uint64_t       attempt(uint64_t a, uint64_t b) {
-  return a * (N - b) * b * (N - a) * 2;
-}
+uint64_t       attempt(uint64_t a, uint64_t b) { return a * (N - b) * b * (N - a) * 2; }
 
 int main() {
   {

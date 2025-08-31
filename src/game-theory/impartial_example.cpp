@@ -11,7 +11,7 @@ struct Nim {
   std::size_t x;
   // this feels way too verbose
   auto moves() const {
-    return std::views::iota(0ull, x) | std::views::transform([](std::size_t x) { return Nim {x}; });
+    return std::views::iota(0ull, x) | std::views::transform([](std::size_t x) { return Nim{x}; });
   }
   auto operator<=>(const Nim&) const = default;
   bool operator==(const Nim&) const  = default;
@@ -67,9 +67,7 @@ inline constexpr bool ranges::enable_borrowed_range<Falling<dx, dy>> = true;
 
 struct Queens {
   std::size_t x, y;
-  auto        moves() const {
-    return ranges::views::concat(Falling<1, 0> {x, y}, Falling<0, 1> {x, y}, Falling<1, 1> {x, y});
-  }
+  auto moves() const { return ranges::views::concat(Falling<1, 0>{x, y}, Falling<0, 1>{x, y}, Falling<1, 1>{x, y}); }
 
   auto operator<=>(const Queens&) const = default;
   bool operator==(const Queens&) const  = default;
@@ -83,22 +81,20 @@ static_assert(ranges::input_range<Falling<1, 1>>);
 
 static_assert(std::weakly_incrementable<Falling<1, 1>>);
 
-std::size_t hash_value(const Queens& q) {
-  return boost::hash<std::pair<std::size_t, std::size_t>> {}({q.x, q.y});
-}
+std::size_t hash_value(const Queens& q) { return boost::hash<std::pair<std::size_t, std::size_t>>{}({q.x, q.y}); }
 
 int main() {
   {
     ivl::gt::Grundifier<Nim> G;
-    LOG(G(Nim {12}));
+    LOG(G(Nim{12}));
   }
   {
     ivl::gt::Grundifier<Queens> G;
-    LOG(G(Queens {3, 5}));
+    LOG(G(Queens{3, 5}));
 
     for (auto i : std::views::iota(0u, 10u)) {
       for (auto j : std::views::iota(0u, 10u))
-        std::cout << std::setw(3) << G(Queens {i, j}) << " ";
+        std::cout << std::setw(3) << G(Queens{i, j}) << " ";
       std::cout << std::endl;
     }
   }

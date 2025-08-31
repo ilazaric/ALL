@@ -19,10 +19,8 @@ uint64_t recursive_calc(uint32_t id) {
 uint64_t recursive2_calc(uint32_t id) {
   uint64_t ret = value[id];
   for (auto nxt : children[id]) {
-    if (children[nxt].size() == 0)
-      ret += value[nxt];
-    else
-      ret += recursive2_calc(nxt);
+    if (children[nxt].size() == 0) ret += value[nxt];
+    else ret += recursive2_calc(nxt);
   }
   return ret;
 }
@@ -46,12 +44,11 @@ uint64_t shit_iterative_calc(uint32_t root) {
     uint32_t last_child;
     uint64_t ret;
   };
-  std::vector<State> stack {{root, 0, value[root]}};
+  std::vector<State> stack{{root, 0, value[root]}};
   while (true) {
     auto& current = stack.back();
     if (current.last_child == children[current.id].size()) {
-      if (stack.size() == 1)
-        return current.ret;
+      if (stack.size() == 1) return current.ret;
       auto child_ret = current.ret;
       stack.pop_back();
       stack.back().ret += child_ret;
@@ -64,39 +61,36 @@ uint64_t shit_iterative_calc(uint32_t root) {
 }
 
 uint64_t good_iterative_calc(uint32_t root) {
-  std::vector<uint32_t> stack {root};
+  std::vector<uint32_t> stack{root};
   uint64_t              ret = 0;
   while (!stack.empty()) {
     auto current = stack.back();
     stack.pop_back();
     ret += value[current];
     for (uint32_t child : children[current]) {
-      if (children[child].size() == 0)
-        ret += value[child];
-      else
-        stack.push_back(child);
+      if (children[child].size() == 0) ret += value[child];
+      else stack.push_back(child);
     }
   }
   return ret;
 }
 
 uint64_t good_iterative2_calc(uint32_t root) {
-  std::vector<uint32_t> stack {root};
+  std::vector<uint32_t> stack{root};
   uint64_t              ret = value[root];
   while (!stack.empty()) {
     auto current = stack.back();
     stack.pop_back();
     for (uint32_t child : children[current]) {
       ret += value[child];
-      if (children[child].size() != 0)
-        stack.push_back(child);
+      if (children[child].size() != 0) stack.push_back(child);
     }
   }
   return ret;
 }
 
 uint64_t good_iterative3_calc(uint32_t root) {
-  std::vector<uint32_t> stack {root};
+  std::vector<uint32_t> stack{root};
   uint64_t              ret = 0;
   while (!stack.empty()) {
     auto current = stack.back();
@@ -107,30 +101,25 @@ uint64_t good_iterative3_calc(uint32_t root) {
         ret += value[child];
         child = children[child][0];
       }
-      if (children[child].size() == 0)
-        ret += value[child];
-      else
-        stack.push_back(child);
+      if (children[child].size() == 0) ret += value[child];
+      else stack.push_back(child);
     }
   }
   return ret;
 }
 
 uint64_t dunno_iterative4_calc(uint32_t root) {
-  std::vector<uint32_t> stack {root};
+  std::vector<uint32_t> stack{root};
   uint64_t              ret = 0;
   while (!stack.empty()) {
     auto current = stack.back();
     stack.pop_back();
     while (true) {
       ret += value[current];
-      if (children[current].size() == 0)
-        break;
+      if (children[current].size() == 0) break;
       for (uint32_t idx = 1; idx < children[current].size(); ++idx) {
-        if (children[children[current][idx]].size() == 0)
-          ret += value[children[current][idx]];
-        else
-          stack.push_back(children[current][idx]);
+        if (children[children[current][idx]].size() == 0) ret += value[children[current][idx]];
+        else stack.push_back(children[current][idx]);
       }
       current = children[current][0];
     }
@@ -140,7 +129,7 @@ uint64_t dunno_iterative4_calc(uint32_t root) {
 
 // cheater because uses parent[], unlike others
 uint64_t cheater_iterative_calc(uint32_t root) {
-  std::vector<uint32_t> stack {0};
+  std::vector<uint32_t> stack{0};
   uint32_t              current = root;
   uint64_t              ret     = value[root];
   while (!stack.empty()) {
@@ -151,8 +140,7 @@ uint64_t cheater_iterative_calc(uint32_t root) {
     }
     uint32_t nxt = children[current][stack.back()++];
     ret += value[nxt];
-    if (children[nxt].size() == 0)
-      continue;
+    if (children[nxt].size() == 0) continue;
     stack.push_back(0);
     current = nxt;
   }
@@ -175,15 +163,15 @@ int main() {
     return (int64_t)ts.tv_sec * 1'000'000'000 + (int64_t)ts.tv_nsec;
   };
 
-#define EVAL(fn)                                                                                   \
-  do {                                                                                             \
-    auto start = timepoint();                                                                      \
-    auto value = fn(0);                                                                            \
-    auto end   = timepoint();                                                                      \
-    std::cout << "Experiment for: " #fn << std::endl;                                              \
-    std::cout << "Value: " << value << std::endl;                                                  \
-    std::cout << "Duration: " << (end - start) / 1e9 << " seconds" << std::endl;                   \
-    std::cout << std::endl;                                                                        \
+#define EVAL(fn)                                                                                                       \
+  do {                                                                                                                 \
+    auto start = timepoint();                                                                                          \
+    auto value = fn(0);                                                                                                \
+    auto end   = timepoint();                                                                                          \
+    std::cout << "Experiment for: " #fn << std::endl;                                                                  \
+    std::cout << "Value: " << value << std::endl;                                                                      \
+    std::cout << "Duration: " << (end - start) / 1e9 << " seconds" << std::endl;                                       \
+    std::cout << std::endl;                                                                                            \
   } while (0)
 
   EVAL(recursive_calc);

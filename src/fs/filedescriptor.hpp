@@ -52,15 +52,14 @@ namespace ivl::fs {
 
     void reset() noexcept {
       if (fd != nfd)
-        if (close(fd) == -1)
-          perror("close");
+        if (close(fd) == -1) perror("close");
     }
 
     int get() const noexcept { return fd; }
 
     explicit operator bool() const noexcept { return fd != nfd; }
 
-    operator FD() const noexcept { return FD {fd}; }
+    operator FD() const noexcept { return FD{fd}; }
 
     ~OwnedFD() noexcept { reset(); }
 

@@ -40,11 +40,11 @@ namespace ivl::structs {
       V   value;
       Ptr children[2];
       Ptr parent;
-      Node(auto&&... args) : value(std::forward<decltype(args)>(args)...), children {}, parent {} {}
+      Node(auto&&... args) : value(std::forward<decltype(args)>(args)...), children{}, parent{} {}
     };
 
-    Ptr                         data {};
-    [[no_unique_address]] Alloc alloc {};
+    Ptr                         data{};
+    [[no_unique_address]] Alloc alloc{};
 
     BinaryTree()                             = default;
     BinaryTree(const BinaryTree&)            = delete;
@@ -55,8 +55,7 @@ namespace ivl::structs {
 
   private:
     void destroy_all(Ptr p) {
-      if (!p)
-        return;
+      if (!p) return;
       destroy_all(p->children[Child::Left]);
       destroy_all(p->children[Child::Right]);
       std::destroy_at(&*p);
@@ -72,8 +71,7 @@ namespace ivl::structs {
       IVL_ASSERT(data);
       auto p                = data->children[child];
       data->children[child] = nullptr;
-      if (p)
-        p->parent = nullptr;
+      if (p) p->parent = nullptr;
       return {p, alloc};
     }
   };

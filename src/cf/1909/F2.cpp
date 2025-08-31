@@ -21,7 +21,7 @@ constexpr std::uint32_t Mod = 998'244'353;
 using Mint                  = ivl::nt::MultiMint<Mod>;
 
 auto factorials_storage = [] {
-  std::array<Mint, 200'005> out {};
+  std::array<Mint, 200'005> out{};
   out[0] = 1;
   for (auto i : std::views::iota(1_u32, out.size()))
     out[i] = out[i - 1] * i;
@@ -29,32 +29,25 @@ auto factorials_storage = [] {
 }();
 
 Mint factorials(std::int32_t n) {
-  if (n < 0)
-    return 0;
+  if (n < 0) return 0;
   return factorials_storage[n];
 }
 
 Mint choose(std::int32_t a, std::int32_t b) {
-  if (a < 0)
-    return 0;
-  if (b < 0)
-    return 0;
-  if (b > a)
-    return 0;
+  if (a < 0) return 0;
+  if (b < 0) return 0;
+  if (b > a) return 0;
   // LOG(a, b);
   return factorials(a) / factorials(b) / factorials(a - b);
 }
 
 Mint magic(std::int32_t full, std::int32_t banned, std::int32_t count) {
   // LOG(full, banned, count);
-  if (count == 0)
-    return 1;
+  if (count == 0) return 1;
 
-  if (full < banned)
-    return 0;
+  if (full < banned) return 0;
 
-  if (count > full)
-    return 0;
+  if (count > full) return 0;
 
   Mint out = 0;
   // for (auto a : std::views::iota(0, count+1))
@@ -383,13 +376,12 @@ int main() {
   // exit(0);
 
   for (auto ti : std::views::iota(0, (int)cin)) {
-    std::vector<std::int32_t> a {cin};
+    std::vector<std::int32_t> a{cin};
     // if (ti != 3) continue;
     std::uint32_t n = a.size();
     a.insert(a.begin(), 0);
 
-    if (a.back() == -1)
-      a.back() = n;
+    if (a.back() == -1) a.back() = n;
 
     if (a.back() != n) {
       std::cout << 0 << std::endl;

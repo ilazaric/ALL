@@ -12,7 +12,7 @@ double eval(const State& a) {
 }
 
 State chase() {
-  State  a {1, -1, 0, 1};
+  State  a{1, -1, 0, 1};
   double anneal = 0.95;
   double last   = eval(a);
   for (auto _ : std::views::iota(0, 5000)) {

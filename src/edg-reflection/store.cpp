@@ -18,10 +18,15 @@ public:
   static consteval bool push() {
     auto idx = Inc::get();
     Inc::advance();
-    define_class(substitute(^Map,
-                            {
-                              std::meta::reflect_value(idx)}),
-                 {std::meta::nsdm_description(^T)});
+    define_class(
+      substitute(
+        ^Map,
+        {
+          std::meta::reflect_value(idx)
+        }
+      ),
+      {std::meta::nsdm_description(^T)}
+    );
     return true;
   }
 
@@ -29,16 +34,22 @@ public:
 
   static consteval std::meta::info get(std::size_t idx) {
     assert(idx < length());
-    auto slot = substitute(^Map, {
-                                   std::meta::reflect_value(idx)});
+    auto slot = substitute(
+      ^Map, {
+              std::meta::reflect_value(idx)
+            }
+    );
     return type_of(nonstatic_data_members_of(slot)[0]);
   }
 
   static consteval void foreach (auto&& callable) {
     auto cnt = Inc::get();
     for (std::size_t idx = 0; idx < cnt; ++idx) {
-      auto slot = substitute(^Map, {
-                                     std::meta::reflect_value(idx)});
+      auto slot = substitute(
+        ^Map, {
+                std::meta::reflect_value(idx)
+              }
+      );
       callable(type_of(nonstatic_data_members_of(slot)[0]));
     }
   }
@@ -56,8 +67,7 @@ public:
       // assert(idx <= length());
     })
       ;
-    if (found)
-      return res;
+    if (found) return res;
     return length();
   }
 };
@@ -92,15 +102,13 @@ InvokeState* create_invoke_state();
 template <typename T>
 Callable::Callable(T&& underlying)
     : underlying(new std::remove_cvref_t<T>(std::forward<T>(underlying))),
-      invoke_state(create_invoke_state<std::remove_cvref_t<T>>()) {
-}
+      invoke_state(create_invoke_state<std::remove_cvref_t<T>>()) {}
 
 template <std::size_t Idx, typename Fn>
 void fill_vec(std::vector<void (*)(void*, void*)>& vec) {
   if constexpr (Idx != 0) {
     vec.push_back([](void* a, void* b) {
-      (*reinterpret_cast<Fn*>(a))(
-        *reinterpret_cast<std::add_pointer_t<typename[:Callable::TL::get(Idx - 1):]>>(b));
+      (*reinterpret_cast<Fn*>(a))(*reinterpret_cast<std::add_pointer_t<typename[:Callable::TL::get(Idx - 1):]>>(b));
     });
     fill_vec<Idx - 1, Fn>(vec);
   }

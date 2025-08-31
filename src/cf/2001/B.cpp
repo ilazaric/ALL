@@ -15,8 +15,7 @@ uint32_t eval(const Perm& perm) {
   uint32_t sol      = 0;
   for (auto idx : std::views::iota(0u, perm.size())) {
     auto pos = inv[idx];
-    if (pos < last_pos)
-      ++sol;
+    if (pos < last_pos) ++sol;
     last_pos = pos;
   }
   return sol;
@@ -30,7 +29,7 @@ uint32_t eval2(const Perm& perm) {
 }
 
 void one() {
-  uint32_t n {cin};
+  uint32_t n{cin};
 
   if (n % 2 == 0) {
     std::cout << -1 << std::endl;
@@ -40,17 +39,15 @@ void one() {
   Perm     perm(n);
   uint32_t a = 0, b = n - 1;
   for (auto idx : std::views::iota(0u, perm.size())) {
-    if (idx % 2 == 0)
-      perm[idx] = a++;
-    else
-      perm[idx] = b--;
+    if (idx % 2 == 0) perm[idx] = a++;
+    else perm[idx] = b--;
   }
 
   LOG(eval(perm));
   LOG(eval2(perm));
   for (auto& x : perm)
     ++x;
-  std::cout << ivl::io::Elems {perm} << std::endl;
+  std::cout << ivl::io::Elems{perm} << std::endl;
 }
 
 int main() {
@@ -58,7 +55,7 @@ int main() {
   // LOG(eval2({0, 1, 2}));
   // return 0;
 
-  for (uint32_t t {cin}; t--;) {
+  for (uint32_t t{cin}; t--;) {
     one();
   }
 

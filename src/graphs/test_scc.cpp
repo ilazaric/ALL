@@ -9,8 +9,7 @@
 std::mt19937 gen(101);
 
 void dfs(std::uint32_t node, const ivl::graphs::DirectedGraph& G, std::vector<bool>& reach) {
-  if (reach[node])
-    return;
+  if (reach[node]) return;
 
   reach[node] = true;
   for (auto next : G.outs(node))
@@ -39,8 +38,7 @@ void run_test() {
 
   for (auto i : std::views::iota(0_u32, node_count))
     for (auto j : std::views::iota(0_u32, node_count))
-      if ((reach[i][j] && reach[j][i]) != (partition[i] == partition[j]))
-        throw std::runtime_error("test failed");
+      if ((reach[i][j] && reach[j][i]) != (partition[i] == partition[j])) throw std::runtime_error("test failed");
 }
 
 void test1() {

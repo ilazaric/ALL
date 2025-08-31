@@ -36,10 +36,10 @@
   just change it in your repository copy :)
  */
 
+#include <ivl/util/fixed_string.hpp>
 #include <array>
 #include <cstdint>
 #include <iostream> // only used for `default_logger`, remove if unnecessary
-#include <ivl/util/fixed_string.hpp>
 #include <string_view>
 
 #ifdef IVL_LOCAL
@@ -51,22 +51,17 @@ namespace ivl::logger {
     char        instr          = 0;
     for (std::size_t idx = 0; idx < names.size(); ++idx) {
       if (!instr) {
-        if (names[idx] == ',' && openparencount == 0)
-          return idx;
-        if (names[idx] == '(' || names[idx] == '[' || names[idx] == '{')
-          ++openparencount;
-        if (names[idx] == ')' || names[idx] == ']' || names[idx] == '}')
-          --openparencount;
+        if (names[idx] == ',' && openparencount == 0) return idx;
+        if (names[idx] == '(' || names[idx] == '[' || names[idx] == '{') ++openparencount;
+        if (names[idx] == ')' || names[idx] == ']' || names[idx] == '}') --openparencount;
       }
       if (names[idx] == '\'' || names[idx] == '"') {
         if (!instr) {
           instr = names[idx];
           continue;
         }
-        if (instr != names[idx])
-          continue;
-        if (names[idx - 1] == '\\')
-          continue;
+        if (instr != names[idx]) continue;
+        if (names[idx - 1] == '\\') continue;
         instr = 0;
       }
     }
@@ -76,18 +71,15 @@ namespace ivl::logger {
   static_assert(find_comma("(,),x") == 3);
   static_assert(find_comma("',',x") == 3);
   static_assert(find_comma("\",\",x") == 3);
-  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") ==
-                std::string_view::npos);
+  static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
 
   consteval void callback_names(std::string_view allnames, auto& callback) {
     while (true) {
       std::size_t      commaloc = find_comma(allnames);
       std::string_view name     = allnames.substr(0, commaloc);
-      if (name.starts_with(' '))
-        name = name.substr(1);
+      if (name.starts_with(' ')) name = name.substr(1);
       callback(name);
-      if (commaloc == std::string_view::npos)
-        return;
+      if (commaloc == std::string_view::npos) return;
       allnames = allnames.substr(commaloc + 1);
     }
   }
@@ -122,14 +114,15 @@ namespace ivl::logger {
 
   template <util::fixed_string T>
   struct name_storage {
-    inline static constexpr std::string_view allnames {(const char*)T, length((const char*)T)};
-    inline static constexpr std::size_t      namecount {count_names(allnames)};
-    inline static constexpr auto             names {generate_names<namecount>(allnames)};
+    inline static constexpr std::string_view allnames{(const char*)T, length((const char*)T)};
+    inline static constexpr std::size_t      namecount{count_names(allnames)};
+    inline static constexpr auto             names{generate_names<namecount>(allnames)};
   };
 
   // a std::source_location that can be passed via template args
-  template <std::uint_least32_t linet, // std::uint_least32_t columnt,
-            util::fixed_string file_namet, util::fixed_string function_namet>
+  template <
+    std::uint_least32_t linet, // std::uint_least32_t columnt,
+    util::fixed_string file_namet, util::fixed_string function_namet>
   struct fixed_source_location {
     inline constexpr static auto line = linet;
     // constexpr static inline auto column = columnt;
@@ -154,14 +147,14 @@ namespace ivl::logger {
       template <typename... Args>
       [[maybe_unused]] static decltype(auto) print(Args&&... args) {
         static_assert(NS::namecount == sizeof...(Args));
-        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line
-                  << "):";
+        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
         std::size_t index = 0;
         ( // should be easy to inline
           [](std::size_t& index, const Args& arg) {
             std::cerr << " " << NS::names[index++] << "=" << (arg);
           }(index, args),
-          ...);
+          ...
+        );
         std::cerr << std::endl;
         // this makes `LOG` usable as a wrapper around sub-expressions
         // wrapper around `std::forward` due to `[[nodiscard]]`
@@ -172,8 +165,7 @@ namespace ivl::logger {
       template <typename... Args>
       [[maybe_unused]] static decltype(auto) print_raw(Args&&... args) {
         static_assert(NS::namecount == sizeof...(Args));
-        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line
-                  << "):";
+        std::cerr << "[LOG] " << CSL::file_name << ":" << CSL::function_name << "(" << CSL::line << "):";
         ((std::cerr << " " << args), ...);
         std::cerr << std::endl;
         return (discardable_forward<Args>(args), ...);
@@ -184,13 +176,13 @@ namespace ivl::logger {
 
 } // namespace ivl::logger
 
-#define LOG(...)                                                                                   \
-  logger_hook<                                                                                     \
-    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                     \
+#define LOG(...)                                                                                                       \
+  logger_hook<                                                                                                         \
+    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                                         \
     ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>>::print(__VA_ARGS__)
-#define LOG_RAW(...)                                                                               \
-  logger_hook<                                                                                     \
-    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                     \
+#define LOG_RAW(...)                                                                                                   \
+  logger_hook<                                                                                                         \
+    ::ivl::logger::name_storage<#__VA_ARGS__>,                                                                         \
     ::ivl::logger::fixed_source_location<__LINE__, __FILE__, __func__>>::print_raw(__VA_ARGS__)
 #else
 #define LOG(...) (__VA_ARGS__)

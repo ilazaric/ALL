@@ -44,8 +44,7 @@ namespace ivl::refl {
             };
             auto right_tuple_gets = ^{
             };
-            for (auto [tuple_idx, nsdm_idx] :
-                 std::vector<size_t> {nsdm_idxs...} | std::views::enumerate) {
+            for (auto [tuple_idx, nsdm_idx] : std::vector<size_t>{nsdm_idxs...} | std::views::enumerate) {
               if (nsdm_idx < idx) {
                 left_idxs = ^{
                   \tokens(left_idxs), \(nsdm_idx)
@@ -82,7 +81,7 @@ namespace ivl::refl {
         }),
        ...);
       queue_injection(^{
-        return typename[: \(^T):] {\tokens(concat)};
+        return typename[: \(^T):]{\tokens(concat)};
       });
     }
   }
@@ -92,7 +91,7 @@ namespace ivl::refl {
 
 template <typename T>
 constexpr auto builder() {
-  return detail::Builder<T> {};
+  return detail::Builder<T>{};
 }
 
 } // namespace ivl::refl

@@ -71,9 +71,11 @@ namespace ivl::ctx {
       // this is before is_trivially_copyable bc they are incomplete
       // TODO: better msg
       static_assert(!IsOurType<T>::value, "You can't mix the ctx modifying types in this way");
-      static_assert(std::is_trivially_copyable_v<T>,
-                    "Your class is pretty complex, I don't think you want to pass it by value, are "
-                    "you sure a `const T&` is not appropriate?");
+      static_assert(
+        std::is_trivially_copyable_v<T>,
+        "Your class is pretty complex, I don't think you want to pass it by value, are "
+        "you sure a `const T&` is not appropriate?"
+      );
       using type = T;
     };
 
@@ -105,8 +107,8 @@ namespace ivl::ctx {
 
     template <typename T, typename U, typename... Us>
     struct Tag2Type<T, U, Us...> {
-      using type = typename std::conditional_t<std::is_same_v<T, typename Tag<U>::type>, Type<U>,
-                                               Tag2Type<T, Us...>>::type;
+      using type =
+        typename std::conditional_t<std::is_same_v<T, typename Tag<U>::type>, Type<U>, Tag2Type<T, Us...>>::type;
     };
 
     template <typename...>
@@ -124,9 +126,7 @@ namespace ivl::ctx {
     constexpr bool validate_tag_uniqueness() {
       size_t idx   = 0;
       bool   check = true;
-      auto   bla   = [&]<typename T> {
-        check &= idx++ == Tag2Index<typename Tag<T>::type, Ts...>::value;
-      };
+      auto   bla   = [&]<typename T> { check &= idx++ == Tag2Index<typename Tag<T>::type, Ts...>::value; };
       (bla.template operator()<Ts>(), ...);
       return check;
     }
@@ -204,7 +204,7 @@ namespace ivl::ctx {
     template <typename... Us>
       requires(sizeof...(Us) >= 2)
     auto get() {
-      return std::tuple<typename detail::Tag2Type<Us, Ts...>::type...> {get<Us>()...};
+      return std::tuple<typename detail::Tag2Type<Us, Ts...>::type...>{get<Us>()...};
     }
 
     // TODO: put()

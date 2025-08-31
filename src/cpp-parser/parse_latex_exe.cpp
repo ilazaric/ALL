@@ -1,7 +1,7 @@
 #include "parse_latex.hpp"
 
-#include <boost/algorithm/string/split.hpp>
 #include <ivl/io/stlutils.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <map>
 #include <ranges>
 #include <set>
@@ -69,8 +69,7 @@ const auto dump_latex = []<typename T>(this const auto& self, const T& entity) {
   } else if constexpr (std::is_same_v<T, Latex>) {
     bool first = true;
     for (auto& el : entity.elems) {
-      if (!first)
-        std::cerr << " ";
+      if (!first) std::cerr << " ";
       self(el);
       first = false;
     }
@@ -94,8 +93,7 @@ std::vector<std::string> split(std::string_view sv) {
   size_t b = 0;
   for (size_t a = 0; a != res.size(); ++a)
     if (!res[a].empty()) {
-      if (a != b)
-        res[b] = std::move(res[a]);
+      if (a != b) res[b] = std::move(res[a]);
       ++b;
     }
   res.erase(res.begin() + b, res.end());
@@ -108,14 +106,12 @@ void fillup(std::vector<DefinitionElem>& res, const LatexElem& elem) {
       if constexpr (std::is_same_v<T, LatexText>) {
         auto pieces = split(x.text);
         for (auto&& piece : pieces)
-          res.emplace_back(DefinitionText {std::move(piece)});
+          res.emplace_back(DefinitionText{std::move(piece)});
       } else { // LatexCommand
-        res.emplace_back(DefinitionCommand {x.name});
+        res.emplace_back(DefinitionCommand{x.name});
         auto& dc = std::get<DefinitionCommand>(res.back().kind);
-        if (x.name != "unicode")
-          assert(x.args.size() <= 1);
-        else
-          assert(x.args.size() == 2);
+        if (x.name != "unicode") assert(x.args.size() <= 1);
+        else assert(x.args.size() == 2);
         for (auto&& arg : x.args | std::views::take(1)) {
           assert(arg.kind == LatexArg::Kind::CURLY);
           for (auto&& el : arg.contents.elems)
@@ -123,7 +119,8 @@ void fillup(std::vector<DefinitionElem>& res, const LatexElem& elem) {
         }
       }
     },
-    elem.kind);
+    elem.kind
+  );
 }
 
 Definition parse_bnf(const LatexEnvironment& env) {
@@ -133,45 +130,33 @@ Definition parse_bnf(const LatexEnvironment& env) {
   auto skip_whitespace_text = [&] {
     while (idx != contents.size()) {
       auto text = std::get_if<LatexText>(&contents[idx].kind);
-      if (text == nullptr)
-        return;
+      if (text == nullptr) return;
       if (std::ranges::all_of(text->text, ::isspace)) {
         ++idx;
         continue;
-      } else
-        return;
+      } else return;
     }
   };
 
   skip_whitespace_text();
   if (idx != contents.size()) {
     auto comm = std::get_if<LatexCommand>(&contents[idx].kind);
-    if (comm != nullptr && comm->name == "microtypesetup")
-      ++idx;
+    if (comm != nullptr && comm->name == "microtypesetup") ++idx;
   }
   skip_whitespace_text();
-  if (idx != contents.size() && eq(contents[idx], LatexCommand {"obeyspaces"}))
-    ++idx;
+  if (idx != contents.size() && eq(contents[idx], LatexCommand{"obeyspaces"})) ++idx;
 
   const auto term = ({
     skip_whitespace_text();
-    if (idx == contents.size())
-      return {"???", true};
+    if (idx == contents.size()) return {"???", true};
     const auto nontermdef = std::get_if<LatexCommand>(&contents[idx].kind);
-    if (nontermdef == nullptr)
-      return {"???", true};
-    if (nontermdef->name != "nontermdef")
-      return {"???", true};
-    if (nontermdef->args.size() != 1)
-      return {"???", true};
-    if (nontermdef->args[0].kind != LatexArg::Kind::CURLY)
-      return {"???", true};
-    if (nontermdef->args[0].contents.elems.size() != 1)
-      return {"???", true};
-    const auto nontermdef_term =
-      std::get_if<LatexText>(&nontermdef->args[0].contents.elems[0].kind);
-    if (nontermdef_term == nullptr)
-      return {"???", true};
+    if (nontermdef == nullptr) return {"???", true};
+    if (nontermdef->name != "nontermdef") return {"???", true};
+    if (nontermdef->args.size() != 1) return {"???", true};
+    if (nontermdef->args[0].kind != LatexArg::Kind::CURLY) return {"???", true};
+    if (nontermdef->args[0].contents.elems.size() != 1) return {"???", true};
+    const auto nontermdef_term = std::get_if<LatexText>(&nontermdef->args[0].contents.elems[0].kind);
+    if (nontermdef_term == nullptr) return {"???", true};
     ++idx;
     nontermdef_term->text;
   });
@@ -179,9 +164,10 @@ Definition parse_bnf(const LatexEnvironment& env) {
   skip_whitespace_text();
   bool one_of = false;
   if (idx != contents.size() &&
-      eq(contents[idx], LatexCommand {"textnormal",
-                                      {LatexArg {LatexArg::Kind::CURLY,
-                                                 Latex {{LatexElem {LatexText {"one of"}}}}}}})) {
+      eq(
+        contents[idx],
+        LatexCommand{"textnormal", {LatexArg{LatexArg::Kind::CURLY, Latex{{LatexElem{LatexText{"one of"}}}}}}}
+      )) {
     one_of = true;
     ++idx;
   }
@@ -189,17 +175,14 @@ Definition parse_bnf(const LatexEnvironment& env) {
   std::vector<DefinitionRow> rows;
   while (true) {
     skip_whitespace_text();
-    if (idx == contents.size())
-      break;
-    if (!eq(contents[idx], LatexCommand {"br"}))
-      return {term, true};
+    if (idx == contents.size()) break;
+    if (!eq(contents[idx], LatexCommand{"br"})) return {term, true};
     ++idx;
     rows.emplace_back();
     auto& row = rows.back();
     while (true) {
       skip_whitespace_text();
-      if (idx == contents.size() || eq(contents[idx], LatexCommand {"br"}))
-        break;
+      if (idx == contents.size() || eq(contents[idx], LatexCommand{"br"})) break;
       fillup(row.conjunction, contents[idx]);
       ++idx;
     }
@@ -221,7 +204,8 @@ void dump(const DefinitionElem& elem) {
         std::cout << " }";
       }
     },
-    elem.kind);
+    elem.kind
+  );
 }
 
 void dump(const DefinitionRow& row) {
@@ -251,13 +235,13 @@ size_t count_terminals(const Latex& latex, const std::string& text);
 
 size_t count_terminals(const LatexElem& elem, const std::string& kw) {
   auto command = std::get_if<LatexCommand>(&elem.kind);
-  if (command == nullptr)
-    return 0;
+  if (command == nullptr) return 0;
   size_t count = 0;
   for (auto& arg : command->args)
     count += count_terminals(arg.contents, kw);
-  if (command->name != "terminal"
-      // && command->name != "tcode"
+  if (
+    command->name != "terminal"
+    // && command->name != "tcode"
   )
     return count;
   if (command->args.size() != 1) {
@@ -268,12 +252,10 @@ size_t count_terminals(const LatexElem& elem, const std::string& kw) {
   assert(command->args.size() == 1);
   for (auto& el : command->args[0].contents.elems) {
     auto text = std::get_if<LatexText>(&el.kind);
-    if (text == nullptr)
-      continue;
+    if (text == nullptr) continue;
     auto words = split(text->text);
     for (auto& word : words)
-      if (word == kw)
-        ++count;
+      if (word == kw) ++count;
   }
   return count;
 }
@@ -286,8 +268,7 @@ size_t count_terminals(const Latex& latex, const std::string& text) {
 }
 
 void normalize_one_of(Definition& def) {
-  if (!def.one_of)
-    return;
+  if (!def.one_of) return;
   if (def.error) {
     dump(def);
     assert(false);
@@ -305,8 +286,9 @@ void normalize_one_of(Definition& def) {
       assert(comm.name == "terminal");
       for (auto& el : comm.contents) {
         if (auto text = std::get_if<DefinitionText>(&el.kind)) {
-          new_rows.emplace_back(DefinitionRow {
-            {DefinitionElem {DefinitionCommand {"terminal", {DefinitionElem {*text}}}}}});
+          new_rows.emplace_back(
+            DefinitionRow{{DefinitionElem{DefinitionCommand{"terminal", {DefinitionElem{*text}}}}}}
+          );
           continue;
         }
 
@@ -316,8 +298,7 @@ void normalize_one_of(Definition& def) {
         assert(comm2.name == "keyword");
         assert(comm2.contents.size() == 1);
         auto& text = std::get<DefinitionText>(comm2.contents[0].kind);
-        new_rows.emplace_back(DefinitionRow {
-          {DefinitionElem {DefinitionCommand {"keyword", {DefinitionElem {text}}}}}});
+        new_rows.emplace_back(DefinitionRow{{DefinitionElem{DefinitionCommand{"keyword", {DefinitionElem{text}}}}}});
 
         // if (def.term == "operator-or-punctuator"){ dump(el); std::cout << std::endl; }
       }
@@ -336,9 +317,8 @@ const auto kill_caret = []<typename T>(this const auto& self, T& entity) {
     auto comm = std::get_if<LatexCommand>(&entity.kind);
     if (comm && comm->name == "caret") {
       assert(comm->args.size() <= 1);
-      if (comm->args.size() == 1)
-        assert(comm->args[0].contents.elems.empty());
-      entity = LatexElem {LatexText {"^"}};
+      if (comm->args.size() == 1) assert(comm->args[0].contents.elems.empty());
+      entity = LatexElem{LatexText{"^"}};
     } else {
       std::visit(self, entity.kind);
     }
@@ -352,168 +332,171 @@ const auto kill_caret = []<typename T>(this const auto& self, T& entity) {
   }
 };
 
-std::set<char> escapes {'%', '&', '~', '{', '}', '#'};
-const auto     kill_escapes =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-            },
-            [](this auto&& self, LatexElem& elem) {
-              auto command = std::get_if<LatexCommand>(&elem.kind);
-              if (command && command->name.size() == 1 && escapes.contains(command->name[0])) {
-                assert(command->args.empty());
-                elem = LatexElem {LatexText {command->name}};
-              } else {
-                std::visit(self, elem.kind);
-              }
-            },
-            [](this auto&& self, LatexText&) {},
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+std::set<char> escapes{'%', '&', '~', '{', '}', '#'};
+const auto     kill_escapes = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) {
+    auto command = std::get_if<LatexCommand>(&elem.kind);
+    if (command && command->name.size() == 1 && escapes.contains(command->name[0])) {
+      assert(command->args.empty());
+      elem = LatexElem{LatexText{command->name}};
+    } else {
+      std::visit(self, elem.kind);
+    }
+  },
+  [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto kill_rlap = Overload {[](this auto&& self, Latex& latex) {
-                                   for (auto& el : latex.elems)
-                                     self(el);
-                                 },
-                                 [](this auto&& self, LatexElem& elem) -> void {
-                                   auto command = std::get_if<LatexCommand>(&elem.kind);
-                                   if (command && command->name == "rlap") {
-                                     assert(command->args.size() == 1);
-                                     assert(command->args[0].contents.elems.size() == 1);
-                                     elem = command->args[0].contents.elems[0];
-                                     self(elem);
-                                   } else {
-                                     std::visit(self, elem.kind);
-                                   }
-                                 },
-                                 [](this auto&& self, LatexText&) {},
-                                 [](this auto&& self, LatexCommand& command) {
-                                   for (auto& arg : command.args)
-                                     self(arg);
-                                 },
-                                 [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto kill_rlap = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) -> void {
+    auto command = std::get_if<LatexCommand>(&elem.kind);
+    if (command && command->name == "rlap") {
+      assert(command->args.size() == 1);
+      assert(command->args[0].contents.elems.size() == 1);
+      elem = command->args[0].contents.elems[0];
+      self(elem);
+    } else {
+      std::visit(self, elem.kind);
+    }
+  },
+  [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto kill_textbackslash =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-            },
-            [](this auto&& self, LatexElem& elem) {
-              auto command = std::get_if<LatexCommand>(&elem.kind);
-              if (command && command->name == "textbackslash") {
-                assert(command->args.size() <= 1);
-                if (command->args.size() == 1)
-                  assert(command->args[0].contents.elems.size() == 0);
-                elem = LatexElem {LatexText {"\\"}};
-              } else {
-                std::visit(self, elem.kind);
-              }
-            },
-            [](this auto&& self, LatexText&) {},
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto kill_textbackslash = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) {
+    auto command = std::get_if<LatexCommand>(&elem.kind);
+    if (command && command->name == "textbackslash") {
+      assert(command->args.size() <= 1);
+      if (command->args.size() == 1) assert(command->args[0].contents.elems.size() == 0);
+      elem = LatexElem{LatexText{"\\"}};
+    } else {
+      std::visit(self, elem.kind);
+    }
+  },
+  [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto drop_space_commands =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-            },
-            [](this auto&& self, LatexElem& elem) {
-              auto command = std::get_if<LatexCommand>(&elem.kind);
-              if (command && (command->name == "quad" || command->name == "," ||
-                              command->name == "bnfindent")) {
-                assert(command->args.empty());
-                elem = LatexElem {LatexText {""}}; // TODO: try space
-              } else {
-                std::visit(self, elem.kind);
-              }
-            },
-            [](this auto&& self, LatexText&) {},
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto drop_space_commands = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) {
+    auto command = std::get_if<LatexCommand>(&elem.kind);
+    if (command && (command->name == "quad" || command->name == "," || command->name == "bnfindent")) {
+      assert(command->args.empty());
+      elem = LatexElem{LatexText{""}}; // TODO: try space
+    } else {
+      std::visit(self, elem.kind);
+    }
+  },
+  [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto kill_keyword =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-            },
-            [](this auto&& self, LatexElem& elem) {
-              auto command = std::get_if<LatexCommand>(&elem.kind);
-              if (command && command->name == "keyword") {
-                assert(command->args.size() == 1);
-                assert(command->args[0].contents.elems.size() == 1);
-                auto text = std::get_if<LatexText>(&command->args[0].contents.elems[0].kind);
-                assert(text != nullptr);
-                elem = LatexElem {*text};
-              } else {
-                std::visit(self, elem.kind);
-              }
-            },
-            [](this auto&& self, LatexText&) {},
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto kill_keyword = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) {
+    auto command = std::get_if<LatexCommand>(&elem.kind);
+    if (command && command->name == "keyword") {
+      assert(command->args.size() == 1);
+      assert(command->args[0].contents.elems.size() == 1);
+      auto text = std::get_if<LatexText>(&command->args[0].contents.elems[0].kind);
+      assert(text != nullptr);
+      elem = LatexElem{*text};
+    } else {
+      std::visit(self, elem.kind);
+    }
+  },
+  [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto concat_texts =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-              // meat and potatoes
-              bool   prev_text = false;
-              size_t store_idx = 0;
-              for (size_t idx = 0; idx < latex.elems.size(); ++idx) {
-                auto text = std::get_if<LatexText>(&latex.elems[idx].kind);
-                if (text && text->text.empty())
-                  continue;
-                if (text == nullptr || !prev_text) {
-                  prev_text = text != nullptr;
-                  if (idx != store_idx)
-                    latex.elems[store_idx] = std::move(latex.elems[idx]);
-                  ++store_idx;
-                  continue;
-                }
-                auto ptext = std::get_if<LatexText>(&latex.elems[store_idx - 1].kind);
-                assert(ptext != nullptr);
-                ptext->text += text->text;
-              }
-              latex.elems.erase(latex.elems.begin() + store_idx, latex.elems.end());
-            },
-            [](this auto&& self, LatexElem& elem) { std::visit(self, elem.kind); },
-            [](this auto&& self, LatexText&) {},
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto concat_texts = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+    // meat and potatoes
+    bool   prev_text = false;
+    size_t store_idx = 0;
+    for (size_t idx = 0; idx < latex.elems.size(); ++idx) {
+      auto text = std::get_if<LatexText>(&latex.elems[idx].kind);
+      if (text && text->text.empty()) continue;
+      if (text == nullptr || !prev_text) {
+        prev_text = text != nullptr;
+        if (idx != store_idx) latex.elems[store_idx] = std::move(latex.elems[idx]);
+        ++store_idx;
+        continue;
+      }
+      auto ptext = std::get_if<LatexText>(&latex.elems[store_idx - 1].kind);
+      assert(ptext != nullptr);
+      ptext->text += text->text;
+    }
+    latex.elems.erase(latex.elems.begin() + store_idx, latex.elems.end());
+  },
+  [](this auto&& self, LatexElem& elem) { std::visit(self, elem.kind); }, [](this auto&& self, LatexText&) {},
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
-const auto trim_whitespace =
-  Overload {[](this auto&& self, Latex& latex) {
-              for (auto& el : latex.elems)
-                self(el);
-            },
-            [](this auto&& self, LatexElem& elem) { std::visit(self, elem.kind); },
-            [](this auto&& self, LatexText& text) {
-              while (!text.text.empty() && ::isspace(text.text.back()))
-                text.text.pop_back();
-              while (!text.text.empty() && ::isspace(text.text.front()))
-                text.text.erase(text.text.begin());
-            },
-            [](this auto&& self, LatexCommand& command) {
-              for (auto& arg : command.args)
-                self(arg);
-            },
-            [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
+const auto trim_whitespace = Overload{
+  [](this auto&& self, Latex& latex) {
+    for (auto& el : latex.elems)
+      self(el);
+  },
+  [](this auto&& self, LatexElem& elem) { std::visit(self, elem.kind); },
+  [](this auto&& self, LatexText& text) {
+    while (!text.text.empty() && ::isspace(text.text.back()))
+      text.text.pop_back();
+    while (!text.text.empty() && ::isspace(text.text.front()))
+      text.text.erase(text.text.begin());
+  },
+  [](this auto&& self, LatexCommand& command) {
+    for (auto& arg : command.args)
+      self(arg);
+  },
+  [](this auto&& self, LatexArg& arg) { self(arg.contents); }
+};
 
 // const auto split_terminal = Overload {
 //   [](this auto&& self, Latex& latex) {
@@ -551,45 +534,44 @@ const auto trim_whitespace =
 //   },
 //   [](this auto&& self, LatexArg& arg) { self(arg.contents); }};
 
-const auto count_commands =
-  Overload {[](this auto&& self, Latex& latex, auto& out) {
-              for (auto& el : latex.elems)
-                self(el, out);
-            },
-            [](this auto&& self, LatexElem& elem, auto& out) {
-              std::visit([&](auto& x) { return self(x, out); }, elem.kind);
-            },
-            [](this auto&& self, LatexText&, auto&) {},
-            [](this auto&& self, LatexCommand& command, auto& out) {
-              ++out[command.name];
-              for (auto& arg : command.args)
-                self(arg, out);
-            },
-            [](this auto&& self, LatexArg& arg, auto& out) { self(arg.contents, out); }};
+const auto count_commands = Overload{
+  [](this auto&& self, Latex& latex, auto& out) {
+    for (auto& el : latex.elems)
+      self(el, out);
+  },
+  [](this auto&& self, LatexElem& elem, auto& out) { std::visit([&](auto& x) { return self(x, out); }, elem.kind); },
+  [](this auto&& self, LatexText&, auto&) {},
+  [](this auto&& self, LatexCommand& command, auto& out) {
+    ++out[command.name];
+    for (auto& arg : command.args)
+      self(arg, out);
+  },
+  [](this auto&& self, LatexArg& arg, auto& out) { self(arg.contents, out); }
+};
 
-const auto count_def_commands =
-  Overload {[](this auto& self, const Definition& def, auto& counts) {
-              for (auto&& row : def.disjunction)
-                self(row, counts);
-            },
-            [](this auto& self, const DefinitionRow& row, auto& counts) {
-              for (auto&& elem : row.conjunction)
-                self(elem, counts);
-            },
-            [](this auto& self, const DefinitionElem& elem, auto& counts) {
-              std::visit([&](auto&& arg) { return self(arg, counts); }, elem.kind);
-            },
-            [](this auto& self, const DefinitionText&, auto&) {},
-            [](this auto& self, const DefinitionCommand& command, auto& counts) {
-              ++counts[command.name];
-              for (auto&& elem : command.contents)
-                self(elem, counts);
-            }};
+const auto count_def_commands = Overload{
+  [](this auto& self, const Definition& def, auto& counts) {
+    for (auto&& row : def.disjunction)
+      self(row, counts);
+  },
+  [](this auto& self, const DefinitionRow& row, auto& counts) {
+    for (auto&& elem : row.conjunction)
+      self(elem, counts);
+  },
+  [](this auto& self, const DefinitionElem& elem, auto& counts) {
+    std::visit([&](auto&& arg) { return self(arg, counts); }, elem.kind);
+  },
+  [](this auto& self, const DefinitionText&, auto&) {},
+  [](this auto& self, const DefinitionCommand& command, auto& counts) {
+    ++counts[command.name];
+    for (auto&& elem : command.contents)
+      self(elem, counts);
+  }
+};
 
 constexpr auto fix_name = [](std::string name) {
   for (auto& c : name)
-    if (c == '-')
-      c = '_';
+    if (c == '-') c = '_';
   return "entity_" + name;
 };
 
@@ -608,40 +590,31 @@ void dump_as_cpp(const Definition& def) {
   // }
 
   {
-    if (def.disjunction.size() >= 3)
-      goto list_end;
+    if (def.disjunction.size() >= 3) goto list_end;
     if (def.disjunction.size() == 1) {
       auto&& dis = def.disjunction[0];
       // A = B opt(A)
-      if (dis.conjunction.size() != 2)
-        goto list_end;
+      if (dis.conjunction.size() != 2) goto list_end;
       auto bla  = std::get_if<DefinitionText>(&dis.conjunction[0].kind);
       auto truc = std::get_if<DefinitionCommand>(&dis.conjunction[1].kind);
-      if (!bla || !truc || truc->name != "opt" || truc->contents.size() != 1)
-        goto list_end;
+      if (!bla || !truc || truc->name != "opt" || truc->contents.size() != 1) goto list_end;
       auto znj = std::get_if<DefinitionText>(&truc->contents[0].kind);
-      if (!znj || znj->text != def.term)
-        goto list_end;
-      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text)
-                << ">>);\n";
+      if (!znj || znj->text != def.term) goto list_end;
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
       return;
     }
     // A = B | B A
-    auto&& d1 = def.disjunction[0].conjunction.size() == 1 ? def.disjunction[0].conjunction
-                                                           : def.disjunction[1].conjunction;
-    auto&& d2 = def.disjunction[0].conjunction.size() == 1 ? def.disjunction[1].conjunction
-                                                           : def.disjunction[0].conjunction;
-    if (d1.size() != 1 || d2.size() != 2)
-      goto list_end;
+    auto&& d1 =
+      def.disjunction[0].conjunction.size() == 1 ? def.disjunction[0].conjunction : def.disjunction[1].conjunction;
+    auto&& d2 =
+      def.disjunction[0].conjunction.size() == 1 ? def.disjunction[1].conjunction : def.disjunction[0].conjunction;
+    if (d1.size() != 1 || d2.size() != 2) goto list_end;
     auto bla   = std::get_if<DefinitionText>(&d1[0].kind);
     auto truc1 = std::get_if<DefinitionText>(&d2[0].kind);
     auto truc2 = std::get_if<DefinitionText>(&d2[1].kind);
-    if (!bla || !truc1 || !truc2)
-      goto list_end;
-    if (bla->text == truc1->text && def.term == truc2->text ||
-        bla->text == truc2->text && def.term == truc1->text) {
-      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text)
-                << ">>);\n";
+    if (!bla || !truc1 || !truc2) goto list_end;
+    if (bla->text == truc1->text && def.term == truc2->text || bla->text == truc2->text && def.term == truc1->text) {
+      std::cout << "ENTITY(" << fix_name(def.term) << ", List<Entity<" << fix_name(bla->text) << ">>);\n";
       return;
     }
   }
@@ -653,25 +626,21 @@ list_end:;
       assert(dis.conjunction.size() >= 1);
       auto&& first = dis.conjunction[0];
       auto   text  = std::get_if<DefinitionText>(&first.kind);
-      if (!text)
-        continue;
-      if (text->text == def.term)
-        has_self_start = true;
+      if (!text) continue;
+      if (text->text == def.term) has_self_start = true;
     }
-    if (!has_self_start)
-      goto self_start_end;
+    if (!has_self_start) goto self_start_end;
     Definition def_start;
     Definition def_continue;
     def_start.term    = def.term + "-impl-start";
     def_continue.term = def.term + "-impl-continue";
-    std::cout << "ENTITY(" << fix_name(def.term) << ", And<Entity<" << fix_name(def_start.term)
-              << ">, List<Entity<" << fix_name(def_continue.term) << ">, 0>>);" << std::endl;
+    std::cout << "ENTITY(" << fix_name(def.term) << ", And<Entity<" << fix_name(def_start.term) << ">, List<Entity<"
+              << fix_name(def_continue.term) << ">, 0>>);" << std::endl;
     for (auto&& dis : def.disjunction) {
       auto text = std::get_if<DefinitionText>(&dis.conjunction[0].kind);
       if (text && text->text == def.term) {
         def_continue.disjunction.emplace_back(dis);
-        def_continue.disjunction.back().conjunction.erase(
-          def_continue.disjunction.back().conjunction.begin());
+        def_continue.disjunction.back().conjunction.erase(def_continue.disjunction.back().conjunction.begin());
       } else {
         def_start.disjunction.emplace_back(dis);
       }
@@ -685,20 +654,16 @@ self_start_end:;
   std::cout << "ENTITY(" << fix_name(def.term) << ", Or<";
   bool dis_first = true;
   for (auto&& dis : def.disjunction) {
-    if (!dis_first)
-      std::cout << ", ";
+    if (!dis_first) std::cout << ", ";
     dis_first = false;
     std::cout << "And<";
     bool con_first = true;
     for (auto&& con : dis.conjunction) {
-      if (!con_first)
-        std::cout << ", ";
+      if (!con_first) std::cout << ", ";
       con_first         = false;
-      const auto dumper = Overload {
+      const auto dumper = Overload{
         [](this auto&& self, const DefinitionElem& elem) { std::visit(self, elem.kind); },
-        [](this auto&& self, const DefinitionText& text) {
-          std::cout << "Entity<" << fix_name(text.text) << ">";
-        },
+        [](this auto&& self, const DefinitionText& text) { std::cout << "Entity<" << fix_name(text.text) << ">"; },
         [](this auto&& self, const DefinitionCommand& comm) {
           if (comm.name == "opt") {
             assert(comm.contents.size() == 1);
@@ -712,8 +677,7 @@ self_start_end:;
             name[0]   = toupper(name[0]);
             bool znj  = true;
             for (auto&& content : comm.contents) {
-              if (!znj)
-                std::cout << ", ";
+              if (!znj) std::cout << ", ";
               znj    = false;
               auto x = std::get_if<DefinitionText>(&content.kind);
               if (!x) {
@@ -728,7 +692,7 @@ self_start_end:;
           }
         dumper_fail: {
           std::cout << "UnimplementedTODO<> /* ";
-          dump(DefinitionElem {comm});
+          dump(DefinitionElem{comm});
           std::cout << " */";
         }
         },
@@ -743,7 +707,7 @@ self_start_end:;
 }
 
 int main() {
-  std::filesystem::path file {"/home/ilazaric/repos/draft/source/std-gram.ext"};
+  std::filesystem::path file{"/home/ilazaric/repos/draft/source/std-gram.ext"};
   // std::filesystem::path file {"/home/ilazaric/repos/draft/source/small.ext"};
   Latex latex = parse_latex_file(file);
   kill_caret(latex);
@@ -765,8 +729,7 @@ int main() {
   for (auto&& env : envs) {
     Definition def = parse_bnf(env);
     LOG(def.term);
-    if (def.term == "new-line")
-      continue;
+    if (def.term == "new-line") continue;
     // if (def.term == "identifier") continue;
     // if (def.term == "identifier-start") continue;
     // if (def.term == "identifier-continue") continue;

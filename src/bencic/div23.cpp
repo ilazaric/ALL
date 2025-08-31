@@ -11,10 +11,8 @@ int main() {
   std::vector<int> vec(n + 1);
   for (auto i : std::views::iota(2, n + 1)) {
     vec[i] = vec[i - 1];
-    if (i % 2 == 0)
-      vec[i] = std::min(vec[i], vec[i / 2]);
-    if (i % 3 == 0)
-      vec[i] = std::min(vec[i], vec[i / 3]);
+    if (i % 2 == 0) vec[i] = std::min(vec[i], vec[i / 2]);
+    if (i % 3 == 0) vec[i] = std::min(vec[i], vec[i / 3]);
     ++vec[i];
   }
 
@@ -46,8 +44,7 @@ int main() {
     int delta = -1;
     for (auto i : std::views::iota(1, n + 1))
       if (i % 3 == 0)
-        if (vec[i / 3] - vec[i] > delta)
-          best = i, delta = vec[i / 3] - vec[i];
+        if (vec[i / 3] - vec[i] > delta) best = i, delta = vec[i / 3] - vec[i];
 
     LOG(best, delta);
   }
@@ -57,12 +54,9 @@ int main() {
     for (auto i : std::views::iota(1, n + 1))
       if (i % 2 == 0 && i % 3 == 0) {
         int wtv = n + 5;
-        if (i % 2 == 0)
-          wtv = std::min(wtv, vec[i / 2] + 1);
-        if (i % 3 == 0)
-          wtv = std::min(wtv, vec[i / 3] + 1);
-        if (wtv != vec[i])
-          LOG(i, vec[i], wtv);
+        if (i % 2 == 0) wtv = std::min(wtv, vec[i / 2] + 1);
+        if (i % 3 == 0) wtv = std::min(wtv, vec[i / 3] + 1);
+        if (wtv != vec[i]) LOG(i, vec[i], wtv);
       }
   }
 
@@ -74,12 +68,10 @@ int main() {
       opts[i % Mod] &= opt(i);
     for (auto i : std::views::iota(0, Mod))
       if (i % 2 == 0 || i % 3 == 0)
-        if (opts[i])
-          LOG(i, opts[i]);
+        if (opts[i]) LOG(i, opts[i]);
   }
 
   for (auto i : std::views::iota(2, n + 1))
     if (i % 6 == 2)
-      if (vec[i] == vec[i / 3] + 3)
-        LOG(i);
+      if (vec[i] == vec[i / 3] + 3) LOG(i);
 }

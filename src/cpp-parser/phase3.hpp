@@ -1,9 +1,9 @@
 #pragma once
 
-#include <unicode/uchar.h>
-#include <unicode/utf8.h>
 #include <optional>
 #include <tuple>
+#include <unicode/uchar.h>
+#include <unicode/utf8.h>
 #include <vector>
 
 namespace ivl::cppp {
@@ -44,9 +44,8 @@ namespace ivl::cppp {
     static ParseRet<And> try_parse(Stream s) {
       if constexpr (sizeof...(Ts) == 1) {
         auto bla = try_parse<Ts...>(s);
-        if (!bla)
-          return std::nullopt;
-        return {{And {bla->first}, bla->second}};
+        if (!bla) return std::nullopt;
+        return {{And{bla->first}, bla->second}};
       } else {
       }
     }
@@ -57,19 +56,16 @@ namespace ivl::cppp {
     std::optional<T>     data;
     static ParseRet<Opt> try_parse(Stream s) {
       T ret = T::try_parse(s);
-      if (!ret)
-        return {{Opt {std::nullopt}, s}};
-      return {{Opt {std::move(ret->first)}, ret->second}};
+      if (!ret) return {{Opt{std::nullopt}, s}};
+      return {{Opt{std::move(ret->first)}, ret->second}};
     }
   };
 
   template <UChar32 C>
   struct Char {
     static ParseRet<Char> try_parse(Stream s) {
-      if (s.empty())
-        return std::nullopt;
-      if (s[0] != C)
-        return std::nullopt;
+      if (s.empty()) return std::nullopt;
+      if (s[0] != C) return std::nullopt;
       return {{{}, s.subspan(1)}};
     }
   };
@@ -80,18 +76,18 @@ namespace ivl::cppp {
   struct QChar : Bla<QChar, NotImplemented> {};
   struct QCharSequence : Bla<QCharSequence, And<QChar, Opt<QCharSequence>>> {};
 
-  struct HeaderName : Bla<HeaderName, Or<And<Char<'<'>, HCharSequence, Char<'>'>>,
-                                         And<Char<'"'>, QCharSequence, Char<'"'>>>> {};
+  struct HeaderName
+      : Bla<HeaderName, Or<And<Char<'<'>, HCharSequence, Char<'>'>>, And<Char<'"'>, QCharSequence, Char<'"'>>>> {};
 
   struct PreprocessingTokenOrWhitespace
-      : Bla<PreprocessingTokenOrWhitespace,
-            Or<HeaderName, ImportKeyword, ModuleKeyword, ExportKeyword, Identifier, PpNumber,
-               CharacterLiteral, UserDefinedCharacterLiteral, StringLiteral,
-               UserDefinedStringLiteral, PreprocessingOpOrPunc, NonWhitespaceCharacter,
-               // ^ above is PreprocessingToken
-               WhitespaceCharacter>> {};
+      : Bla<
+          PreprocessingTokenOrWhitespace, Or<
+                                            HeaderName, ImportKeyword, ModuleKeyword, ExportKeyword, Identifier,
+                                            PpNumber, CharacterLiteral, UserDefinedCharacterLiteral, StringLiteral,
+                                            UserDefinedStringLiteral, PreprocessingOpOrPunc, NonWhitespaceCharacter,
+                                            // ^ above is PreprocessingToken
+                                            WhitespaceCharacter>> {};
 
-  std::vector<PreprocessingTokenOrWhitespace> phase3(std::span<const UChar32> code) {
-  }
+  std::vector<PreprocessingTokenOrWhitespace> phase3(std::span<const UChar32> code) {}
 
 } // namespace ivl::cppp

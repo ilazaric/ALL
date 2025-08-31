@@ -10,23 +10,17 @@ const size_t TARGET = 999966663333;
 std::vector<size_t> primes;
 
 // <0, hi]
-size_t divcnt(size_t hi, size_t m) {
-  return hi / m;
-}
+size_t divcnt(size_t hi, size_t m) { return hi / m; }
 
 // [lo, hi]
-size_t divcnt(size_t lo, size_t hi, size_t m) {
-  return divcnt(hi, m) - divcnt(lo - 1, m);
-}
+size_t divcnt(size_t lo, size_t hi, size_t m) { return divcnt(hi, m) - divcnt(lo - 1, m); }
 
 size_t divsum(size_t hi, size_t m) {
   auto tmp = hi / m;
   return (hi, m, tmp, m * tmp * (tmp + 1) / 2);
 }
 
-size_t divsum(size_t lo, size_t hi, size_t m) {
-  return divsum(hi, m) - divsum(lo - 1, m);
-}
+size_t divsum(size_t lo, size_t hi, size_t m) { return divsum(hi, m) - divsum(lo - 1, m); }
 
 int main() {
   {
@@ -39,7 +33,7 @@ int main() {
           mem[j] = true;
       }
     LOG(primes.size());
-    LOG(ivl::io::Elems {primes | std::views::take(10)});
+    LOG(ivl::io::Elems{primes | std::views::take(10)});
   }
 
   size_t sol = 0;
@@ -49,8 +43,7 @@ int main() {
     auto a = primes[i - 1];
     auto b = primes[i];
 
-    if (a * a > TARGET)
-      break;
+    if (a * a > TARGET) break;
 
     size_t delta = 0;
     delta += (divsum(a * a + 1, std::min(TARGET, b * b - 1), a));

@@ -11,7 +11,7 @@
 
 #include <ivl/fs/fileview.hpp>
 
-std::vector<std::string> keywords {
+std::vector<std::string> keywords{
   "constexpr", "print",
   // "condition",
   // "noexcept",
@@ -27,15 +27,13 @@ int main() {
     // std::ifstream fin(f.path());
     // std::string cont(std::istreambuf_iterator<char>(fin), {});
 
-    if (f.path().filename().string()[0] != 'P' && f.path().filename().string()[0] != 'D')
-      continue;
+    if (f.path().filename().string()[0] != 'P' && f.path().filename().string()[0] != 'D') continue;
 
     ivl::fs::FileView data(f.path().string());
     std::string_view  sv((const char*)data.mapped_region, data.length);
     // std::cout << " " << data.length << " " << f.path() << std::endl;
 
-    if (not std::ranges::all_of(
-          keywords, [&](std::string_view kw) { return sv.find(kw) != std::string_view::npos; }))
+    if (not std::ranges::all_of(keywords, [&](std::string_view kw) { return sv.find(kw) != std::string_view::npos; }))
       continue;
 
     evals.emplace_back(f.path().filename().string(), 0);

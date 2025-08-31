@@ -17,24 +17,20 @@ namespace ivl::nt {
 
   // the slow stupid form
   bool is_prime(std::uint64_t n) {
-    if (n <= 1)
-      return false;
+    if (n <= 1) return false;
     for (std::uint64_t p = 2; p * p <= n; ++p)
-      if (n % p == 0)
-        return false;
+      if (n % p == 0) return false;
     return true;
   }
 
   template <typename T, typename U = std::multiplies<T>>
-  constexpr T power(T a, std::uint64_t e, U&& mul = U {}) {
-    if (e == 0)
-      return T {1};
+  constexpr T power(T a, std::uint64_t e, U&& mul = U{}) {
+    if (e == 0) return T{1};
     // trying something new
-    T r {a};
+    T r{a};
     for (auto idx : std::views::iota(0, 63 - std::countl_zero(e)) | std::views::reverse) {
       r = mul(r, r);
-      if (e & (1 << idx))
-        r = mul(r, a);
+      if (e & (1 << idx)) r = mul(r, a);
     }
     return r;
   }
@@ -71,8 +67,7 @@ namespace ivl::nt {
   multiplies(T&&) -> multiplies<0_u32>;
 
   constexpr std::uint64_t gcd(std::uint64_t a, std::uint64_t b) {
-    if (a == 0 || b == 0)
-      return a + b;
+    if (a == 0 || b == 0) return a + b;
 
     int final_shift = std::min(std::countr_zero(a), std::countr_zero(b));
     a >>= std::countr_zero(a);
@@ -80,25 +75,20 @@ namespace ivl::nt {
 
     while (true) {
       a %= b;
-      if (a == 0)
-        return b << final_shift;
+      if (a == 0) return b << final_shift;
       a >>= std::countr_zero(a);
       b %= a;
-      if (b == 0)
-        return a << final_shift;
+      if (b == 0) return a << final_shift;
       b >>= std::countr_zero(a);
     }
   }
 
-  constexpr std::pair<std::int64_t, std::int64_t> extended_euclid(std::uint32_t a,
-                                                                  std::uint32_t b) {
-    if (a == 0)
-      return {0, 1};
-    if (b == 0)
-      return {1, 0};
+  constexpr std::pair<std::int64_t, std::int64_t> extended_euclid(std::uint32_t a, std::uint32_t b) {
+    if (a == 0) return {0, 1};
+    if (b == 0) return {1, 0};
 
-    std::pair<std::int64_t, std::int64_t> ap {1, 0};
-    std::pair<std::int64_t, std::int64_t> bp {0, 1};
+    std::pair<std::int64_t, std::int64_t> ap{1, 0};
+    std::pair<std::int64_t, std::int64_t> bp{0, 1};
 
     while (b) {
       auto ratio = a / b;
@@ -164,7 +154,7 @@ namespace ivl::nt {
 
     template <typename T>
     T apply(const GarnerVector& gv) const {
-      T out {};
+      T out{};
       apply_inplace(gv, out);
       return out;
     }

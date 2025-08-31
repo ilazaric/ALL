@@ -22,10 +22,10 @@ namespace ivl::alloc {
       using Word                                    = std::uint64_t;
       inline static constexpr std::size_t WordWidth = sizeof(Word) * CHAR_BIT;
       // small memory pessimization
-      inline static constexpr std::size_t FixedW        = std::bit_ceil(W);
-      inline static constexpr std::size_t ElemWidth     = 2 * FixedW;
-      inline static constexpr std::size_t TotalBitCount = N * ElemWidth;
-      inline static constexpr std::size_t WordCount = (TotalBitCount + WordWidth - 1) / WordWidth;
+      inline static constexpr std::size_t FixedW           = std::bit_ceil(W);
+      inline static constexpr std::size_t ElemWidth        = 2 * FixedW;
+      inline static constexpr std::size_t TotalBitCount    = N * ElemWidth;
+      inline static constexpr std::size_t WordCount        = (TotalBitCount + WordWidth - 1) / WordWidth;
       inline static constexpr std::size_t ElemCountPerWord = WordWidth / ElemWidth;
 
       std::array<Word, WordCount> words;
@@ -150,8 +150,7 @@ namespace ivl::alloc {
     template <std::size_t Level, bool Kind>
     void modify_prefix(std::uint32_t idx, std::uint32_t leftlen) {
       if constexpr (Level == 0) {
-        if (leftlen)
-          modify_single<0, Kind>(idx);
+        if (leftlen) modify_single<0, Kind>(idx);
         refresh_upwards<1>(idx / 2);
       } else {
         if (leftlen >= (1u << (Level - 1))) {
@@ -172,8 +171,7 @@ namespace ivl::alloc {
           return idx << Level;
         }
         if constexpr (Level != 0) {
-          return take_impl<Level - 1>(
-            idx * 2 + (std::get<Level - 1>(data).load(idx * 2).second < reqlen), reqlen);
+          return take_impl<Level - 1>(idx * 2 + (std::get<Level - 1>(data).load(idx * 2).second < reqlen), reqlen);
         } else {
           return -1;
         }
@@ -185,8 +183,7 @@ namespace ivl::alloc {
     }
 
     std::uint32_t take(std::uint32_t reqlen) {
-      if (std::get<std::countr_zero(LENGTH)>(data).load(0).second < reqlen)
-        return FAILURE;
+      if (std::get<std::countr_zero(LENGTH)>(data).load(0).second < reqlen) return FAILURE;
       return take_impl<std::countr_zero(LENGTH)>(0, reqlen);
     }
 
@@ -208,9 +205,7 @@ namespace ivl::alloc {
       }
     }
 
-    void give(std::uint32_t reqlen, std::uint32_t loc) {
-      give_impl<std::countr_zero(LENGTH)>(0, reqlen, loc);
-    }
+    void give(std::uint32_t reqlen, std::uint32_t loc) { give_impl<std::countr_zero(LENGTH)>(0, reqlen, loc); }
   };
 
 } // namespace ivl::alloc

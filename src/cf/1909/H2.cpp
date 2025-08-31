@@ -24,22 +24,18 @@ int main() {
   auto simulate = [&](int a, int c) {
     if (a % 2 == 0) {
       a += c;
-      if (a >= n)
-        a = n - 1 - (a - n);
+      if (a >= n) a = n - 1 - (a - n);
       return a;
     } else {
       a -= c;
-      if (a < 0)
-        a = -1 - a;
+      if (a < 0) a = -1 - a;
       return a;
     }
   };
 
   auto dist = [&](int a, int b) {
-    if (a > b)
-      std::swap(a, b);
-    if (a + 1 == b)
-      return 0;
+    if (a > b) std::swap(a, b);
+    if (a + 1 == b) return 0;
 
     int rem = 0;
 
@@ -65,8 +61,7 @@ int main() {
     q[p[i]] = n - 1 - i;
 
   auto solve_cycle = [&](std::vector<int> c) {
-    if (c.size() == 1)
-      return;
+    if (c.size() == 1) return;
     auto cpy = c;
     std::ranges::sort(cpy);
     for (int i = 0; i + 1 < cpy.size(); ++i)

@@ -7,19 +7,18 @@
 
 #include <ivl/logger>
 
-#define EXPECT(cond, err)                                                                          \
-  if (!(cond))                                                                                     \
-  return -(err)
+#define EXPECT(cond, err)                                                                                              \
+  if (!(cond)) return -(err)
 
-#define check_lg2(...)                                                                             \
-  do {                                                                                             \
-    int error = (__VA_ARGS__);                                                                     \
-    if (error < 0) {                                                                               \
-      LOG_RAW("error in git: ", #__VA_ARGS__);                                                     \
-      auto e = git_error_last();                                                                   \
-      LOG(error, e->klass, e->message);                                                            \
-      exit(1);                                                                                     \
-    }                                                                                              \
+#define check_lg2(...)                                                                                                 \
+  do {                                                                                                                 \
+    int error = (__VA_ARGS__);                                                                                         \
+    if (error < 0) {                                                                                                   \
+      LOG_RAW("error in git: ", #__VA_ARGS__);                                                                         \
+      auto e = git_error_last();                                                                                       \
+      LOG(error, e->klass, e->message);                                                                                \
+      exit(1);                                                                                                         \
+    }                                                                                                                  \
   } while (0)
 
 namespace gitfs {
@@ -81,8 +80,7 @@ namespace gitfs {
   int listxattr(const char*, char*, size_t);
   // int removexattr (const char *, const char *);
   int opendir(const char*, struct fuse_file_info*);
-  int readdir(const char*, void*, fuse_fill_dir_t, off_t, struct fuse_file_info*,
-              enum fuse_readdir_flags);
+  int readdir(const char*, void*, fuse_fill_dir_t, off_t, struct fuse_file_info*, enum fuse_readdir_flags);
   int releasedir(const char*, struct fuse_file_info*);
   // int fsyncdir (const char *, int, struct fuse_file_info *);
   // ilazaric: private_data done in main
@@ -98,8 +96,7 @@ namespace gitfs {
   // int utimens (const char *, const struct timespec tv[2],
   //              struct fuse_file_info *fi);
   // int bmap (const char *, size_t blocksize, uint64_t *idx);
-  int ioctl(const char*, unsigned int cmd, void* arg, struct fuse_file_info*, unsigned int flags,
-            void* data);
+  int ioctl(const char*, unsigned int cmd, void* arg, struct fuse_file_info*, unsigned int flags, void* data);
   int poll(const char*, struct fuse_file_info*, struct fuse_pollhandle* ph, unsigned* reventsp);
   int write_buf(const char*, struct fuse_bufvec* buf, off_t off, struct fuse_file_info*);
   // int flock (const char *, struct fuse_file_info *, int op);
@@ -112,10 +109,8 @@ namespace gitfs {
   //                          off_t offset_out, size_t size, int flags);
   off_t lseek(const char*, off_t off, int whence, struct fuse_file_info*);
 
-  fuse_operations ops {.getattr = &getattr, .destroy = &destroy};
+  fuse_operations ops{.getattr = &getattr, .destroy = &destroy};
 
 } // namespace gitfs
 
-int main(int argc, char* argv[]) {
-  return fuse_main(argc, argv, &gitfs::ops, static_cast<void*>(new State()));
-}
+int main(int argc, char* argv[]) { return fuse_main(argc, argv, &gitfs::ops, static_cast<void*>(new State())); }

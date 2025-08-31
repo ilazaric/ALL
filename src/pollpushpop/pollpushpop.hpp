@@ -11,10 +11,8 @@ namespace ivl::pollpushpop {
 
   using MaskType               = std::uint64_t;
   using IndexType              = std::uint32_t;
-  constexpr MaskType full_mask = ~(MaskType {});
-  constexpr MaskType single(IndexType idx) {
-    return MaskType {1} << idx;
-  }
+  constexpr MaskType full_mask = ~(MaskType{});
+  constexpr MaskType single(IndexType idx) { return MaskType{1} << idx; }
 
   template <typename T>
   concept MagicIterable = requires(T t, IndexType b) {
@@ -34,9 +32,7 @@ namespace ivl::pollpushpop {
   // std::span is capable of both compiletime-known and runtime-known sizes
   // should i take inspiration from it?
   // unsure atm how, TODO
-  auto bounded(IndexType count) {
-    return Constant {(single(0) << count) - 1};
-  }
+  auto bounded(IndexType count) { return Constant{(single(0) << count) - 1}; }
 
   struct TotalLimit {
     std::uint32_t count;
@@ -50,12 +46,10 @@ namespace ivl::pollpushpop {
     std::uint32_t count;
     MaskType      poll() const { return count ? full_mask : full_mask ^ single(index); }
     void          push(IndexType idx) {
-      if (idx == index)
-        --count;
+      if (idx == index) --count;
     }
     void pop(IndexType idx) {
-      if (idx == index)
-        ++count;
+      if (idx == index) ++count;
     }
   };
 
@@ -68,15 +62,13 @@ namespace ivl::pollpushpop {
     MaskType poll() const { return single(counts.size() + 1) - 1; }
 
     void push(IndexType idx) {
-      if (idx == counts.size())
-        counts.push_back(0);
+      if (idx == counts.size()) counts.push_back(0);
       ++counts[idx];
     }
 
     void pop(IndexType idx) {
       --counts[idx];
-      if (counts.back() == 0)
-        counts.pop_back();
+      if (counts.back() == 0) counts.pop_back();
     }
   };
 
@@ -88,8 +80,7 @@ namespace ivl::pollpushpop {
     IndexType             idx;
 
     top = (full_mask & ... & magics.poll());
-    if (top == 0)
-      return;
+    if (top == 0) return;
 
     goto push_section;
 
@@ -110,8 +101,7 @@ namespace ivl::pollpushpop {
     (magics.pop(idx), ...);
     top ^= single(idx);
     if (top == 0) {
-      if (stack.empty())
-        return;
+      if (stack.empty()) return;
       top = stack.back();
       stack.pop_back();
       goto pop_section;

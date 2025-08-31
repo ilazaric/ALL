@@ -9,8 +9,7 @@ size_t maxprime[maxd + 1];
 size_t pow(size_t x, size_t e) {
   size_t r = 1;
   while (e) {
-    if (e & 1)
-      r *= x;
+    if (e & 1) r *= x;
     x *= x;
     e >>= 1;
   }

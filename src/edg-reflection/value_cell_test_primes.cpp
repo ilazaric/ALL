@@ -16,8 +16,7 @@ private:
 
   static consteval bool is_prime(std::size_t n) {
     for (std::size_t d = 2; d * d <= n; ++d)
-      if (n % d == 0)
-        return false;
+      if (n % d == 0) return false;
     return true;
   }
 

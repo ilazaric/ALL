@@ -3,8 +3,7 @@
 namespace ivl::combcomp {
 
   template <std::size_t N, typename Head, typename... Tail>
-  using SmallIntUtil =
-    std::conditional_t<(N - 1 <= std::numeric_limits<Head>::max()), Head, SmallIntUtil<N, Tail...>>;
+  using SmallIntUtil = std::conditional_t<(N - 1 <= std::numeric_limits<Head>::max()), Head, SmallIntUtil<N, Tail...>>;
 
   // this is smallest unsigned integer
   // that is capable of storing all
@@ -15,8 +14,7 @@ namespace ivl::combcomp {
   // universally, represents [0, N-1]
   // it just overflows when N==0
   template <std::size_t N>
-  using SmallInt =
-    SmallIntUtil<N, std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, std::size_t>;
+  using SmallInt = SmallIntUtil<N, std::uint8_t, std::uint16_t, std::uint32_t, std::uint64_t, std::size_t>;
 
   // this represents a value with N states
   // states are represented internally as
@@ -53,7 +51,6 @@ namespace ivl::combcomp {
   concept convertible_to = state_count<IT> <= state_count<OT>;
 
   template <typename IT, typename OT>
-  void convert(const IT& in, OT& out) {
-  }
+  void convert(const IT& in, OT& out) {}
 
 } // namespace ivl::combcomp

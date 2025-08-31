@@ -86,8 +86,7 @@ namespace ivl::io {
 
   template <typename T>
   std::ostream& operator<<(std::ostream& out, const Elems<T>& elems) {
-    if (!elems.t.empty())
-      out << *(elems.t.begin());
+    if (!elems.t.empty()) out << *(elems.t.begin());
     for (const auto& elem : elems.t | std::views::drop(1))
       out << " " << elem;
     return out;

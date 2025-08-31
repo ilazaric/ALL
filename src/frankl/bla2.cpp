@@ -23,6 +23,4 @@ void dump() {
   }
 }
 
-int main() {
-  dump<0>();
-}
+int main() { dump<0>(); }

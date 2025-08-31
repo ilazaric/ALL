@@ -62,8 +62,7 @@ namespace ivl::langs::tiny::meta {
   };
   template <typename T, typename... Ts>
   struct tl_is_unique<tl<T, Ts...>> {
-    static constexpr bool value =
-      (true && ... && !std::same_as<T, Ts>) && tl_is_unique<tl<Ts...>>::value;
+    static constexpr bool value = (true && ... && !std::same_as<T, Ts>) && tl_is_unique<tl<Ts...>>::value;
   };
 
 } // namespace ivl::langs::tiny::meta

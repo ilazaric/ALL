@@ -1,10 +1,10 @@
-#include <cassert>
-#include <deque>
 #include <ivl/io/conversion>
 #include <ivl/io/stlutils.hpp>
 #include <ivl/logger>
 #include <ivl/nt/rtmint.hpp>
 #include <ivl/pollpushpop/pollpushpop.hpp>
+#include <cassert>
+#include <deque>
 #include <map>
 #include <ranges>
 #include <set>
@@ -31,8 +31,7 @@ using Heap = std::vector<int32_t>;
 bool pop(Heap& data) {
   uint32_t idx = 1;
   while (2 * idx < data.size()) {
-    if (data[idx * 2] == data[idx * 2 + 1])
-      return false;
+    if (data[idx * 2] == data[idx * 2 + 1]) return false;
     idx = idx * 2 + (data[idx * 2] < data[idx * 2 + 1]);
   }
   int32_t last = -1;
@@ -43,12 +42,8 @@ bool pop(Heap& data) {
   return true;
 }
 
-bool test1(Heap data) {
-  return pop(data);
-}
-bool test2(Heap data) {
-  return pop(data) && pop(data);
-}
+bool test1(Heap data) { return pop(data); }
+bool test2(Heap data) { return pop(data) && pop(data); }
 
 Heap heapify(Heap data) {
   for (uint32_t idx = data.size() - 1; idx > 1; --idx)
@@ -59,16 +54,14 @@ Heap heapify(Heap data) {
 const std::vector<Heap>& heaps(uint32_t n, uint32_t k) {
   static std::map<uint32_t, std::map<uint32_t, std::vector<Heap>>> cache;
   auto&                                                            ret = cache[n][k];
-  if (!ret.empty())
-    return ret;
+  if (!ret.empty()) return ret;
   struct Magic {
     Heap                       data;
-    std::vector<uint32_t>      stack {1};
+    std::vector<uint32_t>      stack{1};
     uint32_t                   n;
     std::vector<Heap>&         heaps;
     ivl::pollpushpop::MaskType poll() const {
-      if (stack.size() == n + 1)
-        return 0;
+      if (stack.size() == n + 1) return 0;
       return ivl::pollpushpop::full_mask << stack.back();
     }
     void push(ivl::pollpushpop::IndexType idx) {
@@ -83,7 +76,7 @@ const std::vector<Heap>& heaps(uint32_t n, uint32_t k) {
       stack.pop_back();
     }
   };
-  Magic magic {.data = Heap(1 << n, 0), .n {n}, .heaps {ret}};
+  Magic magic{.data = Heap(1 << n, 0), .n{n}, .heaps{ret}};
   ivl::pollpushpop::iterate(ivl::pollpushpop::bounded(1 << n), magic);
   return ret;
 }
@@ -91,16 +84,12 @@ const std::vector<Heap>& heaps(uint32_t n, uint32_t k) {
 uint32_t cnt1(uint32_t n, uint32_t k, auto&& pred) {
   return std::ranges::count_if(heaps(n, k) | std::views::filter(pred), &test1);
 }
-uint32_t cnt1(uint32_t n, uint32_t k) {
-  return std::ranges::count_if(heaps(n, k), &test1);
-}
+uint32_t cnt1(uint32_t n, uint32_t k) { return std::ranges::count_if(heaps(n, k), &test1); }
 
 uint32_t cnt2(uint32_t n, uint32_t k, auto&& pred) {
   return std::ranges::count_if(heaps(n, k) | std::views::filter(pred), &test2);
 }
-uint32_t cnt2(uint32_t n, uint32_t k) {
-  return std::ranges::count_if(heaps(n, k), &test2);
-}
+uint32_t cnt2(uint32_t n, uint32_t k) { return std::ranges::count_if(heaps(n, k), &test2); }
 
 uint32_t c(uint32_t a, uint32_t b) {
   uint32_t x = 1, y = 1;
@@ -111,9 +100,7 @@ uint32_t c(uint32_t a, uint32_t b) {
   return x / y;
 }
 
-uint32_t mc(uint32_t a, uint32_t b) {
-  return c(a + b - 1, b);
-}
+uint32_t mc(uint32_t a, uint32_t b) { return c(a + b - 1, b); }
 
 uint32_t lemma(uint32_t n, uint32_t k) {
   uint32_t ret = 0;
@@ -123,16 +110,12 @@ uint32_t lemma(uint32_t n, uint32_t k) {
    */
   for (uint32_t ls = 0; ls * 2 < k; ++ls)
     for (uint32_t gt = ls + 1; ls + gt <= k; ++gt)
-      ret +=
-        cnt2(n - 1, gt, [&](const Heap& h) { return std::max(h[2], h[3]) > ls; }) *
-          mc((1 << (n - 1)) - 1, ls) +
-        cnt1(n - 1, gt, [&](const Heap& h) { return std::max(h[2], h[3]) < ls; }) * cnt1(n - 1, ls);
+      ret += cnt2(n - 1, gt, [&](const Heap& h) { return std::max(h[2], h[3]) > ls; }) * mc((1 << (n - 1)) - 1, ls) +
+             cnt1(n - 1, gt, [&](const Heap& h) { return std::max(h[2], h[3]) < ls; }) * cnt1(n - 1, ls);
   return 2 * ret;
 }
 
-void check(uint32_t n, uint32_t k) {
-  LOG(cnt2(n, k), lemma(n, k));
-}
+void check(uint32_t n, uint32_t k) { LOG(cnt2(n, k), lemma(n, k)); }
 
 // RTMint brute(uint32_t n, uint32_t k, uint32_t p){
 //   assert(n <= 5);

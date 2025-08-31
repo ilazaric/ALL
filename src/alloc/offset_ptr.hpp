@@ -60,10 +60,8 @@ namespace ivl::alloc {
 
     template <typename U>
     // prevents int -> char
-      requires(std::is_same_v<std::remove_const_t<T>, std::remove_const<U>> || std::is_void_v<T> ||
-               std::is_void_v<U>)
-    explicit(std::is_void_v<U> && !std::is_void_v<T>)
-      offset_ptr(offset_ptr<U, Offset, OffsetType> o) noexcept
+      requires(std::is_same_v<std::remove_const_t<T>, std::remove_const<U>> || std::is_void_v<T> || std::is_void_v<U>)
+    explicit(std::is_void_v<U> && !std::is_void_v<T>) offset_ptr(offset_ptr<U, Offset, OffsetType> o) noexcept
       requires(!std::is_same_v<T, U> && (std::is_const_v<T> || !std::is_const_v<U>))
         : offset(o.offset) {}
 

@@ -30,8 +30,7 @@ struct Tester {
     for (std::size_t idx = 0; idx < tests.size(); ++idx)
       if (!(tests[idx](f))) {
         auto fidx = fail_counts[idx]++;
-        if (fidx >= fail_examples[idx].size())
-          continue;
+        if (fidx >= fail_examples[idx].size()) continue;
         fail_examples[idx][fidx] = f;
       }
     ++count;
@@ -42,8 +41,7 @@ struct Tester {
     for (std::size_t idx = 0; idx < tests.size(); ++idx) {
       std::cout << names[idx] << " | " << fail_counts[idx] << " | "
                 << round((double)fail_counts[idx] / (double)count * 10000) / 100 << std::endl;
-      for (std::size_t fidx = 0; fidx < fail_counts[idx] && fidx < fail_examples[idx].size();
-           ++fidx) {
+      for (std::size_t fidx = 0; fidx < fail_counts[idx] && fidx < fail_examples[idx].size(); ++fidx) {
         std::cout << "FAILURE EXAMPLE #" << fidx << std::endl;
         std::cout << fail_examples[idx][fidx] << std::endl;
       }

@@ -13,28 +13,24 @@ using namespace ivl::logger::default_logger;
 namespace v1 {
   std::vector<int>                  stack;
   std::array<std::array<int, 4>, 4> matrix;
-  std::array<int, 4>                row_target {5, 10, 9, 0};
-  std::array<int, 4>                col_target {17, 8, 11, 48};
-  std::array<std::array<int, 4>, 4> row_signs {+1, +1, -1, -1, +1, +1, +1, -1,
-                                               +1, -1, +1, +1, +1, -1, +1, -1};
-  std::array<std::array<int, 4>, 4> col_signs {+1, +1, +1, -1, +1, +1, -1, -1,
-                                               +1, -1, -1, +1, +1, +1, +1, +1};
+  std::array<int, 4>                row_target{5, 10, 9, 0};
+  std::array<int, 4>                col_target{17, 8, 11, 48};
+  std::array<std::array<int, 4>, 4> row_signs{+1, +1, -1, -1, +1, +1, +1, -1, +1, -1, +1, +1, +1, -1, +1, -1};
+  std::array<std::array<int, 4>, 4> col_signs{+1, +1, +1, -1, +1, +1, -1, -1, +1, -1, -1, +1, +1, +1, +1, +1};
 
   bool test_validity() {
     for (auto row : std::views::iota(0, 4)) {
       int acc = 0;
       for (auto col : std::views::iota(0, 4))
         acc += row_signs[row][col] * matrix[row][col];
-      if (acc != row_target[row])
-        return false;
+      if (acc != row_target[row]) return false;
     }
 
     for (auto col : std::views::iota(0, 4)) {
       int acc = 0;
       for (auto row : std::views::iota(0, 4))
         acc += col_signs[col][row] * matrix[row][col];
-      if (acc != col_target[col])
-        return false;
+      if (acc != col_target[col]) return false;
     }
 
     return true;
@@ -61,8 +57,7 @@ namespace v1 {
       int acc = 0;
       for (auto idx : std::views::iota(0, 4))
         acc += row_signs[row - 1][idx] * matrix[row - 1][idx];
-      if (acc != row_target[row - 1])
-        return;
+      if (acc != row_target[row - 1]) return;
     }
 
     for (auto idx : std::views::iota(0u, stack.size())) {
@@ -83,21 +78,15 @@ namespace v2 {
   std::uint32_t col  = 0;
 
   void next() {
-    if (col == 3)
-      col = row++;
-    else if (row == 3)
-      row = ++col;
-    else
-      ++(row <= col ? col : row);
+    if (col == 3) col = row++;
+    else if (row == 3) row = ++col;
+    else ++(row <= col ? col : row);
   }
 
   void prev() {
-    if (col + 1 == row)
-      col = 3, --row;
-    else if (row == col)
-      row = 3, --col;
-    else
-      --(row < col ? col : row);
+    if (col + 1 == row) col = 3, --row;
+    else if (row == col) row = 3, --col;
+    else --(row < col ? col : row);
   }
 
   // diff <(./main 2>&1 | cut -d ':' -f 3) <(./main 2>&1 | tac | cut -d ':' -f 3)
@@ -135,12 +124,9 @@ namespace v2 {
       // TODO
       int a = last_row_cell();
       int b = last_col_cell();
-      if (a != b)
-        return;
-      if (a <= 0 || a > 16)
-        return;
-      if ((mask & (1 << (a - 1))) == 0)
-        return;
+      if (a != b) return;
+      if (a <= 0 || a > 16) return;
+      if ((mask & (1 << (a - 1))) == 0) return;
       v1::matrix[row][col] = a;
       for (auto& row : v1::matrix) {
         for (auto cell : row)
@@ -156,11 +142,9 @@ namespace v2 {
       // LOG(row, col, a);
       // if (row == 0)
       //   LOG(row, col, a, ivl::io::Elems{v1::matrix[row]});
-      if (a <= 0 || a > 16)
-        return;
+      if (a <= 0 || a > 16) return;
       // LOG(row, col, a);
-      if ((mask & (1 << (a - 1))) == 0)
-        return;
+      if ((mask & (1 << (a - 1))) == 0) return;
       // LOG(row, col, a);
       mask ^= (1 << (a - 1));
       v1::matrix[row][col] = a;
@@ -173,10 +157,8 @@ namespace v2 {
 
     if (row == 3) {
       int a = last_col_cell();
-      if (a <= 0 || a > 16)
-        return;
-      if ((mask & (1 << (a - 1))) == 0)
-        return;
+      if (a <= 0 || a > 16) return;
+      if ((mask & (1 << (a - 1))) == 0) return;
       mask ^= (1 << (a - 1));
       v1::matrix[row][col] = a;
       next();
