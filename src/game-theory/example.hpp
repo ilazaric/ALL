@@ -1,3 +1,3 @@
-#include <ivl/game-theory/impartial.hpp>
+#include <ivl/game-theory/impartial>
 
 int main() { return 0; }

@@ -1,5 +1,5 @@
-#include <ivl/alloc/mmap_fixed_storage.hpp>
-#include <ivl/alloc/small_ptr_allocator.hpp>
+#include <ivl/alloc/mmap_fixed_storage>
+#include <ivl/alloc/small_ptr_allocator>
 #include <vector>
 
 template <std::size_t N>

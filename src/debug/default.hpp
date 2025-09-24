@@ -1,3 +1,3 @@
 #pragma once
 
-#include <ivl/debug/assert.hpp>
+#include <ivl/debug/assert>

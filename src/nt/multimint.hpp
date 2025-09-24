@@ -4,7 +4,7 @@
 #include <array>
 #include <cstdint>
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 #include "util.hpp"
 
 namespace ivl::nt {

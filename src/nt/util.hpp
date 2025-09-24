@@ -8,7 +8,7 @@
 #include <utility>
 #include <vector>
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
 namespace ivl::nt {

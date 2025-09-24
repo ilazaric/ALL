@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/timer/timer.hpp>
+#include <ivl/timer/timer>
 
 namespace ivl::algos {
 

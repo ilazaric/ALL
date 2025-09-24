@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <ivl/alloc/global_alloc_fwd.hpp>
+#include <ivl/alloc/global_alloc_fwd>
 
 namespace ivl::structs {
 

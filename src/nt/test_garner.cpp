@@ -2,13 +2,13 @@
 #include <random>
 #include <vector>
 
-#include <ivl/nt/multimint.hpp>
-#include <ivl/nt/util.hpp>
+#include <ivl/nt/multimint>
+#include <ivl/nt/util>
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 using namespace ivl::io;
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
 std::mt19937 gen(101);

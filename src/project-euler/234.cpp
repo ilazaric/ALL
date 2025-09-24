@@ -2,7 +2,7 @@
 #include <ranges>
 #include <vector>
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 #include <ivl/logger>
 
 const size_t TARGET = 999966663333;

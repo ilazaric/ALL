@@ -1,7 +1,7 @@
 #include <ivl/io/conversion>
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 #include <ivl/logger>
-#include <ivl/structs/turnament.hpp>
+#include <ivl/structs/turnament>
 #include <cassert>
 #include <deque>
 #include <map>

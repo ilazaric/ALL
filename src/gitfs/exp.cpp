@@ -1,7 +1,7 @@
 #include <git2.h>
 
 #include <ivl/logger>
-#include <ivl/str/nullstringview.hpp>
+#include <ivl/str/nullstringview>
 
 #define check_lg2(...)                                                                                                 \
   do {                                                                                                                 \

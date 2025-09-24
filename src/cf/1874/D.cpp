@@ -180,13 +180,13 @@
 #include <queue>
 #include <ranges>
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/io/conversion.hpp>
+#include <ivl/io/conversion>
 using ivl::io::conversion::cin;
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
 constexpr auto                                     MAXN = 3000_u32;

@@ -4,13 +4,13 @@
 #include <ranges>
 #include <utility>
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include <ivl/io/conversion.hpp>
+#include <ivl/io/conversion>
 using ivl::io::conversion::cin;
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
 int main() {

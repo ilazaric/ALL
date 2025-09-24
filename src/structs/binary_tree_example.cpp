@@ -3,7 +3,7 @@
 
 #include "binary_tree.hpp"
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
 template <typename V>

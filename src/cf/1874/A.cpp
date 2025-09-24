@@ -4,13 +4,13 @@
 #include <ranges>
 #include <vector>
 
-#include <ivl/io/conversion.hpp>
+#include <ivl/io/conversion>
 using ivl::io::conversion::cin;
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 using namespace ivl::io::vector_elems;
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
 int main() {

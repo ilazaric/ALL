@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/str/nullstringview.hpp>
+#include <ivl/str/nullstringview>
 
 // TODO: move to OS specific dir
 namespace ivl::fs {

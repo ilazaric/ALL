@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/logger>
-#include <ivl/util/fixed_string.hpp>
+#include <ivl/util/fixed_string>
 #include <ivl/util>
 #include <concepts>
 #include <expected>

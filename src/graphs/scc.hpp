@@ -5,12 +5,12 @@
 #include <ranges>
 #include <vector>
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
 #include "graph.hpp"
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
 namespace ivl::graphs {

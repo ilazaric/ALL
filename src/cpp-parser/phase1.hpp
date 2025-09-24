@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/fs/fileview.hpp>
+#include <ivl/fs/fileview>
 #include <limits>
 #include <unicode/utf8.h>
 #include <vector>

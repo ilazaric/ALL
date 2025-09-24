@@ -12,8 +12,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <ivl/fs/filedescriptor.hpp>
-#include <ivl/str/nullstringview.hpp>
+#include <ivl/fs/filedescriptor>
+#include <ivl/str/nullstringview>
 
 namespace ivl::fs {
 

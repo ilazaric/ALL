@@ -9,7 +9,7 @@
 #include <utility>
 #include <vector>
 
-#include <ivl/fs/fileview.hpp>
+#include <ivl/fs/fileview>
 
 std::vector<std::string> keywords{
   "constexpr", "print",

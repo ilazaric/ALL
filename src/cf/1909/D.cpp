@@ -4,15 +4,15 @@
 #include <ranges>
 #include <vector>
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 
-#include <ivl/io/conversion.hpp>
+#include <ivl/io/conversion>
 using ivl::io::conversion::cin;
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/nt/util.hpp>
+#include <ivl/nt/util>
 
 int main() {
   for (auto ti : std::views::iota(0, (int)cin)) {

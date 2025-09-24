@@ -1,6 +1,6 @@
-#include <ivl/dp/weird.hpp>
+#include <ivl/dp/weird>
 
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
 struct Example : ivl::dp::Helper<Example, int(int, int)> {

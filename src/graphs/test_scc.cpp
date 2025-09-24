@@ -4,7 +4,7 @@
 
 #include "scc.hpp"
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 
 std::mt19937 gen(101);
 

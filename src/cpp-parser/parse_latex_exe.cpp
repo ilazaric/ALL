@@ -1,6 +1,6 @@
 #include "parse_latex.hpp"
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 #include <boost/algorithm/string/split.hpp>
 #include <map>
 #include <ranges>

@@ -4,7 +4,7 @@
 #include "segment_tree.hpp"
 #include "segment_tree2.hpp"
 
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 
 int main() {
   LOG(sizeof(ivl::alloc::SegmentTree<(1ULL << 10)>));

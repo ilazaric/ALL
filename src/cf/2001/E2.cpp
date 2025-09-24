@@ -1,8 +1,8 @@
 #include <ivl/io/conversion>
-#include <ivl/io/stlutils.hpp>
+#include <ivl/io/stlutils>
 #include <ivl/logger>
-#include <ivl/nt/rtmint.hpp>
-#include <ivl/pollpushpop/pollpushpop.hpp>
+#include <ivl/nt/rtmint>
+#include <ivl/pollpushpop/pollpushpop>
 #include <cassert>
 #include <deque>
 #include <map>

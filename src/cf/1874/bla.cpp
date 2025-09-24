@@ -1,10 +1,10 @@
-#include <ivl/logger/logger.hpp>
+#include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/literals/ints.hpp>
+#include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include <ivl/nt/primes.hpp>
+#include <ivl/nt/primes>
 
 int main() {
   constexpr auto A     = 1_u64 << 15;

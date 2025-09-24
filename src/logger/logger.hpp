@@ -36,7 +36,7 @@
   just change it in your repository copy :)
  */
 
-#include <ivl/util/fixed_string.hpp>
+#include <ivl/util/fixed_string>
 #include <array>
 #include <cstdint>
 #include <iostream> // only used for `default_logger`, remove if unnecessary
