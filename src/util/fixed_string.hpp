@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string_view>
+
 namespace ivl::util {
 
   // a string that can be passed via template args

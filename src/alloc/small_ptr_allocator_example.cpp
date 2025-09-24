@@ -40,14 +40,14 @@ int main() {
     acc += x;
   LOG(acc);
 
-  using Map = std::map<int, int, std::less<int>, Alloc::rebind<std::pair<const int, int>>::other>;
+  // using Map = std::map<int, int, std::less<int>, Alloc::rebind<std::pair<const int, int>>::other>;
 
-  auto m = Alloc::rebind<Map>::other::allocate(1);
-  std::construct_at(&*m);
+  // auto m = Alloc::rebind<Map>::other::allocate(1);
+  // std::construct_at(&*m);
 
-  for (int i = 0; i < 1000; ++i)
-    (*m)[i] = i;
+  // for (int i = 0; i < 1000; ++i)
+  //   (*m)[i] = i;
 
-  std::destroy_at(&*m);
-  Alloc::rebind<Map>::other::deallocate(m, 1);
+  // std::destroy_at(&*m);
+  // Alloc::rebind<Map>::other::deallocate(m, 1);
 }
