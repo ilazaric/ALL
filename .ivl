@@ -2,17 +2,20 @@
 function dbg-build(){
     FILE="$1"
     shift
-    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -DIVL_DBG_MODE -O0 -g -ggdb -rdynamic -fsanitize=address,undefined -ldl -no-pie -fno-pie -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
+    $LOC/build.py
+    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -DIVL_DBG_MODE -O0 -g -ggdb -rdynamic -fsanitize=address,undefined -ldl -no-pie -fno-pie -std=c++${CXXVER:-20} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
 function build(){
     FILE="$1"
     shift
-    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-20} -I"$LOC/include2" -I"$LOC/include" $FILE.cpp -o $FILE ${CXXPOST:-}
+    $LOC/build.py
+    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-20} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
 function render(){
-    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/include -I $LOC/include2" $1.cpp > $1.rendered.cpp
+    $LOC/build.py
+    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/build/include -I $LOC/build/default_include" $1.cpp > $1.rendered.cpp
 }
 
 # `cargo install cce` needed
