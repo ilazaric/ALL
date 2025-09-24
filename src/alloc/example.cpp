@@ -2,8 +2,7 @@
 
 #include "small_ptr_allocator.hpp"
 
-#include <ivl/logger/logger.hpp>
-using namespace ivl::logger::default_logger;
+#include <ivl/logger>
 
 template <typename T>
 using SmallVec = std::vector<T, ivl::alloc::SmallPtrEnv<0xAFED'0000'0000'0000ULL>::Allocator<T>>;
