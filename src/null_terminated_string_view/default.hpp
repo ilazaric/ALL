@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-namespace ivl::str {
+namespace ivl {
 
   // just like `std::string_view`, but with a guarantee
   // that one-past-the-end ptr points to a null character
@@ -11,11 +11,11 @@ namespace ivl::str {
   // TODO?: `std::string_view` is an alias to
   // - `std::basic_string_view<char, std::char_traits<char>>`
   // - should this also be like that?
-  struct NullStringView {
+  struct null_terminated_string_view {
     std::string_view sv;
 
     // for default constructor
-    static constexpr char emptyString[] = "";
+    static constexpr char empty_string[] = "";
 
     // * member types
     using value_type             = std::string_view::value_type;
@@ -35,24 +35,24 @@ namespace ivl::str {
 #if __cpp_lib_constexpr_string >= 201907L
     constexpr
 #endif
-      NullStringView(const std::string& s) noexcept
+      null_terminated_string_view(const std::string& s) noexcept
         : sv(s) {
     }
 
-    constexpr NullStringView(const char* s) : sv(s) {}
+    constexpr null_terminated_string_view(const char* s) : sv(s ? s : empty_string) {}
 
-    constexpr NullStringView() noexcept : sv(emptyString) {}
+    constexpr null_terminated_string_view() noexcept : sv(empty_string) {}
 
     // TODO: add constructor from std::filesystem::path if needed
 
-    constexpr NullStringView(const NullStringView&) noexcept = default;
-    constexpr NullStringView(NullStringView&&) noexcept      = default;
+    constexpr null_terminated_string_view(const null_terminated_string_view&) noexcept = default;
+    constexpr null_terminated_string_view(null_terminated_string_view&&) noexcept      = default;
 
-    constexpr NullStringView& operator=(const NullStringView&) noexcept = default;
-    constexpr NullStringView& operator=(NullStringView&&) noexcept      = default;
+    constexpr null_terminated_string_view& operator=(const null_terminated_string_view&) noexcept = default;
+    constexpr null_terminated_string_view& operator=(null_terminated_string_view&&) noexcept      = default;
 
     // * destructor
-    constexpr ~NullStringView() noexcept = default;
+    constexpr ~null_terminated_string_view() noexcept = default;
 
     // * conversions
     constexpr operator std::string_view() const noexcept { return sv; }
@@ -74,10 +74,9 @@ namespace ivl::str {
     constexpr const_reference operator[](std::size_t pos) const { return sv[pos]; }
     constexpr const_reference at(std::size_t pos) const { return sv.at(pos); }
 
-    // TODO?: should this be made `noexcept` ?
-    // - even if empty, there is a null character at one-past-the-end
-    constexpr const_reference front() const { return sv.front(); }
-    constexpr const_reference back() const { return sv.back(); }
+    // even if empty, there is a null character at one-past-the-end
+    constexpr const_reference front() const noexcept { return sv.front(); }
+    constexpr const_reference back() const noexcept { return sv.back(); }
     constexpr const_pointer   data() const noexcept { return sv.data(); }
 
     // * capacity
@@ -100,4 +99,4 @@ namespace ivl::str {
     static constexpr size_type npos = std::string_view::npos;
   };
 
-} // namespace ivl::str
+} // namespace ivl
