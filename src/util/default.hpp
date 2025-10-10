@@ -12,6 +12,7 @@ namespace ivl::util {
   template <typename T>
   constexpr std::string_view typestr() {
     // only works with gcc, only care about gcc atm
+    // TODO: add #error on non-gcc
     std::string_view sv = __PRETTY_FUNCTION__;
     sv                  = sv.substr(58);
     sv                  = sv.substr(0, sv.size() - 50);
@@ -37,6 +38,10 @@ namespace ivl::util {
     Fn fn;
     ~AtScopeEnd() { fn(); }
   };
+
+  // TODO: move to ivl/meta
+  template <typename T, typename... Ts>
+  concept same_as_one_of = (std::same_as<T, Ts> || ...);
 
   // namespace detail {
   //   template<typename T>
