@@ -26,6 +26,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
+#include <utility>
+
 namespace ivl::linux::raw_syscalls {
 
   /*
@@ -154,6 +156,11 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
+  inline __attribute__((always_inline)) [[noreturn]] void ud2() {
+    asm volatile("ud2" : : : "memory");
+    std::unreachable();
+  }
+
   // TODO
 
   // long mmap();
@@ -176,7 +183,31 @@ namespace ivl::linux::raw_syscalls {
 
   long exit_group(int error_code) { return manual_syscall(231, error_code); }
 
-  long clone3(const clone_args* args, size_t size) { return manual_syscall(435, reinterpret_cast<long>(args), size); }
+  // long clone3(const clone_args* args, size_t size) { return manual_syscall(435, reinterpret_cast<long>(args), size);
+  // }
+
+  // TODO: think on this more, clone3 is weird, weird control flow
+  long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {
+    register long rax asm("rax") = 435;
+    register long rdi asm("rdi") = reinterpret_cast<long>(args);
+    register long rsi asm("rsi") = static_cast<long>(size);
+    register long rdx asm("rdx") = reinterpret_cast<long>(fn);
+    register long r10 asm("r10") = reinterpret_cast<long>(fnarg);
+    asm volatile goto("syscall\n"
+                      "test %%rax, %%rax\n"
+                      "jnz %l[parent_process]\n"
+                      "mov %%r10, %%rdi\n"
+                      "call *%%rdx\n"
+                      : "+a"(rax)                              /* outputs */
+                      : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10) /* inputs */
+                      : "memory", "rcx", "r11", "cc"           /* clobbers */
+                      : parent_process /* goto labels */);
+
+    // reinterpret_cast<void (*)(void*)>(rdx)(reinterpret_cast<void*>(r10));
+
+  parent_process:
+    return rax;
+  }
 
   long mmap(
     unsigned long addr, unsigned long len, unsigned long prot, unsigned long flags, unsigned long fd, unsigned long off
