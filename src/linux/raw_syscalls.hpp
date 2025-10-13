@@ -183,6 +183,12 @@ namespace ivl::linux::raw_syscalls {
 
   long exit_group(int error_code) { return manual_syscall(231, error_code); }
 
+  long execve(const char* pathname, const char* const argv[], const char* const envp[]) {
+    return manual_syscall(
+      59, reinterpret_cast<long>(pathname), reinterpret_cast<long>(argv), reinterpret_cast<long>(envp)
+    );
+  }
+
   // long clone3(const clone_args* args, size_t size) { return manual_syscall(435, reinterpret_cast<long>(args), size);
   // }
 

@@ -11,6 +11,72 @@ namespace ivl::linux {
     (if anything else shows up it's a kernel bug)
    */
 
+  namespace kernel_result_detail {
+    template <typename T, size_t N>
+    struct wrapper;
+
+    template <typename T>
+    struct wrapper<T, 0> {
+      T payload;
+
+      explicit wrapper(auto&&... args) : payload(FWD(args)...) {}
+
+      T&        get() & { return payload; }
+      const T&  get() const& { return payload; }
+      T&&       get() && { return std::move(payload); }
+      const T&& get() const&& { return std::move(payload); }
+    };
+
+    template <typename T, size_t N>
+      requires(N != 0)
+    struct wrapper<T, N> {
+      wrapper<T, N - 1> payload;
+
+      explicit wrapper(auto&&... args) : payload(FWD(args)...) {}
+
+      T&        get() & { return payload.get(); }
+      const T&  get() const& { return payload.get(); }
+      T&&       get() && { return std::move(payload).get(); }
+      const T&& get() const&& { return std::move(payload).get(); }
+    };
+
+    template <typename A, typename B>
+    struct try_align {};
+
+#define _(N, M)                                                                                                        \
+  template <typename A, typename B>                                                                                    \
+    requires std::is_layout_compatible_v<wrapper<A, N>, wrapper<B, M>>                                                 \
+  struct try_align<A, B> {                                                                                             \
+    using left_wrapper  = wrapper<A, N>;                                                                               \
+    using right_wrapper = wrapper<B, M>;                                                                               \
+  }
+
+    _(1, 1);
+    _(1, 2);
+    _(1, 3);
+    _(1, 4);
+    _(1, 5);
+    _(2, 1);
+    _(3, 1);
+    _(4, 1);
+    _(5, 1);
+
+#undef _
+
+    // template <typename A, typename B>
+    // struct try_align {
+    //   static_assert(std::is_standard_layout_v<A>);
+    //   static_assert(std::is_standard_layout_v<B>);
+    //   static_assert(sizeof(A) == sizeof(B));
+    //   using
+    // };
+
+    // struct try_align {
+    //   using left_wrapper;
+    //   using right_wrapper;
+    // };
+  } // namespace kernel_result_detail
+
   template <size_t width>
     requires(width == 2 || width == 4 || width == 8)
   struct syscall_error {
@@ -19,13 +85,16 @@ namespace ivl::linux {
 
   // TODO: this should work with more standard-layout stuff, like long, and {{long}, whatever}
   template <typename T>
-    requires std::is_standard_layout_v<T> && std::is_layout_compatible_v<T, syscall_error<sizeof(T)>>
+    requires std::is_standard_layout_v<T> // && std::is_layout_compatible_v<T, syscall_error<sizeof(T)>>
   struct [[nodiscard]] or_syscall_error {
-    using error_type = syscall_error<sizeof(T)>;
+    using error_type    = syscall_error<sizeof(T)>;
+    using left_wrapper  = kernel_result_detail::try_align<T, error_type>::left_wrapper;
+    using right_wrapper = kernel_result_detail::try_align<T, error_type>::right_wrapper;
+    static_assert(std::is_layout_compatible_v<left_wrapper, right_wrapper>);
 
     union {
-      error_type error;
-      T          success;
+      right_wrapper error;
+      left_wrapper  success;
     };
 
     explicit or_syscall_error(long value) {
@@ -35,40 +104,44 @@ namespace ivl::linux {
 
     or_syscall_error() = delete;
 
-    bool is_error() const noexcept { return error.value < 0; }
-    bool is_success() const noexcept { return error.value >= 0; }
+    bool is_error() const noexcept { return error.get().value < 0; }
+    bool is_success() const noexcept { return error.get().value >= 0; }
 
     // unwrap, TODO understand unwinding
 
-    decltype(auto) with(auto&& callable) & { return is_success() ? FWD(callable)(success) : FWD(callable)(error); }
-    decltype(auto) with(auto&& callable) const& { return is_success() ? FWD(callable)(success) : FWD(callable)(error); }
+    decltype(auto) with(auto&& callable) & {
+      return is_success() ? FWD(callable)(success.get()) : FWD(callable)(error.get());
+    }
+    decltype(auto) with(auto&& callable) const& {
+      return is_success() ? FWD(callable)(success.get()) : FWD(callable)(error.get());
+    }
     decltype(auto) with(auto&& callable) && {
-      return is_success() ? FWD(callable)(std::move(success)) : FWD(callable)(std::move(error));
+      return is_success() ? FWD(callable)(std::move(success.get())) : FWD(callable)(std::move(error.get()));
     }
     decltype(auto) with(auto&& callable) const&& {
-      return is_success() ? FWD(callable)(std::move(success)) : FWD(callable)(std::move(error));
+      return is_success() ? FWD(callable)(std::move(success.get())) : FWD(callable)(std::move(error.get()));
     }
 
     void with_success(auto&& callable) & {
       if (is_error()) return;
-      FWD(callable)(success);
+      FWD(callable)(success.get());
     }
     void with_success(auto&& callable) const& {
       if (is_error()) return;
-      FWD(callable)(success);
+      FWD(callable)(success.get());
     }
     void with_success(auto&& callable) && {
       if (is_error()) return;
-      FWD(callable)(std::move(success));
+      FWD(callable)(std::move(success.get()));
     }
     void with_success(auto&& callable) const&& {
       if (is_error()) return;
-      FWD(callable)(std::move(success));
+      FWD(callable)(std::move(success.get()));
     }
 
-    ~or_syscall_error() noexcept(noexcept(success.~T())) {
+    ~or_syscall_error() noexcept(noexcept(success.~left_wrapper())) {
       if (is_success()) {
-        success.~T();
+        success.~left_wrapper();
       }
     }
   };
