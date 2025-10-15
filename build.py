@@ -56,6 +56,8 @@ for x in sys.argv[1:]:
     assert y.is_dir(), x
     for root, dirs, files in y.walk():
         for f in files:
+            if '#' in f:
+                continue
             if f.endswith(".cpp"):
                 targets.add(root / f)
 
@@ -64,22 +66,35 @@ print(targets)
 
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
+cxxadded = []
 cxxver = os.getenv("CXXVER", "23")
 cxxpost = os.getenv("CXXPOST", "")
 
-#      $FILE.cpp -o $FILE ${CXXPOST:-}
+def add_compiler_flags(arg):
+    global cxxadded
+    cxxadded += arg.split()
 
 for target in targets:
-    subprocess.run([cxx] +
-                   cxxpre.split() +
-                   ["-DIVL_LOCAL",
-                    "-O3",
-                    "-g1",
-                    f"-std=c++{cxxver}",
-                    f"-I{include.parent.resolve()}",
-                    f"-I{default_include.parent.resolve()}",
-                    target,
-                    "-o",
-                    target.stem] +
-                   cxxpost.split(), check=True)
+    cxxadded = []
+    with target.open() as f:
+        x = "// IVL "
+        ivl_directives = [l.removeprefix(x)[:-1] for l in f.readlines() if l.startswith(x)]
+    # print(ivl_directives)
+    for d in ivl_directives:
+        eval(d)
+    args = ([cxx] +
+            cxxpre.split() +
+            cxxadded +
+            ["-DIVL_LOCAL",
+             "-O3",
+             "-g1",
+             f"-std=c++{cxxver}",
+             f"-I{include.parent.resolve()}",
+             f"-I{default_include.parent.resolve()}",
+             target,
+             "-o",
+             target.parent / target.stem] +
+            cxxpost.split())
+    print(" ".join([str(x) for x in args]))
+    subprocess.run(args, check=True)
     

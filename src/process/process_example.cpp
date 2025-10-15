@@ -1,5 +1,7 @@
 #include <ivl/process>
 
+// IVL add_compiler_flags("")
+
 int main() {
   ivl::process_config cfg;
   cfg.pathname = "/bin/touch";
