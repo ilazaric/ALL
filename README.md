@@ -12,11 +12,10 @@ move ivl script to an isolated dir so it can be added to PATH
 add .bashrc
 
 
-header src/bla/truc/znj.hpp can be included as <ivl/bla/truc/znj>
-header src/bla/truc/default.hpp can be included as <ivl/bla/truc>
 if there is a corresponding .cpp , including the header implies linking with the source file TODO NOT IMPLEMENTED
 if a source file doesnt have a corresponding header, it is implicitly an executable TODO NOT IMPLEMENTED
 
+^ currently .cpp implies executable
 
 what about non-cpp files?
 .sh makes sense to execute
@@ -42,6 +41,8 @@ all artifacts should probably end up in build/
 unfortunately
 kinda like having files in cwd
 
+^ currently only artifacts are executables, and they are placed alongside .cpp
+
 so i want .ivl files
 if root/.ivl and root/subdir/.ivl , it should load them in that order
 what would they contain?
@@ -53,3 +54,5 @@ so why dont i stick with shell?
 wait
 i want this to work relative to target, not cwd
 whoops
+
+^ `ivl build` goes to a python script
