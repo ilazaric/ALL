@@ -7,10 +7,11 @@ function dbg-build(){
 }
 
 function build(){
-    FILE="$1"
-    shift
-    $LOC/build.py
-    ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-20} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
+    $LOC/build.py "$@"
+    # old impl
+    # FILE="$1"
+    # shift
+    # ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-23} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
 function render(){

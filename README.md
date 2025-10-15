@@ -37,3 +37,19 @@ probably do whatever comment syntax for the language
 // IVL DEPENDS_ON(foo/bar)
 # IVL DEPENDS_ON(foo/bar)
 ```
+
+all artifacts should probably end up in build/
+unfortunately
+kinda like having files in cwd
+
+so i want .ivl files
+if root/.ivl and root/subdir/.ivl , it should load them in that order
+what would they contain?
+currently they are shell files
+i dont really want to go into dsl
+python seems like an okay choice
+but i dont like python
+so why dont i stick with shell?
+wait
+i want this to work relative to target, not cwd
+whoops
