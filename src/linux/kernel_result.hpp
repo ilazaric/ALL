@@ -2,6 +2,8 @@
 
 #include <ivl/util>
 
+#include <ivl/linux/raw_syscalls>
+
 namespace ivl::linux {
 
   /*
@@ -84,6 +86,8 @@ namespace ivl::linux {
   };
 
   // TODO: this should work with more standard-layout stuff, like long, and {{long}, whatever}
+  // works with long now, and {{{long}}}
+  // can be improved with reflection
   template <typename T>
     requires std::is_standard_layout_v<T> // && std::is_layout_compatible_v<T, syscall_error<sizeof(T)>>
   struct [[nodiscard]] or_syscall_error {
@@ -108,6 +112,14 @@ namespace ivl::linux {
     bool is_success() const noexcept { return error.get().value >= 0; }
 
     // unwrap, TODO understand unwinding
+
+    decltype(auto) unwrap_or_terminate(this auto&& self) {
+      if (self.is_error()) {
+        ivl::linux::raw_syscalls::exit_group(1);
+        ivl::linux::raw_syscalls::ud2();
+      }
+      return FWD(self).success.get();
+    }
 
     decltype(auto) with(auto&& callable) & {
       return is_success() ? FWD(callable)(success.get()) : FWD(callable)(error.get());
@@ -145,53 +157,5 @@ namespace ivl::linux {
       }
     }
   };
-
-  // struct kernel_success {
-  //   long value;
-  // };
-
-  // struct kernel_error {
-  //   long value;
-  // };
-
-  // struct unhandled_error_exception {
-  //   long value;
-  // }
-
-  // struct bad_error_cast_exception {
-  //   long value;
-  // };
-
-  // // TODO: maybe rename, syscall_return_t ?
-  // // TODO: think about nodiscard
-  // // This is basically a variant of successes and errors.
-  // [[nodiscard]] struct kernel_result {
-  //   long value; // TODO: make private
-
-  //   explicit kernel_result(long value) : value(value) {}
-
-  //   bool is_error() const noexcept { return value < 0; }
-
-  //   bool is_success() const noexcept { return value >= 0; }
-
-  //   // TODO: good monadic stuff
-
-  //   kernel_success unwrap() const {
-  //     return is_success() ? kernel_success{value} : throw unhandled_error_exception{value};
-  //   }
-
-  //   template <typename T>
-  //   T unwrap_as() const {
-  //     return is_success() ? T{value} : throw unhandled_error_exception{value};
-  //   }
-
-  //   kernel_error unwrap_error() const {
-  //     return is_error() ? kernel_error{value} : throw bad_error_cast_exception{value};
-  //   }
-
-  //   decltype(auto) visit(auto&& callable) const {
-  //     return is_success() ? FWD(callable)(kernel_success{value}) : FWD(callable)(kernel_error{value});
-  //   }
-  // };
 
 } // namespace ivl::linux

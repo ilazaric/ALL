@@ -215,6 +215,12 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
+  long dup2(unsigned int oldfd, unsigned int newfd) { return manual_syscall(33, oldfd, newfd); }
+
+  long lseek(unsigned int fd, off_t offset, unsigned int whence) { return manual_syscall(8, fd, offset, whence); }
+
+  // long fatter_clone3(const clone_args* args);
+
   long mmap(
     unsigned long addr, unsigned long len, unsigned long prot, unsigned long flags, unsigned long fd, unsigned long off
   ) {
@@ -223,6 +229,14 @@ namespace ivl::linux::raw_syscalls {
 
   long wait4(pid_t upid, int* stat_addr, int options, rusage* ru) {
     return manual_syscall(61, upid, reinterpret_cast<long>(stat_addr), options, reinterpret_cast<long>(ru));
+  }
+
+  long ftruncate(unsigned int fd, off_t length) { return manual_syscall(77, fd, length); }
+
+  long execveat(int fd, const char* filename, const char* const* argv, const char* const* envp, int flags) {
+    return manual_syscall(
+      322, fd, reinterpret_cast<long>(filename), reinterpret_cast<long>(argv), reinterpret_cast<long>(envp), flags
+    );
   }
 
   long inc(long arg) { return manual_syscall(666, arg); }

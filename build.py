@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+# TODO: move this file into src/ (or ivl/ eventually)
+
 from pathlib import Path
 import shutil
 # import argparse
@@ -70,6 +72,7 @@ cxxadded = []
 cxxver = os.getenv("CXXVER", "23")
 cxxpost = os.getenv("CXXPOST", "")
 
+# TODO: scrape includes for these as well, but eventually would want a preprocessor to do that
 def add_compiler_flags(arg):
     global cxxadded
     cxxadded += arg.split()

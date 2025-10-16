@@ -37,7 +37,7 @@ namespace ivl::linux {
     explicit owned_file_descriptor(int value) : value(value) {}
 
     owned_file_descriptor(const owned_file_descriptor&) = delete;
-    owned_file_descriptor(owned_file_descriptor&& o) { std::swap(value, o.value); }
+    owned_file_descriptor(owned_file_descriptor&& o) : value(o.value) { o.value = file_descriptor::EMPTY_SENTINEL; }
 
     owned_file_descriptor& operator=(const owned_file_descriptor&) = delete;
     owned_file_descriptor& operator=(owned_file_descriptor&& o) noexcept {
