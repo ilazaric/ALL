@@ -4,6 +4,7 @@
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
 #include <ivl/meta>
+#include <ivl/util>
 #include <cstdint>
 #include <utility>
 
@@ -167,7 +168,9 @@ namespace ivl::linux::rich {
 
       template for (constexpr auto error_tag : {meta::tag<Errors>{}...}) {
         if (error_index == tag) {
-          return FWD(callable)(std::forward_like<decltype(self)>(*static_cast<typename decltype(error_tag)::type*>(ptr)));
+          return FWD(callable)(
+            std::forward_like<decltype(self)>(*static_cast<typename decltype(error_tag)::type*>(ptr))
+          );
         }
         ++error_index;
       }
@@ -209,6 +212,18 @@ namespace ivl::linux::rich {
   or_rich_error<wide_owned_file_descriptor, open_error> open(const char* filename, int flags, mode_t mode) {
     return or_rich_error<wide_owned_file_descriptor, open_error>(
       raw_syscalls::open(filename, flags, mode), filename, flags, mode
+    );
+  }
+
+  struct write_error {
+    long         error;
+    unsigned int fd;
+    std::string  data;
+  };
+
+  or_rich_error<long, write_error> write(unsigned int fd, const char* buf, size_t count) {
+    return or_rich_error<long, write_error>(
+      raw_syscalls::write(fd, buf, count), fd, util::lazy_construct<std::string>(buf, count)
     );
   }
 

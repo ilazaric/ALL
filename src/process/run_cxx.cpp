@@ -11,21 +11,12 @@
 
 // IVL add_compiler_flags("-static -flto")
 
-ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor> compile_cxx(std::string_view code) {
+ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
   auto in_fd  = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
   auto out_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
 
-  {
-    auto rem = code;
-    while (!rem.empty()) {
-      auto ret = ivl::linux::raw_syscalls::write(in_fd.get(), rem.data(), rem.size());
-      if (ret < 0) {
-        std::cout << "write: " << ret << std::endl;
-        exit(1);
-      }
-      rem.remove_prefix(ret);
-    }
-  }
+  while (!code.empty())
+    code.remove_prefix(ivl::linux::rich::write(in_fd.get(), code.data(), code.size()).unwrap_or_throw());
 
   ivl::process_config cfg;
   cfg.pathname = "/usr/bin/g++";
@@ -49,7 +40,7 @@ ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor> compile_cxx(std:
   snprintf(link, sizeof(link), "/proc/self/fd/%d", out_fd.get());
   out_fd = ivl::linux::rich::open(link, O_RDONLY, 0).unwrap_or_throw();
 
-  return ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor>(std::move(out_fd));
+  return out_fd;
 }
 
 int main() {
@@ -58,8 +49,7 @@ int main() {
 int main(){
   std::cout << "Hello world" << std::endl;
 }
-)CXX")
-                  .unwrap_or_terminate();
+)CXX");
 
   auto ret = ivl::linux::raw_syscalls::execveat(out_fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
   std::cout << "unexpected ret: " << ret << std::endl;
