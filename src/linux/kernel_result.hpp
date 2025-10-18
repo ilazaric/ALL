@@ -106,6 +106,19 @@ namespace ivl::linux {
       else std::construct_at(&success, value);
     }
 
+    explicit or_syscall_error(T&& o)
+      requires(!std::same_as<T, long>)
+        : success(std::move(o)) {}
+    explicit or_syscall_error(const T&& o)
+      requires(!std::same_as<T, long>)
+        : success(std::move(o)) {}
+    explicit or_syscall_error(T& o)
+      requires(!std::same_as<T, long>)
+        : success(o) {}
+    explicit or_syscall_error(const T& o)
+      requires(!std::same_as<T, long>)
+        : success(o) {}
+
     or_syscall_error() = delete;
 
     bool is_error() const noexcept { return error.get().value < 0; }

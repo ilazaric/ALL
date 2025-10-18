@@ -1,5 +1,6 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/raw_syscalls>
+#include <ivl/linux/throwing_syscalls>
 #include <ivl/linux/typed_syscalls>
 #include <ivl/process>
 #include <cassert>
@@ -9,17 +10,9 @@
 
 // IVL add_compiler_flags("-static -flto")
 
-int main() {
-  std::string_view code = R"CXX(
-#include <iostream>
-int main(){
-  std::cout << "Hello world" << std::endl;
-}
-)CXX";
-
-  auto in_fd  = ivl::linux::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_terminate();
-  auto out_fd = ivl::linux::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_terminate();
-  // assert(ivl::linux::raw_syscalls::ftruncate(in_fd.get(), code.size()) == 0);
+ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor> compile_cxx(std::string_view code) {
+  auto in_fd  = ivl::linux::throwing::open("/dev/shm", O_TMPFILE | O_RDWR, 0777);
+  auto out_fd = ivl::linux::throwing::open("/dev/shm", O_TMPFILE | O_RDWR, 0777);
 
   {
     auto rem = code;
@@ -27,15 +20,15 @@ int main(){
       auto ret = ivl::linux::raw_syscalls::write(in_fd.get(), rem.data(), rem.size());
       if (ret < 0) {
         std::cout << "write: " << ret << std::endl;
-        return 1;
+        exit(1);
       }
       rem.remove_prefix(ret);
     }
   }
 
   ivl::process_config cfg;
-  cfg.pathname       = "/usr/bin/g++";
-  cfg.argv           = {"/usr/bin/g++", "-xc++", "-std=c++23", "-O3", "-static", "-o", "/dev/stdout", "-"};
+  cfg.pathname = "/usr/bin/g++";
+  cfg.argv     = {"/usr/bin/g++", "-xc++", "-std=c++23", "-O3", "-static", "-o", "/dev/stdout", "-"};
   // needs PATH to find linker
   cfg.envp           = {{"PATH", "/usr/bin"}};
   cfg.pre_exec_setup = [&] {
@@ -51,19 +44,23 @@ int main(){
   std::cout << "w: " << w.unwrap_or_terminate() << std::endl;
   assert(w.unwrap_or_terminate() == 0);
 
-  // {
-  //   struct stat sb;
-  //   assert(fstat(out_fd.get(), &sb) != -1);
-  //   std::cout << "mode: " << sb.st_mode << std::endl;
-  //   std::cout << "size: " << sb.st_size << std::endl;
-  // }
-
   char link[64];
   snprintf(link, sizeof(link), "/proc/self/fd/%d", out_fd.get());
-  auto ro_out_fd = ivl::linux::open(link, O_RDONLY, 0).unwrap_or_terminate();
-  (void)out_fd.close();
+  out_fd = ivl::linux::throwing::open(link, O_RDONLY, 0);
 
-  auto ret = ivl::linux::raw_syscalls::execveat(ro_out_fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
+  return ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor>(std::move(out_fd));
+}
+
+int main() {
+  auto out_fd = compile_cxx(R"CXX(
+#include <iostream>
+int main(){
+  std::cout << "Hello world" << std::endl;
+}
+)CXX")
+                  .unwrap_or_terminate();
+
+  auto ret = ivl::linux::raw_syscalls::execveat(out_fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
   std::cout << "unexpected ret: " << ret << std::endl;
   ivl::linux::raw_syscalls::ud2();
 

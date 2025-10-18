@@ -239,6 +239,10 @@ namespace ivl::linux::raw_syscalls {
     );
   }
 
+  long seccomp(unsigned int op, unsigned int flags, void* uargs) {
+    return manual_syscall(317, op, flags, reinterpret_cast<long>(uargs));
+  }
+
   long inc(long arg) { return manual_syscall(666, arg); }
 
 } // namespace ivl::linux::raw_syscalls

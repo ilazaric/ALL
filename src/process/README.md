@@ -15,9 +15,12 @@ fd 2 -- stderr pipe
 
 compile_cxx(input, output)
 compile_cxx(input) -> output pipe
+compile_cxx(input) -> output O_TMPFILE
 compile_cxx() <- input pipe -> output pipe
 run_python(input)
 
 set up some pipes
 run processes
+
+
 

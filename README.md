@@ -36,6 +36,9 @@ probably do whatever comment syntax for the language
 // IVL DEPENDS_ON(foo/bar)
 # IVL DEPENDS_ON(foo/bar)
 ```
+or maybe a macro that gives access
+IVL_TARGET("foobar")
+then the custom preprocessor could figure out the deps
 
 all artifacts should probably end up in build/
 unfortunately
@@ -56,3 +59,41 @@ i want this to work relative to target, not cwd
 whoops
 
 ^ `ivl build` goes to a python script
+
+
+
+
+consider unique_ptr<S>
+also consider S*
+or optional<S&>
+one is owning, one is non-owning
+we could represent both with bits in pointer
+
+
+
+
+exceptions might be bad
+suppose a function, we hit return, construct the object, and some destructors throw
+IMO the caller should have access to both the return object and all exceptions
+currently multiple exceptions terminate, and a single exception kills the return object
+so what could the caller do?
+one flow:
+just continue, use the return value, and let the exceptions propagate up
+what does that even mean though, someone needs to take care of the exceptions
+maybe caller should be forced to acknowledge exceptions before touching return value
+any exception not resolved -> propagate up -> return value gets lost
+(which is good imo)
+
+```cpp
+A fn(){
+  B b; // throws
+  C c; // throws
+  return A{};
+}
+
+auto a = fn() catch (){} catch (){};
+```
+
+maybe
+whatever, rewind back to multiple exceptions concept
+how do we handle that?
