@@ -13,3 +13,27 @@ for example, a path can be represented as char[PATH_MAX] i think
 nvm on PATH_MAX: https://insanecoding.blogspot.com/2007/11/pathmax-simply-isnt.html
 nvm on nvm, looking at linux source, open() syscall cant handle > PATH_MAX (ENAMETOOLONG)
 getname_flags fn in fs/namei.c
+so what, an elf program header specifying a region for exceptions?
+the exceptions would be pretty big :'(
+this region cant be thread local imo
+
+conclusion:
+errors are reported either as just the error code or with args as well
+they are reported as either std::expected-ish or via exception
+exception can always be done over std::expected, .unwrap_or_throw()
+the "just error code" is in fact important, because it is zero overhead
+(same asm as if no type safety was introduced)
+the "with args" is complex though
+consider pathname
+should it be std::string?
+that means allocation
+it could in theory be char[PATH_MAX]-ish
+but still, the or_syscall_error<> type should be small
+so the exception shouldnt be placed in it, but a handle
+so maybe allocation
+could be somewhat alleviated with a block of memory created at elf load time
+to not worry about fragmentation, it would never release memory to the block,
+but to a free list for that exception kind
+(or exception size specific)
+in fact, throwing the thin version is kinda meaningless maybe
+damn, char[PATH_MAX] approach makes fat exceptions :(

@@ -25,22 +25,31 @@ namespace ivl::linux {
   };
 
   // Like unique_ptr, closes on destruction.
-  struct owned_file_descriptor {
-  private:
-    int value;
+  template <typename T>
+  struct basic_owned_file_descriptor {
+  public: // TODO: private
+    T value;
 
   public:
-    owned_file_descriptor() : value(file_descriptor::EMPTY_SENTINEL) {}
+    basic_owned_file_descriptor() : value(file_descriptor::EMPTY_SENTINEL) {}
 
     // Make sure you know what you're doing.
     // Takes ownership of the file descriptor.
-    explicit owned_file_descriptor(int value) : value(value) {}
+    explicit basic_owned_file_descriptor(T value) : value(value) {}
 
-    owned_file_descriptor(const owned_file_descriptor&) = delete;
-    owned_file_descriptor(owned_file_descriptor&& o) : value(o.value) { o.value = file_descriptor::EMPTY_SENTINEL; }
+    basic_owned_file_descriptor(const basic_owned_file_descriptor&) = delete;
+    // basic_owned_file_descriptor(basic_owned_file_descriptor&& o) : value(o.value) {
+    //   o.value = file_descriptor::EMPTY_SENTINEL;
+    // }
 
-    owned_file_descriptor& operator=(const owned_file_descriptor&) = delete;
-    owned_file_descriptor& operator=(owned_file_descriptor&& o) noexcept {
+    template <typename U>
+    basic_owned_file_descriptor(basic_owned_file_descriptor<U>&& o) : value(o.value) {
+      o.value = file_descriptor::EMPTY_SENTINEL;
+    }
+
+    basic_owned_file_descriptor& operator=(const basic_owned_file_descriptor&) = delete;
+    template <typename U>
+    basic_owned_file_descriptor& operator=(basic_owned_file_descriptor<U>&& o) noexcept {
       if (this == &o) return *this;
       (void)close(); // same TODO as destructor
       value   = o.value;
@@ -57,9 +66,9 @@ namespace ivl::linux {
 
     bool empty() const noexcept { return value == file_descriptor::EMPTY_SENTINEL; }
 
-    int get() const noexcept { return value; }
+    T get() const noexcept { return value; }
 
-    ~owned_file_descriptor() {
+    ~basic_owned_file_descriptor() {
       // TODO: this discards errors silently, this is bad (though for close specifically not super bad).
       // Think what is possible here.
       (void)close();
@@ -67,5 +76,8 @@ namespace ivl::linux {
 
     explicit(false) operator file_descriptor() const { return file_descriptor{value}; }
   };
+
+  using owned_file_descriptor      = basic_owned_file_descriptor<int>;
+  using wide_owned_file_descriptor = basic_owned_file_descriptor<long>;
 
 } // namespace ivl::linux

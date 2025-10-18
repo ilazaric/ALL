@@ -39,10 +39,6 @@ namespace ivl::util {
     ~AtScopeEnd() { fn(); }
   };
 
-  // TODO: move to ivl/meta
-  template <typename T, typename... Ts>
-  concept same_as_one_of = (std::same_as<T, Ts> || ...);
-
   // namespace detail {
   //   template<typename T>
   //   struct Piper {

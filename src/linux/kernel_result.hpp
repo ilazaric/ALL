@@ -43,7 +43,7 @@ namespace ivl::linux {
     };
 
     template <typename A, typename B>
-    struct try_align {};
+    struct try_align;
 
 #define _(N, M)                                                                                                        \
   template <typename A, typename B>                                                                                    \

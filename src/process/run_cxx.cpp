@@ -1,5 +1,6 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/raw_syscalls>
+#include <ivl/linux/rich_syscalls>
 #include <ivl/linux/throwing_syscalls>
 #include <ivl/linux/typed_syscalls>
 #include <ivl/process>
@@ -11,8 +12,8 @@
 // IVL add_compiler_flags("-static -flto")
 
 ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor> compile_cxx(std::string_view code) {
-  auto in_fd  = ivl::linux::throwing::open("/dev/shm", O_TMPFILE | O_RDWR, 0777);
-  auto out_fd = ivl::linux::throwing::open("/dev/shm", O_TMPFILE | O_RDWR, 0777);
+  auto in_fd  = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
+  auto out_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
 
   {
     auto rem = code;
@@ -46,7 +47,7 @@ ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor> compile_cxx(std:
 
   char link[64];
   snprintf(link, sizeof(link), "/proc/self/fd/%d", out_fd.get());
-  out_fd = ivl::linux::throwing::open(link, O_RDONLY, 0);
+  out_fd = ivl::linux::rich::open(link, O_RDONLY, 0).unwrap_or_throw();
 
   return ivl::linux::or_syscall_error<ivl::linux::owned_file_descriptor>(std::move(out_fd));
 }

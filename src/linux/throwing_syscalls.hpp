@@ -7,6 +7,7 @@
 namespace ivl::linux::throwing {
 
   struct open_error {
+    long        error;
     std::string filename;
     int         flags;
     mode_t      mode;
@@ -14,7 +15,7 @@ namespace ivl::linux::throwing {
 
   owned_file_descriptor open(const char* filename, int flags, mode_t mode) {
     auto ret = raw_syscalls::open(filename, flags, mode);
-    if (ret < 0) throw open_error{filename, flags, mode};
+    if (ret < 0) throw open_error{ret, filename, flags, mode};
     return owned_file_descriptor{(int)ret};
   }
 

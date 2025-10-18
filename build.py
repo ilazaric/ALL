@@ -27,6 +27,8 @@ srcs = []
 
 for dirpath, _, filenames in src.walk():
     for filename in filenames:
+        if '#' in filename:
+            continue
         filepath = dirpath / filename
         if filepath.suffix == ".cpp":
             srcs.append(filepath)
