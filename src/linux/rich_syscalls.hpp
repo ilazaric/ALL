@@ -110,7 +110,6 @@ namespace ivl::linux::rich {
 
     or_rich_error& operator=(or_rich_error&& o) {
       if (this == &o) return *this;
-      // TODO
       if (is_success() && o.is_success()) {
         std::swap(wrapped, o.wrapped);
       } else if (!is_success() && !o.is_success()) {
@@ -119,18 +118,17 @@ namespace ivl::linux::rich {
         auto tmp = o.raw.get();
         std::construct_at(&o.wrapped, std::move(wrapped));
         std::destroy_at(&wrapped);
-        std::construct_at(&o.raw, tmp);
+        std::construct_at(&raw, tmp);
       } else /* !is_success() && o.is_success() */ {
         auto tmp = raw.get();
         std::construct_at(&wrapped, std::move(o.wrapped));
         // TODO: destruction might be unnecessary
         std::destroy_at(&o.wrapped);
-        std::construct_at(&raw, tmp);
+        std::construct_at(&o.raw, tmp);
       }
       return *this;
     }
 
-    // TODO: might be doable via visit()
     ~or_rich_error() {
       if (is_empty()) return;
       if (is_success()) {
