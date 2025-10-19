@@ -1,5 +1,7 @@
-#!/ usr / bin / env bash
+#!/usr/bin/env bash
 
-set - euo pipefail
+set -euo pipefail
 
-        A = "$(head -1 /dev/stdin)" B = "$(head -1 /dev/stdin)" echo "A=$A B=$B"
+A="$(head -1 /dev/stdin)"
+B="$(head -1 /dev/stdin)"
+echo "A=$A B=$B"

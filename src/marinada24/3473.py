@@ -18,3 +18,4 @@ for n in range(1,100):
         if k > 1e6: break
         k = n * phi(k)
     print(n, k)
+

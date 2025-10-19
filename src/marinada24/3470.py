@@ -29,3 +29,4 @@ def phi(n):
 for n in range(1,1000):
     if sigma(n) + phi(n) == 2*n+8:
         print(n)
+        

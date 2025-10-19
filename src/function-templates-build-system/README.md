@@ -7,3 +7,4 @@ scan for symbols (objdump -t)
 generate intermediate lib.tpp that explicitly instantiates
 what we need
 build, link everything
+

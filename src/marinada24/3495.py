@@ -1,5 +1,6 @@
 
 
+
 b=5
 
 for a in range(1,1001):
@@ -15,3 +16,4 @@ for a in range(1,1001):
         vc = p / c
         if (vb-va-vc)**2 > 1e-8: continue
         print(a, b, c)
+        

@@ -1,1 +1,1 @@
-https: // research.ibm.com/haifa/ponderthis/
+https://research.ibm.com/haifa/ponderthis/

@@ -23,4 +23,4 @@ David Stone save me
 
 so how would structures containing group elements look?  
 we would want to query them as well  
-return of the context structure?
+return of the context structure?  
