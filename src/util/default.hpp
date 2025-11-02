@@ -34,9 +34,9 @@ namespace ivl::util {
   Overload(const Ts&...) -> Overload<Ts...>;
 
   template <typename Fn>
-  struct AtScopeEnd {
+  struct [[nodiscard]] scope_exit {
     Fn fn;
-    ~AtScopeEnd() { fn(); }
+    ~scope_exit() { fn(); }
   };
 
   namespace detail {
@@ -60,16 +60,4 @@ namespace ivl::util {
     return lazy_construct_t<T, decltype(args)...>(FWD(args)...);
   }
 
-  // namespace detail {
-  //   template<typename T>
-  //   struct Piper {
-  //     T callable;
-  //     friend auto operator|(auto&& arg, const Piper& p){return p.callable(arg);}
-  //     friend auto operator|(auto&& arg, Piper& p){return p.callable(arg);}
-  //     friend auto operator|(auto&& arg, Piper&& p){return std::move(p).callable(arg);}
-  //   };
-  // } // namespace detail
-
 } // namespace ivl::util
-
-// #define EXTRACT(...) Piper{[](auto&& arg){}}

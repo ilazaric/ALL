@@ -52,7 +52,7 @@ options.add_argument(f"--user-agent={userAgent}")
 # src/cf dir
 # options.add_argument("--user-data-dir=browser_stuff")
 options.add_argument("--disable-search-engine-choice-screen")
-driver = uc.Chrome(options=options, driver_executable_path=chromedriver_binary.chromedriver_filename)
+driver = uc.Chrome(options=options)#, driver_executable_path=chromedriver_binary.chromedriver_filename)
 wait = WebDriverWait(driver, 10)
 init_login(driver)
 with driver:

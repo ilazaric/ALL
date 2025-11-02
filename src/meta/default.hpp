@@ -2,7 +2,9 @@
 
 // Metaprogramming utilities.
 
+#include <ivl/util>
 #include <concepts>
+#include <cstddef>
 #include <type_traits>
 
 namespace ivl::meta {
@@ -33,5 +35,26 @@ namespace ivl::meta {
 
   template <typename... Ts>
   inline constexpr bool is_unique_v = is_unique<Ts...>::value;
+
+  // TODO: add callable(index) variant
+  void repeat(size_t n, auto&& callable) {
+    for (size_t i = 0; i < n; ++i)
+      callable();
+  }
+
+  template <typename T>
+  struct construct_t {
+    static constexpr T operator()(auto&&... args) { return T(FWD(args)...); }
+  };
+  template <typename T>
+  inline constexpr construct_t<T> construct;
+
+  // don't put this on the heap
+  template <typename T>
+  union uninitialized {
+    T data;
+    uninitialized() {}
+    ~uninitialized() {}
+  };
 
 } // namespace ivl::meta
