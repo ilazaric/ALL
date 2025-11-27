@@ -9,3 +9,7 @@
 	path = submodules/gcc
 	url = git://gcc.gnu.org/git/gcc.git
 	branch = master
+[submodule "submodules/emsdk"]
+	path = submodules/emsdk
+	url = https://github.com/emscripten-core/emsdk.git
+	branch = main
