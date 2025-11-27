@@ -1,3 +1,11 @@
 [submodule "src/spoj"]
 	path = src/spoj
 	url = git@github.com:ilazaric/spoj.git
+[submodule "submodules/llvm-project"]
+	path = submodules/llvm-project
+	url = git@github.com:ilazaric/llvm-project.git
+	branch = ivl_ufcs
+[submodule "submodules/gcc"]
+	path = submodules/gcc
+	url = git://gcc.gnu.org/git/gcc.git
+	branch = master
