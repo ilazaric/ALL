@@ -73,14 +73,19 @@ cxxpre = os.getenv("CXXPRE", "")
 cxxadded = []
 cxxver = os.getenv("CXXVER", "23")
 cxxpost = os.getenv("CXXPOST", "")
+cxxaddedpost = []
 
 # TODO: scrape includes for these as well, but eventually would want a preprocessor to do that
 def add_compiler_flags(arg):
     global cxxadded
     cxxadded += arg.split()
+def add_compiler_flags_tail(arg):
+    global cxxaddedpost
+    cxxaddedpost += arg.split()
 
 for target in targets:
     cxxadded = []
+    cxxaddedpost = []
     with target.open() as f:
         x = "// IVL "
         ivl_directives = [l.removeprefix(x)[:-1] for l in f.readlines() if l.startswith(x)]
@@ -99,7 +104,7 @@ for target in targets:
              target,
              "-o",
              target.parent / target.stem] +
-            cxxpost.split())
+            cxxpost.split() + cxxaddedpost)
     print(" ".join([str(x) for x in args]))
     subprocess.run(args, check=True)
     

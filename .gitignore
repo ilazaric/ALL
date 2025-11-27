@@ -3,6 +3,7 @@
 *
 !/**/
 !*.*
+!/submodules/*
 
 # Prerequisites
 *.d

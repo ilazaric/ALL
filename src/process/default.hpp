@@ -49,10 +49,10 @@ namespace ivl {
   };
 
   struct process_config {
-    std::filesystem::path              pathname;
-    std::vector<std::string>           argv;
+    std::filesystem::path pathname;
+    std::vector<std::string> argv;
     std::map<std::string, std::string> envp;
-    std::function<void()>              pre_exec_setup = [] {};
+    std::function<void()> pre_exec_setup = [] {};
     // TODO
     // bool                               die_on_parent_death = true;
     // bool                               kill_on_destruction = false;
@@ -70,7 +70,7 @@ namespace ivl {
     // Nope, now includes execve errors.
     // TODO
     linux::or_syscall_error<process> clone_and_exec() const {
-      const char*              actual_pathname = pathname.c_str();
+      const char* actual_pathname = pathname.c_str();
       std::vector<const char*> actual_argv(argv.size() + 1, nullptr);
       std::vector<const char*> actual_envp;  //{envp.size() + 1, nullptr};
       std::vector<std::string> envp_storage; //{envp.size()};
@@ -80,8 +80,7 @@ namespace ivl {
       }
       actual_envp.push_back(nullptr);
       long actual_err = 0;
-      for (size_t i = 0; i < argv.size(); ++i)
-        actual_argv[i] = argv[i].c_str();
+      for (size_t i = 0; i < argv.size(); ++i) actual_argv[i] = argv[i].c_str();
       using T = std::tuple<const char*, const char* const*, const char* const*, long*, const std::function<void()>*>;
       T exec_args{actual_pathname, &actual_argv[0], &actual_envp[0], &actual_err, &pre_exec_setup};
 
@@ -93,8 +92,8 @@ namespace ivl {
         .child_tid{},
         .parent_tid{},
         .exit_signal = SIGCHLD,
-        .stack       = reinterpret_cast<uintptr_t>(&stack[0]),
-        .stack_size  = (1ULL << 12),
+        .stack = reinterpret_cast<uintptr_t>(&stack[0]),
+        .stack_size = (1ULL << 12),
         .tls{},
         .set_tid{},
         .set_tid_size{},

@@ -11,12 +11,13 @@ NamespaceIndentation: All
 BreakBeforeBraces: Attach
 
 ColumnLimit: 120
+AllowShortLoopsOnASingleLine: Yes
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
 # PenaltyReturnTypeOnItsOwnLine: 100               # Encourage `auto` on one line
 
-AlignConsecutiveAssignments: Consecutive
-AlignConsecutiveDeclarations: Consecutive
+# AlignConsecutiveAssignments: Consecutive
+# AlignConsecutiveDeclarations: Consecutive
 AlignAfterOpenBracket: BlockIndent
 AlignOperands: AlignAfterOperator
 PointerAlignment: Left
