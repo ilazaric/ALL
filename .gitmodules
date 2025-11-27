@@ -13,3 +13,6 @@
 	path = submodules/emsdk
 	url = https://github.com/emscripten-core/emsdk.git
 	branch = main
+[submodule "submodules/linux"]
+	path = submodules/linux
+	url = git@github.com:torvalds/linux.git
