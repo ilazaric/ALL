@@ -3,16 +3,19 @@
 #include <ivl/util>
 #include <exception>
 #include <format>
+#include <print>
 #include <source_location>
 #include <vector>
-#include <print>
+
+// TODO: this doesn't work if the std::exception_ptr is used,
+// ....: basically can't use constructor to check if such exception is in flight
 
 namespace ivl {
 
   struct base_exception {
     struct detail_handle {
       base_exception* ptr;
-      int             idx;
+      int idx;
 
       detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
     };
@@ -21,10 +24,10 @@ namespace ivl {
 
     struct context {
       std::source_location location;
-      std::string          text;
+      std::string text;
     };
 
-    std::string          throw_text;
+    std::string throw_text;
     std::source_location throw_location;
     std::vector<context> added_context;
 
