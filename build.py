@@ -17,8 +17,10 @@ build_dir = repo_root / "build"
 if build_dir.exists():
     shutil.rmtree(build_dir)
 build_dir.mkdir()
+# code_copy = build_dir / "full_copy"
 include = build_dir / "include" / "ivl"
 default_include = build_dir / "default_include" / "ivl"
+# code_copy.mkdir(parents=True)
 include.mkdir(parents=True)
 default_include.mkdir(parents=True)
 
@@ -68,8 +70,10 @@ for x in sys.argv[1:]:
 # print(repo_root)
 print(targets)
 
+# TODO: add gcc repo as submodule, build it, default to using it
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
+cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(cxx).parent.parent / "lib64"}"] if "/" in cxx else [])
 cxxadded = []
 cxxver = os.getenv("CXXVER", "23")
 cxxpost = os.getenv("CXXPOST", "")
@@ -94,6 +98,7 @@ for target in targets:
         eval(d)
     args = ([cxx] +
             cxxpre.split() +
+            cxxrpath +
             cxxadded +
             ["-DIVL_LOCAL",
              "-O3",
