@@ -4,7 +4,7 @@
 [submodule "submodules/llvm-project"]
 	path = submodules/llvm-project
 	url = git@github.com:ilazaric/llvm-project.git
-	branch = ivl_heterogenous_return_functions
+	branch = ivl_nrvo
 [submodule "submodules/gcc"]
 	path = submodules/gcc
 	url = git://gcc.gnu.org/git/gcc.git
