@@ -87,6 +87,41 @@ fn_new() match (E e) { ... }
 // then decltype is A|B|...|X|Y|...
 ```
 
+need to be able to return-out-of-surrounding-function, throw, return-out-of-current-match-expression
+all with RVO
+
 # impl - clang
 
 branch: ivl_heterogenous_return_functions
+
+how is the return spot chosen?
+usually fns exit by asm instruction `ret`
+now we have multiple exits though
+
+usual:
+caller aligns stack
+caller does asm instruction `call`
+`call` pushes rip to stack
+callee does asm instruction `ret`
+`ret` pops stack -> rip
+caller de-aligns stack
+
+so i guess i can manually push rip
+
+new, for a function A|B|C fn(...):
+caller aligns stack
+push C exit
+push B exit
+caller does asm instruction `call`
+`call` pushes rip to stack, A exit
+callee pops as much of stack as needed (0 for A, 8 for B, 16 for C)
+callee does asm instruction `ret`
+`ret` pops stack -> rip
+caller de-aligns stack
+
+```
+A|B fn1();
+A|B|C fn2() {
+  return fn1(); // this would be just a jmp
+}
+```
