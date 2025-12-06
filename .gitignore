@@ -4,6 +4,7 @@
 !/**/
 !*.*
 !/submodules/*
+!/**/Makefile
 
 # Prerequisites
 *.d
