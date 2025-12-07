@@ -129,6 +129,7 @@ namespace ivl::linux::raw_syscalls {
     return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));            \
   }
 #include <ivl/linux/syscall_arguments_X>
+
 #undef X_PARAMS0
 #undef X_PARAMS1
 #undef X_PARAMS2
@@ -136,6 +137,7 @@ namespace ivl::linux::raw_syscalls {
 #undef X_PARAMS4
 #undef X_PARAMS5
 #undef X_PARAMS6
+
 #undef X_CARGS0
 #undef X_CARGS1
 #undef X_CARGS2
@@ -143,5 +145,14 @@ namespace ivl::linux::raw_syscalls {
 #undef X_CARGS4
 #undef X_CARGS5
 #undef X_CARGS6
+
+  // We add `unavailable` attribute to make previously generated functions unusable.
+  // The corresponding syscall semantics are too complex to be used as regular functions.
+#define X_FORBID(name) decltype(name) __attribute__((unavailable)) name
+  X_FORBID(fork);
+  X_FORBID(vfork);
+  X_FORBID(clone);
+  X_FORBID(clone3);
+#undef X_FORBID
 
 } // namespace ivl::linux::raw_syscalls
