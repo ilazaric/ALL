@@ -125,8 +125,8 @@ namespace ivl::linux::raw_syscalls {
 #define X_CARGS6(t1, a1, ...) argument_convert(a1), X_CARGS5(__VA_ARGS__)
 
 #define X(N, name, ...)                                                                                                \
-  long name(X_PARAMS##N(__VA_ARGS__)) {                                                                                  \
-    return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));              \
+  long name(X_PARAMS##N(__VA_ARGS__)) {                                                                                \
+    return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));            \
   }
 #include <ivl/linux/syscall_arguments_X>
 #undef X_PARAMS0
