@@ -20,6 +20,10 @@ with open(table, "r") as f:
         if abi == "x32":
             continue
         
+        # ignoring entries with missing <entry point>
+        if len(pieces) <= 3:
+            continue
+        
         print(f"X({nr}, {name})")
 
 print()
