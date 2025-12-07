@@ -108,34 +108,40 @@ namespace ivl::linux::raw_syscalls {
   long argument_convert(auto* ptr) { return reinterpret_cast<long>(ptr); }
   long argument_convert(long num) { return num; }
 
-#define PARAMS0()
-#define PARAMS1(t1, a1) t1 a1
-#define PARAMS2(t1, a1, ...) t1 a1, PARAMS1(__VA_ARGS__)
-#define PARAMS3(t1, a1, ...) t1 a1, PARAMS2(__VA_ARGS__)
-#define PARAMS4(t1, a1, ...) t1 a1, PARAMS3(__VA_ARGS__)
-#define PARAMS5(t1, a1, ...) t1 a1, PARAMS4(__VA_ARGS__)
-#define PARAMS6(t1, a1, ...) t1 a1, PARAMS5(__VA_ARGS__)
+#define X_PARAMS0()
+#define X_PARAMS1(t1, a1) t1 a1
+#define X_PARAMS2(t1, a1, ...) t1 a1, X_PARAMS1(__VA_ARGS__)
+#define X_PARAMS3(t1, a1, ...) t1 a1, X_PARAMS2(__VA_ARGS__)
+#define X_PARAMS4(t1, a1, ...) t1 a1, X_PARAMS3(__VA_ARGS__)
+#define X_PARAMS5(t1, a1, ...) t1 a1, X_PARAMS4(__VA_ARGS__)
+#define X_PARAMS6(t1, a1, ...) t1 a1, X_PARAMS5(__VA_ARGS__)
 
-#define CARGS0()
-#define CARGS1(t1, a1) argument_convert(a1)
-#define CARGS2(t1, a1, ...) argument_convert(a1), CARGS1(__VA_ARGS__)
-#define CARGS3(t1, a1, ...) argument_convert(a1), CARGS2(__VA_ARGS__)
-#define CARGS4(t1, a1, ...) argument_convert(a1), CARGS3(__VA_ARGS__)
-#define CARGS5(t1, a1, ...) argument_convert(a1), CARGS4(__VA_ARGS__)
-#define CARGS6(t1, a1, ...) argument_convert(a1), CARGS5(__VA_ARGS__)
+#define X_CARGS0()
+#define X_CARGS1(t1, a1) argument_convert(a1)
+#define X_CARGS2(t1, a1, ...) argument_convert(a1), X_CARGS1(__VA_ARGS__)
+#define X_CARGS3(t1, a1, ...) argument_convert(a1), X_CARGS2(__VA_ARGS__)
+#define X_CARGS4(t1, a1, ...) argument_convert(a1), X_CARGS3(__VA_ARGS__)
+#define X_CARGS5(t1, a1, ...) argument_convert(a1), X_CARGS4(__VA_ARGS__)
+#define X_CARGS6(t1, a1, ...) argument_convert(a1), X_CARGS5(__VA_ARGS__)
 
-#define IVLSYS(N, name, ...)                                                                                           \
-  long name(PARAMS##N(__VA_ARGS__)) {                                                                                  \
-    return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) CARGS##N(__VA_ARGS__));              \
+#define X(N, name, ...)                                                                                                \
+  long name(X_PARAMS##N(__VA_ARGS__)) {                                                                                  \
+    return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));              \
   }
-
-#define IVLSYS0(...) IVLSYS(0, __VA_ARGS__)
-#define IVLSYS1(...) IVLSYS(1, __VA_ARGS__)
-#define IVLSYS2(...) IVLSYS(2, __VA_ARGS__)
-#define IVLSYS3(...) IVLSYS(3, __VA_ARGS__)
-#define IVLSYS4(...) IVLSYS(4, __VA_ARGS__)
-#define IVLSYS5(...) IVLSYS(5, __VA_ARGS__)
-#define IVLSYS6(...) IVLSYS(6, __VA_ARGS__)
 #include <ivl/linux/syscall_arguments_X>
+#undef X_PARAMS0
+#undef X_PARAMS1
+#undef X_PARAMS2
+#undef X_PARAMS3
+#undef X_PARAMS4
+#undef X_PARAMS5
+#undef X_PARAMS6
+#undef X_CARGS0
+#undef X_CARGS1
+#undef X_CARGS2
+#undef X_CARGS3
+#undef X_CARGS4
+#undef X_CARGS5
+#undef X_CARGS6
 
 } // namespace ivl::linux::raw_syscalls
