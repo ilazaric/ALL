@@ -23,6 +23,11 @@ with open(table, "r") as f:
         # ignoring entries with missing <entry point>
         if len(pieces) <= 3:
             continue
+
+        entry_point = pieces[3]
+        # it exists, but only technically, always returns ENOSYS, feels useless
+        if entry_point == "sys_ni_syscall":
+            continue
         
         print(f"X({nr}, {name})")
 
