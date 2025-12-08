@@ -4,7 +4,7 @@
 #include <iostream>
 #include <print>
 
-int main(int argc, char** argv) {
+int main() {
   std::string contents;
   {
     char buf[1 << 16];
@@ -18,5 +18,5 @@ int main(int argc, char** argv) {
   auto hash = ivl::crypto::blake3::hash(contents);
   std::string_view bla((char*)&hash, (char*)(&hash + 1));
   for (auto c : bla) std::print("{:02x}", c);
-  std::println("  {}", argc == 2 ? argv[1] : "-");
+  std::println("  -");
 }
