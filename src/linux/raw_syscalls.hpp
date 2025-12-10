@@ -17,6 +17,9 @@ typedef uid_t qid_t;
 typedef __kernel_rwf_t rwf_t;
 typedef int32_t key_serial_t;
 
+#include <linux/sched.h>    /* Definition of struct clone_args */
+#include <sched.h>          /* Definition of CLONE_* constants */
+
 /*
   In linux repository you will find syscalls defined via macros.
   SYSCALL_DEFINEn(name, ...) for n <= 6

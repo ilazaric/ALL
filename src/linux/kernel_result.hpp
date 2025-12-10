@@ -129,7 +129,7 @@ namespace ivl::linux {
     decltype(auto) unwrap_or_terminate(this auto&& self) {
       if (self.is_error()) {
         ivl::linux::raw_syscalls::exit_group(1);
-        ivl::linux::raw_syscalls::ud2();
+        std::unreachable();
       }
       return FWD(self).success.get();
     }

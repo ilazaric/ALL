@@ -178,7 +178,7 @@ extern "C" __attribute__((naked)) [[noreturn]] void _start() {
 
 uint64_t __attribute__((noinline)) id(uint64_t x) { return x; }
 
-extern "C" __attribute((used)) void actual_start() {
+extern "C" __attribute__((used)) void actual_start() {
   std::atomic<uint64_t> global_sum = 0;
   constexpr uint64_t    X          = 1ULL << 34;
 
