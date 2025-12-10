@@ -1,5 +1,6 @@
 // generated, dont ask how
 // format: X(NUMBER_OF_ARGUMENTS, NAME, TYPE_OF_ARG1, NAME_OF_ARG1, TYPE_OF_ARG2, NAME_OF_ARG2, ...)
+// fork, vfork, clone, clone3 moved to syscall_arguments_controlflow_X
 
 X(1, inotify_init1, int, flags)
 X(0, inotify_init)
@@ -124,10 +125,6 @@ X(6, move_pages, pid_t, pid, unsigned long, nr_pages, const void * *, pages, con
 X(3, modify_ldt, int , func , void * , ptr , unsigned long , bytecount)
 X(6, mmap, unsigned long, addr, unsigned long, len, unsigned long, prot, unsigned long, flags, unsigned long, fd, unsigned long, off)
 X(1, set_tid_address, int *, tidptr)
-X(0, fork)
-X(0, vfork)
-X(5, clone, unsigned long, clone_flags, unsigned long, newsp, int *, parent_tidptr, int *, child_tidptr, unsigned long, tls)
-X(2, clone3, struct clone_args *, uargs, size_t, size)
 X(1, unshare, unsigned long, unshare_flags)
 X(1, personality, unsigned int, personality)
 X(2, truncate, const char *, path, long, length)

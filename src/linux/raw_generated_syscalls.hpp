@@ -17,9 +17,73 @@ typedef uid_t qid_t;
 typedef __kernel_rwf_t rwf_t;
 typedef int32_t key_serial_t;
 
+/*
+  In linux repository you will find syscalls defined via macros.
+  SYSCALL_DEFINEn(name, ...) for n <= 6
+  This is the ultimate source of truth on number of parameters and their types.
+  Note some syscalls are arch specific.
+  There are also nice tables describing the syscall numbers, like:
+  arch/x86/entry/syscalls/syscall_64.tbl
+
+  linux repo was parsed, headers syscall_numbers_X and syscall_arguments_X were generated.
+
+  This header only cares about x86-64.
+ */
+
 #include <ivl/linux/syscall_numbers>
 
+// TODO: clang-format should indent the error
+#if !defined(__x86_64__)
+#error "This header only works for x86-64"
+#endif
+
+#if !defined(__linux__)
+#error "This header only works for linux"
+#endif
+
 namespace ivl::linux::raw_syscalls {
+
+  /*
+    from linux docs (arch/x86/entry/entry_64.S):
+
+     * 64-bit SYSCALL instruction entry. Up to 6 arguments in registers.
+     *
+     * This is the only entry point used for 64-bit system calls.  The
+     * hardware interface is reasonably well designed and the register to
+     * argument mapping Linux uses fits well with the registers that are
+     * available when SYSCALL is used.
+     *
+     * SYSCALL instructions can be found inlined in libc implementations as
+     * well as some other programs and libraries.  There are also a handful
+     * of SYSCALL instructions in the vDSO used, for example, as a
+     * clock_gettimeofday fallback.
+     *
+     * 64-bit SYSCALL saves rip to rcx, clears rflags.RF, then saves rflags to r11,
+     * then loads new ss, cs, and rip from previously programmed MSRs.
+     * rflags gets masked by a value from another MSR (so CLD and CLAC
+     * are not needed). SYSCALL does not save anything on the stack
+     * and does not change rsp.
+     *
+     * Registers on entry:
+     * rax  system call number
+     * rcx  return address
+     * r11  saved rflags (note: r11 is callee-clobbered register in C ABI)
+     * rdi  arg0
+     * rsi  arg1
+     * rdx  arg2
+     * r10  arg3 (needs to be moved to rcx to conform to C ABI)
+     * r8   arg4
+     * r9   arg5
+     * (note: r12-r15, rbp, rbx are callee-preserved in C ABI)
+     *
+     * Only called from user space.
+     *
+     * When user can change pt_regs->foo always force IRET. That is because
+     * it deals with uncanonical addresses better. SYSRET has trouble
+     * with them due to bugs in both AMD and Intel CPUs.
+   */
+
+  // TODO: this is kinda stupid, a lot of repetition, figure out something
 
   long manual_syscall(long nr) {
     register long rax asm("rax") = nr;
@@ -146,13 +210,28 @@ namespace ivl::linux::raw_syscalls {
 #undef X_CARGS5
 #undef X_CARGS6
 
-  // We add `unavailable` attribute to make previously generated functions unusable.
-  // The corresponding syscall semantics are too complex to be used as regular functions.
-#define X_FORBID(name) decltype(name) __attribute__((unavailable)) name
-  X_FORBID(fork);
-  X_FORBID(vfork);
-  X_FORBID(clone);
-  X_FORBID(clone3);
-#undef X_FORBID
+  // some syscalls were stripped out of syscall_arguments_X due to complex semantics
+  // they are: fork, vfork, clone, clone3
+  // they have been moved to syscall_arguments_controlflow_X
+
+  long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {
+    register long rax asm("rax") = (long)syscall_number::clone3;
+    register long rdi asm("rdi") = reinterpret_cast<long>(args);
+    register long rsi asm("rsi") = static_cast<long>(size);
+    register long rdx asm("rdx") = reinterpret_cast<long>(fn);
+    register long r10 asm("r10") = reinterpret_cast<long>(fnarg);
+    asm volatile goto("syscall\n"
+                      "test %%rax, %%rax\n"
+                      "jnz %l[parent_process]\n"
+                      "mov %%r10, %%rdi\n"
+                      "call *%%rdx\n"
+                      : "+a"(rax)                              /* outputs */
+                      : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10) /* inputs */
+                      : "memory", "rcx", "r11", "cc"           /* clobbers */
+                      : parent_process /* goto labels */);
+
+  parent_process:
+    return rax;
+  }
 
 } // namespace ivl::linux::raw_syscalls
