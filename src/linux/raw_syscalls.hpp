@@ -1,5 +1,22 @@
 #pragma once
 
+// these are needed for all the typedefs
+#include <cstdint>
+#include <fcntl.h>
+#include <linux/aio_abi.h>
+#include <linux/capability.h>
+#include <linux/fs.h>
+#include <linux/landlock.h>
+#include <mqueue.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <unistd.h>
+// these are not provided
+typedef unsigned short umode_t;
+typedef uid_t qid_t;
+typedef __kernel_rwf_t rwf_t;
+typedef int32_t key_serial_t;
+
 /*
   In linux repository you will find syscalls defined via macros.
   SYSCALL_DEFINEn(name, ...) for n <= 6
@@ -8,10 +25,12 @@
   There are also nice tables describing the syscall numbers, like:
   arch/x86/entry/syscalls/syscall_64.tbl
 
+  linux repo was parsed, headers syscall_numbers_X and syscall_arguments_X were generated.
+
   This header only cares about x86-64.
-
-
  */
+
+#include <ivl/linux/syscall_numbers>
 
 // TODO: clang-format should indent the error
 #if !defined(__x86_64__)
@@ -21,12 +40,6 @@
 #if !defined(__linux__)
 #error "This header only works for linux"
 #endif
-
-#include <linux/sched.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-
-#include <utility>
 
 namespace ivl::linux::raw_syscalls {
 
@@ -133,7 +146,7 @@ namespace ivl::linux::raw_syscalls {
     register long rsi asm("rsi") = arg1;
     register long rdx asm("rdx") = arg2;
     register long r10 asm("r10") = arg3;
-    register long r8 asm("r8")   = arg4;
+    register long r8 asm("r8") = arg4;
     asm volatile("syscall"
                  : "+a"(rax)                                       /* outputs */
                  : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10), "r"(r8) /* inputs */
@@ -147,8 +160,8 @@ namespace ivl::linux::raw_syscalls {
     register long rsi asm("rsi") = arg1;
     register long rdx asm("rdx") = arg2;
     register long r10 asm("r10") = arg3;
-    register long r8 asm("r8")   = arg4;
-    register long r9 asm("r9")   = arg5;
+    register long r8 asm("r8") = arg4;
+    register long r9 asm("r9") = arg5;
     asm volatile("syscall"
                  : "+a"(rax)                                                /* outputs */
                  : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10), "r"(r8), "r"(r9) /* inputs */
@@ -156,45 +169,53 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  inline __attribute__((always_inline)) [[noreturn]] void ud2() {
-    asm volatile("ud2" : : : "memory");
-    std::unreachable();
+  long argument_convert(auto* ptr) { return reinterpret_cast<long>(ptr); }
+  long argument_convert(long num) { return num; }
+
+#define X_PARAMS0()
+#define X_PARAMS1(t1, a1) t1 a1
+#define X_PARAMS2(t1, a1, ...) t1 a1, X_PARAMS1(__VA_ARGS__)
+#define X_PARAMS3(t1, a1, ...) t1 a1, X_PARAMS2(__VA_ARGS__)
+#define X_PARAMS4(t1, a1, ...) t1 a1, X_PARAMS3(__VA_ARGS__)
+#define X_PARAMS5(t1, a1, ...) t1 a1, X_PARAMS4(__VA_ARGS__)
+#define X_PARAMS6(t1, a1, ...) t1 a1, X_PARAMS5(__VA_ARGS__)
+
+#define X_CARGS0()
+#define X_CARGS1(t1, a1) argument_convert(a1)
+#define X_CARGS2(t1, a1, ...) argument_convert(a1), X_CARGS1(__VA_ARGS__)
+#define X_CARGS3(t1, a1, ...) argument_convert(a1), X_CARGS2(__VA_ARGS__)
+#define X_CARGS4(t1, a1, ...) argument_convert(a1), X_CARGS3(__VA_ARGS__)
+#define X_CARGS5(t1, a1, ...) argument_convert(a1), X_CARGS4(__VA_ARGS__)
+#define X_CARGS6(t1, a1, ...) argument_convert(a1), X_CARGS5(__VA_ARGS__)
+
+#define X(N, name, ...)                                                                                                \
+  inline long name(X_PARAMS##N(__VA_ARGS__)) {                                                                         \
+    return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));            \
   }
+#include <ivl/linux/syscall_arguments_X>
 
-  // TODO
+#undef X_PARAMS0
+#undef X_PARAMS1
+#undef X_PARAMS2
+#undef X_PARAMS3
+#undef X_PARAMS4
+#undef X_PARAMS5
+#undef X_PARAMS6
 
-  // long mmap();
+#undef X_CARGS0
+#undef X_CARGS1
+#undef X_CARGS2
+#undef X_CARGS3
+#undef X_CARGS4
+#undef X_CARGS5
+#undef X_CARGS6
 
-  long read(unsigned int fd, char* buf, size_t count) {
-    return manual_syscall(0, fd, reinterpret_cast<long>(buf), count);
-  }
+  // some syscalls were stripped out of syscall_arguments_X due to complex semantics
+  // they are: fork, vfork, clone, clone3
+  // they have been moved to syscall_arguments_controlflow_X
 
-  long write(unsigned int fd, const char* buf, size_t count) {
-    return manual_syscall(1, fd, reinterpret_cast<long>(buf), count);
-  }
-
-  long open(const char* filename, int flags, mode_t mode) {
-    return manual_syscall(2, reinterpret_cast<long>(filename), flags, mode);
-  }
-
-  long close(unsigned int fd) { return manual_syscall(3, fd); }
-
-  long exit(int error_code) { return manual_syscall(60, error_code); }
-
-  long exit_group(int error_code) { return manual_syscall(231, error_code); }
-
-  long execve(const char* pathname, const char* const argv[], const char* const envp[]) {
-    return manual_syscall(
-      59, reinterpret_cast<long>(pathname), reinterpret_cast<long>(argv), reinterpret_cast<long>(envp)
-    );
-  }
-
-  // long clone3(const clone_args* args, size_t size) { return manual_syscall(435, reinterpret_cast<long>(args), size);
-  // }
-
-  // TODO: think on this more, clone3 is weird, weird control flow
   long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {
-    register long rax asm("rax") = 435;
+    register long rax asm("rax") = (long)syscall_number::clone3;
     register long rdi asm("rdi") = reinterpret_cast<long>(args);
     register long rsi asm("rsi") = static_cast<long>(size);
     register long rdx asm("rdx") = reinterpret_cast<long>(fn);
@@ -209,40 +230,8 @@ namespace ivl::linux::raw_syscalls {
                       : "memory", "rcx", "r11", "cc"           /* clobbers */
                       : parent_process /* goto labels */);
 
-    // reinterpret_cast<void (*)(void*)>(rdx)(reinterpret_cast<void*>(r10));
-
   parent_process:
     return rax;
   }
-
-  long dup2(unsigned int oldfd, unsigned int newfd) { return manual_syscall(33, oldfd, newfd); }
-
-  long lseek(unsigned int fd, off_t offset, unsigned int whence) { return manual_syscall(8, fd, offset, whence); }
-
-  // long fatter_clone3(const clone_args* args);
-
-  long mmap(
-    unsigned long addr, unsigned long len, unsigned long prot, unsigned long flags, unsigned long fd, unsigned long off
-  ) {
-    return manual_syscall(9, addr, len, prot, flags, fd, off);
-  }
-
-  long wait4(pid_t upid, int* stat_addr, int options, rusage* ru) {
-    return manual_syscall(61, upid, reinterpret_cast<long>(stat_addr), options, reinterpret_cast<long>(ru));
-  }
-
-  long ftruncate(unsigned int fd, off_t length) { return manual_syscall(77, fd, length); }
-
-  long execveat(int fd, const char* filename, const char* const* argv, const char* const* envp, int flags) {
-    return manual_syscall(
-      322, fd, reinterpret_cast<long>(filename), reinterpret_cast<long>(argv), reinterpret_cast<long>(envp), flags
-    );
-  }
-
-  long seccomp(unsigned int op, unsigned int flags, void* uargs) {
-    return manual_syscall(317, op, flags, reinterpret_cast<long>(uargs));
-  }
-
-  long inc(long arg) { return manual_syscall(666, arg); }
 
 } // namespace ivl::linux::raw_syscalls
