@@ -17,8 +17,8 @@ typedef uid_t qid_t;
 typedef __kernel_rwf_t rwf_t;
 typedef int32_t key_serial_t;
 
-#include <linux/sched.h>    /* Definition of struct clone_args */
-#include <sched.h>          /* Definition of CLONE_* constants */
+#include <linux/sched.h> /* Definition of struct clone_args */
+#include <sched.h>       /* Definition of CLONE_* constants */
 
 /*
   In linux repository you will find syscalls defined via macros.
@@ -88,7 +88,7 @@ namespace ivl::linux::raw_syscalls {
 
   // TODO: this is kinda stupid, a lot of repetition, figure out something
 
-  long manual_syscall(long nr) {
+  inline long manual_syscall(long nr) {
     register long rax asm("rax") = nr;
     asm volatile("syscall"
                  : "+a"(rax) /* outputs */
@@ -97,7 +97,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0) {
+  inline long manual_syscall(long nr, long arg0) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     asm volatile("syscall"
@@ -107,7 +107,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0, long arg1) {
+  inline long manual_syscall(long nr, long arg0, long arg1) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     register long rsi asm("rsi") = arg1;
@@ -118,7 +118,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0, long arg1, long arg2) {
+  inline long manual_syscall(long nr, long arg0, long arg1, long arg2) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     register long rsi asm("rsi") = arg1;
@@ -130,7 +130,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3) {
+  inline long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     register long rsi asm("rsi") = arg1;
@@ -143,7 +143,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, long arg4) {
+  inline long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, long arg4) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     register long rsi asm("rsi") = arg1;
@@ -157,7 +157,7 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5) {
+  inline long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5) {
     register long rax asm("rax") = nr;
     register long rdi asm("rdi") = arg0;
     register long rsi asm("rsi") = arg1;
@@ -172,8 +172,8 @@ namespace ivl::linux::raw_syscalls {
     return rax;
   }
 
-  long argument_convert(auto* ptr) { return reinterpret_cast<long>(ptr); }
-  long argument_convert(long num) { return num; }
+  inline long argument_convert(auto* ptr) { return reinterpret_cast<long>(ptr); }
+  inline long argument_convert(long num) { return num; }
 
 #define X_PARAMS0()
 #define X_PARAMS1(t1, a1) t1 a1
@@ -217,17 +217,17 @@ namespace ivl::linux::raw_syscalls {
   // they are: fork, vfork, clone, clone3
   // they have been moved to syscall_arguments_controlflow_X
 
-  long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {
+  inline long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {
     register long rax asm("rax") = (long)syscall_number::clone3;
     register long rdi asm("rdi") = reinterpret_cast<long>(args);
     register long rsi asm("rsi") = static_cast<long>(size);
     register long rdx asm("rdx") = reinterpret_cast<long>(fn);
     register long r10 asm("r10") = reinterpret_cast<long>(fnarg);
-    asm volatile goto("syscall\n"
-                      "test %%rax, %%rax\n"
-                      "jnz %l[parent_process]\n"
-                      "mov %%r10, %%rdi\n"
-                      "call *%%rdx\n"
+    asm volatile goto("syscall\n\t"
+                      "test %%rax, %%rax\n\t"
+                      "jnz %l[parent_process]\n\t"
+                      "mov %%r10, %%rdi\n\t"
+                      "call *%%rdx"
                       : "+a"(rax)                              /* outputs */
                       : "r"(rdi), "r"(rsi), "r"(rdx), "r"(r10) /* inputs */
                       : "memory", "rcx", "r11", "cc"           /* clobbers */
