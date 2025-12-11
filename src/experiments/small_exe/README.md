@@ -1,4 +1,4 @@
 trying to produce a tiny executable
-./doit.sh compiles ./small2.cpp into tiniest executable
-it calls exit_group(0)
-it is 129 bytes
+`ivl build small2`
+only left-over is PT_GNU_STACK segment
+can be removed in multiple steps

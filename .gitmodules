@@ -16,3 +16,6 @@
 [submodule "submodules/linux"]
 	path = submodules/linux
 	url = git@github.com:torvalds/linux.git
+[submodule "submodules/binutils"]
+	path = submodules/binutils
+	url = git://sourceware.org/git/binutils-gdb.git
