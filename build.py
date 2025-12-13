@@ -55,7 +55,7 @@ for x in sys.argv[1:]:
     y = src / ("."+x) if x.startswith("/") else Path.cwd() / x
     if not y.is_dir() and y.suffix != ".cpp":
         y = y.with_suffix(".cpp")
-    assert y.exists(), x
+    assert y.exists(), f"{x} ({y})"
     if y.is_file():
         targets.add(y)
         continue
@@ -102,7 +102,7 @@ for target in targets:
             cxxadded +
             ["-DIVL_LOCAL",
              "-O3",
-             "-g1",
+             # "-g1",
              f"-std=c++{cxxver}",
              f"-I{include.parent.resolve()}",
              f"-I{default_include.parent.resolve()}",
