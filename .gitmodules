@@ -1,5 +1,5 @@
 [submodule "src/spoj"]
-	path = src/spoj
+	path = ivl/spoj
 	url = git@github.com:ilazaric/spoj.git
 [submodule "submodules/llvm-project"]
 	path = submodules/llvm-project
