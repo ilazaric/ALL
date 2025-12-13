@@ -5,10 +5,6 @@ everything, usually smallish
 
 ## TODO
 
-move src/ to ivl/
-
-move ivl script to an isolated dir so it can be added to PATH
-
 add .bashrc
 
 

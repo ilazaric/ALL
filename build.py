@@ -10,7 +10,7 @@ import subprocess
 import os
 
 repo_root = Path(__file__).parent.resolve()
-src = repo_root / "src"
+src = repo_root / "ivl"
 
 build_dir = repo_root / "build"
 

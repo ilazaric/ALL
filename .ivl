@@ -27,7 +27,7 @@ function refl-build(){
 
 function cc-build(){
     render "$1"
-    $LOC/src/edg-reflection/cc/callme $1.rendered.cpp --max_depth_constexpr_call=1000000
+    $LOC/ivl/edg-reflection/cc/callme $1.rendered.cpp --max_depth_constexpr_call=1000000
 }
 
 function bloom-build(){
@@ -40,7 +40,7 @@ function list-dir(){
 }
 
 function cf-submit(){
-    if [ "$LOC/src/cf" != "$(dirname "$(pwd)")" ]
+    if [ "$LOC/ivl/cf" != "$(dirname "$(pwd)")" ]
     then
         echo "[IVL] ERR: cf-submit: wrong pwd"
         exit 1
@@ -50,7 +50,7 @@ function cf-submit(){
     shift
     render "$FILE"
 
-    $LOC/src/cf/submit.py "$(basename "$(pwd)")" "$FILE"
+    $LOC/ivl/cf/submit.py "$(basename "$(pwd)")" "$FILE"
 }
 
 ivl_add_command "dbg-build" "LOC=\"$IVL_DOT_LOCATION\" dbg-build"
