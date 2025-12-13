@@ -7,7 +7,7 @@ std::string_view strip_prefix_opt(std::string_view a, std::string_view b) {
 
 std::string foo(std::source_location l) {
   return std::format(
-    "{}:'{}':{}", strip_prefix_opt(l.file_name(), "/home/ilazaric/repos/ALL/src/"), l.function_name(), l.line()
+    "{}:'{}':{}", strip_prefix_opt(l.file_name(), "/home/ilazaric/repos/ALL/ivl/"), l.function_name(), l.line()
   );
 }
 

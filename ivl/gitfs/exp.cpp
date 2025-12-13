@@ -59,7 +59,7 @@ int main() {
   git_tree* tree = (git_tree*)obj;
 
   git_tree_entry** ent;
-  check_lg2(git_tree_entry_bypath(&ent, tree, "src/gitfs"));
+  check_lg2(git_tree_entry_bypath(&ent, tree, "ivl/gitfs"));
 
   git_tree_entry_free(ent);
 
