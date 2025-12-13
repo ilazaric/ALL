@@ -19,3 +19,6 @@
 [submodule "submodules/binutils"]
 	path = submodules/binutils
 	url = git://sourceware.org/git/binutils-gdb.git
+[submodule "submodules/raylib"]
+	path = submodules/raylib
+	url = https://github.com/raysan5/raylib
