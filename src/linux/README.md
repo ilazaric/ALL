@@ -37,3 +37,20 @@ but to a free list for that exception kind
 (or exception size specific)
 in fact, throwing the thin version is kinda meaningless maybe
 damn, char[PATH_MAX] approach makes fat exceptions :(
+
+
+https://www.andrew.cmu.edu/course/14-712-s20/applications/ln/Namespaces_Cgroups_Conatiners.pdf
+^ actually might be bad, seems like cgroups v1
+
+https://www.youtube.com/watch?v=sK5i-N34im8
+^ again cgroups v1 :'(
+TODO: might be good for namespaces though
+
+https://man7.org/conf/ndctechtown2019/Linux-namespaces-NDC-TechTown-2019-Kerrisk.pdf
+- https://lwn.net/Articles/531114/
+- https://blog.lizzie.io/linux-containers-in-500-loc.html
+this one is pretty sick
+
+Linux Containers and Virtualization: A Kernel Perspective
+https://link.springer.com/chapter/10.1007/978-1-4842-6283-2_3
+

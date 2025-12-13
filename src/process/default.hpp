@@ -106,7 +106,7 @@ namespace ivl {
           (*pre_exec_setup)();
           *err = ivl::linux::raw_syscalls::execve(pathname, argv, envp);
           ivl::linux::raw_syscalls::exit_group(1);
-          ivl::linux::raw_syscalls::ud2();
+          // ivl::linux::raw_syscalls::ud2();
         }
       );
       if (ret < 0) return linux::or_syscall_error<process>(ret);

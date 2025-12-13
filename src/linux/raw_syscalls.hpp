@@ -11,11 +11,14 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <sys/mman.h>
 // these are not provided
 typedef unsigned short umode_t;
 typedef uid_t qid_t;
 typedef __kernel_rwf_t rwf_t;
 typedef int32_t key_serial_t;
+// :(
+#define __old_kernel_stat stat
 
 #include <linux/sched.h> /* Definition of struct clone_args */
 #include <sched.h>       /* Definition of CLONE_* constants */

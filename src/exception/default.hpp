@@ -10,6 +10,8 @@
 // TODO: this doesn't work if the std::exception_ptr is used,
 // ....: basically can't use constructor to check if such exception is in flight
 
+// https://nicolasbrailo.github.io/blog/projects_texts/13exceptionsunderthehood.html
+
 namespace ivl {
 
   struct base_exception {
