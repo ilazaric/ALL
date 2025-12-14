@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <emscripten/html5.h>
 #include <iostream>
+#include <functional>
 
 constexpr int DESIGN_W = 1280;
 constexpr int DESIGN_H = 720;
