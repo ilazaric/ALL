@@ -1,74 +1,56 @@
 #!/usr/bin/env python3
 
-# TODO: move this file into src/ (or ivl/ eventually)
+# TODO: move this file into ivl/
 
 from pathlib import Path
 import shutil
-# import argparse
 import sys
 import subprocess
 import os
 
 repo_root = Path(__file__).parent.resolve()
-src = repo_root / "ivl"
-
 build_dir = repo_root / "build"
+src = build_dir / "source_copy"
 
-if build_dir.exists():
-    shutil.rmtree(build_dir)
-build_dir.mkdir()
-# code_copy = build_dir / "full_copy"
-include = build_dir / "include" / "ivl"
-default_include = build_dir / "default_include" / "ivl"
-# code_copy.mkdir(parents=True)
-include.mkdir(parents=True)
-default_include.mkdir(parents=True)
+build_prep = repo_root / "ivl/build_system/generate_build_sources"
+assert build_prep.with_suffix(".cpp").exists(), build_prep
+if not build_prep.exists():
+    print(f"Build prep binary {build_prep} not found, building it ...")
+    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+subprocess.run([build_prep], check=True)
 
 hdrs = []
 srcs = []
 
 for dirpath, _, filenames in src.walk():
     for filename in filenames:
-        if '#' in filename:
-            continue
         filepath = dirpath / filename
         if filepath.suffix == ".cpp":
             srcs.append(filepath)
         if filepath.suffix == ".hpp":
             hdrs.append(filepath)
 
-# print(hdrs)
-# print(srcs)
-
-# TODO: default includes dont work: src/foo/default.hpp, src/foo/bar/default.hpp
-for hdr in hdrs:
-    rel = hdr.relative_to(src)
-    if hdr.name == "default.hpp":
-        (default_include / rel.parent.parent).mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(hdr, default_include / rel.parent)
-    else:
-        (include / rel.parent).mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(hdr, include / rel.parent / rel.stem)
-
 targets = set()
 for x in sys.argv[1:]:
-    y = src / ("."+x) if x.startswith("/") else Path.cwd() / x
+    y = repo_root / "ivl" / ("."+x) if x.startswith("/") else Path.cwd() / x
     if not y.is_dir() and y.suffix != ".cpp":
         y = y.with_suffix(".cpp")
     assert y.exists(), f"{x} ({y})"
+    y = src / y.relative_to(repo_root)
     if y.is_file():
         targets.add(y)
         continue
     assert y.is_dir(), x
     for root, dirs, files in y.walk():
         for f in files:
-            if '#' in f:
-                continue
             if f.endswith(".cpp"):
                 targets.add(root / f)
 
-# print(repo_root)
 print(targets)
+cxxinc = [f"-I{x}" for x in (build_dir / "include_dirs").iterdir()]
+
+# cxxfmap = [f"-ffile-prefix-map={x}=" for x in [src] + list((build_dir / "include_dirs").iterdir())]
+cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 
 # TODO: add gcc repo as submodule, build it, default to using it
 cxx = os.getenv("CXX", "g++")
@@ -100,15 +82,17 @@ for target in targets:
             cxxpre.split() +
             cxxrpath +
             cxxadded +
+            cxxinc +
+            cxxfmap +
             ["-DIVL_LOCAL",
              "-O3",
              # "-g1",
              f"-std=c++{cxxver}",
-             f"-I{include.parent.resolve()}",
-             f"-I{default_include.parent.resolve()}",
+             # f"-I{include.parent.resolve()}",
+             # f"-I{default_include.parent.resolve()}",
              target,
              "-o",
-             target.parent / target.stem] +
+             repo_root / target.relative_to(src).with_suffix('')] +
             cxxpost.split() + cxxaddedpost)
     print(" ".join([str(x) for x in args]))
     subprocess.run(args, check=True)

@@ -74,6 +74,8 @@ namespace ivl::logger {
   static_assert(find_comma("find_counterexample(6, 3, ((1<<6)-1) & 0xAB, 1)") == std::string_view::npos);
 
   consteval void callback_names(std::string_view allnames, auto& callback) {
+    while (allnames.starts_with(' ')) allnames = allnames.substr(1);
+    if (allnames.empty()) return;
     while (true) {
       std::size_t      commaloc = find_comma(allnames);
       std::string_view name     = allnames.substr(0, commaloc);
