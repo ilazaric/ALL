@@ -3,23 +3,13 @@ project(mygame LANGUAGES CXX)
 
 include_directories(/home/ilazaric/repos/ALL/build/include)
 include_directories(/home/ilazaric/repos/ALL/build/default_include)
+# include_directories(/usr/include)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/inc)
 
 set (CMAKE_CXX_STANDARD 23)
 set(CMAKE_EXECUTABLE_SUFFIX ".html")   # ← add this
 
-# file(COPY assets DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(GLOB_RECURSE ASSETS CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/assets/*")
-# add_custom_target(copy_assets ALL
-#     # 1) be sure the dest dir exists
-#     COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/assets
-
-#     # 2) copy the changed files only
-#     COMMAND ${CMAKE_COMMAND} -E copy_if_different
-#             ${ASSETS} ${CMAKE_CURRENT_BINARY_DIR}/assets
-
-#     DEPENDS ${ASSETS}                   # re‑run if any source asset changes
-#     COMMENT "Copying game assets → build/assets"
-# )
 
 add_custom_target(copy_assets ALL
     COMMAND ${CMAKE_COMMAND} -E remove_directory ${CMAKE_CURRENT_BINARY_DIR}/assets
