@@ -12,6 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <sys/mman.h>
+#include <sys/msg.h>
 // these are not provided
 typedef unsigned short umode_t;
 typedef uid_t qid_t;
@@ -19,6 +20,67 @@ typedef __kernel_rwf_t rwf_t;
 typedef int32_t key_serial_t;
 // :(
 #define __old_kernel_stat stat
+
+struct __aio_sigset;
+struct cachestat;
+struct cachestat_range;
+struct epoll_event;
+struct file_handle;
+struct futex_waitv;
+struct getcpu_cache;
+struct iocb;
+struct io_event;
+struct io_uring_params;
+struct iovec;
+struct __kernel_itimerspec;
+struct __kernel_old_itimerval;
+struct __kernel_old_timeval;
+struct __kernel_timespec;
+struct __kernel_timex;
+struct kexec_segment;
+struct landlock_ruleset_attr;
+struct linux_dirent;
+struct linux_dirent64;
+struct lsm_ctx;
+struct mmsghdr;
+struct mnt_id_req;
+struct mount_attr;
+struct mq_attr;
+struct msgbuf;
+struct msqid_ds;
+struct __old_kernel_stat;
+struct old_utsname;
+struct open_how;
+struct perf_event_attr;
+struct pollfd;
+struct rlimit;
+struct rlimit64;
+struct robust_list_head;
+struct rseq;
+struct rusage;
+struct sched_attr;
+struct sched_param;
+struct sembuf;
+struct shmid_ds;
+struct sigaction;
+struct sigevent;
+struct siginfo;
+struct sockaddr;
+struct stat;
+struct statfs;
+struct statmount;
+struct statx;
+struct sysinfo;
+struct timezone;
+struct tms;
+struct user_msghdr;
+struct ustat;
+struct utimbuf;
+struct xattr_args;
+union bpf_attr;
+
+// struct cachestat_range;
+// struct cachestat;
 
 #include <linux/sched.h> /* Definition of struct clone_args */
 #include <sched.h>       /* Definition of CLONE_* constants */
@@ -198,6 +260,7 @@ namespace ivl::linux::raw_syscalls {
   inline long name(X_PARAMS##N(__VA_ARGS__)) {                                                                         \
     return manual_syscall((long)::ivl::linux::syscall_number::name __VA_OPT__(, ) X_CARGS##N(__VA_ARGS__));            \
   }
+
 #include <ivl/linux/syscall_arguments_X>
 
 #undef X_PARAMS0
@@ -217,7 +280,7 @@ namespace ivl::linux::raw_syscalls {
 #undef X_CARGS6
 
   // some syscalls were stripped out of syscall_arguments_X due to complex semantics
-  // they are: fork, vfork, clone, clone3
+  // they are: vfork, clone, clone3
   // they have been moved to syscall_arguments_controlflow_X
 
   inline long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*fn)(void*) noexcept) {

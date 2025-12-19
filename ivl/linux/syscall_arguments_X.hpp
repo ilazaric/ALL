@@ -1,6 +1,6 @@
 // generated, dont ask how
 // format: X(NUMBER_OF_ARGUMENTS, NAME, TYPE_OF_ARG1, NAME_OF_ARG1, TYPE_OF_ARG2, NAME_OF_ARG2, ...)
-// fork, vfork, clone, clone3 moved to syscall_arguments_controlflow_X
+// vfork, clone, clone3 moved to syscall_arguments_controlflow_X
 
 X(1, inotify_init1, int, flags)
 X(0, inotify_init)
@@ -360,5 +360,7 @@ X(3, sendmsg, int, fd, struct user_msghdr *, msg, unsigned int, flags)
 X(4, sendmmsg, int, fd, struct mmsghdr *, mmsg, unsigned int, vlen, unsigned int, flags)
 X(3, recvmsg, int, fd, struct user_msghdr *, msg, unsigned int, flags)
 X(5, recvmmsg, int, fd, struct mmsghdr *, mmsg, unsigned int, vlen, unsigned int, flags, struct __kernel_timespec *, timeout)
+
+X(0, fork)
 
 #undef X
