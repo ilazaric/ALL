@@ -54,3 +54,10 @@ this one is pretty sick
 Linux Containers and Virtualization: A Kernel Perspective
 https://link.springer.com/chapter/10.1007/978-1-4842-6283-2_3
 
+hating on fork:
+https://www.microsoft.com/en-us/research/wp-content/uploads/2019/04/fork-hotos19.pdf
+
+# io_uring
+https://unixism.net/loti/what_is_io_uring.html
+https://lwn.net/Articles/908268/ <-- still not added to linux
+https://man7.org/linux/man-pages/man7/io_uring.7.html

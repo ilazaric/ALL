@@ -19,3 +19,6 @@ input files dont have to exist, std::optional<mtime>
 
 where do rules come from?
 
+TODO:
+https://github.com/google/nsjail
+https://www.gnu.org/software/make/manual/make.html
