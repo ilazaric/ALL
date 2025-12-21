@@ -87,6 +87,7 @@ namespace ivl {
       alignas(16) char stack[1ULL << 12];
 
       clone_args clone3_args{
+        // TODO: https://ewontfix.com/7/
         .flags = CLONE_VM | CLONE_VFORK,
         .pidfd{},
         .child_tid{},
@@ -101,10 +102,13 @@ namespace ivl {
       };
       auto ret = linux::raw_syscalls::fat_clone3(
         &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
-          // TODO: prctl suicide
+          // TODO
           auto [pathname, argv, envp, err, pre_exec_setup] = *reinterpret_cast<const T*>(child_arg);
+          *err = ivl::linux::raw_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+          if (err < 0) goto bad;
           (*pre_exec_setup)();
           *err = ivl::linux::raw_syscalls::execve(pathname, argv, envp);
+        bad:
           ivl::linux::raw_syscalls::exit_group(1);
           // ivl::linux::raw_syscalls::ud2();
         }

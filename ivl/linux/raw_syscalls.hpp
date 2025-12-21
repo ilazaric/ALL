@@ -84,6 +84,7 @@ union bpf_attr;
 
 #include <linux/sched.h> /* Definition of struct clone_args */
 #include <sched.h>       /* Definition of CLONE_* constants */
+#include <linux/io_uring.h>
 
 /*
   In linux repository you will find syscalls defined via macros.
