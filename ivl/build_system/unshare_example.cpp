@@ -7,7 +7,7 @@
 
 // IVL add_compiler_flags("-static -flto -Wno-write-strings")
 
-namespace sys = ivl::terminate_syscalls;
+namespace sys = ivl::linux::terminate_syscalls;
 
 void ro_bind(const std::filesystem::path& in, const std::filesystem::path& out) {
   // std::cerr << in << " -> " << out << std::endl;
