@@ -1,5 +1,7 @@
 #include <iostream>
 
+// Input for unshare_example.
+
 int main() {
   std::cout << "hello world" << std::endl;
   volatile int v = 123;
