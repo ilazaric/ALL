@@ -24,19 +24,13 @@ namespace detail {
 
   void replicate(const std::filesystem::path& root, std::filesystem::path file) {
     file = absolute(file);
-    // assert(!is_directory(file));
     while (is_symlink(file)) {
       ro_bind(file, root / file.relative_path());
       file = file.parent_path() / read_symlink(file);
     }
-    // std::cerr << "!!! " << file << std::endl;
     assert(is_regular_file(file) || is_directory(file));
     ro_bind(file, root / file.relative_path());
   }
-
-  // void replicate(const std::filesystem::path& root, const std::vector<std::filesystem::path>& files) {
-  //   for (auto&& file : files) replicate(root, file);
-  // }
 
   void full_write_at(int dfd, const char* name, std::string_view data) {
     auto fd = sys::openat(dfd, name, O_WRONLY, 0);
@@ -59,8 +53,8 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
   // Setting up the cgroup.
   std::string child_cgroup_name = "child.XXXXXX.slice";
   auto parent_cgroup_fd = sys::open(
-    "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice", O_RDONLY | O_DIRECTORY,
-    0
+    "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice",
+    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0
   );
   while (true) {
     for (int i = 0; i < 6; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
@@ -69,7 +63,7 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
     sys::close(fd);
   }
   sys::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
-  auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
+  auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
   detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
@@ -83,24 +77,12 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
   // sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
 
   pc.pre_exec([&] {
-    {
-      int fd;
-
-      fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/uid_map", O_WRONLY, 0);
-      detail::full_write(fd, "0 1000 1");
-      ivl::linux::terminate_syscalls::close(fd);
-
-      fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/setgroups", O_WRONLY, 0);
-      detail::full_write(fd, "deny");
-      ivl::linux::terminate_syscalls::close(fd);
-
-      fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/gid_map", O_WRONLY, 0);
-      detail::full_write(fd, "0 1000 1");
-      ivl::linux::terminate_syscalls::close(fd);
-    }
+    detail::full_write_at(AT_FDCWD, "/proc/self/uid_map", "0 1000 1");
+    detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
+    detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
 
     sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
-    tmpfsfd = sys::open(root.c_str(), O_RDONLY, 0);
+    tmpfsfd = sys::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0);
     for (auto&& input : inputs) detail::replicate(root, wd / input);
     sys::chroot(root.c_str());
     sys::chdir(wd.c_str());

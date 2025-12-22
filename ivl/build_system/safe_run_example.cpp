@@ -6,6 +6,7 @@ namespace sys = ivl::linux::terminate_syscalls;
 
 int main() {
   std::vector<std::filesystem::path> inputs{
+    // who knows, strace showed these
     "/lib/x86_64-linux-gnu/libbfd-2.42-system.so",
     "/lib/x86_64-linux-gnu/libc.so.6",
     "/lib/x86_64-linux-gnu/libctf.so.0",
@@ -39,7 +40,9 @@ int main() {
     "/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/libm.a",
     "/usr/lib/x86_64-linux-gnu/libm-2.39.a",
     "/usr/lib/x86_64-linux-gnu/libmvec.a",
+    // dynamic linker
     "/lib64/ld-linux-x86-64.so.2",
+    // standard headers
     "/usr/include",
     "/usr/local/include",
     "/usr/lib/gcc/x86_64-linux-gnu/13/include",

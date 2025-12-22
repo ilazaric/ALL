@@ -81,7 +81,7 @@ struct process_config {
   // TODO
   linux::or_syscall_error<process> clone_and_exec() const {
     const char* actual_pathname = pathname.c_str();
-    auto actual_exefd = linux::raw_syscalls::open(actual_pathname, O_RDONLY, 0);
+    auto actual_exefd = linux::raw_syscalls::open(actual_pathname, O_RDONLY | O_CLOEXEC, 0);
     if (actual_exefd < 0) return linux::or_syscall_error<process>(actual_exefd);
     std::vector<const char*> actual_argv(argv.size() + 1, nullptr);
     std::vector<const char*> actual_envp;  //{envp.size() + 1, nullptr};
