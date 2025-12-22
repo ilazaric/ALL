@@ -6,7 +6,7 @@ IndentWidth: 2
 TabWidth: 2
 UseTab: Never
 ContinuationIndentWidth: 2
-NamespaceIndentation: All
+NamespaceIndentation: Inner
 
 BreakBeforeBraces: Attach
 
