@@ -54,6 +54,11 @@ int main() {
 
   auto ret = ivl::safe_run(std::move(pc), inputs, outputs, std::filesystem::current_path(), 200ULL << 20, 100);
   for (auto&& [p, fd] : ret) LOG(p, fd.get());
+  // while (true);
+
+  auto&& fd = ret["a.out"];
+  assert(!fd.empty());
+  sys::execveat(fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
 
   // {
   //   auto pid = sys::fork();

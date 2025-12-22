@@ -69,9 +69,7 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
     sys::close(fd);
   }
   sys::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
-  LOG("HERE");
   auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
-  LOG("HERE");
   detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
@@ -79,27 +77,23 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
   pc.cgroup = cgroup_fd;
   std::filesystem::path root = "/dev/shm/mount-point";
 
-  LOG("HERE");
   pc.share_fds = true;
   pc.isolate_all = true;
   int tmpfsfd = 0;
-  sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
+  // sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
 
   pc.pre_exec([&] {
     {
       int fd;
 
-      LOG("1");
       fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/uid_map", O_WRONLY, 0);
       detail::full_write(fd, "0 1000 1");
       ivl::linux::terminate_syscalls::close(fd);
 
-      LOG("2");
       fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/setgroups", O_WRONLY, 0);
       detail::full_write(fd, "deny");
       ivl::linux::terminate_syscalls::close(fd);
 
-      LOG("3");
       fd = ivl::linux::terminate_syscalls::openat(AT_FDCWD, "/proc/self/gid_map", O_WRONLY, 0);
       detail::full_write(fd, "0 1000 1");
       ivl::linux::terminate_syscalls::close(fd);
@@ -108,19 +102,19 @@ std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> safe_run(
     sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
     tmpfsfd = sys::open(root.c_str(), O_RDONLY, 0);
     for (auto&& input : inputs) detail::replicate(root, wd / input);
-    // detail::replicate(root, inputs);
     sys::chroot(root.c_str());
     sys::chdir(wd.c_str());
   });
 
-  LOG("HERE");
-
   {
     auto ret = pc.clone_and_exec().unwrap_or_terminate().wait();
-    LOG("HERE");
     assert(ret.unwrap_or_terminate() == 0);
     assert(tmpfsfd > 0);
   }
+
+  sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
+  sys::close(parent_cgroup_fd);
+  sys::close(cgroup_fd);
 
   std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> ret;
   for (auto&& file : outputs) {

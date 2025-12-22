@@ -80,7 +80,6 @@ struct process_config {
   // Nope, now includes execve errors.
   // TODO
   linux::or_syscall_error<process> clone_and_exec() const {
-    LOG(pathname);
     const char* actual_pathname = pathname.c_str();
     auto actual_exefd = linux::raw_syscalls::open(actual_pathname, O_RDONLY, 0);
     if (actual_exefd < 0) return linux::or_syscall_error<process>(actual_exefd);
@@ -99,7 +98,6 @@ struct process_config {
 
     alignas(16) char stack[1ULL << 12];
 
-    LOG(isolate_all);
     clone_args clone3_args{
       // TODO: https://ewontfix.com/7/
       .flags = CLONE_CLEAR_SIGHAND | CLONE_VM | CLONE_VFORK | (cgroup ? CLONE_INTO_CGROUP : 0) |
@@ -134,6 +132,7 @@ struct process_config {
         // ivl::linux::raw_syscalls::ud2();
       }
     );
+    ivl::linux::raw_syscalls::close(actual_exefd);
     if (ret < 0) return linux::or_syscall_error<process>(ret);
     if (actual_err < 0) {
       process p(ret); // just to wait
