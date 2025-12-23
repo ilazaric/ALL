@@ -22,3 +22,6 @@
 [submodule "submodules/raylib"]
 	path = submodules/raylib
 	url = https://github.com/raysan5/raylib
+[submodule "submodules/nsjail"]
+	path = submodules/nsjail
+	url = git@github.com:google/nsjail.git
