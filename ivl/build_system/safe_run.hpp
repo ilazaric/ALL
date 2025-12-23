@@ -18,6 +18,7 @@ namespace detail {
     if (!is_directory(in)) sys::close(sys::creat(out.c_str(), 0555));
     else sys::mkdir(out.c_str(), 0555);
     // TODO: symlinks look like files, fix it
+    // UPDT: mightve fixed it
     // TODO: permissions don't look correct:
     // ....: $ ls -lah /usr/bin/g++
     // ....: -rwxr-xr-x 1 65534 65534 1004K Sep  4  2024 /usr/bin/g++
@@ -31,7 +32,7 @@ namespace detail {
     sys::mount_setattr(srcfd, "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT, &attr, sizeof(attr));
     sys::move_mount(srcfd, "", AT_FDCWD, out.c_str(), MOVE_MOUNT_F_EMPTY_PATH);
     sys::close(srcfd);
-    
+
     // sys::mount((char*)in.c_str(), (char*)out.c_str(), nullptr, MS_BIND | MS_NOSYMFOLLOW, nullptr);
     // sys::mount(nullptr, (char*)out.c_str(), nullptr, MS_REMOUNT | MS_BIND | MS_RDONLY | MS_NOSYMFOLLOW, nullptr);
   }
@@ -105,6 +106,9 @@ safe_run_return safe_run(
     sys::mkdir("/proc", 0777);
     sys::mount("proc", "/proc", "proc", 0, nullptr);
     sys::mkdir("/tmp", 0777);
+
+    // TODO: /proc/self/mountinfo is showing a lot of info, think if issue
+    // sys::unshare(CLONE_NEWNS);
 
     sys::chdir(wd.c_str());
   });

@@ -59,6 +59,7 @@ int main() {
     "/lib/x86_64-linux-gnu/libbz2.so.1.0",
     "/usr/share/misc/magic.mgc",
     "/usr/bin/cat",
+    // "foo",
   };
 
   std::vector<std::filesystem::path> outputs{
