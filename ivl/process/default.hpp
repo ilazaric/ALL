@@ -12,10 +12,9 @@
 namespace ivl {
 
 struct process {
-  process();
+  pid_t pid;
 
-  // // TODO: might be wrong api
-  // explicit process(const process_config&);
+  process() : pid(0) {}
 
   process(const process&) = delete;
   process(process&& o) : pid(o.pid) { o.pid = 0; }
@@ -28,27 +27,20 @@ struct process {
 
   linux::or_syscall_error<long> wait() {
     if (pid == 0) return linux::or_syscall_error<long>{-EINVAL};
+    // TODO: maybe wrap this into a struct that understands WIFEXITED et al
     int wstatus;
     auto ret = ivl::linux::raw_syscalls::wait4(pid, &wstatus, 0, nullptr);
     if (ret < 0) return linux::or_syscall_error<long>{ret};
-    // TODO
     return linux::or_syscall_error<long>{wstatus};
   }
 
-  ~process() {
-    // if (kill_on_destruction) kill(SIGKILL);
-    // if (!wait_on_destruction) return;
-    (void)wait();
-  }
+  ~process() { (void)wait(); }
 
   explicit process(pid_t pid) : pid(pid) {}
-
-private:
-  pid_t pid;
-  // friend class process_config;
 };
 
 struct process_config {
+  // TODO: probably just std::string
   std::filesystem::path pathname;
   std::vector<std::string> argv;
   std::map<std::string, std::string> envp;
@@ -62,7 +54,7 @@ struct process_config {
   // bool                               wait_on_destruction = true;
 
   void pre_exec(auto&& callable) {
-    pre_exec_setup = [first = std::move(pre_exec_setup), second = std::move(callable)] {
+    pre_exec_setup = [first = std::move(pre_exec_setup), second = FWD(callable)] {
       first();
       second();
     };
@@ -73,7 +65,7 @@ struct process_config {
   // TODO: seccomp
   // TODO: cgroups
   // TODO: std{in,out,err} of child
-  // actually, might want more generic approach for fds
+  // ....: actually, might want more generic approach for fds
 
   // If error, it is due to clone3 syscall.
   // Errors related to execve are not seen.
@@ -81,8 +73,12 @@ struct process_config {
   // TODO
   linux::or_syscall_error<process> clone_and_exec() const {
     const char* actual_pathname = pathname.c_str();
-    auto actual_exefd = linux::raw_syscalls::open(actual_pathname, O_RDONLY | O_CLOEXEC, 0);
-    if (actual_exefd < 0) return linux::or_syscall_error<process>(actual_exefd);
+    // TODO: this might actually be bad for isolation
+    // ....: but i havent found a way to exploit it
+    // ....: still might be prudent to revert to execve()
+    // UPDT: reverted to execve for now
+    // auto actual_exefd = linux::raw_syscalls::open(actual_pathname, O_RDONLY | O_CLOEXEC, 0);
+    // if (actual_exefd < 0) return linux::or_syscall_error<process>(actual_exefd);
     std::vector<const char*> actual_argv(argv.size() + 1, nullptr);
     std::vector<const char*> actual_envp;  //{envp.size() + 1, nullptr};
     std::vector<std::string> envp_storage; //{envp.size()};
@@ -93,8 +89,9 @@ struct process_config {
     actual_envp.push_back(nullptr);
     long actual_err = 0;
     for (size_t i = 0; i < argv.size(); ++i) actual_argv[i] = argv[i].c_str();
-    using T = std::tuple<long, const char* const*, const char* const*, long*, const std::function<void()>*>;
-    T exec_args{actual_exefd, &actual_argv[0], &actual_envp[0], &actual_err, &pre_exec_setup};
+    // TODO: clean up this garbage
+    using T = std::tuple<const char*, const char* const*, const char* const*, long*, const std::function<void()>*>;
+    T exec_args{actual_pathname, &actual_argv[0], &actual_envp[0], &actual_err, &pre_exec_setup};
 
     alignas(16) char stack[1ULL << 12];
 
@@ -119,20 +116,20 @@ struct process_config {
     auto ret = linux::raw_syscalls::fat_clone3(
       &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
         // TODO
-        auto [exefd, argv, envp, err, pre_exec_setup] = *reinterpret_cast<const T*>(child_arg);
+        auto [pathname, argv, envp, err, pre_exec_setup] = *reinterpret_cast<const T*>(child_arg);
         *err = ivl::linux::raw_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
         if (*err < 0) goto bad;
         *err = -1; // TODO
         (*pre_exec_setup)();
         *err = 0;
-        *err = ivl::linux::raw_syscalls::execveat(exefd, "", argv, envp, AT_EMPTY_PATH);
+        *err = ivl::linux::raw_syscalls::execve(pathname, argv, envp);
         LOG(*err);
       bad:
         ivl::linux::raw_syscalls::exit_group(1);
         // ivl::linux::raw_syscalls::ud2();
       }
     );
-    ivl::linux::raw_syscalls::close(actual_exefd);
+    // ivl::linux::raw_syscalls::close(actual_exefd);
     if (ret < 0) return linux::or_syscall_error<process>(ret);
     if (actual_err < 0) {
       process p(ret); // just to wait

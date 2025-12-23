@@ -46,42 +46,38 @@ int main() {
     "/usr/include",
     "/usr/local/include",
     "/usr/lib/gcc/x86_64-linux-gnu/13/include",
+
+    "/usr/bin/ls",
+    // "/proc",
+    "/lib/x86_64-linux-gnu/libselinux.so.1",
+    "/lib/x86_64-linux-gnu/libpcre2-8.so.0",
+    "/lib/x86_64-linux-gnu/libtinfo.so.6",
+    "/usr/bin/bash",
+    "/usr/bin/file",
+    "/lib/x86_64-linux-gnu/libmagic.so.1",
+    "/lib/x86_64-linux-gnu/liblzma.so.5",
+    "/lib/x86_64-linux-gnu/libbz2.so.1.0",
+    "/usr/share/misc/magic.mgc",
+    "/usr/bin/cat",
   };
 
-  std::vector<std::filesystem::path> outputs{"a.out"};
+  std::vector<std::filesystem::path> outputs{
+    "a.out",
+  };
 
   ivl::process_config pc;
-  pc.pathname = "/usr/bin/g++";
-  pc.argv = {"/usr/bin/g++", "-static", "-frandom-seed=42", "-flto", "tiny.cpp"};
+  pc.pathname = "/usr/bin/bash";
+  pc.argv = {"/usr/bin/bash"};
+  // pc.pathname = "/usr/bin/g++";
+  // pc.argv = {"/usr/bin/g++", "-static", "-frandom-seed=42", "-flto", "tiny.cpp"};
   pc.envp = {{"PATH", "/usr/bin"}, {"LC_ALL", "C"}};
 
   auto ret = ivl::safe_run(std::move(pc), inputs, outputs, std::filesystem::current_path(), 200ULL << 20, 100);
-  for (auto&& [p, fd] : ret) LOG(p, fd.get());
+  LOG(ret.wstatus);
+  for (auto&& [p, fd] : ret.outputs) LOG(p, fd.get());
   // while (true);
 
-  auto&& fd = ret["a.out"];
+  auto&& fd = ret.outputs["a.out"];
   assert(!fd.empty());
   sys::execveat(fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
-
-  // {
-  //   auto pid = sys::fork();
-  //   if (pid == 0) {
-  //     sys::personality(ADDR_NO_RANDOMIZE);
-  //     sys::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
-  //     sys::chroot(root.c_str());
-  //     sys::chdir("/home/ilazaric/repos/ALL/ivl/build_system");
-  //     const char* argv[] = {"/usr/bin/g++", "-static", "-frandom-seed=42", "-flto", "tiny.cpp", nullptr};
-  //     const char* envp[] = {"PATH=/usr/bin", "LC_ALL=C", nullptr};
-  //     sys::execve(argv[0], argv, envp);
-  //   }
-  //   int wstatus;
-  //   sys::wait4(pid, &wstatus, 0, nullptr);
-  //   assert(WIFEXITED(wstatus));
-  //   LOG(WEXITSTATUS(wstatus));
-  // }
-
-  // sys::chroot(root.c_str());
-  // sys::chdir("/home/ilazaric/repos/ALL/ivl/build_system");
-  // sys::personality(ADDR_NO_RANDOMIZE);
-  // sys::execve("a.out", nullptr, nullptr);
 }
