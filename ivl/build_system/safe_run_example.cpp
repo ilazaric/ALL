@@ -60,6 +60,11 @@ int main() {
     "/usr/share/misc/magic.mgc",
     "/usr/bin/cat",
     // "foo",
+    "/usr/bin/id",
+    "/lib/x86_64-linux-gnu/libunwind-ptrace.so.0",
+    "/lib/x86_64-linux-gnu/libunwind-x86_64.so.8",
+    "/lib/x86_64-linux-gnu/libunwind.so.8",
+    "/usr/bin/strace",
   };
 
   std::vector<std::filesystem::path> outputs{

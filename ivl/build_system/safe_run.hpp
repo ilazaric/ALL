@@ -5,6 +5,7 @@
 #include <ivl/process>
 #include <cassert>
 #include <filesystem>
+#include <linux/capability.h>
 #include <map>
 #include <string_view>
 #include <vector>
@@ -92,10 +93,39 @@ safe_run_return safe_run(
   pc.isolate_all = true;
   int tmpfsfd = 0;
 
+  // {
+  //   auto bin = [](uint32_t num) {
+  //     std::string ret(32, '0');
+  //     for (int i = 0; i < 32; ++i) if (num & (1u << i)) ret[i] = '1';
+  //     return ret;
+  //   };
+  //   __user_cap_header_struct header{
+  //     .version = _LINUX_CAPABILITY_VERSION_3,
+  //     .pid = 0,
+  //   };
+  //   __user_cap_data_struct data;
+  //   sys::capget(&header, &data);
+  //   LOG(bin(data.effective), bin(data.permitted), bin(data.inheritable));
+  // }
+
   pc.pre_exec([&] {
-    detail::full_write_at(AT_FDCWD, "/proc/self/uid_map", "0 1000 1");
+    LOG(sys::getuid());
+
+    // TODO: man 7 user_namespaces
+    detail::full_write_at(
+      AT_FDCWD, "/proc/self/uid_map",
+      "0 1000 1\n" // root -> ilazaric
+      // "1 1000 1\n"     // root -> ilazaric
+      // "1000 1000 1\n" // "ilazaric" -> ilazaric
+    );
     detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
-    detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
+    detail::full_write_at(
+      AT_FDCWD, "/proc/self/gid_map",
+      "0 1000 1\n" // root -> ilazaric
+      // "1000 1000 1\n" // "ilazaric" -> ilazaric
+    );
+
+    LOG("here");
 
     sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
     tmpfsfd = sys::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0);
@@ -103,9 +133,36 @@ safe_run_return safe_run(
     for (auto&& input : inputs) detail::replicate(root, wd / input);
     sys::chroot(root.c_str());
 
-    sys::mkdir("/proc", 0777);
-    sys::mount("proc", "/proc", "proc", 0, nullptr);
+    // TODO: this exposes a lot of stuff, think about it more
+    // sys::mkdir("/proc", 0777);
+    // sys::mount("proc", "/proc", "proc", 0, nullptr);
+
     sys::mkdir("/tmp", 0777);
+
+    // {
+    //   auto len = sys::getgroups(0, nullptr);
+    //   std::vector<gid_t> groups(len, 999999);
+    //   sys::getgroups(len, groups.data());
+    //   for (auto group : groups) LOG(group);
+    // }
+    LOG(sys::getuid());
+
+    // {
+    //   auto bin = [](uint32_t num) {
+    //     std::string ret(32, '0');
+    //     for (int i = 0; i < 32; ++i) if (num & (1u << i)) ret[i] = '1';
+    //     return ret;
+    //   };
+    //   __user_cap_header_struct header{
+    //     .version = _LINUX_CAPABILITY_VERSION_3,
+    //     .pid = 0,
+    //   };
+    //   __user_cap_data_struct data;
+    //   sys::capget(&header, &data);
+    //   LOG(bin(data.effective), bin(data.permitted), bin(data.inheritable));
+    // }
+
+    // sys::setgroups(0, nullptr);
 
     // TODO: /proc/self/mountinfo is showing a lot of info, think if issue
     // sys::unshare(CLONE_NEWNS);
@@ -121,6 +178,7 @@ safe_run_return safe_run(
     assert(tmpfsfd > 0);
   }
 
+  // TODO: maybe get some stats from the cgroup (like memory.peak) before removing it
   detail::full_write_at(cgroup_fd, "cgroup.kill", "1");
   sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
   sys::close(parent_cgroup_fd);

@@ -94,8 +94,6 @@ int main() {
 
   replicate(root, "/lib64/ld-linux-x86-64.so.2");
 
-  "/usr/lib/gcc/x86_64-linux-gnu/13/include";
-  "/usr/local/include";
 #define X(x)                                                                                                           \
   create_directories(root / x);                                                                                        \
   sys::mount("/" x, (char*)(root / x).c_str(), nullptr, MS_BIND, nullptr);                                             \
