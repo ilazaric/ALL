@@ -158,129 +158,23 @@ safe_run_return safe_run(
   const std::vector<std::filesystem::path>& outputs, const std::filesystem::path& wd, size_t max_memory,
   size_t max_cpu_percentage
 ) {
-  // Setting up the cgroup.
-  std::string child_cgroup_name = "child.XXXXXX.slice";
-  auto parent_cgroup_fd = sys::open(
-    "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice",
-    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0
-  );
-  while (true) {
-    for (int i = 0; i < 6; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
-    auto fd = ivl::linux::raw_syscalls::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
-    if (fd < 0) break;
-    sys::close(fd);
-  }
-  sys::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
-  auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
-  detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
-  detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
-  detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
-  detail::full_write_at(cgroup_fd, "cpu.max", std::format("{}000 100000", max_cpu_percentage));
-  pc.cgroup = cgroup_fd;
-  std::filesystem::path root = "/dev/shm/mount-point";
-
-  pc.share_fds = true;
-  pc.isolate_all = true;
-  int tmpfsfd = 0;
-
-  // {
-  //   auto bin = [](uint32_t num) {
-  //     std::string ret(32, '0');
-  //     for (int i = 0; i < 32; ++i) if (num & (1u << i)) ret[i] = '1';
-  //     return ret;
-  //   };
-  //   __user_cap_header_struct header{
-  //     .version = _LINUX_CAPABILITY_VERSION_3,
-  //     .pid = 0,
-  //   };
-  //   __user_cap_data_struct data;
-  //   sys::capget(&header, &data);
-  //   LOG(bin(data.effective), bin(data.permitted), bin(data.inheritable));
-  // }
-
-  pc.pre_exec([&] {
-    LOG(sys::getuid());
-
-    // TODO: man 7 user_namespaces
-    detail::full_write_at(
-      AT_FDCWD, "/proc/self/uid_map",
-      "0 1000 1\n" // root -> ilazaric
-      // "1 1000 1\n"     // root -> ilazaric
-      // "1000 1000 1\n" // "ilazaric" -> ilazaric
-    );
-    detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
-    detail::full_write_at(
-      AT_FDCWD, "/proc/self/gid_map",
-      "0 1000 1\n" // root -> ilazaric
-      // "1000 1000 1\n" // "ilazaric" -> ilazaric
-    );
-
-    LOG("here");
-
-    sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
-    tmpfsfd = sys::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0);
-
-    for (auto&& input : inputs) detail::replicate(root, wd / input);
-    sys::chroot(root.c_str());
-
-    // TODO: this exposes a lot of stuff, think about it more
-    // sys::mkdir("/proc", 0777);
-    // sys::mount("proc", "/proc", "proc", 0, nullptr);
-
-    sys::mkdir("/tmp", 0777);
-
-    // {
-    //   auto len = sys::getgroups(0, nullptr);
-    //   std::vector<gid_t> groups(len, 999999);
-    //   sys::getgroups(len, groups.data());
-    //   for (auto group : groups) LOG(group);
-    // }
-    LOG(sys::getuid());
-
-    // {
-    //   auto bin = [](uint32_t num) {
-    //     std::string ret(32, '0');
-    //     for (int i = 0; i < 32; ++i) if (num & (1u << i)) ret[i] = '1';
-    //     return ret;
-    //   };
-    //   __user_cap_header_struct header{
-    //     .version = _LINUX_CAPABILITY_VERSION_3,
-    //     .pid = 0,
-    //   };
-    //   __user_cap_data_struct data;
-    //   sys::capget(&header, &data);
-    //   LOG(bin(data.effective), bin(data.permitted), bin(data.inheritable));
-    // }
-
-    // sys::setgroups(0, nullptr);
-
-    // TODO: /proc/self/mountinfo is showing a lot of info, think if issue
-    // sys::unshare(CLONE_NEWNS);
-
-    sys::chdir(wd.c_str());
-  });
+  auto sp = safe_start(std::move(pc), inputs, wd, max_memory, max_cpu_percentage, false, false, false);
 
   safe_run_return ret;
-
-  {
-    ret.wstatus = pc.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
-    // assert(ret.unwrap_or_terminate() == 0);
-    assert(tmpfsfd > 0);
-  }
+  ret.wstatus = sp.p.wait().unwrap_or_terminate();
 
   // TODO: maybe get some stats from the cgroup (like memory.peak) before removing it
-  detail::full_write_at(cgroup_fd, "cgroup.kill", "1");
-  sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
-  sys::close(parent_cgroup_fd);
-  sys::close(cgroup_fd);
+  detail::full_write_at(sp.cgroup_fd.get(), "cgroup.kill", "1");
+  // TODO: remove cgroup dir
+  // sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
 
   for (auto&& file : outputs) {
-    auto fd = ivl::linux::raw_syscalls::openat(tmpfsfd, (wd / file).relative_path().c_str(), O_RDONLY | O_CLOEXEC, 0);
+    auto fd =
+      ivl::linux::raw_syscalls::openat(sp.root_fd.get(), (wd / file).relative_path().c_str(), O_RDONLY | O_CLOEXEC, 0);
     assert(fd >= 0 || fd == -ENOENT);
     ret.outputs[file] = fd >= 0 ? ivl::linux::owned_file_descriptor{(int)fd} : ivl::linux::owned_file_descriptor{};
   }
 
-  sys::close(tmpfsfd);
   return ret;
 }
 } // namespace ivl
