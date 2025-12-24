@@ -60,6 +60,8 @@ struct safe_process {
   process p;
   ivl::linux::owned_file_descriptor cgroup_fd;
   ivl::linux::owned_file_descriptor root_fd;
+
+  // TODO: dont really like this
   ivl::linux::owned_file_descriptor stdout_fd;
   ivl::linux::owned_file_descriptor stderr_fd;
 };
@@ -71,13 +73,13 @@ safe_process safe_start(
   size_t max_memory, size_t max_cpu_percentage, bool detach_stdin, bool detach_stdout, bool detach_stderr
 ) {
   // Setting up the cgroup.
-  std::string child_cgroup_name = "child.XXXXXX.slice";
+  std::string child_cgroup_name = "child.XXXXXXXXXX.slice";
   auto parent_cgroup_fd = sys::open(
     "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice",
     O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0
   );
   while (true) {
-    for (int i = 0; i < 6; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
+    for (int i = 0; i < 10; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
     auto fd = ivl::linux::raw_syscalls::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
     if (fd < 0) break;
     sys::close(fd);
@@ -113,17 +115,21 @@ safe_process safe_start(
 
     for (auto&& input : inputs) detail::replicate(root / "root", wd / input);
     sys::chroot(root.c_str());
-    if (detach_stdout) stdoutfd = ivl::linux::owned_file_descriptor{(int)sys::creat("/stdout", 0444)};
-    if (detach_stderr) stderrfd = ivl::linux::owned_file_descriptor{(int)sys::creat("/stderr", 0444)};
+    if (detach_stdout)
+      stdoutfd = ivl::linux::owned_file_descriptor{(int)sys::open("/stdout", O_CREAT | O_TRUNC | O_RDWR, 0444)};
+    if (detach_stderr)
+      stderrfd = ivl::linux::owned_file_descriptor{(int)sys::open("/stderr", O_CREAT | O_TRUNC | O_RDWR, 0444)};
     sys::unshare(CLONE_FILES);
     if (detach_stdin) sys::close(0);
     if (detach_stdout) {
       sys::dup2(stdoutfd.get(), 1);
-      (void)stdoutfd.close();
+      // CLONE_VM makes close() member function bad
+      sys::close(stdoutfd.get());
     }
     if (detach_stderr) {
       sys::dup2(stderrfd.get(), 2);
-      (void)stderrfd.close();
+      // CLONE_VM makes close() member function bad
+      sys::close(stderrfd.get());
     }
 
     sys::chroot("/root");
