@@ -56,6 +56,96 @@ namespace detail {
   }
 } // namespace detail
 
+struct safe_process {
+  process p;
+  ivl::linux::owned_file_descriptor cgroup_fd;
+  ivl::linux::owned_file_descriptor root_fd;
+  ivl::linux::owned_file_descriptor stdout_fd;
+  ivl::linux::owned_file_descriptor stderr_fd;
+};
+
+// Files don't have to exist.
+// If an output file doesn't exist, the mmap_region is empty.
+safe_process safe_start(
+  process_config pc, const std::vector<std::filesystem::path>& inputs, const std::filesystem::path& wd,
+  size_t max_memory, size_t max_cpu_percentage, bool detach_stdin, bool detach_stdout, bool detach_stderr
+) {
+  // Setting up the cgroup.
+  std::string child_cgroup_name = "child.XXXXXX.slice";
+  auto parent_cgroup_fd = sys::open(
+    "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice",
+    O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0
+  );
+  while (true) {
+    for (int i = 0; i < 6; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
+    auto fd = ivl::linux::raw_syscalls::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
+    if (fd < 0) break;
+    sys::close(fd);
+  }
+  sys::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
+  auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
+  sys::close(parent_cgroup_fd);
+  detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
+  detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
+  detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
+  detail::full_write_at(cgroup_fd, "cpu.max", std::format("{}000 100000", max_cpu_percentage));
+  pc.cgroup = cgroup_fd;
+  std::filesystem::path root = "/dev/shm/mount-point";
+
+  pc.share_fds = true;
+  pc.isolate_all = true;
+  ivl::linux::owned_file_descriptor tmpfsfd;
+  ivl::linux::owned_file_descriptor stdoutfd;
+  ivl::linux::owned_file_descriptor stderrfd;
+
+  // bool detach_stdin = true;
+  // bool detach_stdout = true;
+  // bool detach_stderr = true;
+
+  pc.pre_exec([&] {
+    // TODO: man 7 user_namespaces
+    detail::full_write_at(AT_FDCWD, "/proc/self/uid_map", "0 1000 1");
+    detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
+    detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
+
+    sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
+    tmpfsfd = ivl::linux::owned_file_descriptor{(int)sys::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0)};
+
+    for (auto&& input : inputs) detail::replicate(root / "root", wd / input);
+    sys::chroot(root.c_str());
+    if (detach_stdout) stdoutfd = ivl::linux::owned_file_descriptor{(int)sys::creat("/stdout", 0444)};
+    if (detach_stderr) stderrfd = ivl::linux::owned_file_descriptor{(int)sys::creat("/stderr", 0444)};
+    sys::unshare(CLONE_FILES);
+    if (detach_stdin) sys::close(0);
+    if (detach_stdout) {
+      sys::dup2(stdoutfd.get(), 1);
+      (void)stdoutfd.close();
+    }
+    if (detach_stderr) {
+      sys::dup2(stderrfd.get(), 2);
+      (void)stderrfd.close();
+    }
+
+    sys::chroot("/root");
+    sys::mkdir("/tmp", 0777);
+    sys::chdir(wd.c_str());
+  });
+
+  safe_process ret;
+
+  {
+    ret.p = pc.clone_and_exec().unwrap_or_terminate();
+    assert(!tmpfsfd.empty());
+  }
+
+  ret.root_fd = std::move(tmpfsfd);
+  ret.cgroup_fd = ivl::linux::owned_file_descriptor{(int)cgroup_fd};
+  ret.stdout_fd = std::move(stdoutfd);
+  ret.stderr_fd = std::move(stderrfd);
+
+  return ret;
+}
+
 struct safe_run_return {
   int wstatus;
   std::map<std::filesystem::path, ivl::linux::owned_file_descriptor> outputs;
