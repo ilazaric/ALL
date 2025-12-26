@@ -10,8 +10,12 @@
 #include <unistd.h>
 #include <sys/stat.h>
 
+// This program has to be buildable without any ivl headers accessible,
+// because this program is the one that sets up the directory hierarchy of headers.
+
 // TODO: check symlinks (want to ignore them)
 // TODO: arg parsing, --help, --verbose-{x,y,z}
+// TODO: emit a .rsp file
 
 int main() {
   auto root = std::filesystem::canonical("/proc/self/exe");

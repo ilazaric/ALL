@@ -1,4 +1,5 @@
 #include <ivl/build_system/safe_run>
+#include <ivl/linux/utils>
 #include <ivl/util>
 #include <algorithm>
 #include <concepts>
@@ -7,6 +8,7 @@
 #include <span>
 #include <string_view>
 
+// TODO: if good, extract to ivl/argument_parsing
 struct magic_argument_parser {
   struct controller;
 
@@ -48,7 +50,103 @@ struct magic_argument_parser {
   }
 };
 
+/*
+  ........ v-- col: 1    v-- col: 40
+  row: 1 | ............... |
+  row: 2 | ............... |
+  row: 3 ! .....x......... !
+                ^-- here
+  row: 4 | ............... |
+  row: 5 | ............... |
+ */
+
+// A line is a sequence of characters terminated by a newline.
+// The newline is understood to be part of the line.
+void print_context(std::string_view file, size_t loc) {
+  // TODO: loc == npos might make sense
+  assert(loc < file.size());
+
+  auto find_line_start = [&](size_t loc) { return file.substr(0, loc).rfind('\n') + 1; };
+  auto find_line_newline = [&](size_t loc) { return file.find('\n', loc); };
+
+  size_t row = std::ranges::count(file.substr(0, loc), '\n');
+  size_t col = loc - (file.substr(0, loc).rfind('\n') + 1);
+  size_t row_context = 3;
+  size_t row_digit_count = [&] {
+    auto x = row + row_context + 1;
+    size_t ret = !x;
+    while (x) x /= 10, ++ret;
+    return ret;
+  }();
+
+  std::vector<std::string_view> lines;
+  {
+    size_t idx = 0;
+    while (true) {
+      auto nxt = file.find('\n', idx);
+      lines.push_back(file.substr(idx, nxt - idx));
+      if (nxt == std::string_view::npos) break;
+      idx = nxt + 1;
+    }
+  }
+
+  for (size_t i = row < row_context ? 0 : row - row_context; i <= row; ++i)
+    std::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
+  std::println(stderr, "{:>{}}", "^--- here", col + row_digit_count + 2 + 9);
+  for (size_t i = row + 1; i <= row + row_context && i < lines.size(); ++i)
+    std::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
+}
+
+// std::vector<std::string> parse_args(std::string_view data) {
+//   std::vector<std::string> ret;
+//   std::string_view sv; // TODO: rename
+
+// new_arg:
+//   while (!sv.empty() && isspace(sv[0])) sv.remove_prefix(1);
+//   if (sv.empty()) goto end;
+
+//   ret.emplace_back();
+//   auto& arg = ret.back();
+
+// consume_arg:
+//   if (sv.empty() || isspace(sv[0])) goto new_arg;
+
+//   if (sv[0] == '\'') {
+//     auto loc = sv.find('\'', 1);
+//     if (loc == std::string_view::npos) {
+//       std::print(
+//         stderr, "Malformed argument file\n"
+//                 "- character `'` is missing ending conterpart\n"
+//       );
+//       print_context(data, data.size() - sv.size());
+//       sys::exit_group(1);
+//     }
+//     arg += sv.substr(0, loc).substr(1);
+//     sv.remove_prefix(loc + 1);
+//     goto consume_arg;
+//   }
+
+//   if (sv[0] == '\\') {
+//     if (sv.size() == 1) {
+//       std::print(
+//         stderr, "Malformed argument file\n"
+//                 "- character `\` with no character after it\n"
+//       );
+//       print_context(data, data.size() - sv.size());
+//       sys::exit_group(1);
+//     }
+
+//     // TODO
+//   }
+
+// end:
+//   return ret;
+// }
+
 int main(int argc, char* argv[]) {
+  print_context(ivl::linux::read_file("run_test.cpp"), 150);
+  return 1;
+
   std::span<char*> args{argv + 1, argv + argc};
   std::span<char*> passthrough;
 
@@ -103,6 +201,12 @@ int main(int argc, char* argv[]) {
   bla.add_argument("--wd", [&](magic_argument_parser::controller& c) { wd = c.consume_argument(); });
 
   bla.add_argument("--verbose", [&] { verbose = true; });
+
+  // bla.add_argument("@", [&](magic_argument_parser::controller& c) {
+  //   // This is basically gcc/libiberty/argv.c:buildargv()
+  //   auto data = ivl::linux::read_file(c.consume_argument().c_str());
+  //   bla.parse(new_args);
+  // });
 
   bla.parse(args);
 

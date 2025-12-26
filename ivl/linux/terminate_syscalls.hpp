@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ivl/linux/raw_syscalls>
 #include <ivl/logger>
 

@@ -39,6 +39,16 @@ namespace ivl::util {
     ~scope_exit() { fn(); }
   };
 
+  template<typename T>
+  struct convert_t {
+    T operator()(auto&& arg) const {
+      return T{FWD(arg)};
+    }
+  };
+
+  template<typename T>
+  inline constexpr convert_t<T> convert;
+
   namespace detail {
     template <typename, typename>
     struct lazy_construct_conversion;

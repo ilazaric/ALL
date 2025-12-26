@@ -13,5 +13,7 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+    - name: install g++-14
+      run: sudo apt update && sudo apt install g++-14
     - name: build
-      run: ./build.py /build_system/generate_build_sources
+      run: CXX=g++-14 ./build.py /build_system
