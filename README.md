@@ -33,22 +33,24 @@ everything, usually smallish
   ```
   then the custom preprocessor could figure out the deps
 
-all artifacts should probably end up in build/
-unfortunately
-kinda like having files in cwd
+- [ ] all artifacts should probably end up in build/\
+  unfortunately\
+  kinda like having files in cwd\
+  currently only artifacts are executables, and they are placed alongside .cpp\
+  addendum, a lot of touched-up headers are fabricated in build/
 
-^ currently only artifacts are executables, and they are placed alongside .cpp
+## Thinking out loud
 
-so i want .ivl files
-if root/.ivl and root/subdir/.ivl , it should load them in that order
-what would they contain?
-currently they are shell files
-i dont really want to go into dsl
-python seems like an okay choice
-but i dont like python
-so why dont i stick with shell?
-wait
-i want this to work relative to target, not cwd
+so i want .ivl files\
+if root/.ivl and root/subdir/.ivl , it should load them in that order\
+what would they contain?\
+currently they are shell files\
+i dont really want to go into dsl\
+python seems like an okay choice\
+but i dont like python\
+so why dont i stick with shell?\
+wait\
+i want this to work relative to target, not cwd\
 whoops
 
 ^ `ivl build` goes to a python script
@@ -56,15 +58,18 @@ whoops
 
 
 
+No idea what the context here was:
+```
 consider unique_ptr<S>
 also consider S*
 or optional<S&>
 one is owning, one is non-owning
 we could represent both with bits in pointer
+```
 
 
-
-
+Nor here, probably related to heterogenous return:
+```
 exceptions might be bad
 suppose a function, we hit return, construct the object, and some destructors throw
 IMO the caller should have access to both the return object and all exceptions
@@ -76,6 +81,7 @@ what does that even mean though, someone needs to take care of the exceptions
 maybe caller should be forced to acknowledge exceptions before touching return value
 any exception not resolved -> propagate up -> return value gets lost
 (which is good imo)
+```
 
 ```cpp
 A fn(){
@@ -87,6 +93,8 @@ A fn(){
 auto a = fn() catch (){} catch (){};
 ```
 
+```
 maybe
 whatever, rewind back to multiple exceptions concept
 how do we handle that?
+```
