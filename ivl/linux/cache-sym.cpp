@@ -4,6 +4,9 @@
 #include <iostream>
 #include <string>
 
+#include <ivl/linux/terminate_syscalls>
+#include <ivl/linux/file_descriptor>
+
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
 
@@ -37,12 +40,12 @@ int main(int argc, char** argv) {
   std::filesystem::path       json_file(argv[1]);
   const auto                  j            = json::parse(std::ifstream(json_file));
   const std::filesystem::path device       = j["device"];
-  const uint64_t              device_start = from_hex(j["device_start"]);
-  const uint64_t              device_end   = from_hex(j["device_end"]);
-  const uint64_t              purge_start  = from_hex(j["purge_start"]);
-  const uint64_t              purge_end    = from_hex(j["purge_end"]);
+  const uint64_t              device_start = from_hex(to_string(j["device_start"]));
+  const uint64_t              device_end   = from_hex(to_string(j["device_end"]));
+  const uint64_t              purge_start  = from_hex(to_string(j["purge_start"]));
+  const uint64_t              purge_end    = from_hex(to_string(j["purge_end"]));
 
-  const auto fd = ivl::fs::OwnedFD::open(device, O_RDWR);
+  ivl::linux::owned_file_descriptor fd{ivl::linux::terminate_syscalls::open(device.c_str(), O_RDWR, 0)};
   auto       virt_start =
     mmap(nullptr, device_end - device_start, PROT_EXEC | PROT_READ | PROT_WRITE, MAP_PRIVATE, fd.get(), 0);
   if (virt_start == nullptr) {

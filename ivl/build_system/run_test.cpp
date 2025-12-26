@@ -144,8 +144,8 @@ void print_context(std::string_view file, size_t loc) {
 // }
 
 int main(int argc, char* argv[]) {
-  print_context(ivl::linux::read_file("run_test.cpp"), 150);
-  return 1;
+  // print_context(ivl::linux::read_file("run_test.cpp"), 150);
+  // return 1;
 
   std::span<char*> args{argv + 1, argv + argc};
   std::span<char*> passthrough;

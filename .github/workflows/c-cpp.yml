@@ -16,4 +16,4 @@ jobs:
     - name: install g++-14
       run: sudo apt update && sudo apt install g++-14
     - name: build
-      run: CXX=g++-14 ./build.py /build_system
+      run: CXX=g++-14 ./build.py /build_system /linux

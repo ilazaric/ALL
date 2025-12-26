@@ -3,12 +3,12 @@
 #include <ivl/linux/raw_syscalls>
 #include <ivl/linux/typed_syscalls>
 
-#include <fcntl.h>
-#include <iostream>
-#include <limits>
-#include <memory>
-#include <utility>
-#include <x86intrin.h> // __rdtsc, __rdtscp, __cpuid
+// #include <fcntl.h>
+// #include <iostream>
+// #include <limits>
+// #include <memory>
+// #include <utility>
+// #include <x86intrin.h> // __rdtsc, __rdtscp, __cpuid
 
 // IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector")
 
@@ -21,6 +21,7 @@
 
 // S s;
 
+#if 0 // this needs added syscall `inc`
 int main(int argc, char** argv) {
   int num;
   sscanf(argv[1], "%d", &num);
@@ -35,8 +36,9 @@ int main(int argc, char** argv) {
   std::cout << "avg cycle count: " << (end - start) * 1.0 / num << std::endl;
   std::cout << "correct: " << (cv == sv + num) << std::endl;
 }
+#endif
 
-#if 0
+#if 1
 // int main() {
 extern "C" [[noreturn]] void _start() {
   // auto wc    = [](char c) { ivl::linux::raw_syscalls::write(1, &c, 1); };

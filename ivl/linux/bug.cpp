@@ -1,3 +1,5 @@
+// IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector")
+
 extern "C" __attribute__((used)) void actual_start() {
   long a          = 0;
   long b          = 0;

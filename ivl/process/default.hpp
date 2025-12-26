@@ -8,6 +8,7 @@
 
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
+#include <ivl/logger>
 
 namespace ivl {
 
