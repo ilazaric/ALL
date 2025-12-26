@@ -1,17 +1,13 @@
 # ALL
+
 everything, usually smallish
-
-
 
 ## TODO
 
-add .bashrc
-
-
-if there is a corresponding .cpp , including the header implies linking with the source file TODO NOT IMPLEMENTED
-if a source file doesnt have a corresponding header, it is implicitly an executable TODO NOT IMPLEMENTED
-
-^ currently .cpp implies executable
+- [ ] add .bashrc
+- [ ] if there is a corresponding .cpp , including the header implies linking with the source file
+  - [ ] if a source file doesnt have a corresponding header, it is implicitly an executable\
+        currently .cpp implies executable
 
 what about non-cpp files?
 .sh makes sense to execute
