@@ -27,10 +27,11 @@ everything, usually smallish
   # IVL DEPENDS_ON(foo/bar)
   ```
 
-
-or maybe a macro that gives access
-IVL_TARGET("foobar")
-then the custom preprocessor could figure out the deps
+  or maybe a macro that gives access
+  ```
+  IVL_TARGET("foobar")
+  ```
+  then the custom preprocessor could figure out the deps
 
 all artifacts should probably end up in build/
 unfortunately
