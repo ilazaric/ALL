@@ -2,6 +2,10 @@
 
 everything, usually smallish
 
+## Status
+
+[![C/C++ CI](https://github.com/ilazaric/ALL/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/ilazaric/ALL/actions/workflows/c-cpp.yml)
+
 ## TODO
 
 - [ ] add .bashrc
