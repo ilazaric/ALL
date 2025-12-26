@@ -20,7 +20,7 @@ everything, usually smallish
 - [ ] how to introduce dependencies?\
       like foo/bar wants to run bla/truc, so need to compile bla/truc.cpp first\
       err, not first but as well\
-      probably do whatever comment syntax for the language
+      probably do whatever comment syntax for the language\
       ```
       // IVL DEPENDS_ON(foo/bar)
       # IVL DEPENDS_ON(foo/bar)
