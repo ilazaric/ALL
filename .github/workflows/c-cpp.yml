@@ -13,6 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+      with:
+        submodules: recursive
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev
     - name: build
