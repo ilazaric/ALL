@@ -12,7 +12,7 @@
 // IVL add_compiler_flags("-static -flto")
 
 ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
-  auto in_fd  = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
+  auto in_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
   auto out_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
 
   while (!code.empty())
@@ -20,9 +20,9 @@ ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
 
   ivl::process_config cfg;
   cfg.pathname = "/usr/bin/g++";
-  cfg.argv     = {"/usr/bin/g++", "-xc++", "-std=c++23", "-O3", "-static", "-o", "/dev/stdout", "-"};
+  cfg.argv = {"/usr/bin/g++", "-xc++", "-std=c++23", "-O3", "-static", "-o", "/dev/stdout", "-"};
   // needs PATH to find linker
-  cfg.envp           = {{"PATH", "/usr/bin"}};
+  cfg.envp = {{"PATH", "/usr/bin"}};
   cfg.pre_exec_setup = [&] {
     assert(ivl::linux::raw_syscalls::dup2(in_fd.get(), 0) >= 0);
     // wouldnt be necessary had i used pwrite
@@ -31,7 +31,7 @@ ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
   };
 
   auto proc = cfg.clone_and_exec().unwrap_or_terminate();
-  auto w    = proc.wait();
+  auto w = proc.wait();
   assert(w.is_success());
   std::cout << "w: " << w.unwrap_or_terminate() << std::endl;
   assert(w.unwrap_or_terminate() == 0);
@@ -53,7 +53,7 @@ int main(){
 
   auto ret = ivl::linux::raw_syscalls::execveat(out_fd.get(), "", nullptr, nullptr, AT_EMPTY_PATH);
   std::cout << "unexpected ret: " << ret << std::endl;
-  ivl::linux::raw_syscalls::ud2();
+  asm volatile("ud2" ::: "memory");
 
   // ivl::linux::raw_syscalls::fat_clone3();
 
