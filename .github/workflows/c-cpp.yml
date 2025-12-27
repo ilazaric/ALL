@@ -24,4 +24,4 @@ jobs:
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev
     - name: build
-      run: ./build.py /build_system /linux
+      run: CXXVER=26 ./build.py /build_system /linux /process
