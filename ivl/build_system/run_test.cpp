@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
   std::span<char*> passthrough;
 
   {
-    auto it = std::ranges::find(args, "--", ivl::util::convert<std::string_view>);
+    auto it = std::ranges::find(args, std::string_view("--"));
     if (it == args.end()) {
       std::cerr << "ERROR: no `--` separator\n";
       return 1;
@@ -233,9 +233,9 @@ int main(int argc, char* argv[]) {
     auto dump = [](ivl::linux::file_descriptor fd) {
       assert(!fd.empty());
       struct stat statbuf;
-      ivl::sys::fstat(fd.get(), &statbuf);
+      ivl::linux::terminate_syscalls::fstat(fd.get(), &statbuf);
       if (statbuf.st_size == 0) return;
-      auto ptr = ivl::sys::mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd.get(), 0);
+      auto ptr = ivl::linux::terminate_syscalls::mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd.get(), 0);
       std::string_view data((const char*)ptr, statbuf.st_size);
       while (true) {
         auto loc = data.find('\n');
@@ -244,7 +244,7 @@ int main(int argc, char* argv[]) {
         if (loc == std::string_view::npos) break;
         data.remove_prefix(loc + 1);
       }
-      ivl::sys::munmap(ptr, statbuf.st_size);
+      ivl::linux::terminate_syscalls::munmap(ptr, statbuf.st_size);
     };
     std::println("STDOUT:");
     dump(s.stdout_fd);

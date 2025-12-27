@@ -11,13 +11,12 @@
 #include <vector>
 
 namespace ivl {
-namespace sys = ivl::linux::terminate_syscalls;
 namespace detail {
   void ro_bind(const std::filesystem::path& in, const std::filesystem::path& out) {
     if (in.native().contains("g++")) LOG(in, out);
     create_directories(out.parent_path());
-    if (!is_directory(in)) sys::close(sys::creat(out.c_str(), 0555));
-    else sys::mkdir(out.c_str(), 0555);
+    if (!is_directory(in)) linux::terminate_syscalls::close(linux::terminate_syscalls::creat(out.c_str(), 0555));
+    else linux::terminate_syscalls::mkdir(out.c_str(), 0555);
     // TODO: symlinks look like files, fix it
     // UPDT: mightve fixed it
     // TODO: permissions don't look correct:
@@ -27,15 +26,15 @@ namespace detail {
     // UPDT: actually this is kinda correct, the wrong thing is we are root
 
     // This seems to mimick symlinks better.
-    auto srcfd = sys::open_tree(AT_FDCWD, in.c_str(), AT_NO_AUTOMOUNT | AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE);
+    auto srcfd = linux::terminate_syscalls::open_tree(AT_FDCWD, in.c_str(), AT_NO_AUTOMOUNT | AT_SYMLINK_NOFOLLOW | OPEN_TREE_CLONE);
     mount_attr attr{};
     attr.attr_set = MOUNT_ATTR_RDONLY;
-    sys::mount_setattr(srcfd, "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT, &attr, sizeof(attr));
-    sys::move_mount(srcfd, "", AT_FDCWD, out.c_str(), MOVE_MOUNT_F_EMPTY_PATH);
-    sys::close(srcfd);
+    linux::terminate_syscalls::mount_setattr(srcfd, "", AT_EMPTY_PATH | AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT, &attr, sizeof(attr));
+    linux::terminate_syscalls::move_mount(srcfd, "", AT_FDCWD, out.c_str(), MOVE_MOUNT_F_EMPTY_PATH);
+    linux::terminate_syscalls::close(srcfd);
 
-    // sys::mount((char*)in.c_str(), (char*)out.c_str(), nullptr, MS_BIND | MS_NOSYMFOLLOW, nullptr);
-    // sys::mount(nullptr, (char*)out.c_str(), nullptr, MS_REMOUNT | MS_BIND | MS_RDONLY | MS_NOSYMFOLLOW, nullptr);
+    // linux::terminate_syscalls::mount((char*)in.c_str(), (char*)out.c_str(), nullptr, MS_BIND | MS_NOSYMFOLLOW, nullptr);
+    // linux::terminate_syscalls::mount(nullptr, (char*)out.c_str(), nullptr, MS_REMOUNT | MS_BIND | MS_RDONLY | MS_NOSYMFOLLOW, nullptr);
   }
 
   void replicate(const std::filesystem::path& root, std::filesystem::path file) {
@@ -50,9 +49,9 @@ namespace detail {
   }
 
   void full_write_at(int dfd, const char* name, std::string_view data) {
-    auto fd = sys::openat(dfd, name, O_WRONLY, 0);
-    while (!data.empty()) data.remove_prefix(sys::write(fd, data.data(), data.size()));
-    sys::close(fd);
+    auto fd = linux::terminate_syscalls::openat(dfd, name, O_WRONLY, 0);
+    while (!data.empty()) data.remove_prefix(linux::terminate_syscalls::write(fd, data.data(), data.size()));
+    linux::terminate_syscalls::close(fd);
   }
 } // namespace detail
 
@@ -74,7 +73,7 @@ safe_process safe_start(
 ) {
   // Setting up the cgroup.
   std::string child_cgroup_name = "child.XXXXXXXXXX.slice";
-  auto parent_cgroup_fd = sys::open(
+  auto parent_cgroup_fd = linux::terminate_syscalls::open(
     "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl-isolation.slice",
     O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0
   );
@@ -82,11 +81,11 @@ safe_process safe_start(
     for (int i = 0; i < 10; ++i) child_cgroup_name[6 + i] = '0' + rand() % 10;
     auto fd = ivl::linux::raw_syscalls::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY, 0);
     if (fd < 0) break;
-    sys::close(fd);
+    linux::terminate_syscalls::close(fd);
   }
-  sys::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
-  auto cgroup_fd = sys::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
-  sys::close(parent_cgroup_fd);
+  linux::terminate_syscalls::mkdirat(parent_cgroup_fd, child_cgroup_name.c_str(), 0777);
+  auto cgroup_fd = linux::terminate_syscalls::openat(parent_cgroup_fd, child_cgroup_name.c_str(), O_RDONLY | O_DIRECTORY | O_CLOEXEC, 0);
+  linux::terminate_syscalls::close(parent_cgroup_fd);
   detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
@@ -110,31 +109,31 @@ safe_process safe_start(
     detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
     detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
 
-    sys::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
-    tmpfsfd = ivl::linux::owned_file_descriptor{(int)sys::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0)};
+    linux::terminate_syscalls::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
+    tmpfsfd = ivl::linux::owned_file_descriptor{(int)linux::terminate_syscalls::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0)};
 
     for (auto&& input : inputs) detail::replicate(root / "root", wd / input);
-    sys::chroot(root.c_str());
+    linux::terminate_syscalls::chroot(root.c_str());
     if (detach_stdout)
-      stdoutfd = ivl::linux::owned_file_descriptor{(int)sys::open("/stdout", O_CREAT | O_TRUNC | O_RDWR, 0444)};
+      stdoutfd = ivl::linux::owned_file_descriptor{(int)linux::terminate_syscalls::open("/stdout", O_CREAT | O_TRUNC | O_RDWR, 0444)};
     if (detach_stderr)
-      stderrfd = ivl::linux::owned_file_descriptor{(int)sys::open("/stderr", O_CREAT | O_TRUNC | O_RDWR, 0444)};
-    sys::unshare(CLONE_FILES);
-    if (detach_stdin) sys::close(0);
+      stderrfd = ivl::linux::owned_file_descriptor{(int)linux::terminate_syscalls::open("/stderr", O_CREAT | O_TRUNC | O_RDWR, 0444)};
+    linux::terminate_syscalls::unshare(CLONE_FILES);
+    if (detach_stdin) linux::terminate_syscalls::close(0);
     if (detach_stdout) {
-      sys::dup2(stdoutfd.get(), 1);
+      linux::terminate_syscalls::dup2(stdoutfd.get(), 1);
       // CLONE_VM makes close() member function bad
-      sys::close(stdoutfd.get());
+      linux::terminate_syscalls::close(stdoutfd.get());
     }
     if (detach_stderr) {
-      sys::dup2(stderrfd.get(), 2);
+      linux::terminate_syscalls::dup2(stderrfd.get(), 2);
       // CLONE_VM makes close() member function bad
-      sys::close(stderrfd.get());
+      linux::terminate_syscalls::close(stderrfd.get());
     }
 
-    sys::chroot("/root");
-    sys::mkdir("/tmp", 0777);
-    sys::chdir(wd.c_str());
+    linux::terminate_syscalls::chroot("/root");
+    linux::terminate_syscalls::mkdir("/tmp", 0777);
+    linux::terminate_syscalls::chdir(wd.c_str());
   });
 
   safe_process ret;
@@ -172,7 +171,7 @@ safe_run_return safe_run(
   // TODO: maybe get some stats from the cgroup (like memory.peak) before removing it
   detail::full_write_at(sp.cgroup_fd.get(), "cgroup.kill", "1");
   // TODO: remove cgroup dir
-  // sys::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
+  // linux::terminate_syscalls::unlinkat(parent_cgroup_fd, child_cgroup_name.c_str(), AT_REMOVEDIR);
 
   for (auto&& file : outputs) {
     auto fd =
