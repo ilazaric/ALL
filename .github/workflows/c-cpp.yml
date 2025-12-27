@@ -13,10 +13,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - uses: actions/checkout@v4
-      with:
-        repository: submodules/gcc
-        path: submodules/gcc
+    - name: fetch gcc
+      run: git submodule update submodules/gcc
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev
     - name: build
