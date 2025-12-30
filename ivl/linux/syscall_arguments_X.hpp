@@ -363,4 +363,8 @@ X(5, recvmmsg, int, fd, struct mmsghdr *, mmsg, unsigned int, vlen, unsigned int
 
 X(0, fork)
 
+// ivl garbage
+X(0, ivl_start_logging)
+X(0, ivl_stop_logging)
+
 #undef X

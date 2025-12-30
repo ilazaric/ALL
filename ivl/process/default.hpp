@@ -90,9 +90,21 @@ struct process_config {
     actual_envp.push_back(nullptr);
     long actual_err = 0;
     for (size_t i = 0; i < argv.size(); ++i) actual_argv[i] = argv[i].c_str();
-    // TODO: clean up this garbage
-    using T = std::tuple<const char*, const char* const*, const char* const*, long*, const std::function<void()>*>;
-    T exec_args{actual_pathname, &actual_argv[0], &actual_envp[0], &actual_err, &pre_exec_setup};
+
+    struct exec_args_t {
+      const char* pathname;
+      const char* const* argv;
+      const char* const* envp;
+      long* err;
+      const std::function<void()>* pre_exec_setup;
+    };
+    exec_args_t exec_args{
+      .pathname = actual_pathname,
+      .argv = &actual_argv[0],
+      .envp = &actual_envp[0],
+      .err = &actual_err,
+      .pre_exec_setup = &pre_exec_setup
+    };
 
     alignas(16) char stack[1ULL << 12];
 
@@ -116,15 +128,16 @@ struct process_config {
     };
     auto ret = linux::raw_syscalls::fat_clone3(
       &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
-        // TODO
-        auto [pathname, argv, envp, err, pre_exec_setup] = *reinterpret_cast<const T*>(child_arg);
-        *err = ivl::linux::raw_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
-        if (*err < 0) goto bad;
-        *err = -1; // TODO
-        (*pre_exec_setup)();
-        *err = 0;
-        *err = ivl::linux::raw_syscalls::execve(pathname, argv, envp);
-        LOG(*err);
+        auto& exec_args = *static_cast<exec_args_t*>(child_arg);
+        // TODO: this might not be correct if parent dies before it?
+        // TODO: erm what if the process is moved out of thread and the thread dies? man prctl
+        // UPDT: killing prctl for now bc it kinda sucks
+        // *exec_args.err = ivl::linux::raw_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+        // if (*exec_args.err < 0) goto bad;
+        *exec_args.err = -1; // TODO
+        (*exec_args.pre_exec_setup)();
+        *exec_args.err = 0;
+        *exec_args.err = ivl::linux::raw_syscalls::execve(exec_args.pathname, exec_args.argv, exec_args.envp);
       bad:
         ivl::linux::raw_syscalls::exit_group(1);
         // ivl::linux::raw_syscalls::ud2();
