@@ -17,6 +17,9 @@ assert build_prep.with_suffix(".cpp").exists(), build_prep
 if not build_prep.exists():
     print(f"Build prep binary {build_prep} not found, building it ...")
     subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
+    print(f"Build prep binary {build_prep} older than sources, rebuilding it ...")
+    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
 subprocess.run([build_prep], check=True)
 
 hdrs = []
@@ -47,7 +50,8 @@ for x in sys.argv[1:]:
                 targets.add(root / f)
 
 print(targets)
-cxxinc = [f"-I{x}" for x in (build_dir / "include_dirs").iterdir()]
+# cxxinc = [f"-I{x}" for x in (build_dir / "include_dirs").iterdir()]
+cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
 
 # cxxfmap = [f"-ffile-prefix-map={x}=" for x in [src] + list((build_dir / "include_dirs").iterdir())]
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="]

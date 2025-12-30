@@ -1,14 +1,15 @@
 #include <cassert>
+#include <cstring>
+#include <fcntl.h>
 #include <filesystem>
 #include <iostream>
 #include <ranges>
-#include <vector>
-#include <cstring>
 #include <string_view>
 #include <sys/mman.h>
-#include <fcntl.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <vector>
+#include <fstream>
 
 // This program has to be buildable without any ivl headers accessible,
 // because this program is the one that sets up the directory hierarchy of headers.
@@ -46,8 +47,8 @@ int main() {
     // assert(copy_file(file, target));
     constexpr char added_prefix[] = "#line 1 \"";
     constexpr char added_suffix[] = "\"\n";
-    size_t added_length = sizeof(added_prefix)-1 + file.native().size() + sizeof(added_suffix)-1;
-    
+    size_t added_length = sizeof(added_prefix) - 1 + file.native().size() + sizeof(added_suffix) - 1;
+
     auto prevfd = open(file.native().c_str(), O_RDONLY, 0);
     assert(prevfd != -1);
     struct stat statbuf;
@@ -62,8 +63,8 @@ int main() {
       std::cout << "err: " << e << std::endl;
       assert(false);
     }
-    
-    auto fd = open(target.native().c_str(), O_CREAT|O_RDWR|O_TRUNC, 0644);
+
+    auto fd = open(target.native().c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
     assert(fd != -1);
     assert(-1 != ftruncate(fd, new_size));
     auto map = mmap(nullptr, new_size, PROT_WRITE, MAP_SHARED, fd, 0);
@@ -75,7 +76,7 @@ int main() {
       assert(false);
     }
     char* ptr = (char*)map;
-    auto wr = [&] (std::string_view sv) {
+    auto wr = [&](std::string_view sv) {
       memcpy(ptr, sv.data(), sv.size());
       ptr += sv.size();
     };
@@ -92,9 +93,14 @@ int main() {
   }
 
   auto include_meta_dir = build_dir / "include_dirs";
+  assert(create_directory(include_meta_dir));
+
+  std::ofstream rsp_file(include_meta_dir / "args.rsp");
 
   {
     auto dir = include_meta_dir / "regular";
+    assert(create_directory(dir));
+    rsp_file << "-I " << dir << std::endl;
     for (auto&& file : files) {
       if (file.extension() != ".hpp") continue;
       if (file.filename() == "default.hpp") continue;
@@ -109,7 +115,9 @@ int main() {
     for (auto&& file : files) {
       if (file.filename() != "default.hpp") continue;
       auto lexfile = file.lexically_relative(copy_dir);
-      auto target = include_meta_dir / std::to_string(std::ranges::distance(lexfile)) / lexfile.parent_path();
+      auto topdir = include_meta_dir / std::to_string(std::ranges::distance(lexfile));
+      auto target = topdir / lexfile.parent_path();
+      if (create_directory(topdir)) rsp_file << "-I " << topdir << std::endl;
       create_directories(target.parent_path());
       create_hard_link(file, target);
     }
