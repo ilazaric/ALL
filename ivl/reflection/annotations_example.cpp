@@ -46,7 +46,7 @@ struct invoke_function_reflection {
     ivl::linux::raw_syscalls::wait4(pid, &wstatus, 0, nullptr);
     if (wstatus != 0) {
       std::println("TEST FAILED {}", display_string_of(I));
-      std::println(" - with exit code {}", WEXITSTATUS(wstatus));
+      std::println(" - with exit status {}", wstatus);
     } else {
       std::println("TEST PASSED {}", display_string_of(I));
     }
@@ -64,13 +64,13 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 // ~META LIB
 
 // USER CODE
-[[= ivl::test]] inline void test1() { std::println("test1"); }
-[[= ivl::test]] inline void test2() { std::println("test2"); }
-[[= ivl::test]] inline void test3() { std::println("test3"); }
-[[= ivl::test]] inline void test_broken() {
-  std::println("whoops");
-  exit(123);
+inline int adder(int a, int b, int c) {
+  return a + b; // whoops, missed c
 }
+
+[[= ivl::test]] inline void test_passes() { assert(adder(1, 2, 0) == 3); }
+
+[[= ivl::test]] inline void test_broken() { assert(adder(3, 4, 5) == 12); }
 // ~USER CODE
 
 // TEST RUNNER
