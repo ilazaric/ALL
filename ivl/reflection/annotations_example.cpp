@@ -1,8 +1,8 @@
 #include <ivl/linux/raw_syscalls>
-#include <ivl/util>
 #include <cassert>
 #include <iostream>
 #include <meta>
+#include <print>
 #include <vector>
 
 // IVL add_compiler_flags("-freflection -static")
@@ -35,6 +35,7 @@ consteval std::vector<std::meta::info> all_test_functions() {
 template <std::meta::info I>
 struct invoke_function_reflection {
   invoke_function_reflection() {
+    std::println("RUNNING TEST {}", display_string_of(I));
     auto pid = ivl::linux::raw_syscalls::fork();
     assert(pid >= 0);
     if (pid == 0) {
@@ -44,9 +45,10 @@ struct invoke_function_reflection {
     int wstatus;
     ivl::linux::raw_syscalls::wait4(pid, &wstatus, 0, nullptr);
     if (wstatus != 0) {
-      std::cout << "TEST FAILED " << display_string_of(I) << std::endl;
+      std::println("TEST FAILED {}", display_string_of(I));
+      std::println(" - with exit code {}", WEXITSTATUS(wstatus));
     } else {
-      std::cout << "TEST PASSED " << display_string_of(I) << std::endl;
+      std::println("TEST PASSED {}", display_string_of(I));
     }
   }
 };
@@ -62,12 +64,17 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 // ~META LIB
 
 // USER CODE
-[[= ivl::test]] void test1() { std::cout << "test1\n"; }
-[[= ivl::test]] void test2() { std::cout << "test2\n"; }
-[[= ivl::test]] void test3() { std::cout << "test3\n"; }
+[[= ivl::test]] inline void test1() { std::println("test1"); }
+[[= ivl::test]] inline void test2() { std::println("test2"); }
+[[= ivl::test]] inline void test3() { std::println("test3"); }
+[[= ivl::test]] inline void test_broken() {
+  std::println("whoops");
+  exit(123);
+}
+// ~USER CODE
 
+// TEST RUNNER
 using full_test_runner = [:substitute(^^invoke_function_reflections, wrap(all_test_functions())):];
 
-int main() {
-  full_test_runner{};
-}
+int main() { full_test_runner{}; }
+// ~TEST RUNNER
