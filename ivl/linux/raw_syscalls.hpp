@@ -14,6 +14,7 @@
 #include <sys/mman.h>
 #include <sys/msg.h>
 #include <sys/prctl.h>
+#include <linux/landlock.h>
 // these are not provided
 typedef unsigned short umode_t;
 typedef uid_t qid_t;

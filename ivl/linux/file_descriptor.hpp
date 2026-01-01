@@ -35,7 +35,8 @@ namespace ivl::linux {
 
     // Make sure you know what you're doing.
     // Takes ownership of the file descriptor.
-    explicit basic_owned_file_descriptor(T value) : value(value) {}
+    explicit basic_owned_file_descriptor(int value) : value(value) {}
+    explicit basic_owned_file_descriptor(long value) : value(value) {}
 
     basic_owned_file_descriptor(const basic_owned_file_descriptor&) = delete;
     // basic_owned_file_descriptor(basic_owned_file_descriptor&& o) : value(o.value) {

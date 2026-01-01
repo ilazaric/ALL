@@ -48,16 +48,18 @@ namespace ivl {
 
     void dump(std::FILE* stream = stdout) const {
       std::println(
-        stream, "ivl::base_exception thrown from {}:'{}':{}", throw_location.file_name(),
-        throw_location.function_name(), throw_location.line()
+        stream, "ivl::base_exception thrown from {}:{}:`{}`",
+        throw_location.file_name(),
+        throw_location.line(),
+        throw_location.function_name()
       );
-      if (!throw_text.empty()) std::println(stream, " + text: {}", throw_text);
+      if (!throw_text.empty()) std::println(stream, " | text: {}", throw_text);
       for (auto&& ctx : added_context) {
         std::println(
-          stream, " + added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
+          stream, " | added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
           ctx.location.line()
         );
-        if (!ctx.text.empty()) std::println(stream, " + + text: {}", ctx.text);
+        if (!ctx.text.empty()) std::println(stream, " | | text: {}", ctx.text);
       }
     }
   };

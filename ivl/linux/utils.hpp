@@ -2,6 +2,7 @@
 
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/terminate_syscalls>
+#include <ivl/linux/throwing_syscalls>
 #include <format>
 #include <string>
 
@@ -12,27 +13,15 @@ inline constexpr size_t page_size = 4096;
 
 // TODO: change arg into null-terminated-string-view
 // TODO: change ret to mmap_region probably
-// TODO: better error reporting
 inline std::string read_file(const char* path) {
-  auto fd = terminate_syscalls::open(path, O_RDONLY, 0);
+  owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
   struct stat statbuf;
-  terminate_syscalls::fstat(fd, &statbuf);
-  auto ptr = terminate_syscalls::mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
+  throwing_syscalls::fstat(fd.get(), &statbuf);
+  auto ptr = throwing_syscalls::mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd.get(), 0);
   std::string ret((const char*)ptr, statbuf.st_size);
-  terminate_syscalls::munmap(ptr, statbuf.st_size);
+  throwing_syscalls::munmap(ptr, statbuf.st_size);
   return ret;
 }
-
-// void show(const char* file) {
-//   namespace sys = terminate_syscalls;
-//   // auto fd = sys::open(file, O_RDONLY, 0);
-//   struct stat statbuf;
-//   sys::lstat(file, &statbuf);
-//   LOG(file);
-//   LOG(statbuf.st_mode);
-//   LOG(statbuf.st_uid);
-//   // sys::close(fd);
-// }
 
 inline owned_file_descriptor create_tmpfs() {
   alignas(16) char stack[1ULL << 12];
@@ -45,11 +34,7 @@ inline owned_file_descriptor create_tmpfs() {
   clone3_args.stack = reinterpret_cast<uintptr_t>(&stack[0]);
   clone3_args.stack_size = sizeof(stack);
 
-  // auto uid = raw_syscalls::getuid();
-  // auto gid = raw_syscalls::getgid();
   namespace sys = terminate_syscalls;
-  // LOG(sys::getuid(), sys::geteuid());
-  // LOG(uid, gid);
 
   struct outcome_t {
     uid_t uid;

@@ -16,7 +16,6 @@
 
 // TODO: check symlinks (want to ignore them)
 // TODO: arg parsing, --help, --verbose-{x,y,z}
-// TODO: emit a .rsp file
 
 int main() {
   auto root = std::filesystem::canonical("/proc/self/exe");
