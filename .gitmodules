@@ -25,3 +25,7 @@
 [submodule "submodules/nsjail"]
 	path = submodules/nsjail
 	url = git@github.com:google/nsjail.git
+[submodule "submodules/gcc-refl"]
+	path = submodules/gcc-refl
+	url = https://forge.sourceware.org/marek/gcc.git
+	branch = reflection
