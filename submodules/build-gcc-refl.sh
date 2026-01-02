@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 set -euo pipefail
+set -x
 
 # COMMIT="$(git rev-parse HEAD:submodules/gcc-refl)"
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
