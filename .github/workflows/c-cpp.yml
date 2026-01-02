@@ -13,15 +13,35 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: install gcc
+    - name: install apt packages
+      run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+
+    - name: get gcc-refl commit
+      id: get-gcc-refl-commit
       run: |
-          wget --quiet https://kayari.org/gcc-latest/gcc-latest.deb \
-          && sudo dpkg -i gcc-latest.deb
-          echo "/opt/gcc-latest/bin" >> $GITHUB_PATH
-          echo "LD_RUN_PATH=/opt/gcc-latest/lib64" >> $GITHUB_ENV
+        echo "commit=$(git rev-parse HEAD:submodules/gcc-refl)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: cache gcc-refl install
+      id: cache-gcc-refl
+      uses: actions/cache@v4
+      with:
+        path: /opt/GCC-REFL
+        key: ${{ runner.os }}-gcc-refl-${{ steps.get-gcc-refl-commit.outputs.commit }}
+
+    - name: install gcc-refl
+      run: |
+        git submodule update -- submodules/gcc-refl
+        submodules/build-gcc-refl.sh --install
+      if: steps.cache-gcc-refl.outputs.cache-hit != 'true'
+
+    - name: activate gcc-refl
+      run: |
+        echo "/opt/GCC-REFL/bin" >> $GITHUB_PATH
+        echo "LD_RUN_PATH=/opt/GCC-REFL/lib64" >> $GITHUB_ENV
+          
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
-    - name: install apt packages
-      run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev
+      
     - name: build
       run: CXXVER=26 ./build.py /build_system /linux /process
