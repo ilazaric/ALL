@@ -1,8 +1,11 @@
+#include <ivl/linux/raw_syscalls>
+#include <cassert>
+#include <cstring>
 #include <meta>
 #include <print>
 #include <vector>
-#include <cassert>
-#include <ivl/linux/raw_syscalls>
+
+// This file is auto-included into tests, at end.
 
 consteval std::vector<std::meta::info> all_test_functions() {
   std::vector<std::meta::info> namespaces{^^::};
@@ -15,6 +18,7 @@ consteval std::vector<std::meta::info> all_test_functions() {
         continue;
       }
       if (!is_function(member)) continue;
+      if (strcmp(IVL_FILE, source_location_of(member).file_name()) != 0) continue;
       if (!annotations_of_with_type(member, ^^ivl::test_t).empty()) {
         test_functions.push_back(member);
       }
@@ -33,7 +37,6 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 template <std::meta::info I>
 bool invoke_function() {
   std::println("RUNNING TEST {}", display_string_of(I));
-  std::println("file: {}", source_location_of(I).file_name());
   auto pid = ivl::linux::raw_syscalls::fork();
   assert(pid >= 0);
   if (pid == 0) {
@@ -59,6 +62,8 @@ bool invoke_functions() {
   return ret;
 }
 
-int main(int argc, char* argv[]) {
-  return ![:substitute(^^invoke_functions, wrap(all_test_functions())):]();
-}
+// TODO: re-exec under run_test
+// ....: or should every test be re-exec'd as safe?
+// ....: this re-exec could be not forkish, not vforkish
+// TODO: cmdline args to execute individual tests, mayhaps verbose
+int main(int argc, char* argv[]) { return ![:substitute(^^invoke_functions, wrap(all_test_functions())):](); }

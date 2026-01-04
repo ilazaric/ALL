@@ -78,7 +78,7 @@ def deduce_file_targets(path):
         name = "/" / path.relative_to(src / "ivl").with_suffix('')
 
     if file_has_test_variant:
-        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner", "-freflection"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
+        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
     if file_has_reg_variant:
         all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
 
@@ -123,7 +123,7 @@ cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
 cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(cxx).parent.parent / "lib64"}"] if "/" in cxx else [])
-cxxver = os.getenv("CXXVER", "23")
+cxxver = os.getenv("CXXVER", "26")
 cxxpost = os.getenv("CXXPOST", "")
 
 for target in targets:
@@ -137,6 +137,8 @@ for target in targets:
             cxxinc +
             cxxfmap +
             ["-DIVL_LOCAL",
+             f"-DIVL_FILE=\"{path.relative_to(src)}\"",
+             "-static",
              "-O3",
              # "-g1",
              f"-std=c++{cxxver}",
@@ -144,6 +146,7 @@ for target in targets:
              # f"-I{default_include.parent.resolve()}",
              "-include",
              "ivl/reflection/test_attribute",
+             "-freflection",
              "-include",
              path,
              "-xc++",
