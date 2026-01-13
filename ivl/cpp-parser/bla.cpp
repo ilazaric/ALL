@@ -57,16 +57,59 @@ struct preprocessing_op_or_punc {
 
 struct single_line_comment {
   std::string_view text;
+
+  static std::optional<single_line_comment> try_parse(cxx_file::parsing_state& state) {
+    if (!state.starts_with("//")) return std::nullopt;
+    auto start_ptr = state.begin();
+    auto end = state.remaining.find('\n');
+    if (end == std::string_view::npos)
+      throw std::runtime_error(
+        std::format("ICE? single line comment cannot find newline\n{}", state.debug_context(start_ptr))
+      );
+    state.remove_prefix(end);
+    return single_line_comment{std::string_view{start_ptr, end}};
+  }
 };
 
 struct multi_line_comment {
   std::string_view text;
+
+  static std::optional<multi_line_comment> try_parse(cxx_file::parsing_state& state) {
+    if (!state.starts_with("/*")) return std::nullopt;
+    auto start_ptr = state.begin();
+    state.consume("/*");
+    auto end = state.remaining.find("*/");
+    if (end == std::string_view::npos)
+      throw std::runtime_error(std::format("Incomplete multiline comment\n{}", state.debug_context(start_ptr)));
+    auto end_ptr = state.begin() + end + 2;
+    state.remove_prefix(end + 2);
+    return multi_line_comment{std::string_view{start_ptr, end_ptr}};
+  }
 };
 
-struct newline {};
+struct newline {
+  static std::optional<newline> try_parse(cxx_file::parsing_state& state) {
+    if (!state.starts_with("\n")) return std::nullopt;
+    state.consume("\n");
+    return newline{};
+  }
+};
 
 struct whitespace {
   std::string text;
+
+  static std::optional<whitespace> try_parse(cxx_file::parsing_state& state) {
+    auto pred = [](char c) { return c != '\n' && isspace(c); };
+
+    if (!pred(state.front())) return std::nullopt;
+    std::string ws;
+    while (pred(state.front())) {
+      ws += state.front();
+      state.remove_prefix(1);
+    }
+
+    return whitespace{std::move(ws)};
+  }
 };
 
 struct identifier {
@@ -128,6 +171,10 @@ struct pp_token {
     identifier, character_literal, pp_number, header_name, import_kw, module_kw, export_kw, string_literal,
     non_whitespace_garbage>
     payload;
+
+  pp_token(auto&& arg)
+    requires(!std::same_as<pp_token, std::decay_t<decltype(arg)>>) && requires { payload = FWD(arg); }
+      : payload(FWD(arg)) {}
 };
 
 int main(int argc, char* argv[]) {
@@ -148,32 +195,26 @@ int main(int argc, char* argv[]) {
     "/usr/include",
   };
 
-  std::string_view remaining(file.post_splicing_contents);
+  auto state = file.parsing_start();
+  auto& remaining = state.remaining;
+  // std::string_view remaining(file.post_splicing_contents);
 
   auto describe_c = [](char c) {
     // TODO: if c is printable, print it
     return std::format("[{}]", (int)c);
   };
 
-  auto reached_eof = [&] { return remaining.empty(); };
-
   auto current_c = [&] {
-    if (reached_eof()) throw std::runtime_error("ICE: Reached EOF and asked for current character");
+    if (state.empty()) throw std::runtime_error("ICE: Reached EOF and asked for current character");
     return remaining[0];
   };
 
   auto debug_context_at = [&](const char* ptr) { return file.debug_context(cxx_file::splice_ptr(ptr)); };
   auto debug_context = [&] { return debug_context_at(remaining.data()); };
 
-  auto consume = [&](std::string_view sv) {
-    if (!remaining.starts_with(sv))
-      throw std::runtime_error(std::format("ICE: failed to consume `{}`\n{}", sv, debug_context()));
-    remaining.remove_prefix(sv.size());
-  };
+  auto consume = [&](std::string_view sv) { state.consume(sv); };
 
-  auto consume_c = [&](char c){
-    consume(std::string_view(&c, 1));
-  };
+  auto consume_c = [&](char c) { consume(std::string_view(&c, 1)); };
 
   auto save_state = [&] { return remaining; };
   auto restore_state = [&](std::string_view state) { remaining = state; };
@@ -200,15 +241,15 @@ int main(int argc, char* argv[]) {
     auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
     if (!is_nondigit(current_c())) return std::nullopt;
     std::string ret;
-    while (is_nondigit(current_c()) || is_digit(current_c())) {
-      ret += current_c();
-      consume_c(current_c());
+    while (is_nondigit(state.front()) || is_digit(state.front())) {
+      ret += state.front();
+      state.remove_prefix(1);
     }
     if (worded_op_or_puncs.contains(ret)) return pp_token{preprocessing_op_or_punc{ret}};
     return pp_token{identifier{ret}};
   };
 
-  auto try_parse_raw_string_literal = [&] -> std::optional<pp_token> {
+  auto try_parse_raw_string_literal = [&] -> std::optional<raw_literal> {
     encoding_prefix ep;
     bool parses_as_raw_literal = false;
     static constexpr auto eps = enumerators<encoding_prefix>();
@@ -279,7 +320,7 @@ int main(int argc, char* argv[]) {
       else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
     }
 
-    return pp_token{raw_literal{ep, delimiter, content, ud_suffix}};
+    return raw_literal{ep, delimiter, content, ud_suffix};
   };
 
   auto try_parse_digraph_exception_1 = [&] -> std::optional<pp_token> {
@@ -317,53 +358,15 @@ int main(int argc, char* argv[]) {
     return std::nullopt;
   };
 
-  auto try_parse_single_line_comment = [&] -> std::optional<pp_token> {
-    if (!starts_with("//")) return std::nullopt;
-    auto start_ptr = remaining.data();
-    while (current_c() != '\n') consume_c(current_c());
-    auto end_ptr = remaining.data();
-    return pp_token{single_line_comment{std::string_view{start_ptr, end_ptr}}};
-  };
-
-  auto try_parse_multi_line_comment = [&] -> std::optional<pp_token> {
-    if (!starts_with("/*")) return std::nullopt;
-    auto start_ptr = remaining.data();
-    consume("/*");
-    while (!starts_with("*/")) consume_c(current_c());
-    consume_c('*');
-    auto end_ptr = remaining.data() + 1;
-    consume_c('/');
-    return pp_token{multi_line_comment{std::string_view{start_ptr, end_ptr}}};
-  };
-
-  auto try_parse_whitespace = [&] -> std::optional<pp_token> {
-    auto pred = [](char c) { return c != '\n' && isspace(c); };
-
-    if (!pred(current_c())) return std::nullopt;
-    std::string ws;
-    while (pred(current_c())) {
-      ws += current_c();
-      consume_c(current_c());
-    }
-
-    return pp_token{whitespace{std::move(ws)}};
-  };
-
-  auto try_parse_newline = [&] -> std::optional<pp_token> {
-    if (current_c() != '\n') return std::nullopt;
-    consume_c('\n');
-    return pp_token{newline{}};
-  };
-
   std::vector<pp_token> tokens;
-  while (!reached_eof()) {
+  while (!state.empty()) {
     std::optional<pp_token> parsed;
 
-    if (!parsed) parsed = try_parse_single_line_comment();
-    if (!parsed) parsed = try_parse_multi_line_comment();
+    if (!parsed) parsed = single_line_comment::try_parse(state);
+    if (!parsed) parsed = multi_line_comment::try_parse(state);
 
-    if (!parsed) parsed = try_parse_whitespace();
-    if (!parsed) parsed = try_parse_newline();
+    if (!parsed) parsed = whitespace::try_parse(state);
+    if (!parsed) parsed = newline::try_parse(state);
 
     // TODO: spec is broken, add ud-suffix
     if (!parsed) parsed = try_parse_raw_string_literal();

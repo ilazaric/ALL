@@ -99,7 +99,12 @@ struct cxx_file {
     // TODO: think if origin_end() is legal
     // ....: here IMO it could be, just say EOF in output
     if (!(origin_begin() <= op && op < origin_end())) {
-      throw std::runtime_error(std::format("ICE: range check failed\nrange: {} .. {}\narg: {}\n", (const void*)origin_begin().ptr, (const void*)origin_end().ptr, (const void*)op.ptr));
+      throw std::runtime_error(
+        std::format(
+          "ICE: range check failed\nrange: {} .. {}\narg: {}\n", (const void*)origin_begin().ptr,
+          (const void*)origin_end().ptr, (const void*)op.ptr
+        )
+      );
     }
 
     auto containing_line = debug_context_line(op);
@@ -120,7 +125,7 @@ struct cxx_file {
     std::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
     return debug_context(convert(sp));
   }
-  
+
   explicit cxx_file(std::string contents) : original_contents(std::move(contents)) {
     std::vector<std::tuple<size_t, size_t, size_t>> reverts;
     auto append = [&](std::string_view sv) {
@@ -165,6 +170,52 @@ struct cxx_file {
     // > an additional new-line character were appended to the file.
     if (!original_contents.empty() && !post_splicing_contents.ends_with('\n')) post_splicing_contents.push_back('\n');
   }
+
+  struct parsing_state {
+    std::string_view remaining;
+    const cxx_file* file;
+
+    bool empty() const { return remaining.empty(); }
+
+    bool starts_with(std::string_view sv) const { return remaining.starts_with(sv); }
+
+    const char& front() const {
+      if (empty()) throw std::runtime_error("ICE: Attempted to get character at EOF");
+      return remaining[0];
+    }
+
+    const char* begin() const { return remaining.data(); }
+    const char* end() const { return remaining.data() + remaining.size(); }
+
+    void consume(std::string_view sv) {
+      if (!starts_with(sv))
+        throw std::runtime_error(
+          std::format("Failed to consume `{}`\n{}", sv, file->debug_context(cxx_file::splice_ptr{remaining.data()}))
+        );
+      remaining.remove_prefix(sv.size());
+    }
+
+    void consume(char c){
+      consume(std::string_view(&c, 1));
+    }
+
+    void remove_prefix(size_t length) {
+      if (remaining.size() < length)
+        throw std::runtime_error(
+          std::format(
+            "ICE: tried to remove more than exists\nremaining: {}, attempted: {}\n{}", remaining.size(), length,
+            debug_context()
+          )
+        );
+      remaining.remove_prefix(length);
+    }
+
+    std::string debug_context(const char* ptr) const { return file->debug_context(splice_ptr{ptr}); }
+
+    std::string debug_context() const { return debug_context(remaining.data()); }
+  };
+
+  parsing_state parsing_start() const { return parsing_state{std::string_view(post_splicing_contents), this}; }
 };
 
 // parseable types T should implement a
