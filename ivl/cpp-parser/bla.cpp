@@ -202,19 +202,6 @@ int main(int argc, char* argv[]) {
     return std::format("[{}]", (int)c);
   };
 
-  auto starts_with = [&](auto&&... svs) {
-    auto current = state;
-    bool failed = false;
-    (
-      [&](std::string_view sv) {
-        if (current.starts_with(sv)) current.remove_prefix(sv.size());
-        else failed = true;
-      }(svs),
-      ...
-    );
-    return !failed;
-  };
-
   std::set<std::string_view> worded_op_or_puncs{
     "and", "or", "xor", "not", "bitand", "bitor", "compl", "and_eq", "or_eq", "xor_eq", "not_eq",
   };
@@ -237,7 +224,10 @@ int main(int argc, char* argv[]) {
     bool parses_as_raw_literal = false;
     static constexpr auto eps = enumerators<encoding_prefix>();
     for (auto e : eps) {
-      if (!starts_with(encoding_prefix_str(e), "R\"")) continue;
+      if (!state.starts_with(encoding_prefix_str(e))) continue;
+      auto copy = state;
+      copy.consume(encoding_prefix_str(e));
+      if (!copy.starts_with("R\"")) continue;
       ep = e;
       parses_as_raw_literal = true;
       break;
@@ -307,15 +297,15 @@ int main(int argc, char* argv[]) {
   };
 
   auto try_parse_digraph_exception_1 = [&] -> std::optional<pp_token> {
-    if (!starts_with("<::")) return std::nullopt;
-    if (starts_with("<:::") || starts_with("<::>")) return std::nullopt;
+    if (!state.starts_with("<::")) return std::nullopt;
+    if (state.starts_with("<:::") || state.starts_with("<::>")) return std::nullopt;
     state.consume('<');
     return pp_token{preprocessing_op_or_punc{"<"}};
   };
 
   auto try_parse_digraph_exception_2 = [&] -> std::optional<pp_token> {
-    if (!starts_with("[::") && !starts_with("[:>")) return std::nullopt;
-    if (starts_with("[:::")) return std::nullopt;
+    if (!state.starts_with("[::") && !state.starts_with("[:>")) return std::nullopt;
+    if (state.starts_with("[:::")) return std::nullopt;
     state.consume('[');
     return pp_token{preprocessing_op_or_punc{"["}};
   };
@@ -332,7 +322,7 @@ int main(int argc, char* argv[]) {
 
   auto try_parse_preprocessing_op_or_punc = [&] -> std::optional<pp_token> {
     for (auto op : regular_op_or_puncs) {
-      if (starts_with(op)) {
+      if (state.starts_with(op)) {
         state.consume(op);
         return pp_token{preprocessing_op_or_punc{std::string(op)}};
       }
