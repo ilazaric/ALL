@@ -1,3 +1,4 @@
+#include <ivl/cpp-parser/truc>
 #include <ivl/linux/utils>
 #include <ivl/logger>
 #include <ivl/reflection/test_attribute>
@@ -168,6 +169,13 @@ struct pp_token {
 int main(int argc, char* argv[]) {
   assert(argc == 2);
   auto data_storage = ivl::linux::read_file(argv[1]);
+
+  {
+    cxx_file file(data_storage);
+    LOG("\n"+file.post_splicing_contents);
+    return 0;
+  }
+  
   // if (!data_storage.empty() && data_storage.back() != '\n') data_storage.push_back('\n');
   assert(data_storage.empty() || !data_storage.back() != '\\');
   std::string_view data = data_storage;
