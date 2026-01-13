@@ -55,6 +55,41 @@ struct raw_literal {
 
 struct preprocessing_op_or_punc {
   std::string kind;
+
+  static std::optional<preprocessing_op_or_punc> try_parse_symbolic(cxx_file::parsing_state& state) {
+    static const auto regular_op_or_puncs = [] {
+      std::vector<std::string_view> regular_op_or_puncs{
+        "#", "##", "%:",  "%:%:", "{",  "}",  "[",  "]",  "(",   ")",   "[:", ":]", "<%", "%>", "<:", ":>",
+        ";", ":",  "...", "?",    "::", ".",  ".*", "->", "->*", "^^",  "~",  "!",  "+",  "-",  "*",  "/",
+        "%", "^",  "&",   "|",    "=",  "+=", "-=", "*=", "/=",  "%=",  "^=", "&=", "|=", "==", "!=", "<",
+        ">", "<=", ">=",  "<=>",  "&&", "||", "<<", ">>", "<<=", ">>=", "++", "--", ",",
+      };
+      std::ranges::sort(regular_op_or_puncs, std::ranges::greater{}, [](std::string_view sv) { return sv.size(); });
+      return regular_op_or_puncs;
+    }();
+    for (auto op : regular_op_or_puncs) {
+      if (state.starts_with(op)) {
+        state.consume(op);
+        return preprocessing_op_or_punc{std::string(op)};
+      }
+    }
+    // worded handled with identifier
+    return std::nullopt;
+  };
+
+  static std::optional<preprocessing_op_or_punc> try_parse_digraph_exception_1(cxx_file::parsing_state& state) {
+    if (!state.starts_with("<::")) return std::nullopt;
+    if (state.starts_with("<:::") || state.starts_with("<::>")) return std::nullopt;
+    state.consume('<');
+    return preprocessing_op_or_punc{"<"};
+  }
+
+  static std::optional<preprocessing_op_or_punc> try_parse_digraph_exception_2(cxx_file::parsing_state& state) {
+    if (!state.starts_with("[::") && !state.starts_with("[:>")) return std::nullopt;
+    if (state.starts_with("[:::")) return std::nullopt;
+    state.consume('[');
+    return preprocessing_op_or_punc{"["};
+  }
 };
 
 struct single_line_comment {
@@ -293,41 +328,6 @@ int main(int argc, char* argv[]) {
 
   auto state = file.parsing_start();
 
-  auto try_parse_digraph_exception_1 = [&] -> std::optional<preprocessing_op_or_punc> {
-    if (!state.starts_with("<::")) return std::nullopt;
-    if (state.starts_with("<:::") || state.starts_with("<::>")) return std::nullopt;
-    state.consume('<');
-    return preprocessing_op_or_punc{"<"};
-  };
-
-  auto try_parse_digraph_exception_2 = [&] -> std::optional<preprocessing_op_or_punc> {
-    if (!state.starts_with("[::") && !state.starts_with("[:>")) return std::nullopt;
-    if (state.starts_with("[:::")) return std::nullopt;
-    state.consume('[');
-    return preprocessing_op_or_punc{"["};
-  };
-
-  std::vector<std::string_view> regular_op_or_puncs{
-    "#", "##", "%:",  "%:%:", "{",  "}",  "[",  "]",  "(",   ")",   "[:", ":]", "<%", "%>", "<:", ":>",
-    ";", ":",  "...", "?",    "::", ".",  ".*", "->", "->*", "^^",  "~",  "!",  "+",  "-",  "*",  "/",
-    "%", "^",  "&",   "|",    "=",  "+=", "-=", "*=", "/=",  "%=",  "^=", "&=", "|=", "==", "!=", "<",
-    ">", "<=", ">=",  "<=>",  "&&", "||", "<<", ">>", "<<=", ">>=", "++", "--", ",",
-  };
-
-  std::ranges::sort(regular_op_or_puncs, std::ranges::greater{}, [](std::string_view sv) { return sv.size(); });
-  // std::ranges::sort(worded_op_or_puncs, std::ranges::greater{}, [](std::string_view sv) { return sv.size(); });
-
-  auto try_parse_preprocessing_op_or_punc = [&] -> std::optional<pp_token> {
-    for (auto op : regular_op_or_puncs) {
-      if (state.starts_with(op)) {
-        state.consume(op);
-        return pp_token{preprocessing_op_or_punc{std::string(op)}};
-      }
-    }
-    // worded handled with identifier
-    return std::nullopt;
-  };
-
   std::vector<pp_token> tokens;
   while (!state.empty()) {
     std::optional<pp_token> parsed;
@@ -340,10 +340,10 @@ int main(int argc, char* argv[]) {
 
     // TODO: spec is broken, add ud-suffix
     if (!parsed) parsed = raw_literal::try_parse(state);
-    if (!parsed) parsed = try_parse_digraph_exception_1();
-    if (!parsed) parsed = try_parse_digraph_exception_2();
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_digraph_exception_1(state);
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_digraph_exception_2(state);
 
-    if (!parsed) parsed = try_parse_preprocessing_op_or_punc();
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_symbolic(state);
 
     if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc(state);
 
