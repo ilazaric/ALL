@@ -165,20 +165,14 @@ int main(int argc, char* argv[]) {
   auto debug_context_at = [&](const char* ptr) { return file.debug_context(cxx_file::splice_ptr(ptr)); };
   auto debug_context = [&] { return debug_context_at(remaining.data()); };
 
-  auto consume_c = [&](char c) {
-    if (current_c() != c)
-      throw std::runtime_error(
-        std::format(
-          "ICE: Tried to consume different character; current={}, attempted={}\n", describe_c(current_c()),
-          describe_c(c), debug_context()
-        )
-      );
-
-    remaining.remove_prefix(1);
+  auto consume = [&](std::string_view sv) {
+    if (!remaining.starts_with(sv))
+      throw std::runtime_error(std::format("ICE: failed to consume `{}`\n{}", sv, debug_context()));
+    remaining.remove_prefix(sv.size());
   };
 
-  auto consume = [&](std::string_view sv) {
-    for (auto c : sv) consume_c(c);
+  auto consume_c = [&](char c){
+    consume(std::string_view(&c, 1));
   };
 
   auto save_state = [&] { return remaining; };
@@ -273,7 +267,8 @@ int main(int argc, char* argv[]) {
 
     auto content = std::string_view(file.original_contents).substr(0, content_end_pos).substr(content_start_pos);
     auto end_quote_ptr = content.data() + content.size() + 1 + delimiter.size();
-    remaining = std::string_view(file.post_splicing_contents).substr(file.convert(cxx_file::origin_ptr{end_quote_ptr}) - file.splice_begin());
+    remaining = std::string_view(file.post_splicing_contents)
+                  .substr(file.convert(cxx_file::origin_ptr{end_quote_ptr}) - file.splice_begin());
     consume_c('"');
 
     auto state = save_state();
