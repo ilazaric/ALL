@@ -196,31 +196,14 @@ int main(int argc, char* argv[]) {
   };
 
   auto state = file.parsing_start();
-  auto& remaining = state.remaining;
-  // std::string_view remaining(file.post_splicing_contents);
 
   auto describe_c = [](char c) {
     // TODO: if c is printable, print it
     return std::format("[{}]", (int)c);
   };
 
-  auto current_c = [&] {
-    if (state.empty()) throw std::runtime_error("ICE: Reached EOF and asked for current character");
-    return remaining[0];
-  };
-
-  auto debug_context_at = [&](const char* ptr) { return file.debug_context(cxx_file::splice_ptr(ptr)); };
-  auto debug_context = [&] { return debug_context_at(remaining.data()); };
-
-  auto consume = [&](std::string_view sv) { state.consume(sv); };
-
-  auto consume_c = [&](char c) { consume(std::string_view(&c, 1)); };
-
-  auto save_state = [&] { return remaining; };
-  auto restore_state = [&](std::string_view state) { remaining = state; };
-
   auto starts_with = [&](auto&&... svs) {
-    auto current = remaining;
+    auto current = state;
     bool failed = false;
     (
       [&](std::string_view sv) {
@@ -239,7 +222,7 @@ int main(int argc, char* argv[]) {
   auto try_parse_identifier_or_worded_op_or_punc = [&] -> std::optional<pp_token> {
     auto is_nondigit = [](char c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'; };
     auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
-    if (!is_nondigit(current_c())) return std::nullopt;
+    if (!is_nondigit(state.front())) return std::nullopt;
     std::string ret;
     while (is_nondigit(state.front()) || is_digit(state.front())) {
       ret += state.front();
@@ -261,18 +244,18 @@ int main(int argc, char* argv[]) {
     }
     if (!parses_as_raw_literal) return std::nullopt;
 
-    consume(encoding_prefix_str(ep));
-    consume("R");
+    state.consume(encoding_prefix_str(ep));
+    state.consume("R");
     // pointing at `"`, not consuming it because we are in "phase-2 revert" land
-    assert(current_c() == '"');
-    auto delimiter_start = file.convert(cxx_file::splice_ptr{remaining.data()}) + 1;
+    assert(state.front() == '"');
+    auto delimiter_start = file.convert(cxx_file::splice_ptr{state.begin()}) + 1;
     auto delimiter_start_pos = delimiter_start - file.origin_begin();
     auto delimiter_end_pos = file.original_contents.find('(', delimiter_start_pos);
     if (delimiter_end_pos == std::string_view::npos) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, cannot deduce delimiter because opening paren `(` is missing\n{}",
-          debug_context()
+          state.debug_context()
         )
       );
     }
@@ -290,7 +273,7 @@ int main(int argc, char* argv[]) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, delimiter contains illegal character `{}`\n{}",
-          describe_c(delimiter[bad_char_pos]), debug_context()
+          describe_c(delimiter[bad_char_pos]), state.debug_context()
         )
       );
     }
@@ -301,22 +284,22 @@ int main(int argc, char* argv[]) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, cannot deduce end because ending delimiter `){}\"` is  missing\n{}", delimiter,
-          debug_context()
+          state.debug_context()
         )
       );
     }
 
     auto content = std::string_view(file.original_contents).substr(0, content_end_pos).substr(content_start_pos);
     auto end_quote_ptr = content.data() + content.size() + 1 + delimiter.size();
-    remaining = std::string_view(file.post_splicing_contents)
-                  .substr(file.convert(cxx_file::origin_ptr{end_quote_ptr}) - file.splice_begin());
-    consume_c('"');
+    state.remaining = std::string_view(file.post_splicing_contents)
+                        .substr(file.convert(cxx_file::origin_ptr{end_quote_ptr}) - file.splice_begin());
+    state.consume('"');
 
-    auto state = save_state();
+    auto saved_state = state;
     auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc();
     std::string ud_suffix;
     if (ud_suffix_maybe) {
-      if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) restore_state(state);
+      if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
       else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
     }
 
@@ -326,14 +309,14 @@ int main(int argc, char* argv[]) {
   auto try_parse_digraph_exception_1 = [&] -> std::optional<pp_token> {
     if (!starts_with("<::")) return std::nullopt;
     if (starts_with("<:::") || starts_with("<::>")) return std::nullopt;
-    consume_c('<');
+    state.consume('<');
     return pp_token{preprocessing_op_or_punc{"<"}};
   };
 
   auto try_parse_digraph_exception_2 = [&] -> std::optional<pp_token> {
     if (!starts_with("[::") && !starts_with("[:>")) return std::nullopt;
     if (starts_with("[:::")) return std::nullopt;
-    consume_c('[');
+    state.consume('[');
     return pp_token{preprocessing_op_or_punc{"["}};
   };
 
@@ -350,7 +333,7 @@ int main(int argc, char* argv[]) {
   auto try_parse_preprocessing_op_or_punc = [&] -> std::optional<pp_token> {
     for (auto op : regular_op_or_puncs) {
       if (starts_with(op)) {
-        consume(op);
+        state.consume(op);
         return pp_token{preprocessing_op_or_punc{std::string(op)}};
       }
     }
@@ -378,7 +361,7 @@ int main(int argc, char* argv[]) {
     if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc();
 
     if (!parsed) {
-      throw std::runtime_error(std::format("ICE: parsing failed\n{}", debug_context()));
+      throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context()));
     }
 
     tokens.push_back(std::move(*parsed));

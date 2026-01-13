@@ -179,6 +179,8 @@ struct cxx_file {
 
     bool starts_with(std::string_view sv) const { return remaining.starts_with(sv); }
 
+    bool starts_with(char c) const { return starts_with(std::string_view(&c, 1)); }
+
     const char& front() const {
       if (empty()) throw std::runtime_error("ICE: Attempted to get character at EOF");
       return remaining[0];
@@ -195,9 +197,7 @@ struct cxx_file {
       remaining.remove_prefix(sv.size());
     }
 
-    void consume(char c){
-      consume(std::string_view(&c, 1));
-    }
+    void consume(char c) { consume(std::string_view(&c, 1)); }
 
     void remove_prefix(size_t length) {
       if (remaining.size() < length)
