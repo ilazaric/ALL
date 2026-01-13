@@ -11,42 +11,6 @@
 #include <set>
 #include <variant>
 
-std::vector<std::string_view> physical_lines(std::string_view data) {
-  if (data.empty()) return {};
-  std::vector<std::string_view> lines;
-  std::string_view rem = data;
-  while (true) {
-    auto loc = rem.find('\n');
-    lines.push_back(rem.substr(0, loc));
-    if (loc == std::string_view::npos) break;
-    rem.remove_prefix(loc + 1);
-  }
-  return lines;
-}
-
-std::vector<std::vector<std::string_view>> logical_lines(const std::vector<std::string_view>& lines) {
-  if (lines.empty()) return {};
-  std::vector<std::vector<std::string_view>> logical_lines;
-  {
-    auto backslash = lines.back().rfind('\\');
-    if (backslash != std::string_view::npos && std::ranges::all_of(lines.back().substr(backslash + 1), &isspace))
-      throw std::runtime_error("Last line ends with backslash `\\`");
-  }
-  logical_lines.emplace_back();
-  for (auto line : lines) {
-    auto backslash = line.rfind('\\');
-    if (backslash != std::string_view::npos && std::ranges::all_of(line.substr(backslash + 1), &isspace)) {
-      logical_lines.back().push_back(line.substr(0, backslash));
-    } else {
-      logical_lines.back().push_back(line);
-      logical_lines.emplace_back();
-    }
-  }
-  if (lines.back().empty()) logical_lines.pop_back();
-  // assert(!logical_lines.empty() && logical_lines.back().empty());
-  return logical_lines;
-}
-
 enum class encoding_prefix : char {
   NONE,
   u8,
@@ -168,29 +132,9 @@ struct pp_token {
 
 int main(int argc, char* argv[]) {
   assert(argc == 2);
-  auto data_storage = ivl::linux::read_file(argv[1]);
 
-  {
-    cxx_file file(data_storage);
-    LOG("\n"+file.post_splicing_contents);
-    return 0;
-  }
-  
-  // if (!data_storage.empty() && data_storage.back() != '\n') data_storage.push_back('\n');
-  assert(data_storage.empty() || !data_storage.back() != '\\');
-  std::string_view data = data_storage;
-
-  std::vector<std::string_view> lines = physical_lines(data);
-
-  for (auto&& line : lines) LOG(line);
-
-  std::vector<std::vector<std::string_view>> lls = logical_lines(lines);
-
-  for (auto&& ll : lls) {
-    std::string line;
-    for (auto x : ll) line += x;
-    LOG(line);
-  }
+  cxx_file file(ivl::linux::read_file(argv[1]));
+  LOG("\n" + file.post_splicing_contents);
 
   std::vector<std::filesystem::path> search_list{
     "/opt/GCC-REFL/lib/gcc/x86_64-pc-linux-gnu/16.0.0/../../../../include/c++/16.0.0",
@@ -204,58 +148,22 @@ int main(int argc, char* argv[]) {
     "/usr/include",
   };
 
-  size_t logic_line_idx = 0;
-  size_t physical_line_idx = 0;
-  size_t char_idx = 0;
+  std::string_view remaining(file.post_splicing_contents);
 
   auto describe_c = [](char c) {
     // TODO: if c is printable, print it
     return std::format("[{}]", (int)c);
   };
 
-  auto reached_eof = [&] {
-    if (lls.empty()) return true;
-    return logic_line_idx == lls.size() - 1;
-  };
+  auto reached_eof = [&] { return remaining.empty(); };
 
   auto current_c = [&] {
-    if (logic_line_idx == lls.size()) throw std::runtime_error("ICE: Reached EOF and asked for current character");
-    if (physical_line_idx == lls[logic_line_idx].size()) return '\n';
-    return lls[logic_line_idx][physical_line_idx][char_idx];
+    if (reached_eof()) throw std::runtime_error("ICE: Reached EOF and asked for current character");
+    return remaining[0];
   };
 
-  auto current_addr = [&] {
-    if (logic_line_idx == lls.size())
-      throw std::runtime_error("ICE: Reached EOF and asked for address of current character");
-    if (physical_line_idx == lls[logic_line_idx].size()) {
-      // throw std::runtime_error("ICE: Reached end-of-line and asked for address of current character");
-      assert(physical_line_idx != 0);
-      auto ptr = lls[logic_line_idx][physical_line_idx - 1].data();
-      while (ptr < data.data() + data.size() && *ptr != '\n') ++ptr;
-      assert(ptr != data.data() + data.size());
-      return ptr;
-    }
-    return &lls[logic_line_idx][physical_line_idx][char_idx];
-  };
-
-  auto debug_context_at = [&](const char* ptr) {
-    assert(*ptr != '\n');
-    size_t row = 0;
-    while (row < lines.size() && lines[row].data() + lines[row].size() <= ptr) ++row;
-    assert(row != lines.size());
-    auto line = lines[row];
-    size_t col = ptr - line.data();
-    return std::format("{}\n{: <{}}^ here (row:{}, col:{})\n", line, "", col, row + 1, col + 1);
-  };
-
-  auto debug_context = [&] {
-    if (reached_eof()) {
-      return std::format("At EOF");
-    } else if (current_c() == '\n') {
-      assert(physical_line_idx != 0);
-      return std::format("{}\nAt new-line at end\n", lls[logic_line_idx][physical_line_idx - 1]);
-    } else return debug_context_at(current_addr());
-  };
+  auto debug_context_at = [&](const char* ptr) { return file.debug_context(cxx_file::splice_ptr(ptr)); };
+  auto debug_context = [&] { return debug_context_at(remaining.data()); };
 
   auto consume_c = [&](char c) {
     if (current_c() != c)
@@ -266,50 +174,27 @@ int main(int argc, char* argv[]) {
         )
       );
 
-    if (physical_line_idx == lls[logic_line_idx].size()) {
-      ++logic_line_idx;
-      physical_line_idx = 0;
-      char_idx = 0;
-      if (logic_line_idx == lls.size()) return;
-      while (physical_line_idx < lls[logic_line_idx].size() && lls[logic_line_idx][physical_line_idx].empty())
-        ++physical_line_idx;
-      return;
-    }
-
-    ++char_idx;
-    while (physical_line_idx < lls[logic_line_idx].size() &&
-           char_idx == lls[logic_line_idx][physical_line_idx].size()) {
-      ++physical_line_idx;
-      char_idx = 0;
-    }
+    remaining.remove_prefix(1);
   };
 
   auto consume = [&](std::string_view sv) {
     for (auto c : sv) consume_c(c);
   };
 
-  auto save_state = [&] { return std::make_tuple(logic_line_idx, physical_line_idx, char_idx); };
-
-  auto restore_state = [&](std::tuple<size_t, size_t, size_t> state) {
-    std::tie(logic_line_idx, physical_line_idx, char_idx) = state;
-  };
+  auto save_state = [&] { return remaining; };
+  auto restore_state = [&](std::string_view state) { remaining = state; };
 
   auto starts_with = [&](auto&&... svs) {
-    auto logic_line_idx_store = logic_line_idx;
-    auto physical_line_idx_store = physical_line_idx;
-    auto char_idx_store = char_idx;
-
-    bool ans = true;
-    try {
-      (consume(svs), ...);
-    } catch (const std::runtime_error&) {
-      ans = false;
-    }
-
-    logic_line_idx = logic_line_idx_store;
-    physical_line_idx = physical_line_idx_store;
-    char_idx = char_idx_store;
-    return ans;
+    auto current = remaining;
+    bool failed = false;
+    (
+      [&](std::string_view sv) {
+        if (current.starts_with(sv)) current.remove_prefix(sv.size());
+        else failed = true;
+      }(svs),
+      ...
+    );
+    return !failed;
   };
 
   std::set<std::string_view> worded_op_or_puncs{
@@ -345,19 +230,19 @@ int main(int argc, char* argv[]) {
     consume("R");
     // pointing at `"`, not consuming it because we are in "phase-2 revert" land
     assert(current_c() == '"');
-    auto delimiter_start = current_addr() + 1;
-    auto delimiter_start_pos = delimiter_start - data.data();
-    auto delimiter_end_pos = data.find('(', delimiter_start_pos);
+    auto delimiter_start = file.convert(cxx_file::splice_ptr{remaining.data()}) + 1;
+    auto delimiter_start_pos = delimiter_start - file.origin_begin();
+    auto delimiter_end_pos = file.original_contents.find('(', delimiter_start_pos);
     if (delimiter_end_pos == std::string_view::npos) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, cannot deduce delimiter because opening paren `(` is missing\n{}",
-          debug_context_at(delimiter_start - 1)
+          debug_context()
         )
       );
     }
 
-    auto delimiter = data.substr(0, delimiter_end_pos).substr(delimiter_start_pos);
+    auto delimiter = std::string_view(file.original_contents).substr(0, delimiter_end_pos).substr(delimiter_start_pos);
     // https://eel.is/c++draft/lex#nt:d-char
     if (auto bad_char_pos = delimiter.find_first_of(
           " ()\\"
@@ -370,25 +255,25 @@ int main(int argc, char* argv[]) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, delimiter contains illegal character `{}`\n{}",
-          describe_c(delimiter[bad_char_pos]), debug_context_at(delimiter_start - 1)
+          describe_c(delimiter[bad_char_pos]), debug_context()
         )
       );
     }
 
     auto content_start_pos = delimiter_end_pos + 1;
-    auto content_end_pos = data.find(std::format("){}\"", delimiter), content_start_pos);
+    auto content_end_pos = file.original_contents.find(std::format("){}\"", delimiter), content_start_pos);
     if (content_end_pos == std::string_view::npos) {
       throw std::runtime_error(
         std::format(
           "Malformed raw string literal, cannot deduce end because ending delimiter `){}\"` is  missing\n{}", delimiter,
-          debug_context_at(delimiter_start - 1)
+          debug_context()
         )
       );
     }
 
-    auto content = data.substr(0, content_end_pos).substr(content_start_pos);
+    auto content = std::string_view(file.original_contents).substr(0, content_end_pos).substr(content_start_pos);
     auto end_quote_ptr = content.data() + content.size() + 1 + delimiter.size();
-    while (current_addr() != end_quote_ptr) consume_c(current_c());
+    remaining = std::string_view(file.post_splicing_contents).substr(file.convert(cxx_file::origin_ptr{end_quote_ptr}) - file.splice_begin());
     consume_c('"');
 
     auto state = save_state();
@@ -439,19 +324,19 @@ int main(int argc, char* argv[]) {
 
   auto try_parse_single_line_comment = [&] -> std::optional<pp_token> {
     if (!starts_with("//")) return std::nullopt;
-    auto start_ptr = current_addr();
+    auto start_ptr = remaining.data();
     while (current_c() != '\n') consume_c(current_c());
-    auto end_ptr = current_addr();
+    auto end_ptr = remaining.data();
     return pp_token{single_line_comment{std::string_view{start_ptr, end_ptr}}};
   };
 
   auto try_parse_multi_line_comment = [&] -> std::optional<pp_token> {
     if (!starts_with("/*")) return std::nullopt;
-    auto start_ptr = current_addr();
+    auto start_ptr = remaining.data();
     consume("/*");
     while (!starts_with("*/")) consume_c(current_c());
     consume_c('*');
-    auto end_ptr = current_addr() + 1;
+    auto end_ptr = remaining.data() + 1;
     consume_c('/');
     return pp_token{multi_line_comment{std::string_view{start_ptr, end_ptr}}};
   };
@@ -475,12 +360,8 @@ int main(int argc, char* argv[]) {
     return pp_token{newline{}};
   };
 
-  LOG(lines.size(), lls.size());
-
   std::vector<pp_token> tokens;
   while (!reached_eof()) {
-    LOG(logic_line_idx, physical_line_idx, char_idx, (int)current_c());
-
     std::optional<pp_token> parsed;
 
     if (!parsed) parsed = try_parse_single_line_comment();

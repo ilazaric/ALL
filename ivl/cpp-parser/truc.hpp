@@ -49,10 +49,10 @@ struct cxx_file {
       return it != splicing_reverts.end() && it->first.first <= sp && sp < it->first.second;
     };
     auto it = splicing_reverts.lower_bound({sp, sp});
-    if (contains(it)) return it->second + (it->first.first - sp);
+    if (contains(it)) return it->second + (sp - it->first.first);
     if (it != splicing_reverts.begin()) {
       --it;
-      if (contains(it)) return it->second + (it->first.first - sp);
+      if (contains(it)) return it->second + (sp - it->first.first);
     }
 
     if (sp + 1 == splice_end() && !original_contents.ends_with('\n'))
@@ -70,10 +70,10 @@ struct cxx_file {
       return it != splicing_appliers.end() && it->first.first <= op && op < it->first.second;
     };
     auto it = splicing_appliers.lower_bound({op, op});
-    if (contains(it)) return it->second + (it->first.first - op);
+    if (contains(it)) return it->second + (op - it->first.first);
     if (it != splicing_appliers.begin()) {
       --it;
-      if (contains(it)) return it->second + (it->first.first - op);
+      if (contains(it)) return it->second + (op - it->first.first);
     }
 
     throw std::runtime_error(
@@ -98,7 +98,9 @@ struct cxx_file {
   std::string debug_context(origin_ptr op) const {
     // TODO: think if origin_end() is legal
     // ....: here IMO it could be, just say EOF in output
-    assert(origin_begin() <= op && op < origin_end());
+    if (!(origin_begin() <= op && op < origin_end())) {
+      throw std::runtime_error(std::format("ICE: range check failed\nrange: {} .. {}\narg: {}\n", (const void*)origin_begin().ptr, (const void*)origin_end().ptr, (const void*)op.ptr));
+    }
 
     auto containing_line = debug_context_line(op);
     auto row = std::ranges::count(std::string_view(origin_begin().ptr, op.ptr), '\n');
@@ -113,6 +115,12 @@ struct cxx_file {
     return ret;
   }
 
+  std::string debug_context(splice_ptr sp) const {
+    std::println("arg: {}", (const void*)sp.ptr);
+    std::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
+    return debug_context(convert(sp));
+  }
+  
   explicit cxx_file(std::string contents) : original_contents(std::move(contents)) {
     std::vector<std::tuple<size_t, size_t, size_t>> reverts;
     auto append = [&](std::string_view sv) {
@@ -125,8 +133,8 @@ struct cxx_file {
       auto backslash = sv.rfind('\\', newline);
       // backspash + non-newline-whitespace + newline gets spliced
       // https://eel.is/c++draft/lex#phases-1.2
-      bool has_backslash_whitespace =
-        backslash != std::string_view::npos && std::ranges::all_of(sv.substr(0, newline).substr(backslash + 1), &isspace);
+      bool has_backslash_whitespace = backslash != std::string_view::npos &&
+                                      std::ranges::all_of(sv.substr(0, newline).substr(backslash + 1), &isspace);
 
       if (newline == std::string_view::npos) {
         if (has_backslash_whitespace)
@@ -157,8 +165,10 @@ struct cxx_file {
     // > an additional new-line character were appended to the file.
     if (!original_contents.empty() && !post_splicing_contents.ends_with('\n')) post_splicing_contents.push_back('\n');
   }
-
-  struct parsing_state {
-    std::string_view splice_remaining;
-  };
 };
+
+// parseable types T should implement a
+// `std::optional<T> try_parse(const cxx_file&, std::string_view& spliced_remaining)`
+// member function, if nullopt the sv must remain unchanged.
+// TODO: cxx_file is only relevant for raw string literals? maybe comments as well?
+// ....: so maybe `try_parse(std::string_view&)` as well
