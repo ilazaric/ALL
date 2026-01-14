@@ -50,10 +50,14 @@ struct raw_literal {
   std::string ud_suffix;
 
   static std::optional<raw_literal> try_parse(ivl::spliced_cxx_file::parsing_state& state);
+
+  auto operator<=>(const raw_literal&) const = default;
 };
 
 struct preprocessing_op_or_punc {
   std::string kind;
+
+  auto operator<=>(const preprocessing_op_or_punc&) const = default;
 
   static std::optional<preprocessing_op_or_punc> try_parse_symbolic(ivl::spliced_cxx_file::parsing_state& state) {
     static const auto regular_op_or_puncs = [] {
@@ -96,6 +100,8 @@ struct preprocessing_op_or_punc {
 struct single_line_comment {
   std::string_view text;
 
+  auto operator<=>(const single_line_comment&) const = default;
+
   static std::optional<single_line_comment> try_parse(ivl::spliced_cxx_file::parsing_state& state) {
     if (!state.starts_with("//")) return std::nullopt;
     auto start_ptr = state.begin();
@@ -112,6 +118,8 @@ struct single_line_comment {
 struct multi_line_comment {
   std::string_view text;
 
+  auto operator<=>(const multi_line_comment&) const = default;
+
   static std::optional<multi_line_comment> try_parse(ivl::spliced_cxx_file::parsing_state& state) {
     if (!state.starts_with("/*")) return std::nullopt;
     auto start_ptr = state.begin();
@@ -126,6 +134,7 @@ struct multi_line_comment {
 };
 
 struct newline {
+  auto operator<=>(const newline&) const = default;
   static std::optional<newline> try_parse(ivl::spliced_cxx_file::parsing_state& state) {
     if (!state.starts_with("\n")) return std::nullopt;
     state.consume("\n");
@@ -135,6 +144,8 @@ struct newline {
 
 struct whitespace {
   std::string text;
+
+  auto operator<=>(const whitespace&) const = default;
 
   static std::optional<whitespace> try_parse(ivl::spliced_cxx_file::parsing_state& state) {
     auto pred = [](char c) { return c != '\n' && isspace(c); };
@@ -152,10 +163,12 @@ struct whitespace {
 
 struct identifier {
   std::string text;
+  auto operator<=>(const identifier&) const = default;
 };
 
 struct pp_number {
   std::string_view text;
+  auto operator<=>(const pp_number&) const = default;
   static std::optional<pp_number> try_parse(spliced_cxx_file::parsing_state& state) {
     auto digit = [](char c) { return '0' <= c && c <= '9'; };
     auto nondigit = [](char c) { return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_'; };
@@ -195,6 +208,7 @@ struct pp_number {
 
 struct basic_c_char {
   char c;
+  auto operator<=>(const basic_c_char&) const = default;
   static std::optional<basic_c_char> try_parse(spliced_cxx_file::parsing_state& state) {
     auto c = state.front();
     if (c == '\'' || c == '\\' || c == '\n') return std::nullopt;
@@ -205,6 +219,7 @@ struct basic_c_char {
 
 struct simple_escape_sequence {
   char c;
+  auto operator<=>(const simple_escape_sequence&) const = default;
   static std::optional<simple_escape_sequence> try_parse(spliced_cxx_file::parsing_state& state) {
     if (!state.starts_with('\\')) return std::nullopt;
     auto copy = state;
@@ -220,6 +235,7 @@ struct simple_escape_sequence {
 struct c_char {
   // TODO: all the rest
   std::variant<basic_c_char, simple_escape_sequence> payload;
+  auto operator<=>(const c_char&) const = default;
   c_char(meta::same_as_one_of<basic_c_char, simple_escape_sequence> auto arg) : payload(arg) {}
   static std::optional<c_char> try_parse(spliced_cxx_file::parsing_state& state) {
     std::optional<c_char> ret;
@@ -233,12 +249,14 @@ struct character_literal {
   encoding_prefix ep;
   std::vector<c_char> c_char_seq;
   std::string ud_suffix;
+  auto operator<=>(const character_literal&) const = default;
 
   static std::optional<character_literal> try_parse(spliced_cxx_file::parsing_state& state);
 };
 
 struct basic_s_char {
   char c;
+  auto operator<=>(const basic_s_char&) const = default;
   static std::optional<basic_s_char> try_parse(spliced_cxx_file::parsing_state& state) {
     auto c = state.front();
     if (c == '"' || c == '\\' || c == '\n') return std::nullopt;
@@ -250,6 +268,7 @@ struct basic_s_char {
 struct s_char {
   // TODO: all the rest
   std::variant<basic_s_char, simple_escape_sequence> payload;
+  auto operator<=>(const s_char&) const = default;
   s_char(meta::same_as_one_of<basic_s_char, simple_escape_sequence> auto arg) : payload(arg) {}
   static std::optional<s_char> try_parse(spliced_cxx_file::parsing_state& state) {
     std::optional<s_char> ret;
@@ -263,35 +282,44 @@ struct string_literal {
   encoding_prefix ep;
   std::vector<s_char> s_char_seq;
   std::string ud_suffix;
+  auto operator<=>(const string_literal&) const = default;
   static std::optional<string_literal> try_parse(spliced_cxx_file::parsing_state& state);
 };
 
 struct header_name {
-  // TODO
-};
-
-struct import_kw {
-  // TODO
-};
-
-struct module_kw {
-  // TODO
-};
-
-struct export_kw {
-  // TODO
+  std::string_view text;
+  auto operator<=>(const header_name&) const = default;
+  static std::optional<header_name> try_parse(spliced_cxx_file::parsing_state& state) {
+    if (state.front() != '"' && state.front() != '<') return std::nullopt;
+    char start_c = state.front();
+    char end_c = start_c == '"' ? '"' : '>';
+    auto start = state.begin();
+    auto saved_state = state;
+    state.consume(start_c);
+    while (!state.starts_with(end_c)) {
+      if (state.starts_with('\n')) {
+        state = saved_state;
+        return std::nullopt;
+      }
+      state.consume(state.front());
+    }
+    state.consume(end_c);
+    return header_name{std::string_view{start, state.begin()}};
+  }
 };
 
 struct non_whitespace_garbage {
   // TODO
+  auto operator<=>(const non_whitespace_garbage&) const = default;
 };
 
+// module, import, export keywords not implemented (treated as regular identifier)
 struct pp_token {
   std::variant<
     std::monostate, raw_literal, preprocessing_op_or_punc, single_line_comment, multi_line_comment, newline, whitespace,
-    identifier, character_literal, pp_number, header_name, import_kw, module_kw, export_kw, string_literal,
-    non_whitespace_garbage>
+    identifier, character_literal, pp_number, header_name, string_literal, non_whitespace_garbage>
     payload;
+  auto operator<=>(const pp_token&) const = default;
 
   pp_token(auto&& arg)
     requires(!std::same_as<pp_token, std::decay_t<decltype(arg)>>) && requires { payload = FWD(arg); }
@@ -471,8 +499,102 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
 
 std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
   std::vector<pp_token> tokens;
+
+  auto tokens_ends_with = [&](const std::vector<pp_token>& seq) {
+    if (tokens.empty()) return false;
+    auto it = tokens.end();
+    --it;
+
+    for (size_t idx = seq.size() - 1; idx + 1; --idx) {
+      auto&& target = seq[idx];
+
+      while (std::holds_alternative<whitespace>(it->payload) ||
+             std::holds_alternative<single_line_comment>(it->payload) ||
+             std::holds_alternative<multi_line_comment>(it->payload)) {
+        if (it == tokens.begin()) return idx == 0 && std::holds_alternative<newline>(target.payload);
+        --it;
+      }
+
+      if (*it != target) return false;
+      if (idx != 0) {
+        if (it == tokens.begin()) return false;
+        --it;
+      }
+    }
+
+    return true;
+  };
+
+  // https://eel.is/c++draft/lex#pptoken-5.4.2
+  std::vector<std::vector<pp_token>> header_name_contexts{
+    {
+      newline{},
+      preprocessing_op_or_punc{"#"},
+      identifier{"include"},
+    },
+    {
+      newline{},
+      preprocessing_op_or_punc{"#"},
+      identifier{"embed"},
+    },
+    {
+      newline{},
+      identifier{"import"},
+    },
+    {
+      newline{},
+      identifier{"export"},
+      identifier{"import"},
+    },
+  };
+  std::vector<std::vector<pp_token>> header_name_conditional_contexts{
+    {identifier{"__has_include"}, preprocessing_op_or_punc{"("}},
+    {identifier{"__has_embed"}, preprocessing_op_or_punc{"("}},
+  };
+
+  enum class conditional {
+    START_OF_LINE,
+    HASH,
+    CORRECT,
+    FAILED,
+  };
+  conditional current_conditional = conditional::START_OF_LINE;
+  auto handle_conditional = [&](const pp_token& token) {
+    if (std::holds_alternative<newline>(token.payload)) {
+      current_conditional = conditional::START_OF_LINE;
+      return;
+    }
+    if (std::holds_alternative<whitespace>(token.payload) ||
+        std::holds_alternative<single_line_comment>(token.payload) ||
+        std::holds_alternative<multi_line_comment>(token.payload) || current_conditional == conditional::FAILED ||
+        current_conditional == conditional::CORRECT)
+      return;
+    if (current_conditional == conditional::START_OF_LINE) {
+      if (auto ptr = std::get_if<preprocessing_op_or_punc>(&token.payload); ptr && ptr->kind == "#")
+        current_conditional = conditional::HASH;
+      else current_conditional = conditional::FAILED;
+      return;
+    }
+    assert(current_conditional == conditional::HASH);
+    if (auto ptr = std::get_if<identifier>(&token.payload);
+        ptr && (ptr->text == "if" || ptr->text == "elif" || ptr->text == "embed"))
+      current_conditional = conditional::CORRECT;
+    else current_conditional = conditional::FAILED;
+  };
+
+  auto should_try_header_name = [&] {
+    for (auto&& context : header_name_contexts)
+      if (tokens_ends_with(context)) return true;
+    if (current_conditional != conditional::CORRECT) return false;
+    for (auto&& context : header_name_conditional_contexts)
+      if (tokens_ends_with(context)) return true;
+    return false;
+  };
+
   while (!state.empty()) {
     std::optional<pp_token> parsed;
+
+    if (should_try_header_name()) parsed = header_name::try_parse(state);
 
     if (!parsed) parsed = single_line_comment::try_parse(state);
     if (!parsed) parsed = multi_line_comment::try_parse(state);
@@ -496,6 +618,8 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
     if (!parsed) {
       throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context()));
     }
+
+    handle_conditional(*parsed);
 
     tokens.push_back(std::move(*parsed));
   }
@@ -550,6 +674,8 @@ std::string reserialize(const pp_token& token) {
       ret += '"';
       ret += unpacked.ud_suffix;
       return ret;
+    } else if constexpr (std::same_as<T, header_name>) {
+      return (std::string)unpacked.text;
     } else {
       assert(false);
     }
@@ -619,5 +745,14 @@ std::string test_token_kind(const pp_token& token) {
   assert(tokens.size() == 2);
   auto num = std::get<pp_number>(tokens[0].payload);
   assert(num.text == ".1abcDEF456'1'Xe+E-p+P-....");
+}
+
+[[= ivl::test]] void test_header_name() {
+  spliced_cxx_file file("  /**/ # /**/ include /**/ <header_name> /**/");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 15);
+  auto hdr = std::get<header_name>(tokens[11].payload);
+  assert(hdr.text == "<header_name>");
 }
 } // namespace ivl
