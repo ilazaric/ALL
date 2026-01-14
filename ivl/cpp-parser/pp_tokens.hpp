@@ -618,6 +618,7 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
   };
 
   while (!state.empty()) {
+    auto copy_state = state;
     std::optional<pp_token> parsed;
 
     if (should_try_header_name()) parsed = header_name::try_parse(state);
@@ -644,6 +645,9 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
     if (!parsed) {
       throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context()));
     }
+
+    // a big like this can blow up memory
+    assert(copy_state.begin() != state.begin());
 
     handle_conditional(*parsed);
 
