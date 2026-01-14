@@ -265,15 +265,41 @@ struct basic_s_char {
   }
 };
 
+struct hexadecimal_escape_sequence {
+  std::string_view text;
+  auto operator<=>(const hexadecimal_escape_sequence&) const = default;
+  static std::optional<hexadecimal_escape_sequence> try_parse(spliced_cxx_file::parsing_state& state) {
+    if (!state.starts_with("\\x")) return std::nullopt;
+    auto start = state.begin();
+    auto saved_state = state;
+    state.consume("\\x");
+    bool curly = state.starts_with('{');
+    if (curly) state.consume('{');
+    while ('0' <= state.front() && state.front() <= '9' || 'a' <= state.front() && state.front() <= 'f' ||
+           'A' <= state.front() && state.front() <= 'F')
+      state.consume(state.front());
+    if (curly) {
+      if (!state.starts_with('}')) {
+        state = saved_state;
+        return std::nullopt;
+      }
+      state.consume('}');
+    }
+    return hexadecimal_escape_sequence{std::string_view{start, state.begin()}};
+  }
+};
+
 struct s_char {
   // TODO: all the rest
-  std::variant<basic_s_char, simple_escape_sequence> payload;
+  std::variant<basic_s_char, simple_escape_sequence, hexadecimal_escape_sequence> payload;
   auto operator<=>(const s_char&) const = default;
-  s_char(meta::same_as_one_of<basic_s_char, simple_escape_sequence> auto arg) : payload(arg) {}
+  s_char(meta::same_as_one_of<basic_s_char, simple_escape_sequence, hexadecimal_escape_sequence> auto arg)
+      : payload(arg) {}
   static std::optional<s_char> try_parse(spliced_cxx_file::parsing_state& state) {
     std::optional<s_char> ret;
     if (!ret) ret = basic_s_char::try_parse(state);
     if (!ret) ret = simple_escape_sequence::try_parse(state);
+    if (!ret) ret = hexadecimal_escape_sequence::try_parse(state);
     return ret;
   }
 };
@@ -455,9 +481,9 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
   // https://eel.is/c++draft/lex#nt:d-char
   if (auto bad_char_pos = delimiter.find_first_of(
         " ()\\"
-        "\x09"
-        "\x0B"
-        "\x0C"
+        "\x{09}"
+        "\x{0B}"
+        "\x{0C}"
         "\n"
       );
       bad_char_pos != std::string_view::npos) {
@@ -669,6 +695,8 @@ std::string reserialize(const pp_token& token) {
         else if (auto ptr = std::get_if<simple_escape_sequence>(&c.payload)) {
           ret += '\\';
           ret += ptr->c;
+        } else if (auto ptr = std::get_if<hexadecimal_escape_sequence>(&c.payload)) {
+          ret += ptr->text;
         } else assert(false);
       }
       ret += '"';

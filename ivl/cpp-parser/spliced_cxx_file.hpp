@@ -119,7 +119,8 @@ struct spliced_cxx_file {
       "{}\n{: <{}}^ here{} (row:{}, col:{})\n", containing_line, "", col, *op == '\n' ? " (newline)" : "", row + 1,
       col + 1
     );
-    if (!containing_line.ends_with('\n')) ret += "note: line does not end with newline\n";
+    if (containing_line.data() + containing_line.size() == original_contents.data() + original_contents.size())
+      ret += "note: line does not end with newline\n";
     return ret;
   }
 
@@ -195,7 +196,9 @@ struct spliced_cxx_file {
     void consume(std::string_view sv) {
       if (!starts_with(sv))
         throw std::runtime_error(
-          std::format("Failed to consume `{}`\n{}", sv, file->debug_context(spliced_cxx_file::splice_ptr{remaining.data()}))
+          std::format(
+            "Failed to consume `{}`\n{}", sv, file->debug_context(spliced_cxx_file::splice_ptr{remaining.data()})
+          )
         );
       remaining.remove_prefix(sv.size());
     }
