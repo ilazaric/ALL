@@ -125,8 +125,8 @@ struct spliced_cxx_file {
   }
 
   std::string debug_context(splice_ptr sp) const {
-    std::println("arg: {}", (const void*)sp.ptr);
-    std::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
+    // std::println("arg: {}", (const void*)sp.ptr);
+    // std::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
     return debug_context(convert(sp));
   }
 
