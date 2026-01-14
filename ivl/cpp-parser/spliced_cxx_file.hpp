@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ivl/linux/utils>
 #include <algorithm>
 #include <cassert>
@@ -9,7 +11,8 @@
 #include <tuple>
 #include <vector>
 
-struct cxx_file {
+namespace ivl {
+struct spliced_cxx_file {
   // We need the original non-spliced file contents for raw string literals and diagnostics.
   std::string original_contents;
   std::string post_splicing_contents;
@@ -126,7 +129,7 @@ struct cxx_file {
     return debug_context(convert(sp));
   }
 
-  explicit cxx_file(std::string contents) : original_contents(std::move(contents)) {
+  explicit spliced_cxx_file(std::string contents) : original_contents(std::move(contents)) {
     std::vector<std::tuple<size_t, size_t, size_t>> reverts;
     auto append = [&](std::string_view sv) {
       reverts.emplace_back(sv.data() - original_contents.data(), post_splicing_contents.size(), sv.size());
@@ -173,7 +176,7 @@ struct cxx_file {
 
   struct parsing_state {
     std::string_view remaining;
-    const cxx_file* file;
+    const spliced_cxx_file* file;
 
     bool empty() const { return remaining.empty(); }
 
@@ -192,7 +195,7 @@ struct cxx_file {
     void consume(std::string_view sv) {
       if (!starts_with(sv))
         throw std::runtime_error(
-          std::format("Failed to consume `{}`\n{}", sv, file->debug_context(cxx_file::splice_ptr{remaining.data()}))
+          std::format("Failed to consume `{}`\n{}", sv, file->debug_context(spliced_cxx_file::splice_ptr{remaining.data()}))
         );
       remaining.remove_prefix(sv.size());
     }
@@ -217,10 +220,11 @@ struct cxx_file {
 
   parsing_state parsing_start() const { return parsing_state{std::string_view(post_splicing_contents), this}; }
 };
+} // namespace ivl
 
 // parseable types T should implement a
-// `std::optional<T> try_parse(const cxx_file&, std::string_view& spliced_remaining)`
+// `std::optional<T> try_parse(const spliced_cxx_file&, std::string_view& spliced_remaining)`
 // member function, if nullopt the sv must remain unchanged.
-// TODO: cxx_file is only relevant for raw string literals? maybe comments as well?
+// TODO: spliced_cxx_file is only relevant for raw string literals? maybe comments as well?
 // ....: so maybe `try_parse(std::string_view&)` as well
-// UPDT: `try_parse(cxx_file::parsing_state&)`
+// UPDT: `try_parse(spliced_cxx_file::parsing_state&)`
