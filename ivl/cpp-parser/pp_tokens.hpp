@@ -1,7 +1,11 @@
 #pragma once
 
 #include <ivl/cpp-parser/spliced_cxx_file>
+#include <ivl/logger>
+#include <ivl/meta>
 #include <ivl/reflection/enumerators>
+#include <ivl/reflection/test_attribute>
+#include <ivl/util>
 #include <algorithm>
 #include <cassert>
 #include <cctype>
@@ -150,29 +154,116 @@ struct identifier {
   std::string text;
 };
 
+struct pp_number {
+  std::string_view text;
+  static std::optional<pp_number> try_parse(spliced_cxx_file::parsing_state& state) {
+    auto digit = [](char c) { return '0' <= c && c <= '9'; };
+    auto nondigit = [](char c) { return 'a' <= c && c <= 'z' || 'A' <= c && c <= 'Z' || c == '_'; };
+    auto sign = [](char c) { return c == '+' || c == '-'; };
+    char c = state.starts_with('.') ? state.begin()[1] : state.front();
+    if (!digit(c)) return std::nullopt;
+    auto start = state.begin();
+    if (state.starts_with('.')) state.consume('.');
+    state.consume(c);
+
+    while (true) {
+      if (state.starts_with('.')) {
+        state.consume('.');
+        continue;
+      }
+      if (std::string_view("eEpP").contains(state.front()) && sign(state.begin()[1])) {
+        state.consume(state.front());
+        state.consume(state.front());
+        continue;
+      }
+      if (state.starts_with('\'') && (digit(state.begin()[1]) || nondigit(state.begin()[1]))) {
+        state.consume('\'');
+        state.consume(state.front());
+        continue;
+      }
+      if (digit(state.front()) || nondigit(state.front())) {
+        state.consume(state.front());
+        continue;
+      }
+      break;
+    }
+
+    auto end = state.begin();
+    return pp_number{std::string_view(start, end)};
+  }
+};
+
 struct basic_c_char {
   char c;
+  static std::optional<basic_c_char> try_parse(spliced_cxx_file::parsing_state& state) {
+    auto c = state.front();
+    if (c == '\'' || c == '\\' || c == '\n') return std::nullopt;
+    state.consume(c);
+    return basic_c_char{c};
+  }
 };
 
-struct escape_sequence {
-  // TODO
-};
-
-struct universal_character_name {
-  // TODO
+struct simple_escape_sequence {
+  char c;
+  static std::optional<simple_escape_sequence> try_parse(spliced_cxx_file::parsing_state& state) {
+    if (!state.starts_with('\\')) return std::nullopt;
+    auto copy = state;
+    copy.consume('\\');
+    if (!std::string_view("'\"?\\abfnrtv").contains(copy.front())) return std::nullopt;
+    state = copy;
+    char c = state.front();
+    state.consume(c);
+    return simple_escape_sequence{c};
+  }
 };
 
 struct c_char {
-  std::variant<basic_c_char, escape_sequence, universal_character_name> payload;
+  // TODO: all the rest
+  std::variant<basic_c_char, simple_escape_sequence> payload;
+  c_char(meta::same_as_one_of<basic_c_char, simple_escape_sequence> auto arg) : payload(arg) {}
+  static std::optional<c_char> try_parse(spliced_cxx_file::parsing_state& state) {
+    std::optional<c_char> ret;
+    if (!ret) ret = basic_c_char::try_parse(state);
+    if (!ret) ret = simple_escape_sequence::try_parse(state);
+    return ret;
+  }
 };
 
 struct character_literal {
   encoding_prefix ep;
   std::vector<c_char> c_char_seq;
+  std::string ud_suffix;
+
+  static std::optional<character_literal> try_parse(spliced_cxx_file::parsing_state& state);
 };
 
-struct pp_number {
-  // TODO
+struct basic_s_char {
+  char c;
+  static std::optional<basic_s_char> try_parse(spliced_cxx_file::parsing_state& state) {
+    auto c = state.front();
+    if (c == '"' || c == '\\' || c == '\n') return std::nullopt;
+    state.consume(c);
+    return basic_s_char{c};
+  }
+};
+
+struct s_char {
+  // TODO: all the rest
+  std::variant<basic_s_char, simple_escape_sequence> payload;
+  s_char(meta::same_as_one_of<basic_s_char, simple_escape_sequence> auto arg) : payload(arg) {}
+  static std::optional<s_char> try_parse(spliced_cxx_file::parsing_state& state) {
+    std::optional<s_char> ret;
+    if (!ret) ret = basic_s_char::try_parse(state);
+    if (!ret) ret = simple_escape_sequence::try_parse(state);
+    return ret;
+  }
+};
+
+struct string_literal {
+  encoding_prefix ep;
+  std::vector<s_char> s_char_seq;
+  std::string ud_suffix;
+  static std::optional<string_literal> try_parse(spliced_cxx_file::parsing_state& state);
 };
 
 struct header_name {
@@ -188,10 +279,6 @@ struct module_kw {
 };
 
 struct export_kw {
-  // TODO
-};
-
-struct string_literal {
   // TODO
 };
 
@@ -225,6 +312,84 @@ std::optional<pp_token> try_parse_identifier_or_worded_op_or_punc(ivl::spliced_c
   }
   if (worded_op_or_puncs.contains(ret)) return pp_token{preprocessing_op_or_punc{ret}};
   return pp_token{identifier{ret}};
+}
+
+std::optional<character_literal> character_literal::try_parse(spliced_cxx_file::parsing_state& state) {
+  encoding_prefix ep;
+  bool parses_as = false;
+  for (auto e : ivl::enumerators<encoding_prefix>()) {
+    if (!state.starts_with(encoding_prefix_str(e))) continue;
+    auto copy = state;
+    copy.consume(encoding_prefix_str(e));
+    if (!copy.starts_with('\'')) continue;
+    ep = e;
+    parses_as = true;
+    break;
+  }
+  if (!parses_as) return std::nullopt;
+  // Not specified this way, but assuming that ' must mean a character literal.
+  // TODO: find out if this is an issue
+
+  state.consume(encoding_prefix_str(ep));
+  state.consume('\'');
+
+  std::vector<c_char> c_char_seq;
+  while (!state.starts_with('\'')) {
+    auto cc = c_char::try_parse(state);
+    if (!cc) throw std::runtime_error(std::format("Failed to parse c-char\n{}", state.debug_context()));
+    c_char_seq.push_back(*cc);
+  }
+
+  state.consume('\'');
+
+  auto saved_state = state;
+  auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc(state);
+  std::string ud_suffix;
+  if (ud_suffix_maybe) {
+    if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
+    else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
+  }
+
+  return character_literal{ep, std::move(c_char_seq), ud_suffix};
+}
+
+std::optional<string_literal> string_literal::try_parse(spliced_cxx_file::parsing_state& state) {
+  encoding_prefix ep;
+  bool parses_as = false;
+  for (auto e : ivl::enumerators<encoding_prefix>()) {
+    if (!state.starts_with(encoding_prefix_str(e))) continue;
+    auto copy = state;
+    copy.consume(encoding_prefix_str(e));
+    if (!copy.starts_with('"')) continue;
+    ep = e;
+    parses_as = true;
+    break;
+  }
+  if (!parses_as) return std::nullopt;
+  // Not specified this way, but assuming that " must mean a string literal.
+  // TODO: find out if this is an issue
+
+  state.consume(encoding_prefix_str(ep));
+  state.consume('"');
+
+  std::vector<s_char> s_char_seq;
+  while (!state.starts_with('"')) {
+    auto sc = s_char::try_parse(state);
+    if (!sc) throw std::runtime_error(std::format("Failed to parse s-char\n{}", state.debug_context()));
+    s_char_seq.push_back(*sc);
+  }
+
+  state.consume('"');
+
+  auto saved_state = state;
+  auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc(state);
+  std::string ud_suffix;
+  if (ud_suffix_maybe) {
+    if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
+    else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
+  }
+
+  return string_literal{ep, std::move(s_char_seq), ud_suffix};
 }
 
 std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing_state& state) {
@@ -302,5 +467,157 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
   }
 
   return raw_literal{ep, delimiter, content, ud_suffix};
+}
+
+std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
+  std::vector<pp_token> tokens;
+  while (!state.empty()) {
+    std::optional<pp_token> parsed;
+
+    if (!parsed) parsed = single_line_comment::try_parse(state);
+    if (!parsed) parsed = multi_line_comment::try_parse(state);
+
+    if (!parsed) parsed = whitespace::try_parse(state);
+    if (!parsed) parsed = newline::try_parse(state);
+
+    if (!parsed) parsed = raw_literal::try_parse(state);
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_digraph_exception_1(state);
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_digraph_exception_2(state);
+
+    if (!parsed) parsed = pp_number::try_parse(state);
+
+    if (!parsed) parsed = preprocessing_op_or_punc::try_parse_symbolic(state);
+
+    if (!parsed) parsed = character_literal::try_parse(state);
+    if (!parsed) parsed = string_literal::try_parse(state);
+
+    if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc(state);
+
+    if (!parsed) {
+      throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context()));
+    }
+
+    tokens.push_back(std::move(*parsed));
+  }
+
+  return tokens;
+}
+
+std::string reserialize(const pp_token& token) {
+  return token.payload.visit([&]<typename T>(const T& unpacked) -> std::string {
+    if constexpr (std::same_as<T, ivl::newline>) {
+      return "\n";
+    } else if constexpr (std::same_as<T, ivl::whitespace>) {
+      return unpacked.text;
+    } else if constexpr (std::same_as<T, ivl::identifier>) {
+      return unpacked.text;
+    } else if constexpr (std::same_as<T, ivl::raw_literal>) {
+      return std::format(
+        "{}R\"{}({}){}\"{}", encoding_prefix_str(unpacked.ep), unpacked.delimiter, unpacked.payload, unpacked.delimiter,
+        unpacked.ud_suffix
+      );
+    } else if constexpr (std::same_as<T, ivl::preprocessing_op_or_punc>) {
+      return unpacked.kind;
+    } else if constexpr (std::same_as<T, ivl::single_line_comment>) {
+      return (std::string)unpacked.text;
+    } else if constexpr (std::same_as<T, ivl::multi_line_comment>) {
+      return (std::string)unpacked.text;
+    } else if constexpr (std::same_as<T, pp_number>) {
+      return (std::string)unpacked.text;
+    } else if constexpr (std::same_as<T, character_literal>) {
+      std::string ret{encoding_prefix_str(unpacked.ep)};
+      ret += '\'';
+      for (auto&& c : unpacked.c_char_seq) {
+        if (auto ptr = std::get_if<basic_c_char>(&c.payload)) ret += ptr->c;
+        else if (auto ptr = std::get_if<simple_escape_sequence>(&c.payload)) {
+          ret += '\\';
+          ret += ptr->c;
+        } else assert(false);
+      }
+      ret += '\'';
+      ret += unpacked.ud_suffix;
+      return ret;
+    } else if constexpr (std::same_as<T, string_literal>) {
+      std::string ret{encoding_prefix_str(unpacked.ep)};
+      ret += '"';
+      for (auto&& c : unpacked.s_char_seq) {
+        if (auto ptr = std::get_if<basic_s_char>(&c.payload)) ret += ptr->c;
+        else if (auto ptr = std::get_if<simple_escape_sequence>(&c.payload)) {
+          ret += '\\';
+          ret += ptr->c;
+        } else assert(false);
+      }
+      ret += '"';
+      ret += unpacked.ud_suffix;
+      return ret;
+    } else {
+      assert(false);
+    }
+  });
+}
+
+std::string test_token_kind(const pp_token& token) {
+  return token.payload.visit([]<typename T>(const T&) { return std::string(util::typestr<T>()); });
+}
+
+// IVL has_test_variant()
+[[= ivl::test]] void test_raw_literal() {
+  spliced_cxx_file file("u8R\"delim(con\ntent)delim\"sv");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 2);
+  auto raw = std::get<raw_literal>(tokens[0].payload);
+  assert(raw.delimiter == "delim");
+  assert(raw.ep == encoding_prefix::u8);
+  assert(raw.payload == "con\ntent");
+  assert(raw.ud_suffix == "sv");
+  std::get<newline>(tokens[1].payload);
+}
+
+[[= ivl::test]] void test_identifier() {
+  spliced_cxx_file file("a\\  \nba\\  \nba\\  \nb");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 2);
+  auto id = std::get<identifier>(tokens[0].payload);
+  assert(id.text == "ababab");
+  std::get<newline>(tokens[1].payload);
+}
+
+[[= ivl::test]] void test_character_literal() {
+  spliced_cxx_file file("U'a\\nb'sv");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 2);
+  auto cl = std::get<character_literal>(tokens[0].payload);
+  assert(cl.ep == encoding_prefix::U);
+  assert(cl.c_char_seq.size() == 3);
+  assert(std::get<basic_c_char>(cl.c_char_seq[0].payload).c == 'a');
+  assert(std::get<simple_escape_sequence>(cl.c_char_seq[1].payload).c == 'n');
+  assert(std::get<basic_c_char>(cl.c_char_seq[2].payload).c == 'b');
+  assert(cl.ud_suffix == "sv");
+}
+
+[[= ivl::test]] void test_string_literal() {
+  spliced_cxx_file file("L\"a\\nb\"svsvsv");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 2);
+  auto cl = std::get<string_literal>(tokens[0].payload);
+  assert(cl.ep == encoding_prefix::L);
+  assert(cl.s_char_seq.size() == 3);
+  assert(std::get<basic_s_char>(cl.s_char_seq[0].payload).c == 'a');
+  assert(std::get<simple_escape_sequence>(cl.s_char_seq[1].payload).c == 'n');
+  assert(std::get<basic_s_char>(cl.s_char_seq[2].payload).c == 'b');
+  assert(cl.ud_suffix == "svsvsv");
+}
+
+[[= ivl::test]] void test_pp_number() {
+  spliced_cxx_file file(".1abcDEF456'1'Xe+E-p+P-....");
+  auto state = file.parsing_start();
+  auto tokens = top_level_parse(state);
+  assert(tokens.size() == 2);
+  auto num = std::get<pp_number>(tokens[0].payload);
+  assert(num.text == ".1abcDEF456'1'Xe+E-p+P-....");
 }
 } // namespace ivl
