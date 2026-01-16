@@ -655,22 +655,22 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
 
 std::string reserialize(const pp_token& token) {
   return token.payload.visit([&]<typename T>(const T& unpacked) -> std::string {
-    if constexpr (std::same_as<T, ivl::newline>) {
+    if constexpr (std::same_as<T, newline>) {
       return "\n";
-    } else if constexpr (std::same_as<T, ivl::whitespace>) {
+    } else if constexpr (std::same_as<T, whitespace>) {
       return (std::string)unpacked.text;
-    } else if constexpr (std::same_as<T, ivl::identifier>) {
+    } else if constexpr (std::same_as<T, identifier>) {
       return (std::string)unpacked.text;
-    } else if constexpr (std::same_as<T, ivl::raw_literal>) {
+    } else if constexpr (std::same_as<T, raw_literal>) {
       return std::format(
         "{}R\"{}({}){}\"{}", encoding_prefix_str(unpacked.ep), unpacked.delimiter, unpacked.payload, unpacked.delimiter,
         unpacked.ud_suffix
       );
-    } else if constexpr (std::same_as<T, ivl::preprocessing_op_or_punc>) {
+    } else if constexpr (std::same_as<T, preprocessing_op_or_punc>) {
       return (std::string)unpacked.kind;
-    } else if constexpr (std::same_as<T, ivl::single_line_comment>) {
+    } else if constexpr (std::same_as<T, single_line_comment>) {
       return (std::string)unpacked.text;
-    } else if constexpr (std::same_as<T, ivl::multi_line_comment>) {
+    } else if constexpr (std::same_as<T, multi_line_comment>) {
       return (std::string)unpacked.text;
     } else if constexpr (std::same_as<T, pp_number>) {
       return (std::string)unpacked.text;
@@ -715,7 +715,7 @@ std::string test_token_kind(const pp_token& token) {
 }
 
 // IVL has_test_variant()
-[[= ivl::test]] void test_raw_literal() {
+[[= test]] void test_raw_literal() {
   spliced_cxx_file file("u8R\"delim(con\ntent)delim\"sv");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
@@ -728,7 +728,7 @@ std::string test_token_kind(const pp_token& token) {
   std::get<newline>(tokens[1].payload);
 }
 
-[[= ivl::test]] void test_identifier() {
+[[= test]] void test_identifier() {
   spliced_cxx_file file("a\\  \nba\\  \nba\\  \nb");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
@@ -738,7 +738,7 @@ std::string test_token_kind(const pp_token& token) {
   std::get<newline>(tokens[1].payload);
 }
 
-[[= ivl::test]] void test_character_literal() {
+[[= test]] void test_character_literal() {
   spliced_cxx_file file("U'a\\nb'sv");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
@@ -752,7 +752,7 @@ std::string test_token_kind(const pp_token& token) {
   assert(cl.ud_suffix == "sv");
 }
 
-[[= ivl::test]] void test_string_literal() {
+[[= test]] void test_string_literal() {
   spliced_cxx_file file("L\"a\\nb\"svsvsv");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
@@ -766,7 +766,7 @@ std::string test_token_kind(const pp_token& token) {
   assert(cl.ud_suffix == "svsvsv");
 }
 
-[[= ivl::test]] void test_pp_number() {
+[[= test]] void test_pp_number() {
   spliced_cxx_file file(".1abcDEF456'1'Xe+E-p+P-....");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
@@ -775,7 +775,7 @@ std::string test_token_kind(const pp_token& token) {
   assert(num.text == ".1abcDEF456'1'Xe+E-p+P-....");
 }
 
-[[= ivl::test]] void test_header_name() {
+[[= test]] void test_header_name() {
   spliced_cxx_file file("  /**/ # /**/ include /**/ <header_name> /**/");
   auto state = file.parsing_start();
   auto tokens = top_level_parse(state);
