@@ -16,29 +16,29 @@ jobs:
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
-    - name: get gcc-refl commit
-      id: get-gcc-refl-commit
+    - name: get gcc commit
+      id: get-gcc-commit
       run: |
-        echo "commit=$(git rev-parse HEAD:submodules/gcc-refl)" >> $GITHUB_OUTPUT
+        echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: cache gcc-refl install
-      id: cache-gcc-refl
+    - name: cache gcc install
+      id: cache-gcc
       uses: actions/cache@v4
       with:
-        path: /opt/GCC-REFL
-        key: ${{ runner.os }}-gcc-refl-${{ steps.get-gcc-refl-commit.outputs.commit }}
+        path: /opt/GCC
+        key: ${{ runner.os }}-gcc-${{ steps.get-gcc-commit.outputs.commit }}
 
-    - name: install gcc-refl
+    - name: install gcc
       run: |
-        git submodule update --init --depth=1 -- submodules/gcc-refl
-        submodules/build-gcc-refl.sh --install
-      if: steps.cache-gcc-refl.outputs.cache-hit != 'true'
+        git submodule update --init --depth=1 -- submodules/gcc
+        submodules/build-gcc.sh --install
+      if: steps.cache-gcc.outputs.cache-hit != 'true'
 
-    - name: activate gcc-refl
+    - name: activate gcc
       run: |
-        echo "/opt/GCC-REFL/bin" >> $GITHUB_PATH
-        echo "LD_RUN_PATH=/opt/GCC-REFL/lib64" >> $GITHUB_ENV
+        echo "/opt/GCC/bin" >> $GITHUB_PATH
+        echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
           
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -

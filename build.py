@@ -34,7 +34,8 @@ class TargetState:
     # but not strictly before
     unordered_dependencies: set
 
-common_test_dependencies = {Path("/build_system/run_test")}
+# TODO: revert when build is caching
+common_test_dependencies = set() # {Path("/build_system/run_test")}
     
 def deduce_file_targets(path):
     added_compiler_flags = []
@@ -122,7 +123,7 @@ cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 # UPDT: use the reflection repo: https://forge.sourceware.org/marek/gcc.git
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
-cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(cxx).parent.parent / "lib64"}"] if "/" in cxx else [])
+cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(shutil.which(cxx)).parent.parent / "lib64"}"])
 cxxver = os.getenv("CXXVER", "26")
 cxxpost = os.getenv("CXXPOST", "")
 
@@ -138,14 +139,14 @@ for target in targets:
             cxxfmap +
             ["-DIVL_LOCAL",
              f"-DIVL_FILE=\"{path.relative_to(src)}\"",
-             "-static",
+             # "-static",
              "-O3",
              # "-g1",
              f"-std=c++{cxxver}",
              # f"-I{include.parent.resolve()}",
              # f"-I{default_include.parent.resolve()}",
-             "-include",
-             "ivl/reflection/test_attribute",
+             # "-include",
+             # "ivl/reflection/test_attribute",
              "-freflection",
              "-include",
              path,

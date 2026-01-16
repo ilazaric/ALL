@@ -71,6 +71,12 @@ struct safe_config {
   size_t max_cpu_percentage;
 };
 
+  safe_config cp_config(const std::filesystem::path& in,
+                        const std::filesystem::path& out) {
+    safe_config ret;
+    // TODO
+  }
+
 // We have multiple phases:
 // 1. before clone3 - set up cgroup
 // 2. clone3 with CLONE_FILES - create tmpfs, give fd to parent

@@ -1,4 +1,3 @@
-
 (menu-bar-mode -1)
 (scroll-bar-mode -1)
 (tool-bar-mode -1)
@@ -108,3 +107,7 @@ Removes LaTeX preview overlays in region or entire buffer."
             (local-set-key (kbd "M-1")
                            #'my-clang-format-and-save)))
 
+
+;; save temporaries in ~/.emacs.d/auto-save/ instead alongside
+(setq auto-save-file-name-transforms
+          `((".*" ,(concat user-emacs-directory "auto-save/") t))) 
