@@ -47,7 +47,7 @@ struct raw_literal {
   encoding_prefix ep;
   std::string_view delimiter;
   std::string_view payload;
-  std::string ud_suffix;
+  std::string_view ud_suffix;
 
   static std::optional<raw_literal> try_parse(ivl::spliced_cxx_file::parsing_state& state);
 
@@ -55,7 +55,7 @@ struct raw_literal {
 };
 
 struct preprocessing_op_or_punc {
-  std::string kind;
+  std::string_view kind;
 
   auto operator<=>(const preprocessing_op_or_punc&) const = default;
 
@@ -72,8 +72,9 @@ struct preprocessing_op_or_punc {
     }();
     for (auto op : regular_op_or_puncs) {
       if (state.starts_with(op)) {
+        auto start = state.begin();
         state.consume(op);
-        return preprocessing_op_or_punc{std::string(op)};
+        return preprocessing_op_or_punc{std::string_view(start, state.begin())};
       }
     }
     // worded handled with identifier
@@ -143,7 +144,7 @@ struct newline {
 };
 
 struct whitespace {
-  std::string text;
+  std::string_view text;
 
   auto operator<=>(const whitespace&) const = default;
 
@@ -151,18 +152,15 @@ struct whitespace {
     auto pred = [](char c) { return c != '\n' && isspace(c); };
 
     if (!pred(state.front())) return std::nullopt;
-    std::string ws;
-    while (pred(state.front())) {
-      ws += state.front();
-      state.remove_prefix(1);
-    }
+    auto start = state.begin();
+    while (pred(state.front())) state.remove_prefix(1);
 
-    return whitespace{std::move(ws)};
+    return whitespace{std::string_view(start, state.begin())};
   }
 };
 
 struct identifier {
-  std::string text;
+  std::string_view text;
   auto operator<=>(const identifier&) const = default;
 };
 
@@ -248,7 +246,7 @@ struct c_char {
 struct character_literal {
   encoding_prefix ep;
   std::vector<c_char> c_char_seq;
-  std::string ud_suffix;
+  std::string_view ud_suffix;
   auto operator<=>(const character_literal&) const = default;
 
   static std::optional<character_literal> try_parse(spliced_cxx_file::parsing_state& state);
@@ -307,7 +305,7 @@ struct s_char {
 struct string_literal {
   encoding_prefix ep;
   std::vector<s_char> s_char_seq;
-  std::string ud_suffix;
+  std::string_view ud_suffix;
   auto operator<=>(const string_literal&) const = default;
   static std::optional<string_literal> try_parse(spliced_cxx_file::parsing_state& state);
 };
@@ -359,11 +357,9 @@ std::optional<pp_token> try_parse_identifier_or_worded_op_or_punc(ivl::spliced_c
   auto is_nondigit = [](char c) { return c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c == '_'; };
   auto is_digit = [](char c) { return c >= '0' && c <= '9'; };
   if (!is_nondigit(state.front())) return std::nullopt;
-  std::string ret;
-  while (is_nondigit(state.front()) || is_digit(state.front())) {
-    ret += state.front();
-    state.remove_prefix(1);
-  }
+  auto start = state.begin();
+  while (is_nondigit(state.front()) || is_digit(state.front())) state.remove_prefix(1);
+  std::string_view ret(start, state.begin());
   if (worded_op_or_puncs.contains(ret)) return pp_token{preprocessing_op_or_punc{ret}};
   return pp_token{identifier{ret}};
 }
@@ -398,7 +394,7 @@ std::optional<character_literal> character_literal::try_parse(spliced_cxx_file::
 
   auto saved_state = state;
   auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc(state);
-  std::string ud_suffix;
+  std::string_view ud_suffix;
   if (ud_suffix_maybe) {
     if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
     else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
@@ -437,7 +433,7 @@ std::optional<string_literal> string_literal::try_parse(spliced_cxx_file::parsin
 
   auto saved_state = state;
   auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc(state);
-  std::string ud_suffix;
+  std::string_view ud_suffix;
   if (ud_suffix_maybe) {
     if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
     else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
@@ -514,7 +510,7 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
 
   auto saved_state = state;
   auto ud_suffix_maybe = try_parse_identifier_or_worded_op_or_punc(state);
-  std::string ud_suffix;
+  std::string_view ud_suffix;
   if (ud_suffix_maybe) {
     if (std::get_if<preprocessing_op_or_punc>(&ud_suffix_maybe->payload)) state = saved_state;
     else ud_suffix = std::get<identifier>(ud_suffix_maybe->payload).text;
@@ -662,16 +658,16 @@ std::string reserialize(const pp_token& token) {
     if constexpr (std::same_as<T, ivl::newline>) {
       return "\n";
     } else if constexpr (std::same_as<T, ivl::whitespace>) {
-      return unpacked.text;
+      return (std::string)unpacked.text;
     } else if constexpr (std::same_as<T, ivl::identifier>) {
-      return unpacked.text;
+      return (std::string)unpacked.text;
     } else if constexpr (std::same_as<T, ivl::raw_literal>) {
       return std::format(
         "{}R\"{}({}){}\"{}", encoding_prefix_str(unpacked.ep), unpacked.delimiter, unpacked.payload, unpacked.delimiter,
         unpacked.ud_suffix
       );
     } else if constexpr (std::same_as<T, ivl::preprocessing_op_or_punc>) {
-      return unpacked.kind;
+      return (std::string)unpacked.kind;
     } else if constexpr (std::same_as<T, ivl::single_line_comment>) {
       return (std::string)unpacked.text;
     } else if constexpr (std::same_as<T, ivl::multi_line_comment>) {
