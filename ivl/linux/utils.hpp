@@ -11,16 +11,21 @@ namespace ivl::linux {
 // TODO: this should be validated on startup via sysconf(_SC_PAGE_SIZE)
 inline constexpr size_t page_size = 4096;
 
-// TODO: change arg into null-terminated-string-view
 // TODO: change ret to mmap_region probably
-inline std::string read_file(const char* path) {
-  owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
+inline std::string read_file(file_descriptor fd) {
   struct stat statbuf;
   throwing_syscalls::fstat(fd.get(), &statbuf);
+  if (statbuf.st_size == 0) return {};
   auto ptr = throwing_syscalls::mmap(0, statbuf.st_size, PROT_READ, MAP_PRIVATE, fd.get(), 0);
   std::string ret((const char*)ptr, statbuf.st_size);
   throwing_syscalls::munmap(ptr, statbuf.st_size);
   return ret;
+}
+
+// TODO: change arg into null-terminated-string-view
+inline std::string read_file(const char* path) {
+  owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
+  return read_file(fd);
 }
 
 inline owned_file_descriptor create_tmpfs() {

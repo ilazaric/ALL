@@ -51,7 +51,10 @@ int main() {
 
     for (auto&& file : files) {
       auto target = copy_dir / file.lexically_relative(root);
-      if (exists(target)) continue;
+      if (exists(target)) {
+        file = target;
+        continue;
+      }
       create_directories(target.parent_path());
 
       constexpr char added_prefix[] = "#line 1 \"";
