@@ -25,3 +25,6 @@
 [submodule "submodules/nsjail"]
 	path = submodules/nsjail
 	url = git@github.com:google/nsjail.git
+[submodule "submodules/nlohmann-json"]
+	path = submodules/nlohmann-json
+	url = git@github.com:nlohmann/json.git
