@@ -32,10 +32,7 @@ std::optional<std::string> preprocess(const std::filesystem::path& file) {
   });
   auto proc = cfg.clone_and_exec().unwrap_or_terminate();
   if (proc.wait().unwrap_or_terminate() == 0) {
-    // LOG(1, file.native());
-    auto ret = read_file(outfd);
-    // LOG(2);
-    return ret;
+    return read_file(outfd);
   } else {
     std::println(stderr, "ERROR: file `{}` failed to preprocess", file.native());
     return std::nullopt;
@@ -158,9 +155,11 @@ std::vector<source_target> parse_ivl(const std::filesystem::path& src) {
       } else if (command == "add_test_dependencies") {
         target.test_dependencies.insert_range(target.test_dependencies.end(), pieces);
       } else if (command == "has_test_variant") {
+        if (directive.file != source) continue;
         if (!pieces.empty()) panic("`has_test_variant` takes no arguments\n```\n{}\n```", directive.pragma);
         target.has_test_variant = true;
       } else if (command == "test_only") {
+        if (directive.file != source) continue;
         if (!pieces.empty()) panic("`test_only` takes no arguments\n```\n{}\n```", directive.pragma);
         target.has_test_variant = true;
         target.has_reg_variant = false;

@@ -14,22 +14,21 @@ ColumnLimit: 120
 AllowShortLoopsOnASingleLine: Yes
 AllowShortFunctionsOnASingleLine: All
 AllowShortIfStatementsOnASingleLine: AllIfsAndElse
-# PenaltyReturnTypeOnItsOwnLine: 100               # Encourage `auto` on one line
 
-# AlignConsecutiveAssignments: Consecutive
-# AlignConsecutiveDeclarations: Consecutive
 AlignAfterOpenBracket: BlockIndent
 AlignOperands: AlignAfterOperator
 PointerAlignment: Left
 ReferenceAlignment: Left
 
 SortIncludes: true
-IncludeBlocks: Preserve    # Preserve user‑grouped blank lines
-IncludeCategories:         # Groups: std / other‑libs / project
+IncludeBlocks: Preserve
+IncludeCategories:
   - Regex:           '^<ivl.*>$'
     Priority:        1
-  - Regex:           '^.*$'
+  - Regex:           '^<.*/.*>$'
     Priority:        2
+  - Regex:           '^.*$'
+    Priority:        3
 
 DerivePointerAlignment: false
 SpaceAroundPointerQualifiers: Default

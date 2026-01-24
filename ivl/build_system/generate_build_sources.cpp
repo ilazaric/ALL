@@ -27,6 +27,73 @@ std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir
   return ret;
 }
 
+void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  assert(exists(indir));
+  if (!exists(outdir)) create_directories(outdir);
+  std::vector<std::filesystem::path> files = find_sources(indir);
+
+  for (auto&& existing : find_sources(outdir)) {
+    auto original = indir / existing.lexically_relative(outdir);
+    if (!exists(original) || last_write_time(original) != last_write_time(existing)) remove(existing);
+  }
+
+  for (auto&& file : files) {
+    auto target = outdir / file.lexically_relative(indir);
+    if (exists(target)) {
+      file = target;
+      continue;
+    }
+    create_directories(target.parent_path());
+
+    constexpr char added_prefix[] = "#line 1 \"";
+    constexpr char added_suffix[] = "\"\n";
+    size_t added_length = sizeof(added_prefix) - 1 + file.native().size() + sizeof(added_suffix) - 1;
+
+    auto prevfd = open(file.native().c_str(), O_RDONLY, 0);
+    assert(prevfd != -1);
+    struct stat statbuf;
+    assert(-1 != fstat(prevfd, &statbuf));
+    size_t new_size = statbuf.st_size + added_length;
+    auto prevmap = statbuf.st_size ? mmap(nullptr, statbuf.st_size, PROT_READ, MAP_PRIVATE, prevfd, 0) : nullptr;
+    if (prevmap == MAP_FAILED) {
+      auto e = errno;
+      std::cout << "file: " << file << std::endl;
+      std::cout << "target: " << target << std::endl;
+      std::cout << "statbuf.st_size: " << statbuf.st_size << std::endl;
+      std::cout << "err: " << e << std::endl;
+      assert(false);
+    }
+
+    auto fd = open(target.native().c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
+    assert(fd != -1);
+    assert(-1 != ftruncate(fd, new_size));
+    auto map = mmap(nullptr, new_size, PROT_WRITE, MAP_SHARED, fd, 0);
+    if (map == MAP_FAILED) {
+      auto e = errno;
+      std::cout << "file: " << file << std::endl;
+      std::cout << "target: " << target << std::endl;
+      std::cout << "err: " << e << std::endl;
+      assert(false);
+    }
+    char* ptr = (char*)map;
+    auto wr = [&](std::string_view sv) {
+      memcpy(ptr, sv.data(), sv.size());
+      ptr += sv.size();
+    };
+    wr(added_prefix);
+    wr(file.native());
+    wr(added_suffix);
+    if (prevmap) wr(std::string_view((const char*)prevmap, statbuf.st_size));
+
+    assert(-1 != munmap(map, new_size));
+    if (prevmap) assert(-1 != munmap(prevmap, statbuf.st_size));
+    assert(-1 != close(fd));
+    assert(-1 != close(prevfd));
+    last_write_time(target, last_write_time(file));
+    file = target;
+  }
+}
+
 int main() {
   auto root = std::filesystem::canonical("/proc/self/exe");
   while (!exists(root / ".git")) {
@@ -35,82 +102,22 @@ int main() {
   }
   std::cerr << "repository root: " << root << std::endl;
 
-  std::vector<std::filesystem::path> files = find_sources(root / "ivl");
-
   auto build_dir = root / "build";
-  if (!exists(build_dir)) create_directory(build_dir);
-
   auto copy_dir = build_dir / "source_copy";
-  if (!exists(copy_dir)) create_directory(copy_dir);
+  sync_dir(root / "ivl", copy_dir / "ivl");
+  sync_dir(
+    root / "submodules" / "nlohmann-json" / "include" / "nlohmann", build_dir / "submodule_source_copy" / "nlohmann"
+  );
 
-  {
-    for (auto&& existing : find_sources(copy_dir)) {
-      auto original = root / existing.lexically_relative(copy_dir);
-      if (!exists(original) || last_write_time(original) != last_write_time(existing)) remove(existing);
-    }
-
-    for (auto&& file : files) {
-      auto target = copy_dir / file.lexically_relative(root);
-      if (exists(target)) {
-        file = target;
-        continue;
-      }
-      create_directories(target.parent_path());
-
-      constexpr char added_prefix[] = "#line 1 \"";
-      constexpr char added_suffix[] = "\"\n";
-      size_t added_length = sizeof(added_prefix) - 1 + file.native().size() + sizeof(added_suffix) - 1;
-
-      auto prevfd = open(file.native().c_str(), O_RDONLY, 0);
-      assert(prevfd != -1);
-      struct stat statbuf;
-      assert(-1 != fstat(prevfd, &statbuf));
-      size_t new_size = statbuf.st_size + added_length;
-      auto prevmap = statbuf.st_size ? mmap(nullptr, statbuf.st_size, PROT_READ, MAP_PRIVATE, prevfd, 0) : nullptr;
-      if (prevmap == MAP_FAILED) {
-        auto e = errno;
-        std::cout << "file: " << file << std::endl;
-        std::cout << "target: " << target << std::endl;
-        std::cout << "statbuf.st_size: " << statbuf.st_size << std::endl;
-        std::cout << "err: " << e << std::endl;
-        assert(false);
-      }
-
-      auto fd = open(target.native().c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
-      assert(fd != -1);
-      assert(-1 != ftruncate(fd, new_size));
-      auto map = mmap(nullptr, new_size, PROT_WRITE, MAP_SHARED, fd, 0);
-      if (map == MAP_FAILED) {
-        auto e = errno;
-        std::cout << "file: " << file << std::endl;
-        std::cout << "target: " << target << std::endl;
-        std::cout << "err: " << e << std::endl;
-        assert(false);
-      }
-      char* ptr = (char*)map;
-      auto wr = [&](std::string_view sv) {
-        memcpy(ptr, sv.data(), sv.size());
-        ptr += sv.size();
-      };
-      wr(added_prefix);
-      wr(file.native());
-      wr(added_suffix);
-      if (prevmap) wr(std::string_view((const char*)prevmap, statbuf.st_size));
-
-      assert(-1 != munmap(map, new_size));
-      if (prevmap) assert(-1 != munmap(prevmap, statbuf.st_size));
-      assert(-1 != close(fd));
-      assert(-1 != close(prevfd));
-      last_write_time(target, last_write_time(file));
-      file = target;
-    }
-  }
+  auto files = find_sources(copy_dir / "ivl");
 
   auto include_meta_dir = build_dir / "include_dirs";
   if (exists(include_meta_dir)) remove_all(include_meta_dir);
   create_directory(include_meta_dir);
 
   std::ofstream rsp_file(include_meta_dir / "args.rsp");
+
+  rsp_file << "-I " << build_dir / "submodule_source_copy" << std::endl;
 
   {
     auto dir = include_meta_dir / "regular";
