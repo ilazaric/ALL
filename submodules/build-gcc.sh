@@ -35,4 +35,3 @@ then
     echo "installing ..."
     sudo make install
 fi
-

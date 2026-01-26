@@ -29,6 +29,10 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-gcc-${{ steps.get-gcc-commit.outputs.commit }}
 
+    - name: fetch nlohmann json
+      run: |
+        git submodule update --init --depth=1 -- submodules/nlohmann-json
+
     - name: install gcc
       run: |
         git submodule update --init --depth=1 -- submodules/gcc

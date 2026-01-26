@@ -3,7 +3,10 @@
 #include <ivl/reflection/util>
 #include <nlohmann/json.hpp>
 #include <cassert>
+#include <map>
 #include <meta>
+#include <optional>
+#include <vector>
 
 namespace ivl {
 enum class from_to_json_impl_direction { FROM, TO };
@@ -14,9 +17,17 @@ template <
   typename RetT = std::conditional_t<Direction == from_to_json_impl_direction::TO, nlohmann::json, T>>
 RetT from_to_json_impl(const InputT& arg) {
   static_assert(!is_pointer_type(^^T));
+  static_assert(!is_reference_type(^^T));
 
   using enum from_to_json_impl_direction;
 
+  // if constexpr (reflection::is_instantiation_of(^^T, ^^std::optional)) {
+  //   if constexpr (Direction == TO) {
+  //     return arg ? from_to_json_impl<T::value_type, Direction>(*arg) : RetT();
+  //   } else {
+  //     return !arg.is_null() ? from_to_json_impl<T::value_type, Direction>(arg) : RetT();
+  //   }
+  // } else
   if constexpr (std::same_as<T, std::filesystem::path>) {
     return from_to_json_impl<std::string, Direction>(arg);
   } else if constexpr (!is_class_type(^^T) || std::same_as<T, nlohmann::json> || std::same_as<T, std::string>) {

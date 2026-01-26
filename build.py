@@ -121,6 +121,7 @@ cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 
 # TODO: add gcc repo as submodule, build it, default to using it
 # UPDT: use the reflection repo: https://forge.sourceware.org/marek/gcc.git
+# UPDT: reflection merged upstream, also submodules/build-gcc.sh installs it to /opt/GCC
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
 cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(shutil.which(cxx)).parent.parent / "lib64"}"])

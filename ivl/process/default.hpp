@@ -56,6 +56,7 @@ struct process_config {
 
   void pre_exec(auto&& callable) {
     pre_exec_setup = [first = std::move(pre_exec_setup), second = FWD(callable)] {
+      // TODO: consider changing pre_exec_setup to std::vector<std::function<void()>>
       first();
       second();
     };

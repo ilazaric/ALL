@@ -3,6 +3,7 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/terminate_syscalls>
 #include <ivl/linux/throwing_syscalls>
+#include <filesystem>
 #include <format>
 #include <string>
 
@@ -27,6 +28,9 @@ inline std::string read_file(const char* path) {
   owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
   return read_file(fd);
 }
+
+inline std::string read_file(const std::string& path) { return read_file(path.c_str()); }
+inline std::string read_file(const std::filesystem::path& path) { return read_file(path.native()); }
 
 inline owned_file_descriptor create_tmpfs() {
   alignas(16) char stack[1ULL << 12];
