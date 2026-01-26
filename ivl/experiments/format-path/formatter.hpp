@@ -3,6 +3,10 @@
 #include <format>
 #include <filesystem>
 
+// https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2024/p2845r8.html
+
+#define __cpp_lib_format_path 202506L
+
 namespace std _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
