@@ -24,9 +24,9 @@ jobs:
       run: |
         git submodule update --init --depth=1 -- submodules/nlohmann-json
 
-    # - name: fetch spoj
-    #   run: |
-    #     git submodule update --init --depth=1 -- ivl/spoj
+    - name: fetch spoj
+      run: |
+        git submodule update --init --depth=1 -- ivl/spoj
 
     - name: get gcc commit
       id: get-gcc-commit
