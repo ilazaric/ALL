@@ -16,6 +16,10 @@ jobs:
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
+    - uses: webfactory/ssh-agent@v0.9.1
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
     - name: fetch nlohmann json
       run: |
         git submodule update --init --depth=1 -- submodules/nlohmann-json
