@@ -3,8 +3,8 @@ name: C/C++ CI
 on:
   push:
     branches: [ "master" ]
-  pull_request:
-    branches: [ "master" ]
+  # pull_request:
+  #   branches: [ "master" ]
 
 jobs:
   build:
@@ -24,9 +24,9 @@ jobs:
       run: |
         git submodule update --init --depth=1 -- submodules/nlohmann-json
 
-    - name: fetch spoj
-      run: |
-        git submodule update --init --depth=1 -- ivl/spoj
+    # - name: fetch spoj
+    #   run: |
+    #     git submodule update --init --depth=1 -- ivl/spoj
 
     - name: get gcc commit
       id: get-gcc-commit
