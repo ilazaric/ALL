@@ -337,11 +337,16 @@ struct non_whitespace_garbage {
   auto operator<=>(const non_whitespace_garbage&) const = default;
 };
 
+// gets synthesized in phase 4
+struct placemarker {
+  auto operator<=>(const non_whitespace_garbage&) const = default;
+};
+
 // module, import, export keywords not implemented (treated as regular identifier)
 struct pp_token {
   std::variant<
     std::monostate, raw_literal, preprocessing_op_or_punc, single_line_comment, multi_line_comment, newline, whitespace,
-    identifier, character_literal, pp_number, header_name, string_literal, non_whitespace_garbage>
+    identifier, character_literal, pp_number, header_name, string_literal, non_whitespace_garbage, placemarker>
     payload;
   auto operator<=>(const pp_token&) const = default;
 
