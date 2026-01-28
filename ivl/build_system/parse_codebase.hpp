@@ -13,24 +13,19 @@
 #include <vector>
 
 namespace ivl::build_system {
-std::optional<std::string> preprocess(const std::filesystem::path& file) {
+std::optional<std::string> preprocess(const std::filesystem::path& file, process_config cxx_cfg) {
   linux::owned_file_descriptor outfd{linux::throwing_syscalls::memfd_create("pp-output", MFD_CLOEXEC)};
-  process_config cfg;
-  cfg.pathname = "/opt/GCC/bin/g++";
-  cfg.argv = {
-    cfg.pathname, "-xc++", "-E", "-fdiagnostics-plain-output",
-    // TODO
-    "@/home/ilazaric/repos/ALL/build/include_dirs/args.rsp", file.native(), "-o",
-    std::format("/proc/{}/fd/{}", linux::throwing_syscalls::getpid(), outfd.get())
-  };
-  cfg.envp = {{"LC_ALL", "C"}, {"PATH", "/opt/GCC/bin"}};
-  cfg.pre_exec([] {
+  cxx_cfg.argv.push_back("-E");
+  cxx_cfg.argv.push_back("-o");
+  cxx_cfg.argv.push_back(std::format("/proc/{}/fd/{}", linux::throwing_syscalls::getpid(), outfd.get()));
+  cxx_cfg.argv.push_back(file);
+  cxx_cfg.pre_exec([] {
     auto fd = linux::terminate_syscalls::open("/dev/null", O_WRONLY, 0);
     if (fd == 2) return;
     linux::terminate_syscalls::dup2(fd, 2);
     linux::terminate_syscalls::close(fd);
   });
-  auto proc = cfg.clone_and_exec().unwrap_or_terminate();
+  auto proc = cxx_cfg.clone_and_exec().unwrap_or_terminate();
   if (proc.wait().unwrap_or_terminate() == 0) {
     return read_file(outfd);
   } else {
@@ -45,6 +40,7 @@ struct ivl_directive {
 };
 
 std::vector<ivl_directive> extract_ivl_directives(std::string_view sv) {
+  // LOG(sv.size());
   if (!sv.empty() && !sv.ends_with('\n')) panic("Preprocessed file doesn't end with a newline\n```\n{}```", sv);
   std::vector<ivl_directive> ret;
   std::filesystem::path current_file;
@@ -99,7 +95,8 @@ std::vector<std::string> parse_pragma_arg(std::string_view sv) {
 }
 
 struct source_target {
-  std::filesystem::path file;
+  std::vector<std::filesystem::path> files;
+  std::vector<std::filesystem::file_time_type> mtimes;
   std::vector<std::string> add_compiler_flags;
   std::vector<std::string> add_compiler_flags_tail;
   std::vector<std::string> dependencies;
@@ -109,33 +106,32 @@ struct source_target {
 };
 
 // call this with source_copy dir
-std::vector<source_target> parse_ivl(const std::filesystem::path& src) {
-  std::vector<std::filesystem::path> headers;
-  std::vector<std::filesystem::path> sources;
+std::vector<source_target> parse_ivl(const std::filesystem::path& src, const process_config& cxx_cfg) {
+  std::vector<std::filesystem::path> files;
   for (auto&& entry : std::filesystem::recursive_directory_iterator(src)) {
     if (!entry.is_regular_file()) continue;
     auto&& path = entry.path();
     if (path.extension() != ".cpp" && path.extension() != ".hpp") panic("Bad file extension: {}", path.native());
-    (path.extension() == ".cpp" ? sources : headers).push_back(path);
+    files.push_back(path);
   }
 
-  size_t total = 0;
-  std::vector<std::pair<std::chrono::duration<double>, std::filesystem::path>> timings;
+  // size_t total = 0;
+  // std::vector<std::pair<std::chrono::duration<double>, std::filesystem::path>> timings;
 
   std::vector<source_target> targets;
-  for (auto&& source : sources) {
-    auto before = std::chrono::high_resolution_clock::now();
-    auto opp = preprocess(source);
-    auto after = std::chrono::high_resolution_clock::now();
-    timings.emplace_back(after - before, source);
+  for (auto&& source : files) {
+    // auto before = std::chrono::high_resolution_clock::now();
+    auto opp = preprocess(source, cxx_cfg);
+    // auto after = std::chrono::high_resolution_clock::now();
+    // timings.emplace_back(after - before, source);
     if (!opp) continue;
     auto&& pp = *opp;
-    total += pp.size();
+    // total += pp.size();
     auto ivl_directives = extract_ivl_directives(pp);
 
     targets.emplace_back();
     auto& target = targets.back();
-    target.file = source;
+    // target.file = source;
 
     target.has_reg_variant = source.extension() == ".cpp";
     target.has_test_variant = false;
@@ -173,15 +169,15 @@ std::vector<source_target> parse_ivl(const std::filesystem::path& src) {
     }
   }
 
-  LOG(total);
+  // LOG(total);
 
-  std::ranges::sort(timings, std::greater<void>{});
-  std::chrono::duration<double> total_duration{};
-  for (auto&& [duration, file] : timings) {
-    LOG(duration, file);
-    total_duration += duration;
-  }
-  LOG(total_duration);
+  // std::ranges::sort(timings, std::greater<void>{});
+  // std::chrono::duration<double> total_duration{};
+  // for (auto&& [duration, file] : timings) {
+  //   LOG(duration, file);
+  //   total_duration += duration;
+  // }
+  // LOG(total_duration);
 
   return targets;
 }
