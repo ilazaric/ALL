@@ -1,6 +1,6 @@
 #include <ivl/linux/raw_syscalls>
 #include <ivl/meta>
-#include <ivl/util>
+// #include <ivl/util>
 
 #include <atomic>
 #include <cstdint>
@@ -66,10 +66,10 @@ void __attribute__((noinline)) print(
 void print(auto&&... args)
   requires(sizeof...(args) != 1)
 {
-  (print(FWD(args)), ...);
+  (print(std::forward<decltype(args)>(args)), ...);
 }
 
-void println(auto&&... args) { print(FWD(args)..., "\n"); }
+void println(auto&&... args) { print(std::forward<decltype(args)>(args)..., "\n"); }
 
 void print_error(std::string_view ctx, long error) {
   println(ctx, ": ", -error);
@@ -118,7 +118,7 @@ struct thread {
     stack = reinterpret_cast<char*>(ret);
     auto stack_end = &stack[0] + stack_size;
     static_assert(sizeof(T) < (1ULL << 12));
-    auto moved = new (stack_end - sizeof(T)) T(FWD(callable));
+    auto moved = new (stack_end - sizeof(T)) T(std::forward<decltype(callable)>(callable));
     // asm volatile("" ::"g"(moved) :);
 
     static_assert(sizeof(T) == 8);
