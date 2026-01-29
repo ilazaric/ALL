@@ -95,7 +95,7 @@ std::vector<std::string> parse_pragma_arg(std::string_view sv) {
 }
 
 struct source_target {
-  std::vector<std::filesystem::path> files;
+  std::filesystem::path file;
   std::vector<std::filesystem::file_time_type> mtimes;
   std::vector<std::string> add_compiler_flags;
   std::vector<std::string> add_compiler_flags_tail;
