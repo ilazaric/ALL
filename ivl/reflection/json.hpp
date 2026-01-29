@@ -28,7 +28,15 @@ RetT from_to_json_impl(const InputT& arg) {
   //     return !arg.is_null() ? from_to_json_impl<T::value_type, Direction>(arg) : RetT();
   //   }
   // } else
-  if constexpr (std::same_as<T, std::filesystem::path>) {
+  if constexpr (reflection::is_instantiation_of(^^T, ^^std::chrono::duration)) {
+    using RepT = T::rep;
+    if constexpr (Direction == TO) return from_to_json_impl<RepT, Direction>(arg.count());
+    else return RetT(from_to_json_impl<RepT, Direction>(arg));
+  } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::chrono::time_point)) {
+    using DurT = T::duration;
+    if constexpr (Direction == TO) return from_to_json_impl<DurT, Direction>(arg.time_since_epoch());
+    else return RetT(from_to_json_impl<DurT, Direction>(arg));
+  } else if constexpr (std::same_as<T, std::filesystem::path>) {
     return from_to_json_impl<std::string, Direction>(arg);
   } else if constexpr (!is_class_type(^^T) || std::same_as<T, nlohmann::json> || std::same_as<T, std::string>) {
     if constexpr (Direction == TO) return nlohmann::json(arg);
@@ -43,13 +51,20 @@ RetT from_to_json_impl(const InputT& arg) {
     using KeyT = [:template_arguments_of(^^T)[0]:];
     using ValueT = [:template_arguments_of(^^T)[1]:];
     auto ret = RetT{};
-    if constexpr (Direction == TO) ret = nlohmann::json::object();
-    for (auto&& [key, value] : arg) {
-      ret.emplace(from_to_json_impl<KeyT, Direction>(key), from_to_json_impl<ValueT, Direction>(value));
+    if constexpr (Direction == TO) {
+      ret = nlohmann::json::object();
+      for (auto&& [key, value] : arg)
+        ret.emplace(from_to_json_impl<KeyT, Direction>(key), from_to_json_impl<ValueT, Direction>(value));
+    } else {
+      for (auto&& [key, value] : arg.items())
+        ret.emplace(
+          from_to_json_impl<KeyT, Direction>(nlohmann::json(key)), from_to_json_impl<ValueT, Direction>(value)
+        );
     }
     return ret;
   } else if constexpr (is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) &&
                        !reflection::is_child_of(^^T, ^^nlohmann)) {
+    // static_assert(false, display_string_of(^^T));
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = nlohmann::json::object();
     [:substitute(
@@ -63,7 +78,7 @@ RetT from_to_json_impl(const InputT& arg) {
     });
     return ret;
   } else {
-    static_assert(false, "Case not handled!");
+    static_assert(false, display_string_of(^^T));
   }
 }
 
