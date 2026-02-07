@@ -137,7 +137,8 @@ struct manifest_part_t {
   std::map<std::filesystem::path, pp_info_t> pp_targets;
   // std::map<cxx_cfg_part_t, std::set<std::filesystem::path>> built_targets;
 
-  std::optional<pp_info_t&> get_pp(const std::filesystem::path& file, const cxx_cfg_part_t& cfg) {
+  std::optional<pp_info_t&>
+  get_pp(const std::filesystem::path& file, const cxx_cfg_part_t& cfg, const std::filesystem::path& build_dir) {
     if (auto it = pp_targets.find(file); it != pp_targets.end()) {
       if (!it->second.is_stale()) return {it->second};
       std::println("pp info for `{}` stale, purging and regenerating", file);
@@ -187,7 +188,7 @@ struct manifest_part_t {
         exists(current_file) ||
           ivl::panic("ICE\nfile=`{}`\ncurrent_file=`{:?}`\nlinemarker=`{:?}`", file, current_file, orig_line);
         if (!current_file.native().starts_with("/usr/include/") && !current_file.native().starts_with("/opt/GCC/") &&
-            current_file.native().starts_with("/home/ilazaric/repos/ALL/build/"))
+            current_file.native().starts_with(build_dir.native()))
           files.insert(current_file);
         continue;
       }
@@ -294,7 +295,7 @@ int main(int argc, char* argv[], char* envp[]) {
     auto& curr_manifest = manifest.parts[cxx_cfg];
     for (std::filesystem::path target :
          {"ivl/build_system/generate_build_sources.cpp", "ivl/build_system/builder.cpp"}) {
-      auto opp = curr_manifest.get_pp(build_dir / "source_copy" / target, cxx_cfg);
+      auto opp = curr_manifest.get_pp(build_dir / "source_copy" / target, cxx_cfg, build_dir);
       opp || ivl::panic("Missing file `{}`", build_dir / "source_copy" / target);
       auto&& pp = *opp;
       if (pp.built_regular) continue;
@@ -348,7 +349,7 @@ int main(int argc, char* argv[], char* envp[]) {
     ut.filename().native().contains(':') && ivl::panic("Broken selector on target `{}`", orig);
     nested_targets.contains(ut) || ivl::panic("No files correspond to `{}`", orig);
     for (auto&& file : nested_targets[ut]) {
-      auto opp = curr_manifest.get_pp(file, cxx_cfg);
+      auto opp = curr_manifest.get_pp(file, cxx_cfg, build_dir);
       if (!opp) continue;
       auto&& pp = *opp;
       if (kind == target_t::kind_t::REGULAR && file.extension() != ".cpp") continue;
@@ -374,7 +375,7 @@ int main(int argc, char* argv[], char* envp[]) {
         auto tail = target_tail.fetch_add(1);
         if (tail >= vec_targets.size()) break;
         auto&& target = vec_targets[tail];
-        auto&& pp = *curr_manifest.get_pp(target.file, cxx_cfg);
+        auto&& pp = *curr_manifest.get_pp(target.file, cxx_cfg, build_dir);
         if (target.kind == target_t::kind_t::REGULAR) {
           auto out = artifacts_dir / target.file.lexically_relative(build_dir / "source_copy").parent_path() /
                      target.file.stem();
