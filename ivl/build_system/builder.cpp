@@ -367,6 +367,7 @@ int main(int argc, char* argv[], char* envp[]) {
     size_t thread_count = std::thread::hardware_concurrency();
     if (thread_count == 0) thread_count = 1;
     if (thread_count != 1) --thread_count;
+    LOG(thread_count);
 
     std::atomic<size_t> target_tail = 0;
     std::vector<std::vector<target_t>> failures(thread_count);
