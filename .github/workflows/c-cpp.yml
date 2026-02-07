@@ -57,3 +57,6 @@ jobs:
       
     - name: build
       run: CXXVER=26 ./build.py /build_system /linux /process
+
+    - name: build2
+      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process
