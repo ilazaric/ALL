@@ -10,9 +10,14 @@
 #include <string_view>
 #include <utility>
 
+#pragma IVL add_compiler_flags "-g"
+#pragma IVL add_compiler_flags_tail "-lstdc++exp"
+
 #define FWD(x) std::forward<decltype(x)>(x)
 
 namespace ivl::util {
+template <typename T>
+using const_span = std::span<const T>;
 
 template <typename T>
 constexpr std::string_view typestr() {
@@ -74,7 +79,7 @@ auto lazy_construct(auto&&... args) {
 }
 
 std::string hex(std::string_view sv) {
-  std::string ret(sv.size(), '\0');
+  std::string ret(sv.size()*2, '\0');
   auto hexc = [](int x) -> char { return x < 10 ? '0' + x : 'a' + x - 10; };
   for (size_t i = 0; i < sv.size(); ++i) {
     ret[2 * i] = hexc(((unsigned char)sv[i]) / 16);

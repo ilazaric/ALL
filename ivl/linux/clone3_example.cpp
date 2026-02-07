@@ -11,6 +11,7 @@
 #include <sys/mman.h>
 
 // IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector")
+#pragma IVL add_compiler_flags -Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector
 
 // TODO: figure out why this doesnt get picked up
 // extern "C" __attribute__((used)) size_t strlen(const char* str) {

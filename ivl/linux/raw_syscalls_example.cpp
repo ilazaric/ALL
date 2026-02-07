@@ -12,6 +12,7 @@
 // #include <x86intrin.h> // __rdtsc, __rdtscp, __cpuid
 
 // IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector")
+#pragma IVL add_compiler_flags -Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector
 
 // constexpr char msg[] = "Hello world!\n";
 

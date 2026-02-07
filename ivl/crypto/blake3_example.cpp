@@ -1,5 +1,5 @@
 #include <ivl/crypto/blake3>
-#include <ivl/linux/raw_generated_syscalls>
+#include <ivl/linux/raw_syscalls>
 #include <cassert>
 #include <iostream>
 #include <print>

@@ -19,6 +19,19 @@
 // IVL add_compiler_flags("-falign-loops=1")
 // IVL add_compiler_flags("-Wl,-z,noexecstack")
 
+#pragma IVL add_compiler_flags -Wl,-z,noseparate-code,--gc-sections
+#pragma IVL add_compiler_flags -fno-exceptions -fno-rtti
+#pragma IVL add_compiler_flags -nostdlib -nolibc -nostartfiles -static -fno-stack-protector
+#pragma IVL add_compiler_flags -fcf-protection=none -fno-asynchronous-unwind-tables
+#pragma IVL add_compiler_flags -Wl,--build-id=none
+#pragma IVL add_compiler_flags -Wl,--entry=_start
+#pragma IVL add_compiler_flags -Wl,-z,nosectionheader
+#pragma IVL add_compiler_flags -falign-functions=1
+#pragma IVL add_compiler_flags -falign-jumps=1
+#pragma IVL add_compiler_flags -falign-labels=1
+#pragma IVL add_compiler_flags -falign-loops=1
+#pragma IVL add_compiler_flags -Wl,-z,noexecstack
+
 extern "C" __attribute__((used)) [[noreturn]] void premain() {
   ivl::linux::raw_syscalls::exit_group(1);
   __builtin_unreachable();
