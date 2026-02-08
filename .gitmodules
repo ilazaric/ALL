@@ -31,3 +31,6 @@
 [submodule "submodules/fmt"]
 	path = submodules/fmt
 	url = git@github.com:fmtlib/fmt.git
+[submodule "submodules/google-benchmark"]
+	path = submodules/google-benchmark
+	url = https://github.com/google/benchmark.git

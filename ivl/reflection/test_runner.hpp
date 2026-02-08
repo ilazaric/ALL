@@ -1,4 +1,5 @@
 #include <ivl/linux/raw_syscalls>
+#include <ivl/reflection/test_attribute>
 #include <cassert>
 #include <cstring>
 #include <meta>

@@ -1,0 +1,7 @@
+----------------------------------------------------------------
+Benchmark                      Time             CPU   Iterations
+----------------------------------------------------------------
+PathConstruction             212 ns          212 ns      3320674
+PathCopy                     325 ns          325 ns      2136921
+PathNormalization            979 ns          979 ns       763840
+EvilPathNormalization        691 ns          691 ns      1101259
