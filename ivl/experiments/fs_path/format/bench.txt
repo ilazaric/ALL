@@ -1,0 +1,36 @@
+\nilazaric version\n
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+PathFormat               762 ns          762 ns       879027
+PathFormat               734 ns          734 ns       879027
+PathFormat               682 ns          682 ns       879027
+PathFormat               679 ns          678 ns       879027
+PathFormat               669 ns          669 ns       879027
+PathFormat               670 ns          670 ns       879027
+PathFormat               659 ns          659 ns       879027
+PathFormat               662 ns          662 ns       879027
+PathFormat               661 ns          661 ns       879027
+PathFormat               663 ns          662 ns       879027
+PathFormat_mean          684 ns          684 ns           10
+PathFormat_median        670 ns          670 ns           10
+PathFormat_stddev       35.2 ns         35.1 ns           10
+PathFormat_cv           5.15 %          5.14 %            10
+\njwakely  version\n
+------------------------------------------------------------
+Benchmark                  Time             CPU   Iterations
+------------------------------------------------------------
+PathFormat               829 ns          829 ns       844926
+PathFormat               825 ns          824 ns       844926
+PathFormat               826 ns          826 ns       844926
+PathFormat               838 ns          838 ns       844926
+PathFormat               835 ns          835 ns       844926
+PathFormat               860 ns          860 ns       844926
+PathFormat               860 ns          860 ns       844926
+PathFormat               866 ns          866 ns       844926
+PathFormat               861 ns          861 ns       844926
+PathFormat               854 ns          854 ns       844926
+PathFormat_mean          845 ns          845 ns           10
+PathFormat_median        846 ns          846 ns           10
+PathFormat_stddev       16.4 ns         16.4 ns           10
+PathFormat_cv           1.94 %          1.94 %            10
