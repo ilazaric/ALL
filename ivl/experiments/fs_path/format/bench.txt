@@ -1,36 +1,40 @@
-\nilazaric version\n
+
+ilazaric version
+
 ------------------------------------------------------------
 Benchmark                  Time             CPU   Iterations
 ------------------------------------------------------------
-PathFormat               762 ns          762 ns       879027
-PathFormat               734 ns          734 ns       879027
-PathFormat               682 ns          682 ns       879027
-PathFormat               679 ns          678 ns       879027
-PathFormat               669 ns          669 ns       879027
-PathFormat               670 ns          670 ns       879027
-PathFormat               659 ns          659 ns       879027
-PathFormat               662 ns          662 ns       879027
-PathFormat               661 ns          661 ns       879027
-PathFormat               663 ns          662 ns       879027
-PathFormat_mean          684 ns          684 ns           10
-PathFormat_median        670 ns          670 ns           10
-PathFormat_stddev       35.2 ns         35.1 ns           10
-PathFormat_cv           5.15 %          5.14 %            10
-\njwakely  version\n
+PathFormat               646 ns          646 ns      1090257
+PathFormat               683 ns          683 ns      1090257
+PathFormat               677 ns          677 ns      1090257
+PathFormat               701 ns          701 ns      1090257
+PathFormat               729 ns          729 ns      1090257
+PathFormat               760 ns          760 ns      1090257
+PathFormat               694 ns          694 ns      1090257
+PathFormat               699 ns          699 ns      1090257
+PathFormat               700 ns          700 ns      1090257
+PathFormat               690 ns          690 ns      1090257
+PathFormat_mean          698 ns          698 ns           10
+PathFormat_median        697 ns          696 ns           10
+PathFormat_stddev       30.4 ns         30.4 ns           10
+PathFormat_cv           4.35 %          4.36 %            10
+
+jwakely version
+
 ------------------------------------------------------------
 Benchmark                  Time             CPU   Iterations
 ------------------------------------------------------------
-PathFormat               829 ns          829 ns       844926
-PathFormat               825 ns          824 ns       844926
-PathFormat               826 ns          826 ns       844926
-PathFormat               838 ns          838 ns       844926
-PathFormat               835 ns          835 ns       844926
-PathFormat               860 ns          860 ns       844926
-PathFormat               860 ns          860 ns       844926
-PathFormat               866 ns          866 ns       844926
-PathFormat               861 ns          861 ns       844926
-PathFormat               854 ns          854 ns       844926
-PathFormat_mean          845 ns          845 ns           10
-PathFormat_median        846 ns          846 ns           10
-PathFormat_stddev       16.4 ns         16.4 ns           10
-PathFormat_cv           1.94 %          1.94 %            10
+PathFormat               866 ns          866 ns       812673
+PathFormat               901 ns          901 ns       812673
+PathFormat               878 ns          878 ns       812673
+PathFormat               841 ns          841 ns       812673
+PathFormat               866 ns          866 ns       812673
+PathFormat               876 ns          876 ns       812673
+PathFormat               877 ns          877 ns       812673
+PathFormat               922 ns          922 ns       812673
+PathFormat               844 ns          844 ns       812673
+PathFormat               885 ns          884 ns       812673
+PathFormat_mean          876 ns          875 ns           10
+PathFormat_median        877 ns          876 ns           10
+PathFormat_stddev       24.2 ns         24.1 ns           10
+PathFormat_cv           2.76 %          2.75 %            10
