@@ -15,4 +15,14 @@ static void PathFormat(benchmark::State& state) {
 }
 BENCHMARK(PathFormat);
 
-BENCHMARK_MAIN();
+static void PathWideFormat(benchmark::State& state) {
+  std::filesystem::path p{"/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path"
+                          "/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path"
+                          "/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path"
+                          "/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path"
+                          "/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path"};
+  for (auto _ : state) {
+    benchmark::DoNotOptimize(std::format(L"{0}{0}{0}{0}{0}{0}{0}{0}{0}{0}{0}{0}", p));
+  }
+}
+BENCHMARK(PathWideFormat);

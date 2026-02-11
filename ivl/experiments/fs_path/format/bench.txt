@@ -1,40 +1,196 @@
+---------------------------------------------------------
+Benchmark               Time             CPU   Iterations
+---------------------------------------------------------
+PathFormat            708 ns          708 ns       977284
+PathWideFormat      16170 ns        16169 ns        38654
+PERF2BOLT: Starting data aggregation job for bench_format.ilazaric.data
+PERF2BOLT: spawning perf job to read branch events
+PERF2BOLT: spawning perf job to read mem events
+PERF2BOLT: spawning perf job to read process events
+PERF2BOLT: spawning perf job to read task events
+BOLT-INFO: Target architecture: x86_64
+BOLT-INFO: BOLT version: <unknown>
+BOLT-INFO: first alloc address is 0x400000
+BOLT-INFO: creating new program header table at address 0x600000, offset 0x200000
+BOLT-INFO: enabling relocation mode
+BOLT-INFO: enabling strict relocation mode for aggregation purposes
+BOLT-INFO: pre-processing profile using perf data aggregator
+PERF2BOLT: waiting for perf mmap events collection to finish...
+PERF2BOLT: parsing perf-script mmap events output
+PERF2BOLT: waiting for perf task events collection to finish...
+PERF2BOLT: parsing perf-script task events output
+PERF2BOLT: input binary is associated with 1 PID(s)
+PERF2BOLT: waiting for perf events collection to finish...
+PERF2BOLT: parse branch events...
+PERF2BOLT: read 6434 samples and 205885 LBR entries
+PERF2BOLT: 0 samples (0.0%) were ignored
+PERF2BOLT: traces mismatching disassembled function contents: 0 (0.0%)
+PERF2BOLT: out of range traces involving unknown regions: 40886 (20.5%)
+PERF2BOLT: waiting for perf mem events collection to finish...
+PERF2BOLT: processing branch events...
+PERF2BOLT: wrote 303 objects and 0 memory objects to bench_format.ilazaric.fdata
+BOLT-INFO: Target architecture: x86_64
+BOLT-INFO: BOLT version: <unknown>
+BOLT-INFO: first alloc address is 0x400000
+BOLT-INFO: creating new program header table at address 0x600000, offset 0x200000
+BOLT-INFO: enabling relocation mode
+BOLT-INFO: enabling lite mode
+BOLT-INFO: pre-processing profile using branch profile reader
+BOLT-INFO: 13 out of 283 functions in the binary (4.6%) have non-empty execution profile
+BOLT-INFO: profile for 1 objects was ignored
+BOLT-INFO: the input contains 14 (dynamic count : 2053) opportunities for macro-fusion optimization. Will fix instances on a hot path.
+BOLT-INFO: 1526 instructions were shortened
+BOLT-INFO: removed 225 empty blocks
+BOLT-INFO: basic block reordering modified layout of 11 functions (84.62% of profiled, 2.45% of total)
+BOLT-INFO: splitting separates 5982 hot bytes from 53279 cold bytes (10.09% of split functions is hot).
+BOLT-INFO: 1 Functions were reordered by LoopInversionPass
+BOLT-INFO: program-wide dynostats after all optimizations before SCTC and FOP:
+
+              151948 : executed forward branches
+               40550 : taken forward branches
+               33309 : executed backward branches
+               26167 : taken backward branches
+               13950 : executed unconditional branches
+               55395 : all function calls
+               14079 : indirect calls
+               12013 : PLT calls
+             1454874 : executed instructions
+              300997 : executed load instructions
+              290560 : executed store instructions
+                2066 : taken jump table branches
+                   0 : taken unknown indirect branches
+              199207 : total branches
+               80667 : taken branches
+              118540 : non-taken conditional branches
+               66717 : taken conditional branches
+              185257 : all conditional branches
+
+              154817 : executed forward branches (+1.9%)
+                 920 : taken forward branches (-97.7%)
+               30440 : executed backward branches (-8.6%)
+               25186 : taken backward branches (-3.7%)
+                1080 : executed unconditional branches (-92.3%)
+               55395 : all function calls (=)
+               14079 : indirect calls (=)
+               12013 : PLT calls (=)
+             1444307 : executed instructions (-0.7%)
+              300997 : executed load instructions (=)
+              290560 : executed store instructions (=)
+                2066 : taken jump table branches (=)
+                   0 : taken unknown indirect branches (=)
+              186337 : total branches (-6.5%)
+               27186 : taken branches (-66.3%)
+              159151 : non-taken conditional branches (+34.3%)
+               26106 : taken conditional branches (-60.9%)
+              185257 : all conditional branches (=)
+
+BOLT-INFO: padding code to 0xa00000 to accommodate hot text
+BOLT-INFO: setting _end to 0xa051f0
+BOLT-INFO: setting __hot_start to 0x800000
+BOLT-INFO: setting __hot_end to 0x8017d6
+---------------------------------------------------------
+Benchmark               Time             CPU   Iterations
+---------------------------------------------------------
+PathFormat           1087 ns         1086 ns       614824
+PathWideFormat      16592 ns        16585 ns        42234
+PERF2BOLT: Starting data aggregation job for bench_format.jwakely.data
+PERF2BOLT: spawning perf job to read branch events
+PERF2BOLT: spawning perf job to read mem events
+PERF2BOLT: spawning perf job to read process events
+PERF2BOLT: spawning perf job to read task events
+BOLT-INFO: Target architecture: x86_64
+BOLT-INFO: BOLT version: <unknown>
+BOLT-INFO: first alloc address is 0x400000
+BOLT-INFO: creating new program header table at address 0x600000, offset 0x200000
+BOLT-INFO: enabling relocation mode
+BOLT-INFO: enabling strict relocation mode for aggregation purposes
+BOLT-INFO: pre-processing profile using perf data aggregator
+PERF2BOLT: waiting for perf mmap events collection to finish...
+PERF2BOLT: parsing perf-script mmap events output
+PERF2BOLT: waiting for perf task events collection to finish...
+PERF2BOLT: parsing perf-script task events output
+PERF2BOLT: input binary is associated with 1 PID(s)
+PERF2BOLT: waiting for perf events collection to finish...
+PERF2BOLT: parse branch events...
+PERF2BOLT: read 6783 samples and 217054 LBR entries
+PERF2BOLT: 0 samples (0.0%) were ignored
+PERF2BOLT: traces mismatching disassembled function contents: 0 (0.0%)
+PERF2BOLT: out of range traces involving unknown regions: 52522 (25.0%)
+PERF2BOLT: waiting for perf mem events collection to finish...
+PERF2BOLT: processing branch events...
+PERF2BOLT: wrote 363 objects and 0 memory objects to bench_format.jwakely.fdata
+BOLT-INFO: Target architecture: x86_64
+BOLT-INFO: BOLT version: <unknown>
+BOLT-INFO: first alloc address is 0x400000
+BOLT-INFO: creating new program header table at address 0x600000, offset 0x200000
+BOLT-INFO: enabling relocation mode
+BOLT-INFO: enabling lite mode
+BOLT-INFO: pre-processing profile using branch profile reader
+BOLT-INFO: 20 out of 285 functions in the binary (7.0%) have non-empty execution profile
+BOLT-INFO: profile for 1 objects was ignored
+BOLT-INFO: the input contains 14 (dynamic count : 0) opportunities for macro-fusion optimization. Will fix instances on a hot path.
+BOLT-INFO: 1744 instructions were shortened
+BOLT-INFO: removed 252 empty blocks
+BOLT-INFO: basic block reordering modified layout of 17 functions (85.00% of profiled, 3.77% of total)
+BOLT-INFO: splitting separates 7842 hot bytes from 69745 cold bytes (10.11% of split functions is hot).
+BOLT-INFO: 2 Functions were reordered by LoopInversionPass
+BOLT-INFO: program-wide dynostats after all optimizations before SCTC and FOP:
+
+              150222 : executed forward branches
+               28463 : taken forward branches
+               38223 : executed backward branches
+               31006 : taken backward branches
+                9634 : executed unconditional branches
+               60372 : all function calls
+               13357 : indirect calls
+               11476 : PLT calls
+             1631264 : executed instructions
+              344490 : executed load instructions
+              374866 : executed store instructions
+                1881 : taken jump table branches
+                   0 : taken unknown indirect branches
+              198079 : total branches
+               69103 : taken branches
+              128976 : non-taken conditional branches
+               59469 : taken conditional branches
+              188445 : all conditional branches
+
+              157697 : executed forward branches (+5.0%)
+                 704 : taken forward branches (-97.5%)
+               30748 : executed backward branches (-19.6%)
+               28891 : taken backward branches (-6.8%)
+                 738 : executed unconditional branches (-92.3%)
+               60372 : all function calls (=)
+               13357 : indirect calls (=)
+               11476 : PLT calls (=)
+             1622441 : executed instructions (-0.5%)
+              344490 : executed load instructions (=)
+              374866 : executed store instructions (=)
+                1881 : taken jump table branches (=)
+                   0 : taken unknown indirect branches (=)
+              189183 : total branches (-4.5%)
+               30333 : taken branches (-56.1%)
+              158850 : non-taken conditional branches (+23.2%)
+               29595 : taken conditional branches (-50.2%)
+              188445 : all conditional branches (=)
+
+BOLT-INFO: padding code to 0xa00000 to accommodate hot text
+BOLT-INFO: setting _end to 0xa059ac
+BOLT-INFO: setting __hot_start to 0x800000
+BOLT-INFO: setting __hot_end to 0x801f7d
 
 ilazaric version
 
-------------------------------------------------------------
-Benchmark                  Time             CPU   Iterations
-------------------------------------------------------------
-PathFormat               646 ns          646 ns      1090257
-PathFormat               683 ns          683 ns      1090257
-PathFormat               677 ns          677 ns      1090257
-PathFormat               701 ns          701 ns      1090257
-PathFormat               729 ns          729 ns      1090257
-PathFormat               760 ns          760 ns      1090257
-PathFormat               694 ns          694 ns      1090257
-PathFormat               699 ns          699 ns      1090257
-PathFormat               700 ns          700 ns      1090257
-PathFormat               690 ns          690 ns      1090257
-PathFormat_mean          698 ns          698 ns           10
-PathFormat_median        697 ns          696 ns           10
-PathFormat_stddev       30.4 ns         30.4 ns           10
-PathFormat_cv           4.35 %          4.36 %            10
+---------------------------------------------------------
+Benchmark               Time             CPU   Iterations
+---------------------------------------------------------
+PathFormat            660 ns          660 ns      1024048
+PathWideFormat      16121 ns        16118 ns        42476
 
 jwakely version
 
-------------------------------------------------------------
-Benchmark                  Time             CPU   Iterations
-------------------------------------------------------------
-PathFormat               866 ns          866 ns       812673
-PathFormat               901 ns          901 ns       812673
-PathFormat               878 ns          878 ns       812673
-PathFormat               841 ns          841 ns       812673
-PathFormat               866 ns          866 ns       812673
-PathFormat               876 ns          876 ns       812673
-PathFormat               877 ns          877 ns       812673
-PathFormat               922 ns          922 ns       812673
-PathFormat               844 ns          844 ns       812673
-PathFormat               885 ns          884 ns       812673
-PathFormat_mean          876 ns          875 ns           10
-PathFormat_median        877 ns          876 ns           10
-PathFormat_stddev       24.2 ns         24.1 ns           10
-PathFormat_cv           2.76 %          2.75 %            10
+---------------------------------------------------------
+Benchmark               Time             CPU   Iterations
+---------------------------------------------------------
+PathFormat            934 ns          934 ns       756790
+PathWideFormat      16093 ns        16090 ns        43817
