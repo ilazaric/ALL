@@ -27,12 +27,10 @@ do
               -reorder-blocks=ext-tsp -reorder-functions=cdsort -split-functions -split-all-cold -split-eh -dyno-stats
 done
 
-rm bench.txt
-
 for version in ${versions[@]}
 do
     echo
     echo "$version version"
     echo
     taskset -c 1 ./bench_format.$version.bolt --benchmark_min_warmup_time=2 --benchmark_repetitions=10
-done >> bench.txt
+done > bench.txt
