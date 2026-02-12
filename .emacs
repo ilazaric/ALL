@@ -111,3 +111,18 @@ Removes LaTeX preview overlays in region or entire buffer."
 ;; save temporaries in ~/.emacs.d/auto-save/ instead alongside
 (setq auto-save-file-name-transforms
           `((".*" ,(concat user-emacs-directory "auto-save/") t))) 
+
+
+
+;; (require 'whitespace)
+;; (setq whitespace-line-column 80) ;; limit line length
+;; (setq whitespace-style '(face lines-tail))
+
+;; (add-hook 'prog-mode-hook 'whitespace-mode)
+
+
+
+;; (setq-default indent-tabs-mode t)
+;; (setq-default tab-width 8) ; Assuming you want your tabs to be four spaces wide
+;; (defvaralias 'c-basic-offset 'tab-width)
+
