@@ -36,9 +36,8 @@ consteval search_result_t find_main_declarations() {
 
   auto decl = ivl_main_decls[0];
   auto params = parameters_of(decl);
-  if (params.size() != 1)
-    throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
-  
+  if (params.size() != 1) throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
+
   res.main_type = ^^int(int, char**);
   res.ivl_main_arg_type = decay(type_of(params[0]));
   res.emit_main = true;
@@ -47,16 +46,18 @@ consteval search_result_t find_main_declarations() {
 
 constexpr search_result_t search_result = find_main_declarations();
 
-[: search_result.main_type :] main;
+[:search_result.main_type:] main;
 
-template<typename arg_t>
+template <typename arg_t>
 int wrap_ivl_main(int argc, char** argv) {
   arg_t arg;
 
   auto store = [&](std::string_view name, std::string_view value) {
-    template for (constexpr auto member : std::define_static_array(nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked()))) {
+    template for (constexpr auto member : std::define_static_array(
+                    nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
+                  )) {
       if (name == identifier_of(member)) {
-        arg. [: member :] = value;
+        arg.[:member:] = value;
         return;
       }
     }
@@ -77,11 +78,11 @@ int wrap_ivl_main(int argc, char** argv) {
     store(arg.substr(2), argv[i + 1]);
     ++i;
   }
-    
+
   return ivl_main(arg);
 }
 
-template<bool use_ivl, typename arg_t>
+template <bool use_ivl, typename arg_t>
 int main_template(int argc, char** argv) {
   if constexpr (use_ivl) {
     return wrap_ivl_main<arg_t>(argc, argv);
@@ -92,13 +93,13 @@ int main_template(int argc, char** argv) {
 
 namespace {
 namespace hide_decl {
-int main(int, char**);
+  int main(int, char**);
 } // namespace hide_decl
 } // namespace
 
-int [: search_result.emit_main ? ^^:: : ^^hide_decl :] :: main(int argc, char** argv) {
+int[:search_result.emit_main ? ^^:: : ^^hide_decl:] ::main(int argc, char** argv) {
   return main_template<
-    search_result.emit_main,
-    typename [: search_result.emit_main ? search_result.ivl_main_arg_type : ^^void :]
-  >(argc, argv);
+    search_result.emit_main, typename[:search_result.emit_main ? search_result.ivl_main_arg_type : ^^void:]>(
+    argc, argv
+  );
 }
