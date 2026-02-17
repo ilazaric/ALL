@@ -14,6 +14,8 @@
 
 #include <print>
 
+using namespace std::literals::string_view_literals;
+
 // minimized example of libstdc++ constexpr std::set issues
 struct NodeBase {
   int data;
@@ -96,6 +98,9 @@ constexpr std::string format_mountain() {
   EXPAND_CNTRS(1, 2, 3, 4);
   // EXPAND_CNTRS(4.1f, 5.2f, 6.3f);
   EXPAND_CNTRS(std::vector{1, 2}, std::vector{3}, std::vector{4, 5, 6});
+
+  FMT(std::pair{123, std::pair{nullptr, "foo bar"sv}});
+  FMT(std::tuple{123, nullptr, "foo bar"sv});
 
   NO(std::map<int, int>{});
   NO(std::map<int, int>{{1, 1}, {2, 2}, {3, 3}});
