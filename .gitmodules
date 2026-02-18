@@ -7,7 +7,7 @@
 	branch = ivl_nrvo
 [submodule "submodules/gcc"]
 	path = submodules/gcc
-	url = git://gcc.gnu.org/git/gcc.git
+	url = git@github.com:ilazaric/gcc.git
 	branch = master
 [submodule "submodules/emsdk"]
 	path = submodules/emsdk
