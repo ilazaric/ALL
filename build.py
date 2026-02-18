@@ -81,7 +81,7 @@ def deduce_file_targets(path):
     if file_has_test_variant:
         all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
     if file_has_reg_variant:
-        all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
+        all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/ivl_main_handler"], unordered_dependencies)
 
 for dirpath, _, filenames in src.walk():
     for filename in filenames:
