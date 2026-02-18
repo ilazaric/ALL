@@ -41,55 +41,66 @@
     to initialize the variable
  */
 
+// :'(
+#ifndef __cpp_exceptions
+#define throw [] { asm(""); }(),
+#define catch(...) if not consteval
+#define try
+#define exception(...) exception("", {})
+#endif
+
 namespace ivl::main_synthesis {
 // TODO: allow `const char*` ?
-consteval void validate_arg(const std::meta::info arg) try {
-  auto ti = dealias(arg);
+consteval void validate_arg(const std::meta::info arg) {
+  try {
+    auto ti = dealias(arg);
 
-  auto check_plain = [](std::meta::info ti) {
-    if (is_reference_type(ti)) throw std::meta::exception("cannot parse reference types", {});
-    if (is_pointer_type(ti)) throw std::meta::exception("cannot parse pointer types", {});
-    if (is_array_type(ti)) throw std::meta::exception("cannot parse array types", {});
-    if (is_const(ti)) throw std::meta::exception("cannot parse const types", {});
-    if (is_volatile(ti)) throw std::meta::exception("cannot parse volatile types", {});
-    if (is_same_type(ti, ^^std::optional<bool>)) throw std::meta::exception("bool cannot be optional-wrapped", {});
-  };
+    auto check_plain = [](std::meta::info ti) {
+      if (is_reference_type(ti)) throw std::meta::exception("cannot parse reference types", {});
+      if (is_pointer_type(ti)) throw std::meta::exception("cannot parse pointer types", {});
+      if (is_array_type(ti)) throw std::meta::exception("cannot parse array types", {});
+      if (is_const(ti)) throw std::meta::exception("cannot parse const types", {});
+      if (is_volatile(ti)) throw std::meta::exception("cannot parse volatile types", {});
+      if (is_same_type(ti, ^^std::optional<bool>)) throw std::meta::exception("bool cannot be optional-wrapped", {});
+    };
 
-  check_plain(ti);
+    check_plain(ti);
 
-  auto is_simple = [](std::meta::info ti) {
-    return is_floating_point_type(ti) || is_integral_type(ti) || is_enum_type(ti) || is_same_type(ti, ^^std::string) ||
-           is_same_type(ti, ^^std::string_view) || is_same_type(ti, ^^std::filesystem::path);
-  };
+    auto is_simple = [](std::meta::info ti) {
+      return is_floating_point_type(ti) || is_integral_type(ti) || is_enum_type(ti) ||
+             is_same_type(ti, ^^std::string) || is_same_type(ti, ^^std::string_view) ||
+             is_same_type(ti, ^^std::filesystem::path);
+    };
 
-  if (is_simple(ti)) return;
+    if (is_simple(ti)) return;
 
-  if (ti == ^^std::optional<bool>) throw std::meta::exception("bool cannot be optional-wrapped", {});
+    if (ti == ^^std::optional<bool>) throw std::meta::exception("bool cannot be optional-wrapped", {});
 
-  if (has_template_arguments(ti) && template_of(ti) == ^^std::optional) {
-    auto opti = template_arguments_of(ti)[0];
-    check_plain(opti);
-    if (is_simple(opti)) return;
-  }
-
-  if (!is_class_type(ti) || ivl::reflection::is_child_of(ti, ^^std))
-    throw std::meta::exception("cannot handle this type", {});
-
-  for (auto member : nonstatic_data_members_of(ti, std::meta::access_context::unchecked())) try {
-      if (is_private(member)) throw std::meta::exception("member cannot be private", {});
-      if (is_protected(member)) throw std::meta::exception("member cannot be protected", {});
-      validate_arg(type_of(member));
-    } catch (const std::meta::exception& e) {
-      throw std::meta::exception(
-        std::format("while validating member variable `{}`\n{}", display_string_of(member), e.what()), e.from(),
-        e.where()
-      );
+    if (has_template_arguments(ti) && template_of(ti) == ^^std::optional) {
+      auto opti = template_arguments_of(ti)[0];
+      check_plain(opti);
+      if (is_simple(opti)) return;
     }
-} catch (const std::meta::exception& e) {
-  throw std::meta::exception(
-    std::format("while validating type `{}`\n{}", ivl::reflection::display_string_of(arg), e.what()), e.from(),
-    e.where()
-  );
+
+    if (!is_class_type(ti) || ivl::reflection::is_child_of(ti, ^^std))
+      throw std::meta::exception("cannot handle this type", {});
+
+    for (auto member : nonstatic_data_members_of(ti, std::meta::access_context::unchecked())) try {
+        if (is_private(member)) throw std::meta::exception("member cannot be private", {});
+        if (is_protected(member)) throw std::meta::exception("member cannot be protected", {});
+        validate_arg(type_of(member));
+      } catch (const std::meta::exception& e) {
+        throw std::meta::exception(
+          std::format("while validating member variable `{}`\n{}", display_string_of(member), e.what()), e.from(),
+          e.where()
+        );
+      }
+  } catch (const std::meta::exception& e) {
+    throw std::meta::exception(
+      std::format("while validating type `{}`\n{}", ivl::reflection::display_string_of(arg), e.what()), e.from(),
+      e.where()
+    );
+  }
 }
 
 struct search_result_t {
