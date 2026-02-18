@@ -4,5 +4,5 @@
 #include <vector>
 
 consteval {
-  (void)std::format("{}", std::vector<int>{});
+  (void)std::format("{}", std::tuple<>{});
 }
