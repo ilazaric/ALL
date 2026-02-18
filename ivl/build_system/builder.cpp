@@ -107,9 +107,15 @@ struct pp_info_t {
     cxx_cfg.argv = cfg.argv;
     cxx_cfg.envp = cfg.envp;
 
+    auto src = file;
+    while (src.filename() != "source_copy") src = src.parent_path();
+
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
     cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back(file);
+    cxx_cfg.argv.push_back(std::format("-DIVL_FILE=\"{}\"", file.lexically_relative(src)));
+    cxx_cfg.argv.push_back("-include");
+    cxx_cfg.argv.push_back("ivl/reflection/test_runner");
     cxx_cfg.argv.push_back("/dev/null");
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
@@ -320,6 +326,7 @@ int main(int argc, char* argv[], char* envp[]) {
   std::map<std::filesystem::path, std::vector<std::filesystem::path>> nested_targets;
   for (auto&& file : find_sources(build_dir / "source_copy")) {
     auto target = "/" / file.lexically_relative(build_dir / "source_copy");
+    if (target == "/ivl/reflection/test_runner.hpp") continue;
     target.replace_extension();
     const auto& self_target = nested_targets[target];
     while (true) {
@@ -354,6 +361,10 @@ int main(int argc, char* argv[], char* envp[]) {
       if (kind == target_t::kind_t::REGULAR && file.extension() != ".cpp") continue;
       // TODO
       if (kind == target_t::kind_t::TEST && file.extension() != ".hpp") continue;
+      if (kind == target_t::kind_t::TEST &&
+          std::ranges::find(pp.files, build_dir / "include_dirs/regular/ivl/reflection/test_attribute") ==
+            pp.files.end())
+        continue;
       targets.emplace(file, kind);
     }
   }
