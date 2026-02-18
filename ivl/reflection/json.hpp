@@ -92,9 +92,8 @@ RetT from_to_json_impl(const InputT& arg) {
     // static_assert(false, display_string_of(^^T));
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = nlohmann::json::object();
-    [:substitute(
-        ^^reflection::foreach, reflection::wrap(nonstatic_data_members_of(^^T, std::meta::access_context::unchecked()))
-      ):]()([&]<std::meta::info member> {
+    template for (constexpr auto member :
+                  define_static_array(nonstatic_data_members_of(^^T, std::meta::access_context::unchecked()))) {
       if constexpr (Direction == TO) {
         ret.emplace(
           identifier_of(member),
@@ -108,7 +107,7 @@ RetT from_to_json_impl(const InputT& arg) {
                                                     !annotations_of_with_type(member, ^^json_serialize_as_array_t)
                                                        .empty()>(arg[identifier_of(member)]);
       }
-    });
+    }
     return ret;
   } else {
     static_assert(false, display_string_of(^^T));
