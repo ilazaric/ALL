@@ -75,6 +75,7 @@ struct safe_config {
                         const std::filesystem::path& out) {
     safe_config ret;
     // TODO
+    throw;
   }
 
 // We have multiple phases:
@@ -129,7 +130,7 @@ safe_process safe_start(
     detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
     detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
 
-    linux::terminate_syscalls::mount("tmpfs", (char*)root.c_str(), "tmpfs", 0, /*size={} could go here*/ nullptr);
+    linux::terminate_syscalls::mount((char*)"tmpfs", (char*)root.c_str(), (char*)"tmpfs", 0, /*size={} could go here*/ nullptr);
     tmpfsfd =
       ivl::linux::owned_file_descriptor{(int)linux::terminate_syscalls::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0)};
 

@@ -130,7 +130,7 @@ inline owned_file_descriptor create_tmpfs() {
       }
 
       raw_syscalls::ivl_start_logging();
-      auto mount_ret = raw_syscalls::mount("tmpfs", "/proc", "tmpfs", 0, (void*)"mode=777,uid=0,gid=0");
+      auto mount_ret = raw_syscalls::mount((char*)"tmpfs", (char*)"/proc", (char*)"tmpfs", 0, (void*)"mode=777,uid=0,gid=0");
       raw_syscalls::ivl_stop_logging();
       if (mount_ret < 0) {
         outcome.syscall_return = mount_ret;
