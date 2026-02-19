@@ -1,4 +1,5 @@
 #include "evil_lexically_normal.hpp"
+#include "sane_lexically_normal.hpp"
 #include <benchmark/benchmark.h>
 
 static void PathConstruction(benchmark::State& state) {
@@ -40,3 +41,13 @@ static void EvilPathNormalization(benchmark::State& state) {
   }
 }
 BENCHMARK(EvilPathNormalization);
+
+static void SanePathNormalization(benchmark::State& state) {
+  // Code inside this loop is measured repeatedly
+  for (auto _ : state) {
+    std::filesystem::path p{"/home/dotdot/some/dot/really/dotdot/dot/dotdot/long/path/"};
+    // Make sure the variable is not optimized away by compiler
+    benchmark::DoNotOptimize(impl_sane::lexically_normal(p));
+  }
+}
+BENCHMARK(SanePathNormalization);

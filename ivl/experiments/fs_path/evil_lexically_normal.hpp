@@ -290,7 +290,6 @@ path lexically_normal(const path& self) {
       callback(pieces[i]->_M_pathname);
     }
     if (last_dot && !pieces.empty()) callback("/"sv);
-    if (ret._M_pathname.empty()) callback("."sv);
   };
 
   size_t total = 0;
