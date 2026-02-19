@@ -56,10 +56,6 @@ jobs:
       run: |
         git submodule update --init --depth=1 -- submodules/nlohmann-json
 
-    # - name: fetch spoj
-    #   run: |
-    #     git submodule update --init --depth=1 -- ivl/spoj
-
     - name: get gcc commit
       id: get-gcc-commit
       run: |
@@ -84,6 +80,45 @@ jobs:
       
     - name: build
       run: CXXVER=26 ./build.py /build_system /linux /process
+
+  build2:
+    needs: build-gcc
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: install apt packages
+      run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+
+    - uses: webfactory/ssh-agent@v0.9.1
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: fetch nlohmann json
+      run: |
+        git submodule update --init --depth=1 -- submodules/nlohmann-json
+
+    - name: get gcc commit
+      id: get-gcc-commit
+      run: |
+        echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: restore gcc install
+      uses: actions/cache/restore@v5
+      id: cache-gcc
+      with:
+        path: /opt/GCC
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        fail-on-cache-miss: true
+
+    - name: activate gcc
+      run: |
+        echo "/opt/GCC/bin" >> $GITHUB_PATH
+        echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
+
+    - name: validate gcc
+      run: echo | g++ -xc++ -E --verbose -
 
     - name: build2
       run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process
