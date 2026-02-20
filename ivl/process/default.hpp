@@ -6,8 +6,13 @@
 #include <string>
 #include <vector>
 
+#include <ivl/exception>
+#include <ivl/linux/file_descriptor>
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
+#include <ivl/linux/terminate_syscalls>
+#include <ivl/linux/throwing_syscalls>
+#include <ivl/linux/utils>
 #include <ivl/logger>
 
 namespace ivl {
@@ -151,6 +156,84 @@ struct process_config {
       return linux::or_syscall_error<process>(actual_err);
     }
     return linux::or_syscall_error<process>(ret);
+  }
+};
+
+// stdin = /dev/null
+// stdout = memfd_create
+// stderr left alone
+struct process_function {
+  std::filesystem::path pathname;
+  std::vector<std::string> argv;
+  std::vector<std::string> envp;
+
+  std::string operator()(auto&&... args) const {
+    auto str_args = std::array{std::format("{}", args)...};
+    std::vector<const char*> pass_args(argv.size() + str_args.size() + 2, nullptr);
+    pass_args[0] = pathname.c_str();
+    for (size_t i = 0; i < argv.size(); ++i) pass_args[i + 1] = argv[i].c_str();
+    for (size_t i = 0; i < str_args.size(); ++i) pass_args[i + argv.size() + 1] = str_args[i].c_str();
+    EXCEPTION_CONTEXT(
+      "pathname={} argv={} envp={}", pathname, std::span(pass_args).subspan(1).first(pass_args.size() - 2), envp
+    );
+    std::vector<const char*> pass_envp(envp.size() + 1, nullptr);
+    for (size_t i = 0; i < envp.size(); ++i) pass_envp[i] = envp[i].c_str();
+
+    linux::owned_file_descriptor stdoutfd(linux::throwing_syscalls::memfd_create("process-output", 0));
+
+    long actual_err = 0;
+    struct exec_args_t {
+      const char* pathname;
+      const char* const* argv;
+      const char* const* envp;
+      pid_t ppid;
+      int stdoutfd;
+    };
+    exec_args_t exec_args{
+      .pathname = pathname.c_str(),
+      .argv = pass_args.data(),
+      .envp = pass_envp.data(),
+      .ppid = (pid_t)linux::throwing_syscalls::getpid(),
+      .stdoutfd = stdoutfd.get(),
+    };
+    alignas(16) char stack[1ULL << 12];
+
+    clone_args clone3_args{
+      // TODO: https://ewontfix.com/7/
+      .flags = CLONE_CLEAR_SIGHAND | CLONE_VM | CLONE_VFORK,
+      .pidfd{},
+      .child_tid{},
+      .parent_tid{},
+      .exit_signal = SIGCHLD,
+      .stack = reinterpret_cast<uintptr_t>(&stack[0]),
+      .stack_size = sizeof(stack),
+      .tls{},
+      .set_tid{},
+      .set_tid_size{},
+      .cgroup{},
+    };
+    auto pid = linux::throwing_syscalls::fat_clone3(
+      &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
+        auto& exec_args = *static_cast<exec_args_t*>(child_arg);
+        linux::terminate_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+        if (linux::terminate_syscalls::getppid() != exec_args.ppid) linux::raw_syscalls::exit_group(1);
+        if (exec_args.stdoutfd != 1) {
+          linux::terminate_syscalls::dup2(exec_args.stdoutfd, 1);
+          linux::terminate_syscalls::close(exec_args.stdoutfd);
+        }
+        auto dev_null = linux::terminate_syscalls::open("/dev/null", O_RDONLY, 0);
+        if (dev_null != 0) {
+          linux::terminate_syscalls::dup2(dev_null, 0);
+          linux::terminate_syscalls::close(dev_null);
+        }
+        linux::terminate_syscalls::execve(exec_args.pathname, exec_args.argv, exec_args.envp);
+      }
+    );
+
+    int wstatus;
+    auto ret = linux::throwing_syscalls::wait4(pid, &wstatus, 0, nullptr);
+    if (wstatus != 0) throw ivl::base_exception(std::format("process exited with status {}", ret));
+    return linux::read_file(stdoutfd);
   }
 };
 
