@@ -168,6 +168,7 @@ struct process_function {
   std::vector<std::string> envp;
 
   std::string operator()(auto&&... args) const {
+    namespace sys = linux::throwing_syscalls;
     auto str_args = std::array{std::format("{}", args)...};
     std::vector<const char*> pass_args(argv.size() + str_args.size() + 2, nullptr);
     pass_args[0] = pathname.c_str();
@@ -179,7 +180,7 @@ struct process_function {
     std::vector<const char*> pass_envp(envp.size() + 1, nullptr);
     for (size_t i = 0; i < envp.size(); ++i) pass_envp[i] = envp[i].c_str();
 
-    linux::owned_file_descriptor stdoutfd(linux::throwing_syscalls::memfd_create("process-output", 0));
+    linux::owned_file_descriptor stdoutfd(sys::memfd_create("process-output", 0));
 
     long actual_err = 0;
     struct exec_args_t {
@@ -193,7 +194,7 @@ struct process_function {
       .pathname = pathname.c_str(),
       .argv = pass_args.data(),
       .envp = pass_envp.data(),
-      .ppid = (pid_t)linux::throwing_syscalls::getpid(),
+      .ppid = (pid_t)sys::getpid(),
       .stdoutfd = stdoutfd.get(),
     };
     alignas(16) char stack[1ULL << 12];
@@ -212,26 +213,27 @@ struct process_function {
       .set_tid_size{},
       .cgroup{},
     };
-    auto pid = linux::throwing_syscalls::fat_clone3(
+    auto pid = sys::fat_clone3(
       &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
+        namespace sys = linux::terminate_syscalls;
         auto& exec_args = *static_cast<exec_args_t*>(child_arg);
-        linux::terminate_syscalls::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
-        if (linux::terminate_syscalls::getppid() != exec_args.ppid) linux::raw_syscalls::exit_group(1);
+        sys::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+        if (sys::getppid() != exec_args.ppid) sys::exit_group(1);
         if (exec_args.stdoutfd != 1) {
-          linux::terminate_syscalls::dup2(exec_args.stdoutfd, 1);
-          linux::terminate_syscalls::close(exec_args.stdoutfd);
+          sys::dup2(exec_args.stdoutfd, 1);
+          sys::close(exec_args.stdoutfd);
         }
-        auto dev_null = linux::terminate_syscalls::open("/dev/null", O_RDONLY, 0);
+        auto dev_null = sys::open("/dev/null", O_RDONLY, 0);
         if (dev_null != 0) {
-          linux::terminate_syscalls::dup2(dev_null, 0);
-          linux::terminate_syscalls::close(dev_null);
+          sys::dup2(dev_null, 0);
+          sys::close(dev_null);
         }
-        linux::terminate_syscalls::execve(exec_args.pathname, exec_args.argv, exec_args.envp);
+        sys::execve(exec_args.pathname, exec_args.argv, exec_args.envp);
       }
     );
 
     int wstatus;
-    auto ret = linux::throwing_syscalls::wait4(pid, &wstatus, 0, nullptr);
+    auto ret = sys::wait4(pid, &wstatus, 0, nullptr);
     if (wstatus != 0) throw ivl::base_exception(std::format("process exited with status {}", ret));
     return linux::read_file(stdoutfd);
   }
