@@ -14,7 +14,7 @@
 
 namespace ivl {
 
-  struct base_exception {
+  struct base_exception : std::exception {
     struct detail_handle {
       base_exception* ptr;
       int idx;
@@ -32,6 +32,7 @@ namespace ivl {
     std::string throw_text;
     std::source_location throw_location;
     std::vector<context> added_context;
+    mutable std::unique_ptr<std::string> cached_what;
 
     base_exception(
       std::string_view throw_text = "", std::source_location throw_location = std::source_location::current()
@@ -61,6 +62,28 @@ namespace ivl {
         );
         if (!ctx.text.empty()) std::println(stream, " | | text: {}", ctx.text);
       }
+    }
+
+    virtual const char* what() const noexcept {
+      if (cached_what) return cached_what->c_str();
+      std::string what;
+      auto out = std::back_inserter(what);
+      out = std::format_to(
+        out, "ivl::base_exception thrown from {}:{}:`{}`\n",
+        throw_location.file_name(),
+        throw_location.line(),
+        throw_location.function_name()
+      );
+      if (!throw_text.empty()) out = std::format_to(out, " | text: {}\n", throw_text);
+      for (auto&& ctx : added_context) {
+        out = std::format_to(
+          out, " | added context from {}:'{}':{}\n", ctx.location.file_name(), ctx.location.function_name(),
+          ctx.location.line()
+        );
+        if (!ctx.text.empty()) out = std::format_to(out, " | | text: {}\n", ctx.text);
+      }
+      cached_what = std::make_unique<std::string>(std::move(what));
+      return cached_what->c_str();
     }
   };
 
