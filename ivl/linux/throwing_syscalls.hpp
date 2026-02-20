@@ -5,6 +5,7 @@
 #include <ivl/linux/raw_syscalls>
 #include <string>
 #include <utility>
+#include <type_traits>
 
 namespace ivl::linux::throwing_syscalls {
 
@@ -21,19 +22,19 @@ namespace {
     } else if constexpr (std::is_same_v<T, char*> || std::is_same_v<T, const char*>) {
       return arg;
     } else {
-      return static_cast<const void*>(arg);
+      return reinterpret_cast<const void*>(arg);
     }
   }
 } // namespace
 
 // TODO: join up this with raw_syscalls X macro shenanigans
 #define X_PARAMS0()
-#define X_PARAMS1(t1, a1) t1 a1
-#define X_PARAMS2(t1, a1, ...) t1 a1, X_PARAMS1(__VA_ARGS__)
-#define X_PARAMS3(t1, a1, ...) t1 a1, X_PARAMS2(__VA_ARGS__)
-#define X_PARAMS4(t1, a1, ...) t1 a1, X_PARAMS3(__VA_ARGS__)
-#define X_PARAMS5(t1, a1, ...) t1 a1, X_PARAMS4(__VA_ARGS__)
-#define X_PARAMS6(t1, a1, ...) t1 a1, X_PARAMS5(__VA_ARGS__)
+#define X_PARAMS1(t1, a1) std::type_identity_t<t1> a1
+#define X_PARAMS2(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS1(__VA_ARGS__)
+#define X_PARAMS3(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS2(__VA_ARGS__)
+#define X_PARAMS4(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS3(__VA_ARGS__)
+#define X_PARAMS5(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS4(__VA_ARGS__)
+#define X_PARAMS6(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS5(__VA_ARGS__)
 
 #define X_CARGS0(P)
 #define X_CARGS1(P, t1, a1) P(a1)
@@ -58,10 +59,12 @@ namespace {
     X_FARGS##N(__VA_ARGS__);                                                                                           \
     auto ret = ::ivl::linux::raw_syscalls::name(X_CARGS##N(X_ID __VA_OPT__(, ) __VA_ARGS__));                          \
     if (ret < 0) {                                                                                                     \
-      throw ivl::base_exception{std::format("Syscall `" #name "` failed with error code {}", ret)};                    \
+      throw ivl::base_exception{std::format("syscall `" #name "` failed with error code {}", ret)};                    \
     }                                                                                                                  \
     return ret;                                                                                                        \
   }
+
+#include <ivl/linux/syscall_arguments_fat_clone3_X>
 
 #include <ivl/linux/syscall_arguments_X>
 

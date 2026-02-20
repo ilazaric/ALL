@@ -2,18 +2,19 @@
 
 #include <ivl/linux/raw_syscalls>
 #include <ivl/logger>
+#include <type_traits>
 
 // If an error occurs, log it and abort process.
 
 namespace ivl::linux::terminate_syscalls {
 // TODO: join up this with raw_syscalls X macro shenanigans
 #define X_PARAMS0()
-#define X_PARAMS1(t1, a1) t1 a1
-#define X_PARAMS2(t1, a1, ...) t1 a1, X_PARAMS1(__VA_ARGS__)
-#define X_PARAMS3(t1, a1, ...) t1 a1, X_PARAMS2(__VA_ARGS__)
-#define X_PARAMS4(t1, a1, ...) t1 a1, X_PARAMS3(__VA_ARGS__)
-#define X_PARAMS5(t1, a1, ...) t1 a1, X_PARAMS4(__VA_ARGS__)
-#define X_PARAMS6(t1, a1, ...) t1 a1, X_PARAMS5(__VA_ARGS__)
+#define X_PARAMS1(t1, a1) std::type_identity_t<t1> a1
+#define X_PARAMS2(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS1(__VA_ARGS__)
+#define X_PARAMS3(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS2(__VA_ARGS__)
+#define X_PARAMS4(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS3(__VA_ARGS__)
+#define X_PARAMS5(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS4(__VA_ARGS__)
+#define X_PARAMS6(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS5(__VA_ARGS__)
 
 #define X_CARGS0()
 #define X_CARGS1(t1, a1) a1
@@ -33,6 +34,8 @@ namespace ivl::linux::terminate_syscalls {
     }                                                                                                                  \
     return ret;                                                                                                        \
   }
+
+#include <ivl/linux/syscall_arguments_fat_clone3_X>
 
 #include <ivl/linux/syscall_arguments_X>
 
