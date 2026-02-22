@@ -10,7 +10,8 @@
 namespace ivl {
 
 // TODO: implement the generic basic_string{,_view} templates
-// actually, punt on this, first think about ufcs-esque extensions
+// UPDT: actually, punt on this, first think about ufcs-esque extensions
+// UPDT: using gcc mainly, so probably no ufcs-ish extensions
 
 // TODO: move to ivl/string
 
@@ -75,6 +76,63 @@ std::vector<std::string> split_py(std::string_view sv) {
 
 std::vector<std::string_view> split_py_view(std::string_view sv) {
   return split_py_range(sv) | std::ranges::to<std::vector>();
+}
+
+struct split_sentinel {};
+
+struct split_iterator {
+  using iterator_category = std::input_iterator_tag;
+  using value_type = std::string_view;
+  using difference_type = ptrdiff_t;
+  using pointer = const std::string_view*;
+  using reference = const std::string_view&;
+
+  std::string_view data{};
+  std::string_view by{};
+  size_t cursor{};
+
+  explicit split_iterator(std::string_view sv, std::string_view by) : data(sv), by(by), cursor(0) {
+    cursor = data.find(by);
+  }
+  split_iterator() = default;
+
+  std::string_view operator*() const { return data.substr(0, cursor); }
+
+  split_iterator& operator++() {
+    if (cursor == std::string_view::npos) [[unlikely]] {
+      data = {};
+      cursor = 0;
+      return *this;
+    }
+    data.remove_prefix(cursor);
+    data.remove_prefix(by.size());
+    cursor = data.find(by);
+    return *this;
+  }
+
+  void operator++(int) { ++*this; }
+
+  bool reached_end() const { return data.data() == nullptr; }
+
+  bool operator==(split_sentinel) const { return reached_end(); }
+  friend bool operator==(split_sentinel, const split_iterator& it) { return it.reached_end(); }
+};
+
+struct split_range_t {
+  std::string_view data;
+  std::string_view by;
+  split_iterator begin() const { return split_iterator{data, by}; }
+  split_sentinel end() const { return split_sentinel{}; }
+};
+
+auto split_range(std::string_view sv, std::string_view by) { return split_range_t{sv, by}; }
+
+std::vector<std::string> split(std::string_view sv, std::string_view by) {
+  return split_range(sv, by) | std::views::transform(meta::construct<std::string>) | std::ranges::to<std::vector>();
+}
+
+std::vector<std::string_view> split_view(std::string_view sv, std::string_view by) {
+  return split_range(sv, by) | std::ranges::to<std::vector>();
 }
 
 } // namespace ivl
