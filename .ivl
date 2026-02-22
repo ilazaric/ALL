@@ -14,6 +14,10 @@ function build(){
     # ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -O3 -g1 -std=c++${CXXVER:-23} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
+function build2(){
+    $LOC/bootstrap.sh "$@"
+}
+
 function render(){
     $LOC/build.py
     $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/build/include -I $LOC/build/default_include" $1.cpp > $1.rendered.cpp
@@ -56,6 +60,7 @@ function cf-submit(){
 ivl_add_command "dbg-build" "LOC=\"$IVL_DOT_LOCATION\" dbg-build"
 
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
+ivl_add_command "build2" "LOC=\"$IVL_DOT_LOCATION\" build2"
 
 ivl_add_command "render" "LOC=\"$IVL_DOT_LOCATION\" render"
 
