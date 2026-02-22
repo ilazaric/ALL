@@ -1,9 +1,16 @@
 #pragma once
 
+#include <ivl/exception>
 #include <ivl/linux/utils>
 #include <ivl/stl/string>
 #include <ivl/util>
 #include <filesystem>
+#include <map>
+#include <set>
+#include <string>
+#include <string_view>
+#include <variant>
+#include <vector>
 
 // https://ninja-build.org/manual.html#ref_ninja_file
 namespace ivl::parsing::ninja {
@@ -26,11 +33,19 @@ struct rule {
   std::map<std::string, rule_variable> variables;
 };
 
+struct pool {
+  std::string name;
+  size_t depth;
+};
+
 struct build {
   // TODO
 };
 
 struct state {
+  std::map<std::string, variable, std::less<>> variables;
+  std::map<std::string, rule, std::less<>> rules;
+  std::map<std::string, pool, std::less<>> pools;
   // TODO
 };
 
@@ -44,7 +59,9 @@ state parse(const std::filesystem::path& file) {
   size_t cursor = 0;
   size_t diag_row = 0;
   size_t diag_col = 0;
-  EXCEPTION_CONTEXT("row: {}, column: {}", diag_row, diag_column);
+  EXCEPTION_CONTEXT("row: {}, column: {}", diag_row, diag_col);
+
+  state global_state;
 
   auto finished = [&] { return cursor == contents.size(); };
 
@@ -103,7 +120,10 @@ state parse(const std::filesystem::path& file) {
   };
 
   // TODO: need to understand subninja and include
-  auto variable_value = [&](std::string_view id) { todo(); };
+  // TODO: maybe could return string_view
+  auto variable_value = [&](std::string_view id) -> std::string {
+    return global_state.variables.contains(id) ? global_state.variables.find(id)->second.value : "";
+  };
 
   auto parse_variable = [&] {
     variable ret;
@@ -158,8 +178,8 @@ state parse(const std::filesystem::path& file) {
     consume_c('=');
     consume_spaces();
 
-    ret.value.emplace_back(rule::text{});
-    auto last_text = &std::get<rule::text>(ret.value.back());
+    ret.value.emplace_back(rule_variable::text{});
+    auto last_text = &std::get<rule_variable::text>(ret.value.back());
 
     while (!consume_c_if('\n')) {
       if (!consume_c_if('$')) {
@@ -188,9 +208,9 @@ state parse(const std::filesystem::path& file) {
         consume_c('}');
       } else id = parse_identifier();
 
-      ret.value.emplace_back(rule::identifier(id));
-      ret.value.emplace_back(rule::text{});
-      last_text = &std::get<rule::text>(ret.value.back());
+      ret.value.emplace_back(rule_variable::identifier(std::string(id)));
+      ret.value.emplace_back(rule_variable::text{});
+      last_text = &std::get<rule_variable::text>(ret.value.back());
     }
 
     return ret;
@@ -217,31 +237,83 @@ state parse(const std::filesystem::path& file) {
       if (current_c() == '#') goto comment;
       if (consume_c_if('\n')) break;
       auto var = parse_rule_variable();
-      rule.variables[var.name] = var;
+      ret.variables[var.name] = var;
     }
 
     return ret;
   };
 
+  auto parse_pool = [&] {
+    pool ret;
+    consume("pool");
+    consume_if(" ") || consume_if("$\n") || panic("malformed pool declaration");
+    consume_spaces();
+    ret.name = std::string(parse_identifier());
+    consume_spaces();
+    consume_c('\n');
+
+    consume_c(' ');
+    consume_spaces();
+    consume("depth");
+    consume_spaces();
+    consume_c('=');
+    consume_spaces();
+    current_c() >= '1' && current_c() <= '9' || panic("malformed integer");
+    ret.depth = current_c() - '0';
+    consume_c_nocheck();
+    while (current_c() >= '0' && current_c() <= '9') {
+      __builtin_mul_overflow(ret.depth, 10, &ret.depth) && panic("integer too big");
+      __builtin_add_overflow(ret.depth, current_c() - '0', &ret.depth) && panic("integer too big");
+      consume_c_nocheck();
+    }
+    consume_spaces();
+    consume_c('\n');
+
+    return ret;
+  };
+
   auto parse_declaration = [&] {
-    auto line = lines[line_index];
-    auto current_line_index = line_index++;
-
-    { // check if empty line
-      auto trimmed_line = trim_prefix_view(line);
-      if (trimmed_line.empty() || trimmed_line.starts_with('#')) return;
+    if (consume_c_if('#')) {
+    comment:
+      while (current_c() != '\n') consume_c_nocheck();
+      consume_c('\n');
+      return;
+    }
+    
+    if (consume_c_if(' ')) {
+      consume_spaces();
+      if (consume_c_if('#')) goto comment;
+      consume_c('\n');
+      return;
     }
 
-    if (current_sv().starts_with("rule ") || current_sv().starts_with("rule$")) {
-      parse_rule();
-      continue;
+    auto starts_with_and_space = [&] (std::string_view sv) {
+      auto curr = current_sv();
+      if (!curr.starts_with(sv)) return false;
+      curr.remove_prefix(sv.size());
+      return curr.starts_with(' ') || curr.starts_with('$');
+    };
+
+    if (starts_with_and_space("rule")) {
+      auto r = parse_rule();
+      global_state.rules.contains(r.name) && panic("duplicate rule {:?}", r.name);
+      global_state.rules[r.name] = std::move(r);
+      return;
     }
 
-    if (line.starts_with("build ")) {
+    // console??
+    if (starts_with_and_space("pool")) {
+      auto p = parse_pool();
+      global_state.pools.contains(p.name) && panic("duplicate pool {:?}", p.name);
+      global_state.pools[p.name] = p;
+      return;
+    }
+
+    if (starts_with_and_space("build")) {
       todo();
     }
 
-    if (line.starts_with("default ")) {
+    if (starts_with_and_space("default")) {
       todo();
     }
 
@@ -255,22 +327,20 @@ state parse(const std::filesystem::path& file) {
     //   todo();
     // }
 
-    if (line.starts_with("subninja ")) {
+    if (starts_with_and_space("subninja")) {
       todo();
     }
 
-    if (line.starts_with("include ")) {
-      todo();
-    }
-
-    // console??
-    if (line.starts_with("pool ")) {
+    if (starts_with_and_space("include")) {
       todo();
     }
 
     // should be variable declaration
+    todo();
   };
 
-  while (line_index != lines.size()) parse_declaration();
+  while (!finished()) parse_declaration();
+
+  return global_state;
 }
 } // namespace ivl::parsing::ninja
