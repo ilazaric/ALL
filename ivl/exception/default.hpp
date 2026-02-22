@@ -1,11 +1,12 @@
 #pragma once
 
-#include <ivl/util>
+#include <ivl/util/scope_exit>
 #include <exception>
 #include <format>
 #include <print>
 #include <source_location>
 #include <vector>
+#include <memory>
 
 // TODO: this doesn't work if the std::exception_ptr is used,
 // ....: basically can't use constructor to check if such exception is in flight
@@ -14,80 +15,76 @@
 
 namespace ivl {
 
-  struct base_exception : std::exception {
-    struct detail_handle {
-      base_exception* ptr;
-      int idx;
+struct base_exception : std::exception {
+  struct detail_handle {
+    base_exception* ptr;
+    int idx;
 
-      detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
-    };
-
-    inline static thread_local std::vector<detail_handle> inflight_exceptions{};
-
-    struct context {
-      std::source_location location;
-      std::string text;
-    };
-
-    std::string throw_text;
-    std::source_location throw_location;
-    std::vector<context> added_context;
-    mutable std::unique_ptr<std::string> cached_what;
-
-    base_exception(
-      std::string_view throw_text = "", std::source_location throw_location = std::source_location::current()
-    )
-        : throw_text(throw_text), throw_location(throw_location) {
-      inflight_exceptions.emplace_back(*this);
-    }
-
-    ~base_exception() { inflight_exceptions.pop_back(); }
-
-    static bool is_in_flight() {
-      return !inflight_exceptions.empty() && inflight_exceptions.back().idx + 1 == std::uncaught_exceptions();
-    }
-
-    void dump(std::FILE* stream = stdout) const {
-      std::println(
-        stream, "ivl::base_exception thrown from {}:{}:`{}`",
-        throw_location.file_name(),
-        throw_location.line(),
-        throw_location.function_name()
-      );
-      if (!throw_text.empty()) std::println(stream, " | text: {}", throw_text);
-      for (auto&& ctx : added_context) {
-        std::println(
-          stream, " | added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
-          ctx.location.line()
-        );
-        if (!ctx.text.empty()) std::println(stream, " | | text: {}", ctx.text);
-      }
-    }
-
-    virtual const char* what() const noexcept {
-      if (cached_what) return cached_what->c_str();
-      std::string what;
-      auto out = std::back_inserter(what);
-      out = std::format_to(
-        out, "ivl::base_exception thrown from {}:{}:`{}`\n",
-        throw_location.file_name(),
-        throw_location.line(),
-        throw_location.function_name()
-      );
-      if (!throw_text.empty()) out = std::format_to(out, " | text: {}\n", throw_text);
-      for (auto&& ctx : added_context) {
-        out = std::format_to(
-          out, " | added context from {}:'{}':{}\n", ctx.location.file_name(), ctx.location.function_name(),
-          ctx.location.line()
-        );
-        if (!ctx.text.empty()) out = std::format_to(out, " | | text: {}\n", ctx.text);
-      }
-      cached_what = std::make_unique<std::string>(std::move(what));
-      return cached_what->c_str();
-    }
+    detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
   };
 
-  // TODO: add std::source_location magic
+  inline static thread_local std::vector<detail_handle> inflight_exceptions{};
+
+  struct context {
+    std::source_location location;
+    std::string text;
+  };
+
+  std::string throw_text;
+  std::source_location throw_location;
+  std::vector<context> added_context;
+  mutable std::unique_ptr<std::string> cached_what;
+
+  base_exception(
+    std::string_view throw_text = "", std::source_location throw_location = std::source_location::current()
+  )
+      : throw_text(throw_text), throw_location(throw_location) {
+    inflight_exceptions.emplace_back(*this);
+  }
+
+  ~base_exception() { inflight_exceptions.pop_back(); }
+
+  static bool is_in_flight() {
+    return !inflight_exceptions.empty() && inflight_exceptions.back().idx + 1 == std::uncaught_exceptions();
+  }
+
+  void dump(std::FILE* stream = stdout) const {
+    std::println(
+      stream, "ivl::base_exception thrown from {}:{}:`{}`", throw_location.file_name(), throw_location.line(),
+      throw_location.function_name()
+    );
+    if (!throw_text.empty()) std::println(stream, " | text: {}", throw_text);
+    for (auto&& ctx : added_context) {
+      std::println(
+        stream, " | added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
+        ctx.location.line()
+      );
+      if (!ctx.text.empty()) std::println(stream, " | | text: {}", ctx.text);
+    }
+  }
+
+  virtual const char* what() const noexcept {
+    if (cached_what) return cached_what->c_str();
+    std::string what;
+    auto out = std::back_inserter(what);
+    out = std::format_to(
+      out, "ivl::base_exception thrown from {}:{}:`{}`\n", throw_location.file_name(), throw_location.line(),
+      throw_location.function_name()
+    );
+    if (!throw_text.empty()) out = std::format_to(out, " | text: {}\n", throw_text);
+    for (auto&& ctx : added_context) {
+      out = std::format_to(
+        out, " | added context from {}:'{}':{}\n", ctx.location.file_name(), ctx.location.function_name(),
+        ctx.location.line()
+      );
+      if (!ctx.text.empty()) out = std::format_to(out, " | | text: {}\n", ctx.text);
+    }
+    cached_what = std::make_unique<std::string>(std::move(what));
+    return cached_what->c_str();
+  }
+};
+
+// TODO: add std::source_location magic
 #define EXCEPTION_CONTEXT(...)                                                                                         \
   ::ivl::util::scope_exit _ {                                                                                          \
     [&, EXCEPTION_CONTEXT_exception_count = std::uncaught_exceptions()] {                                              \

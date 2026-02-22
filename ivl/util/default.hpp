@@ -1,5 +1,7 @@
 #pragma once
 
+#include <ivl/exception>
+#include <ivl/util/scope_exit>
 #include <cassert>
 #include <filesystem>
 #include <format>
@@ -43,12 +45,6 @@ struct Overload : Ts... {
 template <typename... Ts>
 Overload(const Ts&...) -> Overload<Ts...>;
 
-template <typename Fn>
-struct [[nodiscard]] scope_exit {
-  Fn fn;
-  ~scope_exit() { fn(); }
-};
-
 template <typename T>
 struct convert_t {
   T operator()(auto&& arg) const { return T{FWD(arg)}; }
@@ -79,7 +75,7 @@ auto lazy_construct(auto&&... args) {
 }
 
 std::string hex(std::string_view sv) {
-  std::string ret(sv.size()*2, '\0');
+  std::string ret(sv.size() * 2, '\0');
   auto hexc = [](int x) -> char { return x < 10 ? '0' + x : 'a' + x - 10; };
   for (size_t i = 0; i < sv.size(); ++i) {
     ret[2 * i] = hexc(((unsigned char)sv[i]) / 16);
@@ -99,10 +95,11 @@ std::filesystem::path repo_root() {
 } // namespace ivl::util
 
 namespace ivl {
-struct panic_exception : std::exception {
-  std::string msg;
-  explicit panic_exception(std::string&& msg) : msg(std::move(msg)) {}
-  const char* what() const noexcept override { return msg.c_str(); }
+struct panic_exception : base_exception {
+  using base_exception::base_exception;
+  // std::string msg;
+  // explicit panic_exception(std::string&& msg) : msg(std::move(msg)) {}
+  // const char* what() const noexcept override { return msg.c_str(); }
 };
 
 #pragma IVL add_compiler_flags_tail "-lstdc++exp"
@@ -117,7 +114,8 @@ struct panic {
       std::format(
         "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line(),
         std::stacktrace::current()
-      )
+      ),
+      loc
     );
   }
   operator bool() const noexcept { return true; };
@@ -129,7 +127,8 @@ struct panic<> {
     std::string_view header = "!!! PANIC !!!", std::source_location loc = std::source_location::current()
   ) {
     throw panic_exception(
-      std::format("{}\n\nin {}:{}\nstacktrace:\n{}\n", header, loc.file_name(), loc.line(), std::stacktrace::current())
+      std::format("{}\n\nin {}:{}\nstacktrace:\n{}\n", header, loc.file_name(), loc.line(), std::stacktrace::current()),
+      loc
     );
   }
   operator bool() const noexcept { return true; };
