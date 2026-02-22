@@ -82,7 +82,11 @@ struct pp_info_t {
     cxx_cfg.envp = cfg.envp;
 
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
+    cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back(file);
+    cxx_cfg.argv.push_back("-include");
+    cxx_cfg.argv.push_back("ivl/reflection/ivl_main_handler");
+    cxx_cfg.argv.push_back("/dev/null");
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
