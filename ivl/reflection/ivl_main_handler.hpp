@@ -212,30 +212,34 @@ int wrap_ivl_main(int argc, char** argv) {
     }
   };
 
-  auto store = [&](std::string_view name) {
-    template for (constexpr auto member : std::define_static_array(
-                    nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
-                  )) {
-      if (name.substr(2) == identifier_of(member)) {
-        arg.[:member:] = construct.template operator()<typename[:type_of(member):]>();
-        return;
+  if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
+    static_assert(^^arg_t != ^^bool, "cannot use bool directly");
+    return ivl_main(construct.template operator()<arg_t>());
+  } else {
+    auto store = [&](std::string_view name) {
+      template for (constexpr auto member : std::define_static_array(
+                      nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
+                    )) {
+        if (name.substr(2) == identifier_of(member)) {
+          arg.[:member:] = construct.template operator()<typename[:type_of(member):]>();
+          return;
+        }
       }
-    }
-    std::println(stderr, "unrecognized argument: {:?}", name);
-    exit(1);
-  };
-
-  while (!args.empty()) {
-    auto arg = take_arg();
-    context = arg;
-    if (!arg.starts_with("--")) {
-      std::println(stderr, "invalid argument name (missing \"--\" prefix): {:?}", arg);
+      std::println(stderr, "unrecognized argument: {:?}", name);
       exit(1);
-    }
-    store(arg);
-  }
+    };
 
-  return ivl_main(arg);
+    while (!args.empty()) {
+      auto arg = take_arg();
+      context = arg;
+      if (!arg.starts_with("--")) {
+        std::println(stderr, "invalid argument name (missing \"--\" prefix): {:?}", arg);
+        exit(1);
+      }
+      store(arg);
+    }
+    return ivl_main(arg);
+  }
 }
 
 template <bool use_ivl, typename arg_t>
