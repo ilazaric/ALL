@@ -53,12 +53,12 @@ struct state {
 state parse(const std::filesystem::path& file) {
   auto contents = linux::read_file(file);
   if (contents.empty()) return state{};
-  contents.ends_with("\n") && panic("file does not terminate with newline");
+  contents.ends_with("\n") || panic("file does not terminate with newline");
   std::string_view contents_sv(contents);
 
   size_t cursor = 0;
-  size_t diag_row = 0;
-  size_t diag_col = 0;
+  size_t diag_row = 1;
+  size_t diag_col = 1;
   EXCEPTION_CONTEXT("row: {}, column: {}", diag_row, diag_col);
 
   state global_state;
@@ -76,13 +76,14 @@ state parse(const std::filesystem::path& file) {
     finished() && panic("tried to consume character at EOF");
     if (current_c() == '\n') {
       ++diag_row;
-      diag_col = 0;
+      diag_col = 1;
     } else ++diag_col;
     ++cursor;
   };
 
   auto consume_c = [&](char c) {
     current_c() == c || panic("tried to consume different character: arg={:?}, actual={:?}", c, current_c());
+    consume_c_nocheck();
   };
 
   auto consume_c_if = [&](char c) {
@@ -98,7 +99,8 @@ state parse(const std::filesystem::path& file) {
 
   auto consume_if = [&](std::string_view sv) {
     if (!current_sv().starts_with(sv)) return false;
-    cursor += sv.size();
+    consume(sv);
+    // cursor += sv.size();
     return true;
   };
 
@@ -273,13 +275,16 @@ state parse(const std::filesystem::path& file) {
   };
 
   auto parse_declaration = [&] {
+    if (consume_c_if('\n')) return;
+    if (consume_if("$\n")) return;
+
     if (consume_c_if('#')) {
     comment:
       while (current_c() != '\n') consume_c_nocheck();
       consume_c('\n');
       return;
     }
-    
+
     if (consume_c_if(' ')) {
       consume_spaces();
       if (consume_c_if('#')) goto comment;
@@ -287,7 +292,7 @@ state parse(const std::filesystem::path& file) {
       return;
     }
 
-    auto starts_with_and_space = [&] (std::string_view sv) {
+    auto starts_with_and_space = [&](std::string_view sv) {
       auto curr = current_sv();
       if (!curr.starts_with(sv)) return false;
       curr.remove_prefix(sv.size());
@@ -336,7 +341,8 @@ state parse(const std::filesystem::path& file) {
     }
 
     // should be variable declaration
-    todo();
+    auto v = parse_variable();
+    global_state.variables[v.name] = v;
   };
 
   while (!finished()) parse_declaration();
