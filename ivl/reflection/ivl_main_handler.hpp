@@ -242,8 +242,10 @@ int wrap_ivl_main(int argc, char** argv) {
       return ivl_main(arg);
     }
   } catch (const std::exception& e) {
+#ifdef __cpp_exceptions
     std::println(stderr, "exeption reached main\n{}", e.what());
     return 1;
+#endif
   }
 }
 
