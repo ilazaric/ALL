@@ -170,79 +170,81 @@ void print_help() {
 }
 
 template <typename arg_t>
-int wrap_ivl_main(int argc, char** argv) try {
-  arg_t arg{};
+int wrap_ivl_main(int argc, char** argv) {
+  try {
+    arg_t arg{};
 
-  std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
+    std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
 
-  for (auto arg : args)
-    if (std::string_view(arg) == "--help") {
-      print_help<arg_t>();
-      return 1;
-    }
-
-  std::string_view context;
-  auto take_arg = [&] {
-    if (!args.empty()) {
-      std::string_view ret = args[0];
-      args = args.subspan(1);
-      return ret;
-    }
-
-    std::println(stderr, "missing arguments while parsing {:?}", context);
-    exit(1);
-  };
-  auto construct = [&]<typename T>(this const auto& self) -> T {
-    if constexpr (^^T == ^^bool) return true;
-    else if constexpr (is_integral_type(^^T) || is_floating_point_type(^^T)) {
-      auto arg = take_arg();
-      T value;
-      auto ret = std::from_chars<T>(arg.data(), arg.data() + arg.size(), value);
-      if (!ret || ret.ptr != arg.data() + arg.size()) {
-        std::println(stderr, "bad value passed to argument {:?}: {:?}", context, arg);
-        exit(1);
+    for (auto arg : args)
+      if (std::string_view(arg) == "--help") {
+        print_help<arg_t>();
+        return 1;
       }
-      return value;
-    } else if constexpr (has_template_arguments(^^T) && template_of(^^T) == ^^std::optional) {
-      return self.template operator()<typename[:template_arguments_of(^^T)[0]:]>();
-    } else if constexpr (ivl::meta::same_as_one_of<T, std::string, std::string_view, std::filesystem::path>) {
-      return T(take_arg());
-    } else {
-      static_assert(false, std::format("type `{}` not implemented", display_string_of(^^T)));
-    }
-  };
 
-  if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
-    static_assert(^^arg_t != ^^bool, "cannot use bool directly");
-    return ivl_main(construct.template operator()<arg_t>());
-  } else {
-    auto store = [&](std::string_view name) {
-      template for (constexpr auto member : std::define_static_array(
-                      nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
-                    )) {
-        if (name.substr(2) == identifier_of(member)) {
-          arg.[:member:] = construct.template operator()<typename[:type_of(member):]>();
-          return;
-        }
+    std::string_view context;
+    auto take_arg = [&] {
+      if (!args.empty()) {
+        std::string_view ret = args[0];
+        args = args.subspan(1);
+        return ret;
       }
-      std::println(stderr, "unrecognized argument: {:?}", name);
+
+      std::println(stderr, "missing arguments while parsing {:?}", context);
       exit(1);
     };
-
-    while (!args.empty()) {
-      auto arg = take_arg();
-      context = arg;
-      if (!arg.starts_with("--")) {
-        std::println(stderr, "invalid argument name (missing \"--\" prefix): {:?}", arg);
-        exit(1);
+    auto construct = [&]<typename T>(this const auto& self) -> T {
+      if constexpr (^^T == ^^bool) return true;
+      else if constexpr (is_integral_type(^^T) || is_floating_point_type(^^T)) {
+        auto arg = take_arg();
+        T value;
+        auto ret = std::from_chars<T>(arg.data(), arg.data() + arg.size(), value);
+        if (!ret || ret.ptr != arg.data() + arg.size()) {
+          std::println(stderr, "bad value passed to argument {:?}: {:?}", context, arg);
+          exit(1);
+        }
+        return value;
+      } else if constexpr (has_template_arguments(^^T) && template_of(^^T) == ^^std::optional) {
+        return self.template operator()<typename[:template_arguments_of(^^T)[0]:]>();
+      } else if constexpr (ivl::meta::same_as_one_of<T, std::string, std::string_view, std::filesystem::path>) {
+        return T(take_arg());
+      } else {
+        static_assert(false, std::format("type `{}` not implemented", display_string_of(^^T)));
       }
-      store(arg);
+    };
+
+    if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
+      static_assert(^^arg_t != ^^bool, "cannot use bool directly");
+      return ivl_main(construct.template operator()<arg_t>());
+    } else {
+      auto store = [&](std::string_view name) {
+        template for (constexpr auto member : std::define_static_array(
+                        nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
+                      )) {
+          if (name.substr(2) == identifier_of(member)) {
+            arg.[:member:] = construct.template operator()<typename[:type_of(member):]>();
+            return;
+          }
+        }
+        std::println(stderr, "unrecognized argument: {:?}", name);
+        exit(1);
+      };
+
+      while (!args.empty()) {
+        auto arg = take_arg();
+        context = arg;
+        if (!arg.starts_with("--")) {
+          std::println(stderr, "invalid argument name (missing \"--\" prefix): {:?}", arg);
+          exit(1);
+        }
+        store(arg);
+      }
+      return ivl_main(arg);
     }
-    return ivl_main(arg);
+  } catch (const std::exception& e) {
+    std::println(stderr, "exeption reached main\n{}", e.what());
+    return 1;
   }
-} catch (const std::exception& e) {
-  std::println(stderr, "exeption reached main\n{}", e.what());
-  return 1;
 }
 
 template <bool use_ivl, typename arg_t>
