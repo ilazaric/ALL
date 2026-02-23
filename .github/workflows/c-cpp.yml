@@ -79,7 +79,7 @@ jobs:
       run: echo | g++ -xc++ -E --verbose -
       
     - name: build
-      run: CXXVER=26 ./build.py /build_system /linux /process
+      run: CXXVER=26 ./build.py /build_system /linux /process /algos /meta /util /stl
 
   build2:
     needs: build-gcc
@@ -121,4 +121,4 @@ jobs:
       run: echo | g++ -xc++ -E --verbose -
 
     - name: build2
-      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process
+      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/util /ivl/stl
