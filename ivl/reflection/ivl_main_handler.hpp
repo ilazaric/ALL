@@ -170,7 +170,7 @@ void print_help() {
 }
 
 template <typename arg_t>
-int wrap_ivl_main(int argc, char** argv) {
+int wrap_ivl_main(int argc, char** argv) try {
   arg_t arg{};
 
   std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
@@ -240,6 +240,9 @@ int wrap_ivl_main(int argc, char** argv) {
     }
     return ivl_main(arg);
   }
+} catch (const std::exception& e) {
+  std::println(stderr, "exeption reached main\n{}", e.what());
+  return 1;
 }
 
 template <bool use_ivl, typename arg_t>
