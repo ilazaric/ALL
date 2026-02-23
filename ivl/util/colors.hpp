@@ -2,6 +2,7 @@
 
 #include <format>
 #include <string>
+#include <string_view>
 
 // https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
 
