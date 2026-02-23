@@ -121,15 +121,9 @@ struct process_config {
                                 CLONE_NEWTIME | CLONE_NEWUSER | CLONE_NEWUTS
                             : 0) |
                (share_fds ? CLONE_FILES : 0),
-      .pidfd{},
-      .child_tid{},
-      .parent_tid{},
       .exit_signal = SIGCHLD,
       .stack = reinterpret_cast<uintptr_t>(&stack[0]),
       .stack_size = sizeof(stack),
-      .tls{},
-      .set_tid{},
-      .set_tid_size{},
       .cgroup{cgroup},
     };
     auto ret = linux::raw_syscalls::fat_clone3(
@@ -202,16 +196,9 @@ struct process_function {
     clone_args clone3_args{
       // TODO: https://ewontfix.com/7/
       .flags = CLONE_CLEAR_SIGHAND | CLONE_VM | CLONE_VFORK,
-      .pidfd{},
-      .child_tid{},
-      .parent_tid{},
       .exit_signal = SIGCHLD,
       .stack = reinterpret_cast<uintptr_t>(&stack[0]),
       .stack_size = sizeof(stack),
-      .tls{},
-      .set_tid{},
-      .set_tid_size{},
-      .cgroup{},
     };
     auto pid = sys::fat_clone3(
       &clone3_args, sizeof(clone3_args), &exec_args, +[](void* child_arg) noexcept {
