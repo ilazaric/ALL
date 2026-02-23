@@ -275,6 +275,7 @@ int main(int argc, char* argv[], char* envp[]) {
   cxx_cfg.pathname = "/opt/GCC/bin/g++";
   cxx_cfg.argv = {
     cxx_cfg.pathname,
+    "-fdiagnostics-color=always",
     "-xc++",
     "-Wl,-rpath=/opt/GCC/lib64",
     "-DIVL_LOCAL",
