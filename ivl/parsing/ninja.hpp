@@ -39,7 +39,10 @@ struct pool {
 };
 
 struct build {
-  // TODO
+  std::vector<std::string> outputs;
+  std::string rulename;
+  std::vector<std::string> inputs;
+  std::vector<variable> variables;
 };
 
 struct state {
@@ -118,6 +121,7 @@ state parse(const std::filesystem::path& file) {
     auto start = &current_c();
     while (is_identifier_c(current_c())) consume_c_nocheck();
     auto end = &current_c();
+    start == end&& panic("malformed identifier");
     return std::string_view(start, end);
   };
 
@@ -274,9 +278,28 @@ state parse(const std::filesystem::path& file) {
     return ret;
   };
 
+  // auto parse_build = [&] {
+  //   build ret;
+  //   consume("build");
+  //   consume_if(" ") || consume_if("$\n") || panic("malformed build declaration");
+  //   consume_spaces();
+
+  //   while (!consume_if_c(':')) {
+  //     ret.outputs.emplace_back(parse_identifier());
+  //     consume_spaces();
+  //   }
+
+  //   consume_spaces();
+  //   ret.rulename = std::string(parse_identifier());
+  //   consume_spaces();
+
+  //   while (current_c() != '\n' && current_c() != '|') {
+  //   }
+  // };
+
   auto parse_declaration = [&] {
     if (consume_c_if('\n')) return;
-    if (consume_if("$\n")) return;
+    current_sv().starts_with("$\n") && panic("lexing error");
 
     if (consume_c_if('#')) {
     comment:
