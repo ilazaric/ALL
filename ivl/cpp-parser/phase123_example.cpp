@@ -1,6 +1,6 @@
 #include <ivl/cpp-parser/pp_tokens>
 #include <ivl/cpp-parser/spliced_cxx_file>
-#include <ivl/linux/utils>
+#include <ivl/linux/utility>
 #include <ivl/logger>
 #include <cassert>
 #include <filesystem>

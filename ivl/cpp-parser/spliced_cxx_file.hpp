@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/linux/utils>
+#include <ivl/linux/utility>
 #include <algorithm>
 #include <cassert>
 #include <cstddef>

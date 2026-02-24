@@ -12,7 +12,7 @@
 #include <ivl/linux/raw_syscalls>
 #include <ivl/linux/terminate_syscalls>
 #include <ivl/linux/throwing_syscalls>
-#include <ivl/linux/utils>
+#include <ivl/linux/utility>
 #include <ivl/logger>
 
 namespace ivl {

@@ -2,7 +2,7 @@
 
 #include <ivl/crypto/blake3>
 #include <ivl/linux/throwing_syscalls>
-#include <ivl/linux/utils>
+#include <ivl/linux/utility>
 #include <ivl/process>
 #include <algorithm>
 #include <cassert>
