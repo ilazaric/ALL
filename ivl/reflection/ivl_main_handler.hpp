@@ -2,7 +2,7 @@
 
 #include <ivl/meta>
 #include <ivl/reflection/prettier_types>
-#include <ivl/reflection/util>
+#include <ivl/reflection/utility>
 #include <charconv>
 #include <filesystem>
 #include <meta>

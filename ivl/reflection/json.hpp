@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/reflection/util>
+#include <ivl/reflection/utility>
 #include <nlohmann/json.hpp>
 #include <cassert>
 #include <map>
