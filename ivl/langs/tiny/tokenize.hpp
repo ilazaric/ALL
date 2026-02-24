@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/util>
+#include <ivl/utility>
 #include "meta.hpp"
 #include <algorithm>
 #include <cassert>

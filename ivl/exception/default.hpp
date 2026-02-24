@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/util/scope_exit>
+#include <ivl/utility/scope_exit>
 #include <exception>
 #include <format>
 #include <print>

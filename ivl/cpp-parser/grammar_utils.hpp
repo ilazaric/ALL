@@ -1,8 +1,8 @@
 #pragma once
 
 #include <ivl/logger>
-#include <ivl/util/fixed_string>
-#include <ivl/util>
+#include <ivl/utility/fixed_string>
+#include <ivl/utility>
 #include <concepts>
 #include <expected>
 #include <memory>

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/exception>
-#include <ivl/util/scope_exit>
+#include <ivl/utility/scope_exit>
 #include <cassert>
 #include <filesystem>
 #include <format>

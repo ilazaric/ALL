@@ -1,5 +1,5 @@
 #include <ivl/logger>
-#include <ivl/util>
+#include <ivl/utility>
 #include "context.hpp"
 
 #include <iostream>

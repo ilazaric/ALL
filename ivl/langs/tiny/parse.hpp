@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/util>
+#include <ivl/utility>
 #include "tokenize.hpp"
 #include <cstdint>
 #include <memory>

@@ -5,7 +5,7 @@
 #include <ivl/meta>
 #include <ivl/reflection/enumerators>
 #include <ivl/reflection/test_attribute>
-#include <ivl/util>
+#include <ivl/utility>
 #include <algorithm>
 #include <cassert>
 #include <cctype>

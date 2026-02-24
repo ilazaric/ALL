@@ -4,7 +4,7 @@
 #include <ivl/linux/utility>
 #include <ivl/parsing/basic_parser>
 #include <ivl/stl/string>
-#include <ivl/util>
+#include <ivl/utility>
 #include <filesystem>
 #include <map>
 #include <set>

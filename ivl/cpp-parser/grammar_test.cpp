@@ -1,5 +1,5 @@
 #include <ivl/logger>
-#include <ivl/util>
+#include <ivl/utility>
 #include "grammar_utils.hpp"
 
 using namespace ivl;

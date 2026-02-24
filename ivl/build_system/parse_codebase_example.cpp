@@ -1,6 +1,6 @@
 #include <ivl/build_system/parse_codebase>
 #include <ivl/reflection/json>
-#include <ivl/util>
+#include <ivl/utility>
 #include <fstream>
 
 // IVL add_compiler_flags("-g")

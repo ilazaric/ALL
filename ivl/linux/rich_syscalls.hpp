@@ -4,7 +4,7 @@
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
 #include <ivl/meta>
-#include <ivl/util>
+#include <ivl/utility>
 #include <cstdint>
 #include <utility>
 

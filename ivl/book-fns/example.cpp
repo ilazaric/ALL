@@ -1,5 +1,5 @@
 #include <ivl/logger>
-#include <ivl/util>
+#include <ivl/utility>
 #include "book.hpp"
 #include <algorithm>
 #include <cassert>

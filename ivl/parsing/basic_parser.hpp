@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/util>
+#include <ivl/utility>
 #include <format>
 #include <string_view>
 
