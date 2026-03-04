@@ -4,14 +4,89 @@
 #include <string>
 #include <string_view>
 
+// https://en.wikipedia.org/wiki/ANSI_escape_code#Select_Graphic_Rendition_parameters
 // https://en.wikipedia.org/wiki/ANSI_escape_code#24-bit
+// `ansi2txt` can strip out colors
 
-namespace ivl {
+namespace ivl::terminal_graphical_rendition {
+namespace detail {
+  template <typename Wrapped, typename Fmt, typename... Args>
+  struct wrapper {
+    Wrapped& wrapped;
+    Fmt fmt;
+    std::tuple<Args&...> args;
+  };
 
-std::string foreground(uint8_t r, uint8_t g, uint8_t b) { return std::format("\x1B[38;2;{};{};{}m", r, g, b); }
+  struct wrapper_enabled {
+    template <typename Self, typename... Args>
+    auto operator()(this Self&& self, std::format_string<Args...> fmt, Args&&... args) {
+      return detail::wrapper<std::remove_reference_t<Self>, std::format_string<Args...>, Args...>(
+        self, fmt, std::tuple<Args&...>(args...)
+      );
+    }
+  };
+} // namespace detail
 
-std::string background(uint8_t r, uint8_t g, uint8_t b) { return std::format("\x1B[48;2;{};{};{}m", r, g, b); }
+struct color {
+  uint8_t r, g, b;
+};
 
-std::string_view reset() { return "\x1B[m"; }
+struct foreground_color : color, detail::wrapper_enabled {};
+struct background_color : color, detail::wrapper_enabled {};
+struct foreground_reset {};
+struct background_reset {};
 
-} // namespace ivl
+namespace colors {
+  inline constexpr foreground_color FG_RED{255, 0, 0};
+} // namespace colors
+} // namespace ivl::terminal_graphical_rendition
+
+template <>
+struct std::formatter<ivl::terminal_graphical_rendition::foreground_reset, char> {
+  constexpr auto parse(auto& ctx) { return ctx.begin(); }
+  auto format(ivl::terminal_graphical_rendition::foreground_reset, auto& ctx) const {
+    return std::format_to(ctx.out(), "\x1B[39m");
+  }
+};
+
+template <>
+struct std::formatter<ivl::terminal_graphical_rendition::background_reset, char> {
+  constexpr auto parse(auto& ctx) { return ctx.begin(); }
+  auto format(ivl::terminal_graphical_rendition::background_reset, auto& ctx) const {
+    return std::format_to(ctx.out(), "\x1B[49m");
+  }
+};
+
+template <>
+struct std::formatter<ivl::terminal_graphical_rendition::foreground_color, char> {
+  constexpr auto parse(auto& ctx) { return ctx.begin(); }
+  auto format(ivl::terminal_graphical_rendition::foreground_color clr, auto& ctx) const {
+    return std::format_to(ctx.out(), "\x1B[38;2;{};{};{}m", clr.r, clr.g, clr.b);
+  }
+  auto format_reset(auto& ctx) const {
+    return std::formatter<ivl::terminal_graphical_rendition::foreground_reset, char>{}.format({}, ctx);
+  }
+};
+
+template <>
+struct std::formatter<ivl::terminal_graphical_rendition::background_color, char> {
+  constexpr auto parse(auto& ctx) { return ctx.begin(); }
+  auto format(ivl::terminal_graphical_rendition::background_color clr, auto& ctx) const {
+    return std::format_to(ctx.out(), "\x1B[48;2;{};{};{}m", clr.r, clr.g, clr.b);
+  }
+  auto format_reset(auto& ctx) const {
+    return std::formatter<ivl::terminal_graphical_rendition::background_reset, char>{}.format({}, ctx);
+  }
+};
+
+template <typename Wrapped, typename Fmt, typename... Args>
+struct std::formatter<ivl::terminal_graphical_rendition::detail::wrapper<Wrapped, Fmt, Args...>, char> {
+  constexpr auto parse(auto& ctx) { return ctx.begin(); }
+  auto format(ivl::terminal_graphical_rendition::detail::wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
+    ctx.advance_to(std::formatter<Wrapped>{}.format(wrap.wrapped, ctx));
+    auto&& [... args] = wrap.args;
+    ctx.advance_to(std::format_to(ctx.out(), wrap.fmt, args...));
+    return std::formatter<Wrapped>{}.format_reset(ctx);
+  }
+  auto format_reset(auto& ctx) const { return std::format_to(ctx.out(), "\x1B[39m"); }
+};
