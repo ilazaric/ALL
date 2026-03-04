@@ -12,6 +12,7 @@
  ;; If there is more than one, they won't work right.
  '(default-text-scale-amount 16)
  '(default-text-scale-mode t nil (default-text-scale))
+ '(display-fill-column-indicator-column 80)
  '(markdown-command "pandoc --from markdown --to html5 --mathjax --standalone")
  '(org-support-shift-select t)
  '(package-selected-packages
