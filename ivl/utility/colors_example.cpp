@@ -12,4 +12,5 @@ int main() {
   std::println("foo {:?} bar", foo);
   auto clr = term::foreground_color{255, 0, 0};
   std::println("foo {} bar", clr("{:?}", "hello\nworld"));
+  std::println("foo {:?} bar", clr("hello\nworld"));
 }

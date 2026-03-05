@@ -11,18 +11,32 @@
 namespace ivl::terminal_graphical_rendition {
 namespace detail {
   template <typename Wrapped, typename Fmt, typename... Args>
-  struct wrapper {
+  struct fmt_wrapper {
     Wrapped& wrapped;
     Fmt fmt;
     std::tuple<Args&...> args;
   };
 
-  struct wrapper_enabled {
+  struct fmt_wrapper_enabled {
     template <typename Self, typename... Args>
+      requires(sizeof...(Args) > 0)
     auto operator()(this Self&& self, std::format_string<Args...> fmt, Args&&... args) {
-      return detail::wrapper<std::remove_reference_t<Self>, std::format_string<Args...>, Args...>(
+      return fmt_wrapper<std::remove_reference_t<Self>, std::format_string<Args...>, Args...>(
         self, fmt, std::tuple<Args&...>(args...)
       );
+    }
+  };
+
+  template <typename Wrapped, typename Arg>
+  struct single_wrapper {
+    Wrapped& wrapped;
+    Arg& arg;
+  };
+
+  struct single_wrapper_enabled {
+    template <typename Self, typename Arg>
+    auto operator()(this Self&& self, Arg&& arg) {
+      return single_wrapper<std::remove_reference_t<Self>, Arg>(self, arg);
     }
   };
 } // namespace detail
@@ -31,8 +45,8 @@ struct color {
   uint8_t r, g, b;
 };
 
-struct foreground_color : color, detail::wrapper_enabled {};
-struct background_color : color, detail::wrapper_enabled {};
+struct foreground_color : color, detail::fmt_wrapper_enabled, detail::single_wrapper_enabled {};
+struct background_color : color, detail::fmt_wrapper_enabled, detail::single_wrapper_enabled {};
 struct foreground_reset {};
 struct background_reset {};
 
@@ -80,13 +94,23 @@ struct std::formatter<ivl::terminal_graphical_rendition::background_color, char>
 };
 
 template <typename Wrapped, typename Fmt, typename... Args>
-struct std::formatter<ivl::terminal_graphical_rendition::detail::wrapper<Wrapped, Fmt, Args...>, char> {
+struct std::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
-  auto format(ivl::terminal_graphical_rendition::detail::wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
+  auto format(ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
     ctx.advance_to(std::formatter<Wrapped>{}.format(wrap.wrapped, ctx));
     auto&& [... args] = wrap.args;
     ctx.advance_to(std::format_to(ctx.out(), wrap.fmt, args...));
     return std::formatter<Wrapped>{}.format_reset(ctx);
   }
-  auto format_reset(auto& ctx) const { return std::format_to(ctx.out(), "\x1B[39m"); }
+};
+
+template <typename Wrapped, typename Arg>
+struct std::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg>, char> {
+  std::formatter<std::decay_t<Arg>> underlying;
+  constexpr auto parse(auto& ctx) { return underlying.parse(ctx); }
+  auto format(ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg> wrap, auto& ctx) const {
+    ctx.advance_to(std::formatter<Wrapped>{}.format(wrap.wrapped, ctx));
+    ctx.advance_to(underlying.format(wrap.arg, ctx));
+    return std::formatter<Wrapped>{}.format_reset(ctx);
+  }
 };
