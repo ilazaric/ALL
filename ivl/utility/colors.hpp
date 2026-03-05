@@ -39,14 +39,19 @@ namespace detail {
       return single_wrapper<std::remove_reference_t<Self>, Arg>(self, arg);
     }
   };
+
+  struct wrapper_enabled : fmt_wrapper_enabled, single_wrapper_enabled {
+    using fmt_wrapper_enabled::operator();
+    using single_wrapper_enabled::operator();
+  };
 } // namespace detail
 
 struct color {
   uint8_t r, g, b;
 };
 
-struct foreground_color : color, detail::fmt_wrapper_enabled, detail::single_wrapper_enabled {};
-struct background_color : color, detail::fmt_wrapper_enabled, detail::single_wrapper_enabled {};
+struct foreground_color : color, detail::wrapper_enabled {};
+struct background_color : color, detail::wrapper_enabled {};
 struct foreground_reset {};
 struct background_reset {};
 
