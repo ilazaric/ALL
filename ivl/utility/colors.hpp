@@ -20,8 +20,8 @@ namespace detail {
   struct fmt_wrapper_enabled {
     template <typename Self, typename... Args>
       requires(sizeof...(Args) > 0)
-    auto operator()(this Self&& self, std::format_string<Args...> fmt, Args&&... args) {
-      return fmt_wrapper<std::remove_reference_t<Self>, std::format_string<Args...>, Args...>(
+    auto operator()(this Self&& self, std::format_string<Args&...> fmt, Args&&... args) {
+      return fmt_wrapper<std::remove_reference_t<Self>, std::format_string<Args&...>, Args&...>(
         self, fmt, std::tuple<Args&...>(args...)
       );
     }
@@ -102,10 +102,11 @@ template <typename Wrapped, typename Fmt, typename... Args>
 struct std::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
-    ctx.advance_to(std::formatter<Wrapped>{}.format(wrap.wrapped, ctx));
+    std::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     auto&& [... args] = wrap.args;
     ctx.advance_to(std::format_to(ctx.out(), wrap.fmt, args...));
-    return std::formatter<Wrapped>{}.format_reset(ctx);
+    return fmt_wrap.format_reset(ctx);
   }
 };
 
@@ -114,8 +115,9 @@ struct std::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<
   std::formatter<std::decay_t<Arg>> underlying;
   constexpr auto parse(auto& ctx) { return underlying.parse(ctx); }
   auto format(ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg> wrap, auto& ctx) const {
-    ctx.advance_to(std::formatter<Wrapped>{}.format(wrap.wrapped, ctx));
+    std::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     ctx.advance_to(underlying.format(wrap.arg, ctx));
-    return std::formatter<Wrapped>{}.format_reset(ctx);
+    return fmt_wrap.format_reset(ctx);
   }
 };
