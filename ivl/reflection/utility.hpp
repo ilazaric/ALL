@@ -20,6 +20,14 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
   return ret;
 }
 
+consteval auto bases(std::meta::info i) {
+  return define_static_array(bases_of(i, std::meta::access_context::unchecked()));
+}
+
+consteval auto nsdms(std::meta::info i) {
+  return define_static_array(nonstatic_data_members_of(i, std::meta::access_context::unchecked()));
+}
+
 // constexpr template for is broken at the moment, this can be used to avoid it.
 template <std::meta::info... Is>
 auto foreach () {
