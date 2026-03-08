@@ -9,6 +9,7 @@ ContinuationIndentWidth: 2
 NamespaceIndentation: Inner
 
 BreakBeforeBraces: Attach
+SpaceAfterTemplateKeyword: false
 
 ColumnLimit: 120
 AllowShortLoopsOnASingleLine: Yes
@@ -37,4 +38,3 @@ SpaceBeforeCpp11BracedList: false
 Cpp11BracedListStyle: true
 BreakTemplateDeclarations: Yes
 KeepEmptyLinesAtTheStartOfBlocks: false
-# -------------------------------------------
