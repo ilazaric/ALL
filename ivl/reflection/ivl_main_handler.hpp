@@ -1,6 +1,7 @@
 // this file shouldn't be included, it is used by build system
 
 #include <ivl/meta>
+#include <ivl/reflection/argument_parsing>
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
 #include <charconv>
@@ -14,6 +15,8 @@
 // TODO: add method of enabling parsing of custom class, should be able to consume multiple cmdline entries
 
 /*
+  TODO: probably purge this comment, argparsing has been moved
+  
   ivl_main() has to accept a single type ArgT
   decay(ArgT) must satisfy IvlMainArg
 
@@ -50,59 +53,6 @@
 #endif
 
 namespace ivl::main_synthesis {
-// TODO: allow `const char*` ?
-consteval void validate_arg(const std::meta::info arg) {
-  try {
-    auto ti = dealias(arg);
-
-    auto check_plain = [](std::meta::info ti) {
-      if (is_reference_type(ti)) throw std::meta::exception("cannot parse reference types", {});
-      if (is_pointer_type(ti)) throw std::meta::exception("cannot parse pointer types", {});
-      if (is_array_type(ti)) throw std::meta::exception("cannot parse array types", {});
-      if (is_const(ti)) throw std::meta::exception("cannot parse const types", {});
-      if (is_volatile(ti)) throw std::meta::exception("cannot parse volatile types", {});
-      if (is_same_type(ti, ^^std::optional<bool>)) throw std::meta::exception("bool cannot be optional-wrapped", {});
-    };
-
-    check_plain(ti);
-
-    auto is_simple = [](std::meta::info ti) {
-      return is_floating_point_type(ti) || is_integral_type(ti) || is_enum_type(ti) ||
-             is_same_type(ti, ^^std::string) || is_same_type(ti, ^^std::string_view) ||
-             is_same_type(ti, ^^std::filesystem::path);
-    };
-
-    if (is_simple(ti)) return;
-
-    if (ti == ^^std::optional<bool>) throw std::meta::exception("bool cannot be optional-wrapped", {});
-
-    if (has_template_arguments(ti) && template_of(ti) == ^^std::optional) {
-      auto opti = template_arguments_of(ti)[0];
-      check_plain(opti);
-      if (is_simple(opti)) return;
-    }
-
-    if (!is_class_type(ti) || ivl::reflection::is_child_of(ti, ^^std))
-      throw std::meta::exception("cannot handle this type", {});
-
-    for (auto member : nonstatic_data_members_of(ti, std::meta::access_context::unchecked())) try {
-        if (is_private(member)) throw std::meta::exception("member cannot be private", {});
-        if (is_protected(member)) throw std::meta::exception("member cannot be protected", {});
-        validate_arg(type_of(member));
-      } catch (const std::meta::exception& e) {
-        throw std::meta::exception(
-          std::format("while validating member variable `{}`\n{}", display_string_of(member), e.what()), e.from(),
-          e.where()
-        );
-      }
-  } catch (const std::meta::exception& e) {
-    throw std::meta::exception(
-      std::format("while validating type `{}`\n{}", ivl::reflection::display_string_of(arg), e.what()), e.from(),
-      e.where()
-    );
-  }
-}
-
 struct search_result_t {
   std::meta::info main_type;
   std::meta::info ivl_main_arg_type;
@@ -142,35 +92,17 @@ consteval search_result_t find_main_declarations() {
 
   res.main_type = ^^int(int, char**);
   res.ivl_main_arg_type = decay(type_of(params[0]));
-  validate_arg(res.ivl_main_arg_type);
+  ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
   res.emit_main = true;
   return res;
 }
 
 constexpr search_result_t search_result = find_main_declarations();
 
-template <typename T>
-void print_help_impl(std::string prefix) {
-  std::println("{}", ivl::reflection::display_string_of(^^T));
-  template for (constexpr auto mem :
-                define_static_array(nonstatic_data_members_of(^^T, std::meta::access_context::unchecked()))) {
-    if constexpr (is_class_type(type_of(mem)) && !ivl::reflection::is_child_of(type_of(mem), ^^std)) {
-      print_help_impl<typename[:type_of(mem):]>(prefix + identifier_of(mem) + ".");
-    } else {
-      std::println("  --{}{}: {}", prefix, identifier_of(mem), ivl::reflection::display_string_of(type_of(mem)));
-    }
-  }
-}
-
-template <typename T>
-void print_help() {
-  std::println("  --help");
-  std::println();
-  print_help_impl<T>("");
-}
-
 template <typename arg_t>
 int wrap_ivl_main(int argc, char** argv) {
+  static_assert(::ivl::cmdline_parsing::validate_sanity(^^arg_t));
+  
   try {
     arg_t arg{};
 
@@ -178,72 +110,23 @@ int wrap_ivl_main(int argc, char** argv) {
 
     for (auto arg : args)
       if (std::string_view(arg) == "--help") {
-        print_help<arg_t>();
+        ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
         return 1;
       }
 
-    std::string_view context;
-    auto take_arg = [&] {
-      if (!args.empty()) {
-        std::string_view ret = args[0];
-        args = args.subspan(1);
-        return ret;
-      }
-
-      std::println(stderr, "missing arguments while parsing {:?}", context);
-      exit(1);
-    };
-    auto construct = [&]<typename T>(this const auto& self) -> T {
-      if constexpr (^^T == ^^bool) return true;
-      else if constexpr (is_integral_type(^^T) || is_floating_point_type(^^T)) {
-        auto arg = take_arg();
-        T value;
-        auto ret = std::from_chars<T>(arg.data(), arg.data() + arg.size(), value);
-        if (!ret || ret.ptr != arg.data() + arg.size()) {
-          std::println(stderr, "bad value passed to argument {:?}: {:?}", context, arg);
-          exit(1);
-        }
-        return value;
-      } else if constexpr (has_template_arguments(^^T) && template_of(^^T) == ^^std::optional) {
-        return self.template operator()<typename[:template_arguments_of(^^T)[0]:]>();
-      } else if constexpr (ivl::meta::same_as_one_of<T, std::string, std::string_view, std::filesystem::path>) {
-        return T(take_arg());
-      } else {
-        static_assert(false, std::format("type `{}` not implemented", display_string_of(^^T)));
-      }
-    };
-
     if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
-      static_assert(^^arg_t != ^^bool, "cannot use bool directly");
-      return ivl_main(construct.template operator()<arg_t>());
+      static_assert(false);
+      return 1;
+      // static_assert(^^arg_t != ^^bool, "cannot use bool directly");
+      // return ivl_main(construct.template operator()<arg_t>());
     } else {
-      auto store = [&](std::string_view name) {
-        template for (constexpr auto member : std::define_static_array(
-                        nonstatic_data_members_of(^^arg_t, std::meta::access_context::unchecked())
-                      )) {
-          if (name.substr(2) == identifier_of(member)) {
-            arg.[:member:] = construct.template operator()<typename[:type_of(member):]>();
-            return;
-          }
-        }
-        std::println(stderr, "unrecognized argument: {:?}", name);
-        exit(1);
-      };
-
-      while (!args.empty()) {
-        auto arg = take_arg();
-        context = arg;
-        if (!arg.starts_with("--")) {
-          std::println(stderr, "invalid argument name (missing \"--\" prefix): {:?}", arg);
-          exit(1);
-        }
-        store(arg);
-      }
+      ::ivl::cmdline_parsing::parse(arg, args);
       return ivl_main(arg);
     }
   } catch (const std::exception& e) {
 #ifdef __cpp_exceptions
     std::println(stderr, "exeption reached main\n{}", e.what());
+    ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
     return 1;
 #endif
   }

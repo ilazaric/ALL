@@ -26,15 +26,15 @@
 
 // --foo x
 // --foo=x
-// --foo= x
+// --foo= x // nope
 
 namespace ivl::cmdline_parsing {
 using command_line_arguments = std::span<const char*>;
 
-template <typename>
+template<typename>
 struct parser;
 
-template <>
+template<>
 struct parser<bool> {
   void parse_one(bool& arg, std::string_view sv) const {
     if (sv == "1" || sv == "true") {
@@ -72,7 +72,7 @@ struct parser_one {
   }
 };
 
-template <std::floating_point Fp>
+template<std::floating_point Fp>
 struct parser<Fp> : parser_one {
   void parse_one(Fp& arg, std::string_view sv) const {
     auto ret = std::from_chars<Fp>(sv.data(), sv.data() + sv.size(), arg);
@@ -80,7 +80,7 @@ struct parser<Fp> : parser_one {
   }
 };
 
-template <std::integral Ip>
+template<std::integral Ip>
 struct parser<Ip> : parser_one {
   void parse_one(Ip& arg, std::string_view sv) const {
     auto ret = std::from_chars<Ip>(sv.data(), sv.data() + sv.size(), arg);
@@ -88,12 +88,12 @@ struct parser<Ip> : parser_one {
   }
 };
 
-template <meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
+template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
 struct parser<Str> : parser_one {
   void parse_one(Str& arg, std::string_view sv) const { arg = sv; }
 };
 
-template <>
+template<>
 struct parser<const char*> : parser_one {
   void parse_one(const char*& arg, std::string_view sv) const { arg = sv.data(); }
 };
@@ -117,7 +117,7 @@ struct B : A {
   void f(const char*);
 };
 
-template <typename T>
+template<typename T>
 concept parseable =
   requires(T& a, std::optional<std::string_view> b, command_line_arguments c) { parser<T>{}.parse(a, b, c); };
 
@@ -127,7 +127,7 @@ consteval bool is_parseable_type(std::meta::info type) {
 }
 // clang-format on
 
-template <typename... Args>
+template<typename... Args>
 consteval void err(std::format_string<Args...> fmt, Args&&... args) {
   __builtin_constexpr_diag(2, "command_line_argument_parsing", std::format(fmt, std::forward<Args>(args)...));
 }
@@ -137,10 +137,12 @@ consteval bool is_argument_optional(std::meta::info type) {
   return is_same_type(type, ^^bool);
 }
 
-consteval void validate_sanity(std::meta::info type) {
+consteval bool validate_sanity(std::meta::info type) {
+  bool ret = true;
+
   if (!is_type(type)) {
     err("ICE: expected type, got: {:?}", type);
-    return;
+    return false;
   }
 
   type = dealias(type);
@@ -148,21 +150,23 @@ consteval void validate_sanity(std::meta::info type) {
   if (is_const_type(type) || is_volatile(type)) {
     err("type {:?} shouldn't be const or volatile", type);
     type = remove_cv(type);
+    ret = false;
   }
 
   if (is_reference_type(type)) {
     err("type {:?} shouldn't be reference", type);
     type = remove_reference(type);
+    ret = false;
   }
 
   if (!is_class_type(type)) {
     err("type {:?} is not a class", type);
-    return;
+    return false;
   }
 
   if (reflection::is_child_of(type, ^^std)) {
     err("type {:?} is a stdlib type", type);
-    return;
+    return false;
   }
 
   auto ctx = std::meta::access_context::unchecked();
@@ -179,9 +183,11 @@ consteval void validate_sanity(std::meta::info type) {
     );
     if (!nonpublic.empty()) err("type {:?} has non-public non-static data members: {::?}", nonpublic);
   }
+
+  return ret;
 }
 
-template <typename T>
+template<typename T>
 void print_help(std::string_view program_name, bool passthrough) {
   namespace term = ivl::terminal_graphical_rendition;
   auto section = term::colors::FG_LIGHTGREEN;
@@ -198,7 +204,7 @@ void print_help(std::string_view program_name, bool passthrough) {
   todo();
 }
 
-template <typename T>
+template<typename T>
 void parse(T& state, command_line_arguments& args) {
   while (!args.empty()) {
     std::string_view current = args[0];
