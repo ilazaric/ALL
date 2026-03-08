@@ -17,6 +17,7 @@
 
 #define FWD(x) std::forward<decltype(x)>(x)
 
+// TODO: flatten to just ivl
 namespace ivl::util {
 template <typename T>
 using const_span = std::span<const T>;
@@ -110,13 +111,19 @@ struct panic {
     Args&&... args, std::string_view header = "!!! PANIC !!!",
     std::source_location loc = std::source_location::current()
   ) {
-    throw panic_exception(
-      std::format(
-        "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line(),
-        std::stacktrace::current()
-      ),
-      loc
-    );
+    if consteval {
+      throw panic_exception(
+        std::format("{}\n\n{}\n\nin {}:{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line()), loc
+      );
+    } else {
+      throw panic_exception(
+        std::format(
+          "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line(),
+          std::stacktrace::current()
+        ),
+        loc
+      );
+    }
   }
   constexpr operator bool() const noexcept { return true; };
 };
@@ -126,10 +133,16 @@ struct panic<> {
   [[noreturn]] constexpr explicit panic(
     std::string_view header = "!!! PANIC !!!", std::source_location loc = std::source_location::current()
   ) {
-    throw panic_exception(
-      std::format("{}\n\nin {}:{}\nstacktrace:\n{}\n", header, loc.file_name(), loc.line(), std::stacktrace::current()),
-      loc
-    );
+    if consteval {
+      throw panic_exception(std::format("{}\n\nin {}:{}\n", header, loc.file_name(), loc.line()), loc);
+    } else {
+      throw panic_exception(
+        std::format(
+          "{}\n\nin {}:{}\nstacktrace:\n{}\n", header, loc.file_name(), loc.line(), std::stacktrace::current()
+        ),
+        loc
+      );
+    }
   }
   constexpr operator bool() const noexcept { return true; };
 };
