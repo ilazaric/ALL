@@ -56,6 +56,7 @@ namespace ivl::main_synthesis {
 struct search_result_t {
   std::meta::info main_type;
   std::meta::info ivl_main_arg_type;
+  bool validated = false;
   bool emit_main = false;
 };
 
@@ -92,7 +93,7 @@ consteval search_result_t find_main_declarations() {
 
   res.main_type = ^^int(int, char**);
   res.ivl_main_arg_type = decay(type_of(params[0]));
-  ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
+  res.validated = ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
   res.emit_main = true;
   return res;
 }
@@ -101,8 +102,6 @@ constexpr search_result_t search_result = find_main_declarations();
 
 template<typename arg_t>
 int wrap_ivl_main(int argc, char** argv) {
-  static_assert(::ivl::cmdline_parsing::validate_sanity(^^arg_t));
-
   try {
     arg_t arg{};
 
@@ -114,6 +113,7 @@ int wrap_ivl_main(int argc, char** argv) {
       // static_assert(^^arg_t != ^^bool, "cannot use bool directly");
       // return ivl_main(construct.template operator()<arg_t>());
     } else {
+      // TODO: passthrough
       if (!::ivl::cmdline_parsing::parse(arg, args)) {
         ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
         return 1;
@@ -148,7 +148,7 @@ namespace hide_decl {
 
 int[:ivl::main_synthesis::search_result.emit_main ? ^^:: : ^^hide_decl:] ::main(int argc, char** argv) {
   return ivl::main_synthesis::main_template<
-    ivl::main_synthesis::search_result.emit_main,
+    ivl::main_synthesis::search_result.emit_main && ivl::main_synthesis::search_result.validated,
     typename[:ivl::main_synthesis::search_result.emit_main ? ivl::main_synthesis::search_result.ivl_main_arg_type : ^^
              void:]>(argc, argv);
 }

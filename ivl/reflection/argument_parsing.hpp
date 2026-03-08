@@ -80,7 +80,7 @@ struct parser_one {
 template<std::floating_point Fp>
 struct parser<Fp> : parser_one {
   inline bool parse_one(Fp& arg, std::string_view sv) const {
-    auto ret = std::from_chars<Fp>(sv.data(), sv.data() + sv.size(), arg);
+    auto ret = std::from_chars(sv.data(), sv.data() + sv.size(), arg);
     if (ret && ret.ptr == sv.data() + sv.size()) return true;
     else {
       println("failed to parse floating-point, argument: {:?}", sv);
@@ -92,7 +92,7 @@ struct parser<Fp> : parser_one {
 template<std::integral Ip>
 struct parser<Ip> : parser_one {
   inline bool parse_one(Ip& arg, std::string_view sv) const {
-    auto ret = std::from_chars<Ip>(sv.data(), sv.data() + sv.size(), arg);
+    auto ret = std::from_chars(sv.data(), sv.data() + sv.size(), arg);
     if (ret && ret.ptr == sv.data() + sv.size()) return true;
     else {
       println("failed to parse integer, argument: {:?}", sv);
@@ -133,7 +133,9 @@ consteval bool is_parseable_type(std::meta::info type) {
 
 template<typename... Args>
 consteval void err(std::format_string<Args...> fmt, Args&&... args) {
-  __builtin_constexpr_diag(2, "command_line_argument_parsing", std::format(fmt, std::forward<Args>(args)...));
+  // avoiding https://gcc.gnu.org/bugzilla/show_bug.cgi?id=124404
+  auto msg = std::format(fmt, std::forward<Args>(args)...);
+  __builtin_constexpr_diag(2, "command_line_argument_parsing", std::string_view(msg));
 }
 
 consteval bool is_argument_optional(std::meta::info type) {
@@ -185,7 +187,7 @@ consteval bool validate_sanity(std::meta::info type) {
     std::vector<std::meta::info> nonpublic(
       std::from_range, std::views::filter(nsdms, std::not_fn(std::meta::is_public))
     );
-    if (!nonpublic.empty()) err("type {:?} has non-public non-static data members: {::?}", nonpublic);
+    if (!nonpublic.empty()) err("type {:?} has non-public non-static data members: {::?}", type, nonpublic);
   }
 
   return ret;
