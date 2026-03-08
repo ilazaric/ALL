@@ -106,7 +106,7 @@ struct panic_exception : base_exception {
 
 template <typename... Args>
 struct panic {
-  [[noreturn]] explicit panic(
+  [[noreturn]] constexpr explicit panic(
     Args&&... args, std::string_view header = "!!! PANIC !!!",
     std::source_location loc = std::source_location::current()
   ) {
@@ -118,12 +118,12 @@ struct panic {
       loc
     );
   }
-  operator bool() const noexcept { return true; };
+  constexpr operator bool() const noexcept { return true; };
 };
 
 template <>
 struct panic<> {
-  [[noreturn]] explicit panic(
+  [[noreturn]] constexpr explicit panic(
     std::string_view header = "!!! PANIC !!!", std::source_location loc = std::source_location::current()
   ) {
     throw panic_exception(
@@ -131,7 +131,7 @@ struct panic<> {
       loc
     );
   }
-  operator bool() const noexcept { return true; };
+  constexpr operator bool() const noexcept { return true; };
 };
 
 template <typename... Args>
@@ -141,18 +141,18 @@ panic() -> panic<>;
 
 template <typename... Args>
 struct todo {
-  [[noreturn]] explicit todo(Args&&... args, std::source_location loc = std::source_location::current()) {
+  [[noreturn]] constexpr explicit todo(Args&&... args, std::source_location loc = std::source_location::current()) {
     panic<Args...>(FWD(args)..., "!!! TODO PANIC !!!", loc);
   }
-  operator bool() const noexcept { return true; };
+  constexpr operator bool() const noexcept { return true; };
 };
 
 template <>
 struct todo<> {
-  [[noreturn]] explicit todo(std::source_location loc = std::source_location::current()) {
+  [[noreturn]] constexpr explicit todo(std::source_location loc = std::source_location::current()) {
     panic<std::format_string<>>("TODO not implemented", "!!! TODO PANIC !!!", loc);
   }
-  operator bool() const noexcept { return true; };
+  constexpr operator bool() const noexcept { return true; };
 };
 
 template <typename... Args>
