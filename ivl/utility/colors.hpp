@@ -57,6 +57,8 @@ struct background_reset {};
 
 namespace colors {
   inline constexpr foreground_color FG_RED{255, 0, 0};
+  inline constexpr foreground_color FG_CYAN{0, 255, 255};
+  inline constexpr foreground_color FG_LIGHTGREEN{144, 238, 144};
 } // namespace colors
 } // namespace ivl::terminal_graphical_rendition
 
