@@ -37,6 +37,7 @@ template <typename... Ts>
 inline constexpr bool is_unique_v = is_unique<Ts...>::value;
 
 // TODO: add callable(index) variant
+// UPDT: probably actually just remove this
 void repeat(size_t n, auto&& callable) {
   for (size_t i = 0; i < n; ++i) callable();
 }
