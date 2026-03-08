@@ -75,7 +75,7 @@ auto lazy_construct(auto&&... args) {
   return lazy_construct_t<T, decltype(args)...>(FWD(args)...);
 }
 
-std::string hex(std::string_view sv) {
+inline std::string hex(std::string_view sv) {
   std::string ret(sv.size() * 2, '\0');
   auto hexc = [](int x) -> char { return x < 10 ? '0' + x : 'a' + x - 10; };
   for (size_t i = 0; i < sv.size(); ++i) {
@@ -85,7 +85,7 @@ std::string hex(std::string_view sv) {
   return ret;
 }
 
-std::filesystem::path repo_root() {
+inline std::filesystem::path repo_root() {
   auto root = std::filesystem::canonical("/proc/self/exe");
   while (!exists(root / ".git")) {
     assert(root.has_parent_path());

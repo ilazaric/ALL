@@ -20,7 +20,7 @@ struct base_exception : std::exception {
     base_exception* ptr;
     int idx;
 
-    detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
+    inline detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
   };
 
   inline static thread_local std::vector<detail_handle> inflight_exceptions{};
@@ -35,20 +35,20 @@ struct base_exception : std::exception {
   std::vector<context> added_context;
   mutable std::unique_ptr<std::string> cached_what;
 
-  base_exception(
+  inline base_exception(
     std::string_view throw_text = "", std::source_location throw_location = std::source_location::current()
   )
       : throw_text(throw_text), throw_location(throw_location) {
     inflight_exceptions.emplace_back(*this);
   }
 
-  ~base_exception() { inflight_exceptions.pop_back(); }
+  inline ~base_exception() { inflight_exceptions.pop_back(); }
 
-  static bool is_in_flight() {
+  inline static bool is_in_flight() {
     return !inflight_exceptions.empty() && inflight_exceptions.back().idx + 1 == std::uncaught_exceptions();
   }
 
-  void dump(std::FILE* stream = stdout) const {
+  inline void dump(std::FILE* stream = stdout) const {
     std::println(
       stream, "ivl::base_exception thrown from {}:{}:`{}`", throw_location.file_name(), throw_location.line(),
       throw_location.function_name()
@@ -63,7 +63,7 @@ struct base_exception : std::exception {
     }
   }
 
-  virtual const char* what() const noexcept {
+  virtual inline const char* what() const noexcept {
     if (cached_what) return cached_what->c_str();
     std::string what;
     auto out = std::back_inserter(what);

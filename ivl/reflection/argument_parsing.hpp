@@ -1,6 +1,5 @@
 #pragma once
 
-#include <ivl/exception>
 #include <ivl/meta>
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
@@ -9,6 +8,7 @@
 #include <functional>
 #include <meta>
 #include <optional>
+#include <print>
 #include <ranges>
 #include <span>
 #include <string_view>
@@ -35,7 +35,7 @@ struct parser;
 
 template<>
 struct parser<bool> {
-  bool parse_one(bool& arg, std::string_view sv) const {
+  inline bool parse_one(bool& arg, std::string_view sv) const {
     if (sv == "1" || sv == "true") {
       arg = true;
       return true;
@@ -48,7 +48,7 @@ struct parser<bool> {
     return false;
   }
 
-  bool parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
+  inline bool parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
     if (eq) return parse_one(arg, *eq);
 
     if (!rest.empty()) {
@@ -65,7 +65,7 @@ struct parser<bool> {
 };
 
 struct parser_one {
-  bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
+  inline bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
     if (eq) return self.parse_one(arg, *eq);
     if (rest.empty()) {
       std::println("missing argument");
@@ -79,7 +79,7 @@ struct parser_one {
 
 template<std::floating_point Fp>
 struct parser<Fp> : parser_one {
-  bool parse_one(Fp& arg, std::string_view sv) const {
+  inline bool parse_one(Fp& arg, std::string_view sv) const {
     auto ret = std::from_chars<Fp>(sv.data(), sv.data() + sv.size(), arg);
     if (ret && ret.ptr == sv.data() + sv.size()) return true;
     else {
@@ -91,7 +91,7 @@ struct parser<Fp> : parser_one {
 
 template<std::integral Ip>
 struct parser<Ip> : parser_one {
-  bool parse_one(Ip& arg, std::string_view sv) const {
+  inline bool parse_one(Ip& arg, std::string_view sv) const {
     auto ret = std::from_chars<Ip>(sv.data(), sv.data() + sv.size(), arg);
     if (ret && ret.ptr == sv.data() + sv.size()) return true;
     else {
@@ -103,7 +103,7 @@ struct parser<Ip> : parser_one {
 
 template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
 struct parser<Str> : parser_one {
-  bool parse_one(Str& arg, std::string_view sv) const {
+  inline bool parse_one(Str& arg, std::string_view sv) const {
     arg = sv;
     return true;
   }
@@ -111,7 +111,7 @@ struct parser<Str> : parser_one {
 
 template<>
 struct parser<const char*> : parser_one {
-  bool parse_one(const char*& arg, std::string_view sv) const {
+  inline bool parse_one(const char*& arg, std::string_view sv) const {
     arg = sv.data();
     return true;
   }
@@ -119,21 +119,6 @@ struct parser<const char*> : parser_one {
 
 struct description {
   std::string_view contents;
-};
-
-struct A {
-  bool x;
-  bool y;
-  std::string_view z;
-  const char* w;
-  std::string t;
-  int u;
-};
-
-struct B : A {
-  A a;
-  A b;
-  void f(const char*);
 };
 
 template<typename T>
@@ -207,7 +192,7 @@ consteval bool validate_sanity(std::meta::info type) {
 }
 
 template<typename T>
-void print_help(std::string_view program_name, bool passthrough) {
+inline void print_help(std::string_view program_name, bool passthrough) {
   namespace term = ivl::terminal_graphical_rendition;
   auto section = term::colors::FG_LIGHTGREEN;
   auto option = term::colors::FG_CYAN;
@@ -225,7 +210,7 @@ void print_help(std::string_view program_name, bool passthrough) {
 }
 
 template<typename T>
-bool parse(T& state, command_line_arguments& args) {
+inline bool parse(T& state, command_line_arguments& args) {
   while (!args.empty()) {
     std::string_view current = args[0];
     // TODO: allow for parsing plain non-option value
