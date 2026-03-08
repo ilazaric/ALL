@@ -1,93 +1,232 @@
 #pragma once
 
 #include <ivl/exception>
+#include <ivl/meta>
 #include <ivl/reflection/prettier_types>
-#include <cassert>
+#include <ivl/reflection/utility>
+#include <ivl/utility/colors>
+#include <ivl/utility>
+#include <format>
+#include <functional>
 #include <meta>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string_view>
 
-namespace ivl {
-struct text_annotation {
-  const char* text;
-  consteval text_annotation(auto&& data) : text(std::define_static_string(data)) {}
+// https://nullprogram.com/blog/2020/08/01/
+
+// --long_option argument
+// --long_option=argument
+// --boolean_option // as-if =1 or =true
+// -s argument // short option
+// -abc // a,b,c are short boolean options
+// no thanks on -abc
+// do i even want short options
+
+// --foo x
+// --foo=x
+// --foo= x
+
+namespace ivl::cmdline_parsing {
+using command_line_arguments = std::span<const char*>;
+
+template <typename>
+struct parser;
+
+template <>
+struct parser<bool> {
+  void parse_one(bool& arg, std::string_view sv) const {
+    if (sv == "1" || sv == "true") {
+      arg = true;
+      return;
+    }
+    if (sv == "0" || sv == "false") {
+      arg = false;
+      return;
+    }
+    panic("failed to parse boolean, argument: {:?}", sv);
+  }
+
+  void parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
+    if (eq) return parse_one(arg, *eq);
+
+    if (!rest.empty()) {
+      std::string_view nxt = rest[0];
+      if (!nxt.starts_with("--")) {
+        rest = rest.subspan(1);
+        return parse_one(arg, nxt);
+      }
+    }
+
+    arg = true;
+  }
 };
 
-struct long_option : text_annotation {};
+struct parser_one {
+  void parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
+    if (eq) return self.parse_one(arg, *eq);
+    rest.empty() && panic("missing argument");
+    self.parse_one(arg, rest[0]);
+    rest = rest.subspan(1);
+  }
+};
 
-struct short_option : text_annotation {};
+template <std::floating_point Fp>
+struct parser<Fp> : parser_one {
+  void parse_one(Fp& arg, std::string_view sv) const {
+    auto ret = std::from_chars<Fp>(sv.data(), sv.data() + sv.size(), arg);
+    ret&& ret.ptr == sv.data() + sv.size() || panic("failed to parse floating-point, argument: {:?}", sv);
+  }
+};
 
-struct title : text_annotation {};
+template <std::integral Ip>
+struct parser<Ip> : parser_one {
+  void parse_one(Ip& arg, std::string_view sv) const {
+    auto ret = std::from_chars<Ip>(sv.data(), sv.data() + sv.size(), arg);
+    ret&& ret.ptr == sv.data() + sv.size() || panic("failed to parse integer, argument: {:?}", sv);
+  }
+};
 
-struct description : text_annotation {};
+template <meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
+struct parser<Str> : parser_one {
+  void parse_one(Str& arg, std::string_view sv) const { arg = sv; }
+};
 
-struct name : text_annotation {};
+template <>
+struct parser<const char*> : parser_one {
+  void parse_one(const char*& arg, std::string_view sv) const { arg = sv.data(); }
+};
 
-consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
-  std::vector<std::meta::info> ret;
-  for (auto i : v) ret.push_back(reflect_constant(i));
-  return ret;
+struct description {
+  std::string_view contents;
+};
+
+struct A {
+  bool x;
+  bool y;
+  std::string_view z;
+  const char* w;
+  std::string t;
+  int u;
+};
+
+struct B : A {
+  A a;
+  A b;
+  void f(const char*);
+};
+
+template <typename T>
+concept parseable =
+  requires(T& a, std::optional<std::string_view> b, command_line_arguments c) { parser<T>{}.parse(a, b, c); };
+
+// clang-format off
+consteval bool is_parseable_type(std::meta::info type) {
+  return extract<bool>(substitute(^^parseable, {type}));
+}
+// clang-format on
+
+template <typename... Args>
+consteval void err(std::format_string<Args...> fmt, Args&&... args) {
+  __builtin_constexpr_diag(2, "command_line_argument_parsing", std::format(fmt, std::forward<Args>(args)...));
 }
 
-template <std::meta::info... Is>
-inline auto foreach = [](auto&& callable) { ((callable.template operator()<Is>()), ...); };
-
-consteval bool is_in_std(std::meta::info i) {
-  for (; has_parent(i); i = parent_of(i))
-    if (i == ^^std) return true;
-  return false;
+consteval bool is_argument_optional(std::meta::info type) {
+  // TODO
+  return is_same_type(type, ^^bool);
 }
 
-template <std::meta::info I>
-void describe_descriptions(size_t indent) {
-  [:substitute(^^foreach, wrap(annotations_of_with_type(I, ^^description))):]([&]<std::meta::info DI> {
-    std::println("{: <{}}description:", "", indent * 2);
-    std::println("{: <{}}- {}", "", indent * 2, extract<description>(DI).text);
-  });
-}
+consteval void validate_sanity(std::meta::info type) {
+  if (!is_type(type)) {
+    err("ICE: expected type, got: {:?}", type);
+    return;
+  }
 
-template <std::meta::info I>
-void describe_member(size_t indent) {
-  std::println("{: <{}}name: {}", "", indent * 2, identifier_of(I));
-  std::println("{: <{}}type: {}", "", indent * 2, reflection::display_string_of(type_of(I)));
-  describe_descriptions<I>(indent);
-  std::println();
-}
+  type = dealias(type);
 
-template <std::meta::info I>
-void describe_bundle(size_t indent = 0) {
-  std::println("{: <{}}name: {}", "", indent * 2, identifier_of(I));
+  if (is_const_type(type) || is_volatile(type)) {
+    err("type {:?} shouldn't be const or volatile", type);
+    type = remove_cv(type);
+  }
 
-  describe_descriptions<I>(indent);
+  if (is_reference_type(type)) {
+    err("type {:?} shouldn't be reference", type);
+    type = remove_reference(type);
+  }
 
-  [:substitute(^^foreach, wrap(nonstatic_data_members_of(I, std::meta::access_context::unchecked()))):](
-    [&]<std::meta::info mem>() { describe_member<mem>(indent + 1); }
-  );
+  if (!is_class_type(type)) {
+    err("type {:?} is not a class", type);
+    return;
+  }
+
+  if (reflection::is_child_of(type, ^^std)) {
+    err("type {:?} is a stdlib type", type);
+    return;
+  }
+
+  auto ctx = std::meta::access_context::unchecked();
+
+  {
+    auto bases = bases_of(type, ctx);
+    if (!bases.empty()) err("type {:?} has bases: {::?}", type, bases);
+  }
+
+  {
+    auto nsdms = nonstatic_data_members_of(type, ctx);
+    std::vector<std::meta::info> nonpublic(
+      std::from_range, std::views::filter(nsdms, std::not_fn(std::meta::is_public))
+    );
+    if (!nonpublic.empty()) err("type {:?} has non-public non-static data members: {::?}", nonpublic);
+  }
 }
 
 template <typename T>
-T parse(std::span<const char*> args) {
-  T state;
-
-start:
-  if (args.empty()) return state;
-
-  auto arg = std::string_view(args[0]);
-  args = args.subspan(1);
-
-  if (!arg.starts_with('-')) throw ivl::base_exception("expected an option, received: `{}`", arg);
-
-  if (!arg.starts_with("--")) throw ivl::base_exception("options should start with `--`, received: `{}`", arg);
-
-  arg.remove_prefix(2);
-
-  if (arg == "help") {
-    describe_bundle<^^T>();
+void print_help(std::string_view program_name, bool passthrough) {
+  namespace term = ivl::terminal_graphical_rendition;
+  auto section = term::colors::FG_LIGHTGREEN;
+  auto option = term::colors::FG_CYAN;
+  std::print("{}Usage: {} {}[--help]", section, program_name, option);
+  template for (constexpr auto member : reflection::nsdms(^^T)) {
+    if constexpr (is_argument_optional(type_of(member))) {
+      std::print(" [--{} [{}]]", identifier_of(member), reflection::display_string_of(type_of(member)));
+    } else {
+      std::print(" [--{} {}]", identifier_of(member), reflection::display_string_of(type_of(member)));
+    }
   }
-
-  goto start;
+  std::println("{}", term::foreground_reset{});
+  todo();
 }
 
-[[= ivl::test]] void parse_test() {}
-} // namespace ivl
+template <typename T>
+void parse(T& state, command_line_arguments& args) {
+  while (!args.empty()) {
+    std::string_view current = args[0];
+    // TODO: allow for parsing plain non-option value
+    // ....: `gcc -c **src.cpp** -o src.o`
+    if (!current.starts_with('-')) break;
+    if (current == "--") break;
+    args = args.subspan(1);
+    current.starts_with("--") || panic("option should start with '--', got: {:?}", current);
+    auto name = current.substr(2);
+
+    std::optional<std::string_view> eq;
+    if (auto loc = name.find('='); loc != std::string_view::npos) {
+      eq = name.substr(loc + 1);
+      name = name.substr(0, loc);
+    }
+
+    bool found = false;
+    template for (constexpr auto member : reflection::nsdms(^^T)) {
+      if (identifier_of(member) == name) {
+        parser<typename[:type_of(member):]> p;
+        p.parse(state.[:member:], eq, args);
+        found = true;
+        break;
+      }
+    }
+
+    found || panic("unrecognized option: {:?}", current);
+  }
+}
+} // namespace ivl::cmdline_parsing
