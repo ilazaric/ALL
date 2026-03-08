@@ -32,6 +32,9 @@
 #pragma IVL add_compiler_flags -falign-loops=1
 #pragma IVL add_compiler_flags -Wl,-z,noexecstack
 
+// IVL disable_ivl_main_handler()
+#pragma IVL disable_ivl_main_handler
+
 extern "C" __attribute__((used)) [[noreturn]] void premain() {
   ivl::linux::raw_syscalls::exit_group(1);
   __builtin_unreachable();

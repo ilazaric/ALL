@@ -54,6 +54,7 @@ struct pp_info_t {
 
   std::vector<std::string> add_compiler_flags;
   std::vector<std::string> add_compiler_flags_tail;
+  bool ivl_main_handler = true;
 
   // std::vector<std::string> dependencies;
   // std::vector<std::string> test_dependencies;
@@ -84,8 +85,10 @@ struct pp_info_t {
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
     cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back(file);
-    cxx_cfg.argv.push_back("-include");
-    cxx_cfg.argv.push_back("ivl/reflection/ivl_main_handler");
+    if (ivl_main_handler) {
+      cxx_cfg.argv.push_back("-include");
+      cxx_cfg.argv.push_back("ivl/reflection/ivl_main_handler");
+    }
     cxx_cfg.argv.push_back("/dev/null");
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
@@ -222,6 +225,15 @@ struct manifest_part_t {
           //   pp_info.dependencies.insert_range(pp_info.dependencies.end(), pieces);
           // } else if (command == "add_test_dependencies") {
           //   pp_info.test_dependencies.insert_range(pp_info.test_dependencies.end(), pieces);
+        } else if (command == "disable_ivl_main_handler") {
+          if (!pieces.empty()) {
+            std::println(stderr, "ERROR: IVL directive `disable_ivl_main_handler` expects no arguments");
+            std::println(stderr, "ERROR: in file: {}", file);
+            std::println(stderr, "ERROR: directive: {}", line);
+            std::println(stderr, "ERROR: from file: {}", current_file);
+            return std::nullopt;
+          }
+          pp_info.ivl_main_handler = false;
         } else {
           std::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", file);
           std::println(stderr, "ERROR: directive: {}", line);

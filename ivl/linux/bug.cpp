@@ -1,5 +1,7 @@
 // IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector")
 #pragma IVL add_compiler_flags -Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector
+// IVL disable_ivl_main_handler()
+#pragma IVL disable_ivl_main_handler
 
 extern "C" __attribute__((used)) void actual_start() {
   long a          = 0;

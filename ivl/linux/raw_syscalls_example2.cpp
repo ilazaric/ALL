@@ -3,7 +3,8 @@
 
 // IVL add_compiler_flags("-Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector -fno-exceptions -fno-rtti")
 #pragma IVL add_compiler_flags -Wl,-z,noseparate-code -flto -static -nolibc -nostartfiles -fno-stack-protector -fno-exceptions -fno-rtti
-
+// IVL disable_ivl_main_handler()
+#pragma IVL disable_ivl_main_handler
 
 extern "C" __attribute__((naked)) [[noreturn]] void _start() {
   asm volatile("call actual_start\n"

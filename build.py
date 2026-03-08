@@ -44,6 +44,7 @@ def deduce_file_targets(path):
     unordered_test_dependencies = set()
     file_has_reg_variant = path.suffix == ".cpp"
     file_has_test_variant = False
+    ivl_main_handler = True
     def add_compiler_flags(arg):
         nonlocal added_compiler_flags
         added_compiler_flags += arg.split()
@@ -65,6 +66,9 @@ def deduce_file_targets(path):
     def has_test_variant():
         nonlocal file_has_test_variant
         file_has_test_variant = True
+    def disable_ivl_main_handler():
+        nonlocal ivl_main_handler
+        ivl_main_handler = False
 
     with path.open() as f:
         x = "// IVL "
@@ -81,7 +85,7 @@ def deduce_file_targets(path):
     if file_has_test_variant:
         all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
     if file_has_reg_variant:
-        all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/ivl_main_handler"], unordered_dependencies)
+        all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + (["-include", "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
 
 for dirpath, _, filenames in src.walk():
     for filename in filenames:
