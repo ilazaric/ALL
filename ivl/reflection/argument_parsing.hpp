@@ -5,7 +5,6 @@
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
 #include <ivl/utility/colors>
-#include <ivl/utility>
 #include <format>
 #include <functional>
 #include <meta>
@@ -36,19 +35,20 @@ struct parser;
 
 template<>
 struct parser<bool> {
-  void parse_one(bool& arg, std::string_view sv) const {
+  bool parse_one(bool& arg, std::string_view sv) const {
     if (sv == "1" || sv == "true") {
       arg = true;
-      return;
+      return true;
     }
     if (sv == "0" || sv == "false") {
       arg = false;
-      return;
+      return true;
     }
-    panic("failed to parse boolean, argument: {:?}", sv);
+    std::println("failed to parse boolean, argument: {:?}", sv);
+    return false;
   }
 
-  void parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
+  bool parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
     if (eq) return parse_one(arg, *eq);
 
     if (!rest.empty()) {
@@ -60,42 +60,61 @@ struct parser<bool> {
     }
 
     arg = true;
+    return true;
   }
 };
 
 struct parser_one {
-  void parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
+  bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
     if (eq) return self.parse_one(arg, *eq);
-    rest.empty() && panic("missing argument");
-    self.parse_one(arg, rest[0]);
+    if (rest.empty()) {
+      std::println("missing argument");
+      return false;
+    }
+    auto x = rest[0];
     rest = rest.subspan(1);
+    return self.parse_one(arg, x);
   }
 };
 
 template<std::floating_point Fp>
 struct parser<Fp> : parser_one {
-  void parse_one(Fp& arg, std::string_view sv) const {
+  bool parse_one(Fp& arg, std::string_view sv) const {
     auto ret = std::from_chars<Fp>(sv.data(), sv.data() + sv.size(), arg);
-    ret&& ret.ptr == sv.data() + sv.size() || panic("failed to parse floating-point, argument: {:?}", sv);
+    if (ret && ret.ptr == sv.data() + sv.size()) return true;
+    else {
+      println("failed to parse floating-point, argument: {:?}", sv);
+      return false;
+    }
   }
 };
 
 template<std::integral Ip>
 struct parser<Ip> : parser_one {
-  void parse_one(Ip& arg, std::string_view sv) const {
+  bool parse_one(Ip& arg, std::string_view sv) const {
     auto ret = std::from_chars<Ip>(sv.data(), sv.data() + sv.size(), arg);
-    ret&& ret.ptr == sv.data() + sv.size() || panic("failed to parse integer, argument: {:?}", sv);
+    if (ret && ret.ptr == sv.data() + sv.size()) return true;
+    else {
+      println("failed to parse integer, argument: {:?}", sv);
+      return false;
+    }
   }
 };
 
 template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
 struct parser<Str> : parser_one {
-  void parse_one(Str& arg, std::string_view sv) const { arg = sv; }
+  bool parse_one(Str& arg, std::string_view sv) const {
+    arg = sv;
+    return true;
+  }
 };
 
 template<>
 struct parser<const char*> : parser_one {
-  void parse_one(const char*& arg, std::string_view sv) const { arg = sv.data(); }
+  bool parse_one(const char*& arg, std::string_view sv) const {
+    arg = sv.data();
+    return true;
+  }
 };
 
 struct description {
@@ -206,15 +225,19 @@ void print_help(std::string_view program_name, bool passthrough) {
 }
 
 template<typename T>
-void parse(T& state, command_line_arguments& args) {
+bool parse(T& state, command_line_arguments& args) {
   while (!args.empty()) {
     std::string_view current = args[0];
     // TODO: allow for parsing plain non-option value
     // ....: `gcc -c **src.cpp** -o src.o`
     if (!current.starts_with('-')) break;
     if (current == "--") break;
+    if (current == "--help") return false;
     args = args.subspan(1);
-    current.starts_with("--") || panic("option should start with '--', got: {:?}", current);
+    if (!current.starts_with("--")) {
+      std::println("option should start with '--', got: {:?}", current);
+      return false;
+    }
     auto name = current.substr(2);
 
     std::optional<std::string_view> eq;
@@ -227,13 +250,21 @@ void parse(T& state, command_line_arguments& args) {
     template for (constexpr auto member : reflection::nsdms(^^T)) {
       if (identifier_of(member) == name) {
         parser<typename[:type_of(member):]> p;
-        p.parse(state.[:member:], eq, args);
+        if (!p.parse(state.[:member:], eq, args)) {
+          std::println("during parsing option: {:?}", current);
+          return false;
+        }
         found = true;
         break;
       }
     }
 
-    found || panic("unrecognized option: {:?}", current);
+    if (!found) {
+      std::println("unrecognized option: {:?}", current);
+      return false;
+    }
   }
+
+  return true;
 }
 } // namespace ivl::cmdline_parsing

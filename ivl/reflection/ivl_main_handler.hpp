@@ -16,7 +16,7 @@
 
 /*
   TODO: probably purge this comment, argparsing has been moved
-  
+
   ivl_main() has to accept a single type ArgT
   decay(ArgT) must satisfy IvlMainArg
 
@@ -99,20 +99,14 @@ consteval search_result_t find_main_declarations() {
 
 constexpr search_result_t search_result = find_main_declarations();
 
-template <typename arg_t>
+template<typename arg_t>
 int wrap_ivl_main(int argc, char** argv) {
   static_assert(::ivl::cmdline_parsing::validate_sanity(^^arg_t));
-  
+
   try {
     arg_t arg{};
 
     std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
-
-    for (auto arg : args)
-      if (std::string_view(arg) == "--help") {
-        ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
-        return 1;
-      }
 
     if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
       static_assert(false);
@@ -120,19 +114,21 @@ int wrap_ivl_main(int argc, char** argv) {
       // static_assert(^^arg_t != ^^bool, "cannot use bool directly");
       // return ivl_main(construct.template operator()<arg_t>());
     } else {
-      ::ivl::cmdline_parsing::parse(arg, args);
+      if (!::ivl::cmdline_parsing::parse(arg, args)) {
+        ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
+        return 1;
+      }
       return ivl_main(arg);
     }
   } catch (const std::exception& e) {
 #ifdef __cpp_exceptions
     std::println(stderr, "exeption reached main\n{}", e.what());
-    ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
     return 1;
 #endif
   }
 }
 
-template <bool use_ivl, typename arg_t>
+template<bool use_ivl, typename arg_t>
 int main_template(int argc, char** argv) {
   if constexpr (use_ivl) {
     return wrap_ivl_main<arg_t>(argc, argv);
