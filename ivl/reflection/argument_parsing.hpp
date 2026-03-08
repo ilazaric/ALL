@@ -200,8 +200,9 @@ void print_help(std::string_view program_name, bool passthrough) {
       std::print(" [--{} {}]", identifier_of(member), reflection::display_string_of(type_of(member)));
     }
   }
+  if (passthrough) std::print("[-- [passthrough-args]...]");
   std::println("{}", term::foreground_reset{});
-  todo();
+  // TODO: descriptions
 }
 
 template<typename T>
