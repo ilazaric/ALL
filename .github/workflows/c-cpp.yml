@@ -45,8 +45,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: install apt packages
-      run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+    # - name: install apt packages
+    #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
     - uses: webfactory/ssh-agent@v0.9.1
       with:
@@ -87,8 +87,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: install apt packages
-      run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+    # - name: install apt packages
+    #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
     - uses: webfactory/ssh-agent@v0.9.1
       with:
