@@ -11,7 +11,7 @@ struct cc_bundle {
   std::string truc;
   int x;
   float y;
-  // const char* z;
+  // const char* z; // json doesnt like this
 };
 
 int ivl_main(cc_bundle& args, std::span<const char*> pass) {
