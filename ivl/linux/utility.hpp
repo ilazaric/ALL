@@ -32,6 +32,25 @@ inline std::string read_file(const char* path) {
 inline std::string read_file(const std::string& path) { return read_file(path.c_str()); }
 inline std::string read_file(const std::filesystem::path& path) { return read_file(path.native()); }
 
+// sometimes mmap can't be used, for example /sys/fs/cgroup/cgroup.controllers lies about size.
+inline std::string read_file_slow(file_descriptor fd) {
+  std::string ret;
+  char buf[page_size * 8];
+  while (auto len = throwing_syscalls::read(fd.get(), buf, sizeof(buf))) {
+    ret += std::string_view(buf, buf + len);
+  }
+  return ret;
+}
+
+// TODO: change arg into null-terminated-string-view
+inline std::string read_file_slow(const char* path) {
+  owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
+  return read_file_slow(fd);
+}
+
+inline std::string read_file_slow(const std::string& path) { return read_file_slow(path.c_str()); }
+inline std::string read_file_slow(const std::filesystem::path& path) { return read_file_slow(path.native()); }
+
 inline owned_file_descriptor create_tmpfs() {
   alignas(16) char stack[1ULL << 12];
 
@@ -130,7 +149,8 @@ inline owned_file_descriptor create_tmpfs() {
       }
 
       raw_syscalls::ivl_start_logging();
-      auto mount_ret = raw_syscalls::mount((char*)"tmpfs", (char*)"/proc", (char*)"tmpfs", 0, (void*)"mode=777,uid=0,gid=0");
+      auto mount_ret =
+        raw_syscalls::mount((char*)"tmpfs", (char*)"/proc", (char*)"tmpfs", 0, (void*)"mode=777,uid=0,gid=0");
       raw_syscalls::ivl_stop_logging();
       if (mount_ret < 0) {
         outcome.syscall_return = mount_ret;
