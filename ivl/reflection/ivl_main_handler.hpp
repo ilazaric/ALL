@@ -107,6 +107,8 @@ int wrap_ivl_main(int argc, char** argv) {
 
     std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
 
+    std::string_view program_name = argc ? argv[0] : "<program-name>";
+
     if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
       static_assert(false);
       return 1;
@@ -115,7 +117,7 @@ int wrap_ivl_main(int argc, char** argv) {
     } else {
       // TODO: passthrough
       if (!::ivl::cmdline_parsing::parse(arg, args)) {
-        ::ivl::cmdline_parsing::print_help<arg_t>("TODO", false);
+        ::ivl::cmdline_parsing::print_help<arg_t>(program_name, false);
         return 1;
       }
       return ivl_main(arg);
@@ -147,8 +149,8 @@ namespace hide_decl {
 [:ivl::main_synthesis::search_result.main_type:] main;
 
 int[:ivl::main_synthesis::search_result.emit_main ? ^^:: : ^^hide_decl:] ::main(int argc, char** argv) {
-  return ivl::main_synthesis::main_template<
-    ivl::main_synthesis::search_result.emit_main && ivl::main_synthesis::search_result.validated,
-    typename[:ivl::main_synthesis::search_result.emit_main ? ivl::main_synthesis::search_result.ivl_main_arg_type : ^^
-             void:]>(argc, argv);
+  return ivl::main_synthesis::main_template < ivl::main_synthesis::search_result.emit_main &&
+           ivl::main_synthesis::search_result.validated,
+         typename[:ivl::main_synthesis::search_result.emit_main ? ivl::main_synthesis::search_result.ivl_main_arg_type
+                                                                : ^^void:] > (argc, argv);
 }
