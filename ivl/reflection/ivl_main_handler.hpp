@@ -58,6 +58,7 @@ struct search_result_t {
   std::meta::info ivl_main_arg_type;
   bool validated = false;
   bool emit_main = false;
+  bool passthrough = false;
 };
 
 consteval search_result_t find_main_declarations() {
@@ -89,8 +90,9 @@ consteval search_result_t find_main_declarations() {
 
   auto decl = ivl_main_decls[0];
   auto params = parameters_of(decl);
-  if (params.size() != 1) throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
-
+  if (params.size() == 0 || params.size() > 2)
+    throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
+  res.passthrough = params.size() == 2;
   res.main_type = ^^int(int, char**);
   res.ivl_main_arg_type = decay(type_of(params[0]));
   res.validated = ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
@@ -100,7 +102,7 @@ consteval search_result_t find_main_declarations() {
 
 constexpr search_result_t search_result = find_main_declarations();
 
-template<typename arg_t>
+template<typename arg_t, bool passthrough>
 int wrap_ivl_main(int argc, char** argv) {
   try {
     arg_t arg{};
@@ -117,10 +119,17 @@ int wrap_ivl_main(int argc, char** argv) {
     } else {
       // TODO: passthrough
       if (!::ivl::cmdline_parsing::parse(arg, args)) {
-        ::ivl::cmdline_parsing::print_help<arg_t>(program_name, false);
+      help:
+        ::ivl::cmdline_parsing::print_help<arg_t>(program_name, passthrough);
         return 1;
       }
-      return ivl_main(arg);
+      if constexpr (passthrough) {
+        return ivl_main(arg, args);
+      } else {
+        if (args.empty()) return ivl_main(arg);
+        std::println("program does not handle passthrough arguments");
+        goto help;
+      }
     }
   } catch (const std::exception& e) {
 #ifdef __cpp_exceptions
@@ -130,10 +139,10 @@ int wrap_ivl_main(int argc, char** argv) {
   }
 }
 
-template<bool use_ivl, typename arg_t>
+template<bool use_ivl, typename arg_t, bool passthrough>
 int main_template(int argc, char** argv) {
   if constexpr (use_ivl) {
-    return wrap_ivl_main<arg_t>(argc, argv);
+    return wrap_ivl_main<arg_t, passthrough>(argc, argv);
   } else {
     return 0;
   }
@@ -152,5 +161,6 @@ int[:ivl::main_synthesis::search_result.emit_main ? ^^:: : ^^hide_decl:] ::main(
   return ivl::main_synthesis::main_template < ivl::main_synthesis::search_result.emit_main &&
            ivl::main_synthesis::search_result.validated,
          typename[:ivl::main_synthesis::search_result.emit_main ? ivl::main_synthesis::search_result.ivl_main_arg_type
-                                                                : ^^void:] > (argc, argv);
+                                                                : ^^void:], ivl::main_synthesis::search_result
+                                                                                .passthrough > (argc, argv);
 }

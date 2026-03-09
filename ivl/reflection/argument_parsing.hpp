@@ -201,12 +201,13 @@ inline void print_help(std::string_view program_name, bool passthrough) {
   std::print("{}Usage: {} {}[--help]", section, program_name, option);
   template for (constexpr auto member : reflection::nsdms(^^T)) {
     if constexpr (is_argument_optional(type_of(member))) {
-      std::print(" [--{} [{}]]", identifier_of(member), reflection::display_string_of(type_of(member)));
+      std::print(" [--{} [`{}`]]", identifier_of(member), reflection::display_string_of(type_of(member)));
     } else {
-      std::print(" [--{} {}]", identifier_of(member), reflection::display_string_of(type_of(member)));
+      std::print(" [--{} `{}`]", identifier_of(member), reflection::display_string_of(type_of(member)));
     }
   }
-  if (passthrough) std::print("[-- [passthrough-args]...]");
+  // TODO: name of passthrough args should be customizable
+  if (passthrough) std::print(" [--] args ...");
   std::println("{}", term::foreground_reset{});
   // TODO: descriptions
 }

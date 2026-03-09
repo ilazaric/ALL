@@ -8,6 +8,10 @@
 struct cc_bundle {
   bool bla;
   std::string truc;
+// private:
+  int x;
+  float y;
+  const char* z;
 };
 
 struct args_bundle : cc_bundle {
@@ -106,7 +110,7 @@ void describe2(const T& arg, size_t indent = 0) {
   }
 }
 
-int ivl_main(cc_bundle& args) {
+int ivl_main(cc_bundle& args, std::span<const char*>) {
   args_bundle a2;
   std::string foo = "hello world";
   describe2(a2);
