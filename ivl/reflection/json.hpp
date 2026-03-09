@@ -16,7 +16,7 @@ constexpr json_serialize_as_array_t json_serialize_as_array;
 
 enum class from_to_json_impl_direction { FROM, TO };
 
-template <
+template<
   typename T, from_to_json_impl_direction Direction, bool SerializeAsArray = false,
   typename InputT = std::conditional_t<Direction == from_to_json_impl_direction::TO, T, nlohmann::json>,
   typename RetT = std::conditional_t<Direction == from_to_json_impl_direction::TO, nlohmann::json, T>>
@@ -114,12 +114,12 @@ RetT from_to_json_impl(const InputT& arg) {
   }
 }
 
-template <typename T>
+template<typename T>
 T from_json(const nlohmann::json& j) {
   return from_to_json_impl<T, from_to_json_impl_direction::FROM>(j);
 }
 
-template <typename T>
+template<typename T>
 nlohmann::json to_json(const T& t) {
   return from_to_json_impl<T, from_to_json_impl_direction::TO>(t);
 }
