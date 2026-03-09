@@ -3,9 +3,9 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/terminate_syscalls>
 #include <ivl/process>
+#include <linux/capability.h>
 #include <cassert>
 #include <filesystem>
-#include <linux/capability.h>
 #include <map>
 #include <string_view>
 #include <vector>
@@ -71,12 +71,11 @@ struct safe_config {
   size_t max_cpu_percentage;
 };
 
-  safe_config cp_config(const std::filesystem::path& in,
-                        const std::filesystem::path& out) {
-    safe_config ret;
-    // TODO
-    throw;
-  }
+safe_config cp_config(const std::filesystem::path& in, const std::filesystem::path& out) {
+  safe_config ret;
+  // TODO
+  throw;
+}
 
 // We have multiple phases:
 // 1. before clone3 - set up cgroup
@@ -130,7 +129,9 @@ safe_process safe_start(
     detail::full_write_at(AT_FDCWD, "/proc/self/setgroups", "deny");
     detail::full_write_at(AT_FDCWD, "/proc/self/gid_map", "0 1000 1");
 
-    linux::terminate_syscalls::mount((char*)"tmpfs", (char*)root.c_str(), (char*)"tmpfs", 0, /*size={} could go here*/ nullptr);
+    linux::terminate_syscalls::mount(
+      (char*)"tmpfs", (char*)root.c_str(), (char*)"tmpfs", 0, /*size={} could go here*/ nullptr
+    );
     tmpfsfd =
       ivl::linux::owned_file_descriptor{(int)linux::terminate_syscalls::open(root.c_str(), O_RDONLY | O_CLOEXEC, 0)};
 
