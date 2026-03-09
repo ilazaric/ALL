@@ -179,7 +179,10 @@ consteval bool validate_sanity(std::meta::info type) {
 
   {
     auto bases = bases_of(type, ctx);
-    if (!bases.empty()) err("type {:?} has bases: {::?}", type, bases);
+    if (!bases.empty()) {
+      err("type {:?} has bases: {::?}", type, bases);
+      ret = false;
+    }
   }
 
   {
@@ -187,7 +190,10 @@ consteval bool validate_sanity(std::meta::info type) {
     std::vector<std::meta::info> nonpublic(
       std::from_range, std::views::filter(nsdms, std::not_fn(std::meta::is_public))
     );
-    if (!nonpublic.empty()) err("type {:?} has non-public non-static data members: {::?}", type, nonpublic);
+    if (!nonpublic.empty()) {
+      err("type {:?} has non-public non-static data members: {::?}", type, nonpublic);
+      ret = false;
+    }
   }
 
   return ret;
