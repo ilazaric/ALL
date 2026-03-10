@@ -5,7 +5,7 @@
 #include <vector>
 
 namespace ivl {
-template <typename E>
+template<typename E>
   requires std::is_enum_v<E>
 consteval std::span<const E> enumerators() {
   std::vector<E> ret;
