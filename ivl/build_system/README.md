@@ -22,3 +22,6 @@ where do rules come from?
 TODO:
 https://github.com/google/nsjail
 https://www.gnu.org/software/make/manual/make.html
+
+would be nice to have .build files, where rules are defined?
+for each cpp file, define a target

@@ -153,6 +153,7 @@ for target in targets:
              # "-include",
              # "ivl/reflection/test_attribute",
              "-freflection",
+             "-fcontracts",
              "-include",
              path,
              "-xc++",

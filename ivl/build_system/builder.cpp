@@ -294,6 +294,7 @@ int main(int argc, char* argv[], char* envp[]) {
     "-O3",
     "-std=c++26",
     "-freflection",
+    "-fcontracts",
     std::format("-ffile-prefix-map={}/=", root),
     std::format("@{}/include_dirs/args.rsp", build_dir),
   };
