@@ -20,3 +20,5 @@ namespace ivl::io::conversion {
   istream_wrapper cin{std::cin};
 
 } // namespace ivl::io::conversion
+
+using ivl::io::conversion::cin;
