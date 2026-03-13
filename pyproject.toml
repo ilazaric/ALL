@@ -6,6 +6,7 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "argparse>=1.4.0",
+    "camoufox>=0.4.11",
     "grequests>=0.7.0",
     "matplotlib>=3.10.8",
     "numpy>=2.4.3",
@@ -13,5 +14,6 @@ dependencies = [
     "playwright>=1.58.0",
     "polars>=1.38.1",
     "requests>=2.32.5",
+    "seleniumbase>=4.47.2",
     "sympy>=1.14.0",
 ]
