@@ -151,18 +151,15 @@ function find_include_dir_match(){
     return
 }
 
-# TODO-think: does this have to be local? think no, didnt think hard tho
-SKIPLINE=
 # args: path, name, depth
 function render_source_file(){
     err "[$3] rendering $2 ..."
-    if [ "$(head -1 "$1")" == "#pragma once" ]
+    if [ grep "#pragma once" "$1" &>/dev/null ]
     then
         err "pragma once detected, checking ..."
         if test_and_set_pragma_once "$1"
         then
             err "not rendered, continuing"
-            SKIPLINE=x
         else
             err "rendered already, skipping"
             return
@@ -173,10 +170,9 @@ function render_source_file(){
     
     while IFS= read -r LINE
     do
-        if [ "$SKIPLINE" != "" ]
+        if [ "$LINE" == "#pragma once" ]
         then
-            SKIPLINE=
-            continue
+            echo -n '// '
         fi
 
         REGEX='^#include "(.*)".*$'

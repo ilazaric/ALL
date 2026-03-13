@@ -20,7 +20,7 @@ function build2(){
 
 function render(){
     $LOC/build.py
-    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "-I $LOC/build/include -I $LOC/build/default_include" $1.cpp > $1.rendered.cpp
+    $LOC/render-includes/renderer.sh -c "${CXX:-g++}" -e "@$LOC/build/include_dirs/args.rsp" $1.cpp > $1.rendered.cpp
 }
 
 # `cargo install cce` needed
