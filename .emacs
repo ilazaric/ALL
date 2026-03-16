@@ -143,3 +143,17 @@ Removes LaTeX preview overlays in region or entire buffer."
       auto-save-timeout 20              ; number of seconds idle time before auto-save (default: 30)
       auto-save-interval 200            ; number of keystrokes between auto-saves (default: 300)
       )
+
+
+;; (prefer-coding-system 'utf-8)
+;; (set-default-coding-systems 'utf-8)
+;; (setq x-select-request-type '(UTF8_STRING COMPOUND_TEXT TEXT STRING))
+;; (setq default-buffer-file-coding-system 'utf-8)
+;; (set-selection-coding-system 'utf-8)
+
+(setq locale-coding-system 'utf-8)
+(set-terminal-coding-system 'utf-8)
+(set-keyboard-coding-system 'utf-8)
+(set-selection-coding-system 'utf-8)
+(prefer-coding-system 'utf-8)
+(define-coding-system-alias 'UTF-8 'utf-8)
