@@ -34,3 +34,12 @@
 [submodule "submodules/google-benchmark"]
 	path = submodules/google-benchmark
 	url = https://github.com/google/benchmark.git
+[submodule "submodules/sudo"]
+	path = submodules/sudo
+	url = git@github.com:sudo-project/sudo.git
+[submodule "submodules/coreutils"]
+	path = submodules/coreutils
+	url = git@github.com:coreutils/coreutils.git
+[submodule "submodules/util-linux"]
+	path = submodules/util-linux
+	url = git@github.com:util-linux/util-linux.git
