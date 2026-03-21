@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -39,7 +39,7 @@ requires-dist = [
     { name = "playwright", specifier = ">=1.58.0" },
     { name = "polars", specifier = ">=1.38.1" },
     { name = "requests", specifier = ">=2.32.5" },
-    { name = "seleniumbase", specifier = ">=4.47.2" },
+    { name = "seleniumbase", specifier = ">=4.47.3" },
     { name = "sympy", specifier = ">=1.14.0" },
 ]
 
@@ -776,11 +776,11 @@ wheels = [
 
 [[package]]
 name = "mycdp"
-version = "1.3.3"
+version = "1.3.5"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/cd/6f/8e41669068792fc6c23645fc0ae73b4799cc769e59eaf7f10e3651be9419/mycdp-1.3.3.tar.gz", hash = "sha256:0d77fceeb91b988e0936b2540562cd3738b73d722373ea241280594398a7f1f6", size = 224271, upload-time = "2026-03-11T04:08:43.225Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/a2/e1/bf10351317623d6624a11dba5e777c5549909adebc584a84905278558662/mycdp-1.3.5.tar.gz", hash = "sha256:b5319d8c24ba4b3cf4eb04ad7abbab414702200427124442622d2b0ef9361ba3", size = 224389, upload-time = "2026-03-13T02:13:00.668Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/12/7b/7e4b84947e9ce18fe6d1d6c0d31edcd1dbcf414276ad2091e1e4200f8032/mycdp-1.3.3-py3-none-any.whl", hash = "sha256:c93e65abd0d4e60da610aaaac365fa0e253b2b0ffded7cc5df5242baedebf223", size = 251767, upload-time = "2026-03-11T04:08:40.96Z" },
+    { url = "https://files.pythonhosted.org/packages/8d/15/bdb1d79d4346008ec08be1f13ee73cb30c48360c34f34a56df840d11b74b/mycdp-1.3.5-py3-none-any.whl", hash = "sha256:1c062f9cc08cab5344c81c69140f630fa36fdefb9dc0bd03283dc27f4a1ef21c", size = 251884, upload-time = "2026-03-13T02:12:58.95Z" },
 ]
 
 [[package]]
@@ -1499,7 +1499,7 @@ wheels = [
 
 [[package]]
 name = "seleniumbase"
-version = "4.47.2"
+version = "4.47.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
@@ -1563,9 +1563,9 @@ dependencies = [
     { name = "wheel" },
     { name = "wsproto" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/8e/68/1aa2e125084c037da974f7f5ce1cf7ef63716111349303708627bc1613c9/seleniumbase-4.47.2.tar.gz", hash = "sha256:27015ff089ac0930f0e3a6c68741033edc174986ac82524cf45269edd05c6e3b", size = 652173, upload-time = "2026-03-11T18:42:25.851Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/52/8d/a28264d25f8b47a83acd2a172956bea4e8264ad75b464bae900383f69aa6/seleniumbase-4.47.3.tar.gz", hash = "sha256:deedce704ce57b31545b3d1e6b572caba2864666031d319fa76495031d99edd1", size = 652400, upload-time = "2026-03-13T00:18:07.154Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/8a/bad48dce692dba707cca2b5d945464fb26a2de93c70e68047408591dc77f/seleniumbase-4.47.2-py3-none-any.whl", hash = "sha256:7e9c3b625c07ad37bebdd46c74735d2f9c570d595b02ca62754b964b1af1447a", size = 659142, upload-time = "2026-03-11T18:42:21.055Z" },
+    { url = "https://files.pythonhosted.org/packages/99/c5/84dd91cf1658c6a149ceb6dc40c7b4fcf748b4d9bdc0e5962c1f49716709/seleniumbase-4.47.3-py3-none-any.whl", hash = "sha256:d9e12548479abf2b3e252220210154322c8ffd7b61c93092bc261a6faa4d0e0c", size = 659331, upload-time = "2026-03-13T00:18:04.631Z" },
 ]
 
 [[package]]
