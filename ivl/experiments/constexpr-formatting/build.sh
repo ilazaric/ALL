@@ -19,7 +19,7 @@ copy_std format
 copy_std map
 copy_std set
 
-g++ -Wl,-rpath=/opt/GCC/lib64 -std=c++26 -freflection \
-    -fsanitize=address,undefined \
+g++ -Wl,-rpath=/opt/GCC/lib64 -std=gnu++26 -freflection \
+    -fdiagnostics-plain-output -fdiagnostics-color=always -fsanitize=address,undefined \
     "$1.cpp" -o "$1"
 #    -o constexpr_to_string{,.cpp}
