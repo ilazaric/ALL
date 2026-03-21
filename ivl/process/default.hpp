@@ -17,6 +17,13 @@
 
 namespace ivl {
 
+  // TODO: consider gdb (4.2):
+  // 4 categories for execution:
+  // * arguments
+  // * environment
+  // * working directory
+  // * standard input and output
+
 struct process {
   pid_t pid;
 
