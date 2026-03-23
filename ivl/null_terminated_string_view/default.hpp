@@ -91,7 +91,7 @@ namespace ivl {
     // * modifiers
     constexpr void remove_prefix(size_type n) { sv.remove_prefix(n); }
     // not implementing `remove_suffix`, can't keep null-terminated invariant
-    constexpr void swap(NullStringView& v) noexcept { sv.swap(v.sv); }
+    constexpr void swap(null_terminated_string_view& v) noexcept { sv.swap(v.sv); }
 
     // * operations
     // TODO

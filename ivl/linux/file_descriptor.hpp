@@ -78,6 +78,7 @@ namespace ivl::linux {
     explicit(false) operator file_descriptor() const { return file_descriptor{value}; }
   };
 
+  // TODO: don't think wide is ever wanted, trim the complexity
   using owned_file_descriptor      = basic_owned_file_descriptor<int>;
   using wide_owned_file_descriptor = basic_owned_file_descriptor<long>;
 
