@@ -366,5 +366,3 @@ X(466, removexattrat)
 // ivl garbage
 X(666, ivl_start_logging)
 X(777, ivl_stop_logging)
-
-#undef X

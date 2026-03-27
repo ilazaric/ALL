@@ -5,5 +5,3 @@
 X(0, vfork)
 X(5, clone, unsigned long, clone_flags, unsigned long, newsp, int *, parent_tidptr, int *, child_tidptr, unsigned long, tls)
 X(2, clone3, struct clone_args *, uargs, size_t, size)
-
-#undef X

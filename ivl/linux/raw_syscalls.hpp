@@ -265,6 +265,8 @@ inline long argument_convert(long num) { return num; }
 
 #include <ivl/linux/syscall_arguments_X>
 
+#undef X
+
 #undef X_PARAMS0
 #undef X_PARAMS1
 #undef X_PARAMS2

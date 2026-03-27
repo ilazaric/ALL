@@ -64,9 +64,10 @@ namespace {
     return ret;                                                                                                        \
   }
 
+#include <ivl/linux/syscall_arguments_X>
 #include <ivl/linux/syscall_arguments_fat_clone3_X>
 
-#include <ivl/linux/syscall_arguments_X>
+#undef X
 
 #undef X_ID
 

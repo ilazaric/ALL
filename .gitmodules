@@ -43,3 +43,6 @@
 [submodule "submodules/util-linux"]
 	path = submodules/util-linux
 	url = git@github.com:util-linux/util-linux.git
+[submodule "submodules/glibc"]
+	path = submodules/glibc
+	url = git://sourceware.org/git/glibc.git

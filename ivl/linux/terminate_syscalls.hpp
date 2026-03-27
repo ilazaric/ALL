@@ -35,9 +35,10 @@ namespace ivl::linux::terminate_syscalls {
     return ret;                                                                                                        \
   }
 
+#include <ivl/linux/syscall_arguments_X>
 #include <ivl/linux/syscall_arguments_fat_clone3_X>
 
-#include <ivl/linux/syscall_arguments_X>
+#undef X
 
 #undef X_PARAMS0
 #undef X_PARAMS1

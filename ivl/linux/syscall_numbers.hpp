@@ -8,6 +8,7 @@ namespace ivl::linux {
 enum class syscall_number {
 #define X(nr, name) name = nr,
 #include <ivl/linux/syscall_numbers_X>
+#undef X
 };
 
 // If the argument is invalid returns default-constructed std::string_view.
@@ -19,6 +20,7 @@ constexpr std::string_view syscall_name(syscall_number nr) noexcept {
   case syscall_number::name:                                                                                           \
     return #name;
 #include <ivl/linux/syscall_numbers_X>
+#undef X
   }
 }
 
@@ -30,6 +32,7 @@ constexpr bool is_valid_syscall_number(int nr) noexcept {
   case nr:                                                                                                             \
     return true;
 #include <ivl/linux/syscall_numbers_X>
+#undef X
   }
 }
 
