@@ -54,7 +54,7 @@ auto foreach () {
 
 consteval std::meta::info get_nsdm(std::meta::info i, std::string_view name) {
   i = remove_cvref(dealias(i));
-  for (auto member : nsdms(i))
+  for (auto member : nonstatic_data_members_of(i, std::meta::access_context::unchecked()))
     if (has_identifier(member) && identifier_of(member) == name) return member;
   __builtin_constexpr_diag(2, "", std::format("no member with name {:?} found in {:?}", name, i));
   __builtin_unreachable();
