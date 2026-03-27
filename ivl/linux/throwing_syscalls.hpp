@@ -29,7 +29,7 @@ namespace {
 
 // TODO: join up this with raw_syscalls X macro shenanigans
 #define X_PARAMS0()
-#define X_PARAMS1(t1, a1) std::type_identity_t<t1> a1
+#define X_PARAMS1(t1, a1) t1 a1
 #define X_PARAMS2(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS1(__VA_ARGS__)
 #define X_PARAMS3(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS2(__VA_ARGS__)
 #define X_PARAMS4(t1, a1, ...) X_PARAMS1(t1, a1), X_PARAMS3(__VA_ARGS__)
