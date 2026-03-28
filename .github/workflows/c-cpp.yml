@@ -10,6 +10,11 @@ jobs:
   build-gcc:
     runs-on: ubuntu-latest
 
+    # only one compiler build at same time, so no weird cache behaviour happens
+    concurrency:
+      group: build-gcc
+      cancel-in-progress: false
+
     steps:
     - uses: actions/checkout@v4
     # TODO: skip if cache hit
