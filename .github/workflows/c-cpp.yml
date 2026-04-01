@@ -16,12 +16,12 @@ jobs:
       cancel-in-progress: false
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     # TODO: skip if cache hit
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential
 
-    - uses: webfactory/ssh-agent@v0.9.1
+    - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -33,7 +33,7 @@ jobs:
 
     - name: cache gcc install
       id: cache-gcc
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-gcc-${{ steps.get-gcc-commit.outputs.commit }}
@@ -49,11 +49,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     # - name: install apt packages
     #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
-    - uses: webfactory/ssh-agent@v0.9.1
+    - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
@@ -91,11 +91,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     # - name: install apt packages
     #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
 
-    - uses: webfactory/ssh-agent@v0.9.1
+    - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
