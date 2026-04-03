@@ -16,7 +16,7 @@ gcc -undef -E -P -fdirectives-only -isystem linux/include/uapi -include asm-gene
            BEGIN{print ""}
            BEGIN{print "namespace ivl::linux {"}
            BEGIN{print "enum class syscall_error_raw : int16_t {"}
-           {print "  " ($2=="E2BIG"?"TOOBIG":substr($2,2)) " = " $3 ","}
+           {print "  " ($2=="E2BIG"?"TOOBIG":substr($2,2)) " = " (substr($3,1,1)=="E"?substr($3,2):$3) ","}
            END{print "};"}
            END{print ""}
            END{print "using syscall_error = checked_enum<syscall_error_raw>;"}
