@@ -96,3 +96,7 @@ namespace {
 #undef X_FARGS6
 
 } // namespace ivl::linux::throwing_syscalls
+
+#define X_NAMESPACE ivl::linux::throwing_syscalls
+#include <ivl/linux/syscall_semantic_X>  
+#undef X_NAMESPACE

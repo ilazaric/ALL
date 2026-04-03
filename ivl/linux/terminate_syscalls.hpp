@@ -56,3 +56,7 @@ namespace ivl::linux::terminate_syscalls {
 #undef X_CARGS5
 #undef X_CARGS6
 } // namespace ivl::linux::terminate_syscalls
+
+#define X_NAMESPACE ivl::linux::terminate_syscalls
+#include <ivl/linux/syscall_semantic_X>  
+#undef X_NAMESPACE

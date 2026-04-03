@@ -306,5 +306,8 @@ inline long fat_clone3(const clone_args* args, size_t size, void* fnarg, void (*
 parent_process:
   return rax;
 }
-
 } // namespace ivl::linux::raw_syscalls
+
+#define X_NAMESPACE ivl::linux::raw_syscalls
+#include <ivl/linux/syscall_semantic_X>  
+#undef X_NAMESPACE
