@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/linux/file_descriptor>
-#include <ivl/linux/throwing_syscalls>
+#include <ivl/linux/semantic_syscalls>
 #include <ivl/utility/enum>
 #include <sys/epoll.h>
 #include <chrono>
@@ -40,75 +40,71 @@ struct epoll_file_descriptor : owned_file_descriptor {
   // ....: so i just cant use constructors?
   // ....: well, cant use them with some semantics, not all
   // ....: a static member function create() wouldnt have this issue
-  explicit epoll_file_descriptor(epoll_create_enum flags = epoll_create_enum::EPOLL_CLOEXEC)
-      : owned_file_descriptor(throwing_syscalls::epoll_create1(flags.get())) {}
+  // UPDT: dont even have result semantic implemented, problem for another day
+  explicit epoll_file_descriptor(auto semantic, epoll_create_enum flags = epoll_create_enum::EPOLL_CLOEXEC)
+      : owned_file_descriptor(semantic_syscalls::epoll_create1(semantic, flags.get())) {}
 
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl(epoll_ctl_enum op, file_descriptor fd, struct epoll_event* event) pre(!empty() && !fd.empty()) {
-    return [:semantic:] ::epoll_ctl(get(), std::to_underlying(op.get()), fd.get(), event);
+  decltype(auto)
+  ctl(auto semantic, epoll_ctl_enum op, file_descriptor fd, struct epoll_event* event) pre(!empty() && !fd.empty()) {
+    return semantic_syscalls::epoll_ctl(semantic, get(), std::to_underlying(op.get()), fd.get(), event);
   }
 
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl_add(file_descriptor fd, struct epoll_event& event) pre(!empty() && !fd.empty()) {
-    return ctl<semantic>(epoll_ctl_enum::ADD, fd, &event);
-  }
-
-  // embed the listened fd into the epoll_event.data
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl_add_fd(file_descriptor fd, epoll_events_enum events) pre(!empty() && !fd.empty()) {
-    struct epoll_event event;
-    event.events = events.get();
-    event.data.fd = fd.get();
-    return ctl_add<semantic>(fd, event);
-  }
-
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl_mod(file_descriptor fd, struct epoll_event& event) pre(!empty() && !fd.empty()) {
-    return ctl<semantic>(epoll_ctl_enum::MOD, fd, &event);
+  decltype(auto) ctl_add(auto semantic, file_descriptor fd, struct epoll_event& event) pre(!empty() && !fd.empty()) {
+    return ctl(semantic, epoll_ctl_enum::ADD, fd, &event);
   }
 
   // embed the listened fd into the epoll_event.data
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl_mod_fd(file_descriptor fd, epoll_events_enum events) pre(!empty() && !fd.empty()) {
+  decltype(auto) ctl_add_fd(auto semantic, file_descriptor fd, epoll_events_enum events) pre(!empty() && !fd.empty()) {
     struct epoll_event event;
     event.events = events.get();
     event.data.fd = fd.get();
-    return ctl_mod<semantic>(fd, event);
+    return ctl_add(semantic, fd, event);
   }
 
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) ctl_del(file_descriptor fd) pre(!empty() && !fd.empty()) {
-    return ctl<semantic>(epoll_ctl_enum::DEL, fd, nullptr);
+  decltype(auto) ctl_mod(auto semantic, file_descriptor fd, struct epoll_event& event) pre(!empty() && !fd.empty()) {
+    return ctl(semantic, epoll_ctl_enum::MOD, fd, &event);
   }
 
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) wait_noblock(std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
+  // embed the listened fd into the epoll_event.data
+  decltype(auto) ctl_mod_fd(auto semantic, file_descriptor fd, epoll_events_enum events) pre(!empty() && !fd.empty()) {
+    struct epoll_event event;
+    event.events = events.get();
+    event.data.fd = fd.get();
+    return ctl_mod(semantic, fd, event);
+  }
+
+  decltype(auto) ctl_del(auto semantic, file_descriptor fd) pre(!empty() && !fd.empty()) {
+    return ctl(semantic, epoll_ctl_enum::DEL, fd, nullptr);
+  }
+
+  decltype(auto) wait_noblock(auto semantic, std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
     int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
                     ? static_cast<int>(events.size())
                     : std::numeric_limits<int>::max();
-    return [:semantic:] ::epoll_wait(get(), events.data(), maxevents, 0);
+    return semantic_syscalls::epoll_wait(semantic, get(), events.data(), maxevents, 0);
   }
 
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) wait_block_forever(std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
+  decltype(auto)
+  wait_block_forever(auto semantic, std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
     int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
                     ? static_cast<int>(events.size())
                     : std::numeric_limits<int>::max();
-    return [:semantic:] ::epoll_wait(get(), events.data(), maxevents, -1);
+    return semantic_syscalls::epoll_wait(semantic, get(), events.data(), maxevents, -1);
   }
 
   // this can do wait_nonblocking(), via timeout == 0, don't think it's worth blocking it in pre()
-  template<std::meta::info semantic /* = ^^::ivl::linux::throwing_syscalls*/>
-  decltype(auto) wait_block_for(std::span<struct epoll_event> events, std::chrono::nanoseconds timeout) pre(
-    !empty() && !events.empty() && timeout >= std::chrono::nanoseconds(0)
-  ) {
+  decltype(auto) wait_block_for(
+    auto semantic, std::span<struct epoll_event> events, std::chrono::nanoseconds timeout
+  ) pre(!empty() && !events.empty() && timeout >= std::chrono::nanoseconds(0)) {
     __kernel_timespec ts;
     ts.tv_sec = timeout.count() / 1'000'000'000;
     ts.tv_nsec = timeout.count() % 1'000'000'000;
     int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
                     ? static_cast<int>(events.size())
                     : std::numeric_limits<int>::max();
-    return [:semantic:] ::epoll_pwait2(get(), events.data(), maxevents, &timeout, nullptr, sizeof(sigset_t));
+    return semantic_syscalls::epoll_pwait2(
+      semantic, get(), events.data(), maxevents, &timeout, nullptr, sizeof(sigset_t)
+    );
   }
 };
 } // namespace ivl::linux

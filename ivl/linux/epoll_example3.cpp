@@ -12,17 +12,17 @@
 int main() {
   namespace sys = ivl::linux::throwing_syscalls;
 
-  ivl::linux::epoll_file_descriptor efd;
+  ivl::linux::epoll_file_descriptor efd(sys::semantic);
   size_t running_count = 0;
   static constexpr size_t parallelism_limit = 3;
 
   auto add_fd = [&](ivl::linux::file_descriptor fd) pre(running_count < parallelism_limit) {
-    efd.ctl_add_fd<^^sys>(fd, ivl::linux::epoll_events_enum::EPOLLIN);
+    efd.ctl_add_fd(sys::semantic, fd, ivl::linux::epoll_events_enum::EPOLLIN);
     ++running_count;
   };
 
   auto remove_fd = [&](ivl::linux::file_descriptor fd) pre(running_count > 0) {
-    efd.ctl_del<^^sys>(fd);
+    efd.ctl_del(sys::semantic, fd);
     --running_count;
   };
 
@@ -58,7 +58,7 @@ int main() {
 
   auto wait_for_exit = [&, &running_count] pre(running_count > 0) {
     epoll_event ev{};
-    auto ret = efd.wait_block_forever<^^sys>({&ev, 1});
+    auto ret = efd.wait_block_forever(sys::semantic, {&ev, 1});
     // LOG(running_count, ret);
     contract_assert(ret == 1);
     return ev.data.fd;

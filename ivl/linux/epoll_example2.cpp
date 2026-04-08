@@ -12,7 +12,7 @@
 int main() {
   namespace sys = ivl::linux::throwing_syscalls;
 
-  ivl::linux::epoll_file_descriptor efd;
+  ivl::linux::epoll_file_descriptor efd(sys::semantic);
   size_t running_count = 0;
   static constexpr size_t parallelism_limit = 3;
 

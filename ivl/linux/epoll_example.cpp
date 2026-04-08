@@ -4,6 +4,7 @@
 #include <sys/epoll.h>
 #include <sys/wait.h>
 #include <ivl/reflection/json>
+#include <ivl/linux/syscall_error>
 
 static_assert(alignof(epoll_event) == 1);
 
