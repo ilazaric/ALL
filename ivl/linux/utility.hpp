@@ -22,13 +22,11 @@ inline std::string read_file(file_descriptor fd) {
   throwing_syscalls::munmap(ptr, statbuf.st_size);
   return ret;
 }
-
 // TODO: change arg into null-terminated-string-view
 inline std::string read_file(const char* path) {
   owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
   return read_file(fd);
 }
-
 inline std::string read_file(const std::string& path) { return read_file(path.c_str()); }
 inline std::string read_file(const std::filesystem::path& path) { return read_file(path.native()); }
 
@@ -41,15 +39,32 @@ inline std::string read_file_slow(file_descriptor fd) {
   }
   return ret;
 }
-
 // TODO: change arg into null-terminated-string-view
 inline std::string read_file_slow(const char* path) {
   owned_file_descriptor fd{throwing_syscalls::open(path, O_RDONLY, 0)};
   return read_file_slow(fd);
 }
-
 inline std::string read_file_slow(const std::string& path) { return read_file_slow(path.c_str()); }
 inline std::string read_file_slow(const std::filesystem::path& path) { return read_file_slow(path.native()); }
+
+inline void write_file_slow(file_descriptor fd, std::string_view payload) {
+  while (!payload.empty()) {
+    auto ret = throwing_syscalls::write(fd.get(), payload.data(), payload.size());
+    payload.remove_prefix(ret);
+  }
+}
+// TODO: change arg into null-terminated-string-view
+// if you were too lazy to open yourself, you get what you get (mode)
+inline void write_file_slow(const char* path, std::string_view payload) {
+  owned_file_descriptor fd{throwing_syscalls::open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777)};
+  return write_file_slow(fd, payload);
+}
+inline void write_file_slow(const std::string& path, std::string_view payload) {
+  return write_file_slow(path.c_str(), payload);
+}
+inline void write_file_slow(const std::filesystem::path& path, std::string_view payload) {
+  return write_file_slow(path.native(), payload);
+}
 
 inline owned_file_descriptor create_tmpfs() {
   alignas(16) char stack[1ULL << 12];
