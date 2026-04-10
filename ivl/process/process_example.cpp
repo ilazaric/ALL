@@ -15,6 +15,6 @@ struct safe_process_config {
 int main() {
   ivl::process_config cfg;
   cfg.pathname = "/bin/touch";
-  cfg.argv     = {"/bin/touch", "/home/ilazaric/repos/ALL/src/process/evidence"};
+  cfg.argv     = {"/bin/touch", "/home/ilazaric/repos/ALL/ivl/process/evidence"};
   auto proc    = cfg.clone_and_exec();
 }
