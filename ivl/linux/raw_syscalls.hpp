@@ -309,5 +309,5 @@ parent_process:
 } // namespace ivl::linux::raw_syscalls
 
 #define X_NAMESPACE ivl::linux::raw_syscalls
-#include <ivl/linux/syscall_semantic_X>  
+#include <ivl/linux/syscall_semantic_X>
 #undef X_NAMESPACE
