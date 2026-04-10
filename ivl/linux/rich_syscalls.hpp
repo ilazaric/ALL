@@ -18,7 +18,7 @@ namespace ivl::linux::rich {
   // This is basically a std::variant<std::monostate, T, std::unique_ptr<Errors>...>.
   // TODO: more info
   template <typename T, typename... Errors>
-    requires(std::is_standard_layout_v<T> && meta::is_unique_v<T, std::monostate, Errors...> && sizeof...(Errors) <= 64)
+    requires(std::is_standard_layout_v<T> && meta::is_unique<T, std::monostate, Errors...> && sizeof...(Errors) <= 64)
   struct or_rich_error {
     using raw_type     = kernel_result_detail::try_align<long, T>::left_wrapper;
     using wrapped_type = kernel_result_detail::try_align<long, T>::right_wrapper;
