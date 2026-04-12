@@ -1,0 +1,218 @@
+#pragma once
+
+#include <ivl/build_system/task_config>
+#include <ivl/build_system/task_outcome>
+#include <ivl/linux/clone3>
+#include <ivl/linux/epoll>
+#include <ivl/linux/throwing_syscalls>
+#include <ivl/linux/utility>
+#include <sys/timerfd.h>
+#include <sys/wait.h>
+#include <dirent.h>
+#include <vector>
+
+namespace ivl::build_system {
+struct task_executor {
+  linux::epoll_file_descriptor efd;
+  std::filesystem::path root_cgroup_dir;
+
+  explicit task_executor(const std::filesystem::path& root_cgroup_dir)
+      : efd(linux::throwing_syscalls::semantic, linux::epoll_create_enum::EPOLL_CLOEXEC),
+        root_cgroup_dir(root_cgroup_dir) {}
+
+  struct running_task_state {
+    linux::owned_file_descriptor pidfd;
+    linux::owned_file_descriptor timerfd;
+    linux::owned_file_descriptor stdoutfd;
+    linux::owned_file_descriptor stderrfd;
+    // can't be a fd, bc we couldn't remove it, can be a number + parent cgroup fd maybe TODO
+    std::filesystem::path cgroup_dir;
+    std::string task_identifier;
+
+    bool is_reaped() const { return pidfd.empty(); }
+
+    void terminate_cgroup() { linux::write_file_slow(cgroup_dir / "cgroup.kill", "1"); }
+
+    // TODO: this should probably be a free function somewhere
+    std::map<std::string, std::string> collect_cgroup_files() {
+      namespace sys = linux::throwing_syscalls;
+
+      linux::owned_file_descriptor fd(sys::open(cgroup_dir.c_str(), O_RDONLY | O_DIRECTORY, 0));
+      std::map<std::string, std::string> ret;
+
+      struct my_dirent64 {
+        ino64_t d_ino;
+        off64_t d_off;
+        unsigned short d_reclen;
+        unsigned char d_type;
+        char d_name[];
+      };
+      alignas(16) char buf[PATH_MAX * 2];
+
+      while (true) {
+        auto count = sys::getdents64(fd.get(), (linux_dirent64*)buf, sizeof(buf));
+        if (count == 0) break;
+
+        const char* ptr = buf;
+        while (count) {
+          auto dent = (const my_dirent64*)ptr;
+          contract_assert(dent->d_reclen <= count);
+
+          if (dent->d_type == DT_REG) {
+            auto raw_fd = linux::raw_syscalls::openat(fd.get(), dent->d_name, O_RDONLY, 0);
+            if (raw_fd >= 0) {
+              linux::owned_file_descriptor file_fd(raw_fd);
+              ret[dent->d_name] = linux::read_file_slow(file_fd);
+            }
+          }
+
+          ptr += dent->d_reclen;
+          count -= dent->d_reclen;
+        }
+      }
+
+      return ret;
+    }
+
+    task_outcome terminate_and_reap() {
+      contract_assert(!pidfd.empty());
+      namespace sys = linux::throwing_syscalls;
+      terminate_cgroup();
+      task_outcome outcome;
+      outcome.identifier = task_identifier;
+      siginfo_t info{};
+      sys::waitid(P_PIDFD, pidfd.get(), (siginfo*)&info, WEXITED | __WALL, &outcome.end_rusage);
+      contract_assert(info.si_code == CLD_EXITED || info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
+      outcome.end_cgroup_files = collect_cgroup_files();
+      // TODO: should check and remove if there are child cgroups, shouldnt matter for a while
+      sys::rmdir(cgroup_dir.c_str());
+      // this should evict them from epoll fd
+      (void)pidfd.close();
+      (void)timerfd.close();
+      // TODO: might want to encode si_code too
+      outcome.exit_status = info.si_status;
+      outcome.stdout = linux::read_file(stdoutfd);
+      outcome.stderr = linux::read_file(stderrfd);
+      return outcome;
+    }
+
+    running_task_state(const running_task_state&) = delete;
+    running_task_state(running_task_state&&) = default;
+
+    running_task_state& operator=(const running_task_state&) = delete;
+    running_task_state& operator=(running_task_state&&) = default;
+
+    ~running_task_state() {
+      if (!is_reaped()) (void)terminate_and_reap();
+    }
+  };
+
+  std::vector<running_task_state> tasks;
+  std::size_t active_task_count = 0;
+
+  std::filesystem::path create_new_cgroup() {
+    namespace sys = linux::throwing_syscalls;
+    while (true) {
+      auto path = root_cgroup_dir / std::format("child.{:08X}.slice", rand());
+      if (exists(path)) continue;
+      sys::mkdir(path.c_str(), 0755);
+      return path;
+    }
+  }
+
+  void launch_task(
+    const task_config& task, std::size_t cpu_max_percentage, std::size_t memory_max, std::chrono::nanoseconds time_limit
+  ) {
+    namespace sys = linux::throwing_syscalls;
+
+    contract_assert(time_limit > std::chrono::nanoseconds(0));
+
+    auto argv_envp_helper = [](const std::vector<std::string>& seq) {
+      std::vector<const char*> ret(seq.size() + 1, nullptr);
+      for (std::size_t i = 0; i < seq.size(); ++i) ret[i] = seq[i].c_str();
+      return ret;
+    };
+
+    auto argv = argv_envp_helper(task.process_argv);
+    auto envp = argv_envp_helper(task.process_envp);
+
+    linux::owned_file_descriptor timerfd(sys::timerfd_create(CLOCK_MONOTONIC, /* TODO: TFD_NONBLOCK? */ TFD_CLOEXEC));
+    {
+      struct itimerspec spec{};
+      spec.it_value.tv_sec = (int)(time_limit.count() / 1'000'000'000);
+      spec.it_value.tv_nsec = (int)(time_limit.count() % 1'000'000'000);
+      sys::timerfd_settime(timerfd.get(), 0, (const __kernel_itimerspec*)&spec, nullptr);
+    }
+
+    linux::owned_file_descriptor stdinfd(sys::open("/dev/null", O_RDONLY | O_CLOEXEC, 0));
+    linux::owned_file_descriptor stdoutfd(sys::memfd_create("stdout", MFD_CLOEXEC));
+    linux::owned_file_descriptor stderrfd(sys::memfd_create("stderr", MFD_CLOEXEC));
+    // this is relevant for the post-clone pre-exec lambda
+    contract_assert(stdinfd.get() < stdoutfd.get() && stdoutfd.get() < stderrfd.get());
+    // so i dont have to switch dup2 calls to fnctl (bc of cloexec)
+    contract_assert(stdinfd.get() != 0);
+    contract_assert(stdoutfd.get() != 1);
+    contract_assert(stderrfd.get() != 2);
+    auto cgroup_dir = create_new_cgroup();
+    linux::write_file_slow(cgroup_dir / "memory.max", std::to_string(memory_max));
+    linux::write_file_slow(cgroup_dir / "cpu.max", std::format("{}000 100000", cpu_max_percentage));
+    linux::write_file_slow(cgroup_dir / "memory.swap.max", "0");
+    linux::write_file_slow(cgroup_dir / "memory.zswap.max", "0");
+    linux::owned_file_descriptor pidfd;
+    pid_t ppid = sys::getpid();
+
+    {
+      linux::owned_file_descriptor cgroupfd(sys::open(cgroup_dir.c_str(), O_PATH, 0));
+      alignas(16) char stack[1ULL << 12];
+      clone_args clone3_args{
+        // NB: fd table not shared
+        .flags = CLONE_CLEAR_SIGHAND | CLONE_VM | CLONE_VFORK | CLONE_INTO_CGROUP | CLONE_PIDFD,
+        .pidfd = reinterpret_cast<uint64_t>(&pidfd),
+        .stack = reinterpret_cast<uintptr_t>(&stack[0]),
+        .stack_size = sizeof(stack),
+        .cgroup{(std::uint64_t)cgroupfd.get()},
+      };
+      linux::generic_clone3(sys::semantic, clone3_args, [&] {
+        namespace sys = linux::terminate_syscalls;
+        sys::prctl(PR_SET_PDEATHSIG, SIGKILL, 0, 0, 0);
+        if (sys::getppid() != ppid) sys::exit_group(1);
+        sys::chdir(task.process_working_directory.c_str());
+        sys::dup2(stdinfd.get(), 0);
+        sys::dup2(stdoutfd.get(), 1);
+        sys::dup2(stderrfd.get(), 2);
+        sys::close_range(3, (unsigned int)-1, 0);
+        sys::execve(task.process_pathname.c_str(), argv.data(), envp.data());
+      });
+      contract_assert(!pidfd.empty());
+    }
+
+    tasks.emplace_back(
+      running_task_state{
+        .pidfd = std::move(pidfd),
+        .timerfd = std::move(timerfd),
+        .stdoutfd = std::move(stdoutfd),
+        .stderrfd = std::move(stderrfd),
+        .cgroup_dir = std::move(cgroup_dir),
+        .task_identifier = task.identifier,
+      }
+    );
+    ++active_task_count;
+
+    struct epoll_event event{};
+    event.events = EPOLLIN;
+    event.data.u64 = tasks.size() - 1;
+    efd.ctl_add(sys::semantic, tasks.back().pidfd, event);
+    efd.ctl_add(sys::semantic, tasks.back().timerfd, event);
+  }
+
+  task_outcome wait_for_death() {
+    contract_assert(active_task_count > 0);
+    namespace sys = linux::throwing_syscalls;
+    struct epoll_event event;
+    efd.wait_block_forever(sys::semantic, {&event, &event + 1});
+    std::size_t index = event.data.u64;
+    --active_task_count;
+    return tasks[index].terminate_and_reap();
+  }
+};
+} // namespace ivl::build_system
