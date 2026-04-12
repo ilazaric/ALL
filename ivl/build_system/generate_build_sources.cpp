@@ -1,3 +1,5 @@
+#include <sys/mman.h>
+#include <sys/stat.h>
 #include <cassert>
 #include <cstring>
 #include <fcntl.h>
@@ -6,8 +8,6 @@
 #include <iostream>
 #include <ranges>
 #include <string_view>
-#include <sys/mman.h>
-#include <sys/stat.h>
 #include <unistd.h>
 #include <vector>
 
@@ -22,7 +22,8 @@ std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir
   for (auto&& entry : std::filesystem::recursive_directory_iterator(dir)) {
     if (!entry.is_regular_file()) continue;
     auto&& p = entry.path();
-    if (p.extension() == ".cpp" || p.extension() == ".hpp") ret.emplace_back(p);
+    if (p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h")
+      ret.emplace_back(p);
   }
   return ret;
 }
