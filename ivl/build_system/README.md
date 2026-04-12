@@ -30,3 +30,5 @@ a target can be:
 built,
 stale,
 unbuildable (nonzero exit)
+
+currently generate\_build\_sources copies all source files into build/
