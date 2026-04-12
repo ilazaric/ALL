@@ -10,7 +10,7 @@ int ivl_main() {
   auto bash = [](std::string_view id, std::string_view arg) {
     return ivl::build_system::task_config{
       .identifier = std::string("BASH ") + id,
-      .process_working_directory = std::filesystem::current_path(),
+      .process_working_directory = "/tmp",
       .process_pathname = "/usr/bin/bash",
       .process_argv{
         "/usr/bin/bash",
@@ -24,9 +24,12 @@ int ivl_main() {
     };
   };
 
-  executor.launch_task(bash("fd-check", "sleep 1; echo STDOUT > /dev/stdout; echo STDERR > /dev/stderr"), 100, 1'000'000'000, 10s);
-  executor.launch_task(bash("ls-root", "sleep 1; ls /"), 100, 1'000'000'000, 10s);
-  executor.launch_task(bash("df-root", "sleep 1; df /"), 100, 1'000'000'000, 10s);
+  executor.launch_task(bash("fd-check", "echo STDOUT; echo STDERR > /dev/stderr"), 100, 1'000'000'000, 10s);
+  executor.launch_task(bash("ls-root", "ls /"), 100, 1'000'000'000, 10s);
+  executor.launch_task(bash("df-root", "df /"), 100, 1'000'000'000, 10s);
+  executor.launch_task(bash("pwd", "pwd"), 100, 1'000'000'000, 10s);
+
+  executor.launch_task(bash("stalling-out", "sleep 20"), 100, 1'000'000'000, 1s);
 
   while (executor.active_task_count) {
     auto outcome = executor.wait_for_death();

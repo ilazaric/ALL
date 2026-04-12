@@ -28,6 +28,8 @@ struct task_executor {
     // can't be a fd, bc we couldn't remove it, can be a number + parent cgroup fd maybe TODO
     std::filesystem::path cgroup_dir;
     std::string task_identifier;
+    std::chrono::time_point<std::chrono::steady_clock> start_time_point;
+    std::size_t vector_index;
 
     bool is_reaped() const { return pidfd.empty(); }
 
@@ -83,6 +85,7 @@ struct task_executor {
       siginfo_t info{};
       sys::waitid(P_PIDFD, pidfd.get(), (siginfo*)&info, WEXITED | __WALL, &outcome.end_rusage);
       contract_assert(info.si_code == CLD_EXITED || info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
+      outcome.duration = std::chrono::steady_clock::now() - start_time_point;
       outcome.end_cgroup_files = collect_cgroup_files();
       // TODO: should check and remove if there are child cgroups, shouldnt matter for a while
       sys::rmdir(cgroup_dir.c_str());
@@ -194,6 +197,8 @@ struct task_executor {
         .stderrfd = std::move(stderrfd),
         .cgroup_dir = std::move(cgroup_dir),
         .task_identifier = task.identifier,
+        .start_time_point = std::chrono::steady_clock::now(),
+        .vector_index = tasks.size(),
       }
     );
     ++active_task_count;
@@ -212,6 +217,8 @@ struct task_executor {
     efd.wait_block_forever(sys::semantic, {&event, &event + 1});
     std::size_t index = event.data.u64;
     --active_task_count;
+    contract_assert(index < tasks.size());
+    contract_assert(tasks[index].vector_index == index);
     return tasks[index].terminate_and_reap();
   }
 };
