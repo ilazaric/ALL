@@ -90,12 +90,11 @@ consteval search_result_t find_main_declarations() {
 
   auto decl = ivl_main_decls[0];
   auto params = parameters_of(decl);
-  if (params.size() == 0 || params.size() > 2)
-    throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
+  if (params.size() > 2) throw std::meta::exception("unexpected number of arguments to `ivl_main` entry point", decl);
   res.passthrough = params.size() == 2;
   res.main_type = ^^int(int, char**);
-  res.ivl_main_arg_type = decay(type_of(params[0]));
-  res.validated = ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
+  res.ivl_main_arg_type = params.empty() ? ^^void : decay(type_of(params[0]));
+  res.validated = params.empty() || ::ivl::cmdline_parsing::validate_sanity(res.ivl_main_arg_type);
   res.emit_main = true;
   return res;
 }
@@ -104,38 +103,42 @@ constexpr search_result_t search_result = find_main_declarations();
 
 template<typename arg_t, bool passthrough>
 int wrap_ivl_main(int argc, char** argv) {
-  try {
-    arg_t arg{};
+  if constexpr (^^arg_t == ^^void) {
+    return [:(passthrough ? ^^:: : ^^::):] ::ivl_main();
+  } else {
+    try {
+      arg_t arg{};
 
-    std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
+      std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
 
-    std::string_view program_name = argc ? argv[0] : "<program-name>";
+      std::string_view program_name = argc ? argv[0] : "<program-name>";
 
-    if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
-      static_assert(false);
-      return 1;
-      // static_assert(^^arg_t != ^^bool, "cannot use bool directly");
-      // return ivl_main(construct.template operator()<arg_t>());
-    } else {
-      // TODO: passthrough
-      if (!::ivl::cmdline_parsing::parse(arg, args)) {
-      help:
-        ::ivl::cmdline_parsing::print_help<arg_t>(program_name, passthrough);
+      if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
+        static_assert(false);
         return 1;
-      }
-      if constexpr (passthrough) {
-        return ivl_main(arg, args);
+        // static_assert(^^arg_t != ^^bool, "cannot use bool directly");
+        // return ivl_main(construct.template operator()<arg_t>());
       } else {
-        if (args.empty()) return ivl_main(arg);
-        std::println("program does not handle passthrough arguments");
-        goto help;
+        // TODO: passthrough
+        if (!::ivl::cmdline_parsing::parse(arg, args)) {
+        help:
+          ::ivl::cmdline_parsing::print_help<arg_t>(program_name, passthrough);
+          return 1;
+        }
+        if constexpr (passthrough) {
+          return ivl_main(arg, args);
+        } else {
+          if (args.empty()) return ivl_main(arg);
+          std::println("program does not handle passthrough arguments");
+          goto help;
+        }
       }
-    }
-  } catch (const std::exception& e) {
+    } catch (const std::exception& e) {
 #ifdef __cpp_exceptions
-    std::println(stderr, "exeption reached main\n{}", e.what());
-    return 1;
+      std::println(stderr, "exception reached main\n{}", e.what());
+      return 1;
 #endif
+    }
   }
 }
 
