@@ -16,6 +16,28 @@ constexpr json_serialize_as_array_t json_serialize_as_array;
 
 enum class from_to_json_impl_direction { FROM, TO };
 
+// template<typename>
+// struct json_serializer {
+//   static_assert(false, "not implemented");
+// };
+
+// template<typename T>
+// nlohmann::json to_json(const T& arg) {
+//   return json_serializer<T>{}.to_json(arg);
+// }
+// template<typename T>
+// T from_json(const nlohmann::json& arg) {
+//   return json_serializer<T>{}.from_json(arg);
+// }
+
+// template<typename T>
+// struct json_serializer<std::optional<T>> {
+//   nlohmann::json to_json(const std::optional<T>& arg) { return arg ? to_json(*arg) : nlohmann::json(); }
+//   std::optional<T> from_json(const nlohmann::json& arg) {
+//     return !arg.is_null() ? from_json<T>(arg) : std::optional<T>();
+//   }
+// };
+
 template<
   typename T, from_to_json_impl_direction Direction, bool SerializeAsArray = false,
   typename InputT = std::conditional_t<Direction == from_to_json_impl_direction::TO, T, nlohmann::json>,
@@ -45,8 +67,9 @@ RetT from_to_json_impl(const InputT& arg) {
   } else if constexpr (!is_class_type(^^T) || std::same_as<T, nlohmann::json> || std::same_as<T, std::string>) {
     if constexpr (Direction == TO) return nlohmann::json(arg);
     else return arg.template get<T>();
-  } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::vector) ||
-                       reflection::is_instantiation_of(^^T, ^^std::set)) {
+  } else if constexpr (
+    reflection::is_instantiation_of(^^T, ^^std::vector) || reflection::is_instantiation_of(^^T, ^^std::set)
+  ) {
     using ElementT = T::value_type;
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = nlohmann::json::array();
@@ -87,13 +110,18 @@ RetT from_to_json_impl(const InputT& arg) {
       }
     }
     return ret;
-  } else if constexpr (is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) &&
-                       !reflection::is_child_of(^^T, ^^nlohmann)) {
+  } else if constexpr (
+    is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) && !reflection::is_child_of(^^T, ^^nlohmann)
+  ) {
     // static_assert(false, display_string_of(^^T));
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = nlohmann::json::object();
-    template for (constexpr auto member :
-                  define_static_array(nonstatic_data_members_of(^^T, std::meta::access_context::unchecked()))) {
+    template for (constexpr auto basic_member : reflection::nsdms(^^T)) {
+      // TODO: this sucks
+      constexpr auto member =
+        has_identifier(^^T) && identifier_of(^^T) == "rusage" && is_union_type(type_of(basic_member))
+          ? reflection::nsdms(type_of(basic_member))[0]
+          : basic_member;
       if constexpr (Direction == TO) {
         ret.emplace(
           identifier_of(member),
