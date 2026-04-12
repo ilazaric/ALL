@@ -78,17 +78,15 @@ struct epoll_file_descriptor : owned_file_descriptor {
   }
 
   decltype(auto) wait_noblock(auto semantic, std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
-    int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
-                    ? static_cast<int>(events.size())
-                    : std::numeric_limits<int>::max();
+    int maxevents = std::cmp_less(events.size(), std::numeric_limits<int>::max()) ? static_cast<int>(events.size())
+                                                                                  : std::numeric_limits<int>::max();
     return semantic_syscalls::epoll_wait(semantic, get(), events.data(), maxevents, 0);
   }
 
   decltype(auto)
   wait_block_forever(auto semantic, std::span<struct epoll_event> events) pre(!empty() && !events.empty()) {
-    int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
-                    ? static_cast<int>(events.size())
-                    : std::numeric_limits<int>::max();
+    int maxevents = std::cmp_less(events.size(), std::numeric_limits<int>::max()) ? static_cast<int>(events.size())
+                                                                                  : std::numeric_limits<int>::max();
     return semantic_syscalls::epoll_wait(semantic, get(), events.data(), maxevents, -1);
   }
 
@@ -99,9 +97,8 @@ struct epoll_file_descriptor : owned_file_descriptor {
     __kernel_timespec ts;
     ts.tv_sec = timeout.count() / 1'000'000'000;
     ts.tv_nsec = timeout.count() % 1'000'000'000;
-    int maxevents = std::cmp_greater_equal(events.size(), std::numeric_limits<int>::max())
-                    ? static_cast<int>(events.size())
-                    : std::numeric_limits<int>::max();
+    int maxevents = std::cmp_less(events.size(), std::numeric_limits<int>::max()) ? static_cast<int>(events.size())
+                                                                                  : std::numeric_limits<int>::max();
     return semantic_syscalls::epoll_pwait2(
       semantic, get(), events.data(), maxevents, &timeout, nullptr, sizeof(sigset_t)
     );
