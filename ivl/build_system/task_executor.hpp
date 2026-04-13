@@ -29,7 +29,7 @@ struct task_executor {
     std::filesystem::path cgroup_dir;
     std::string task_identifier;
     std::chrono::time_point<std::chrono::steady_clock> start_time_point;
-    std::size_t vector_index;
+    std::size_t task_index;
 
     bool is_reaped() const { return pidfd.empty(); }
 
@@ -77,7 +77,7 @@ struct task_executor {
     }
 
     task_outcome terminate_and_reap() {
-      vector_index = -1;
+      task_index = -1;
       contract_assert(!pidfd.empty());
       namespace sys = linux::throwing_syscalls;
       terminate_cgroup();
@@ -112,8 +112,11 @@ struct task_executor {
   };
 
   std::vector<running_task_state> tasks;
-  std::size_t active_task_count = 0;
   std::vector<std::size_t> unused_slots;
+  // TODO: kinda hate this, if epoll works well enough this can be killed off
+  std::map<std::size_t, std::size_t> task_index_to_slot;
+  std::size_t active_task_count = 0;
+  std::size_t seen_task_count = 0;
 
   std::filesystem::path create_new_cgroup() {
     namespace sys = linux::throwing_syscalls;
@@ -192,16 +195,17 @@ struct task_executor {
     }
     auto start_time_point = std::chrono::steady_clock::now();
 
-    std::size_t index;
+    std::size_t task_index = seen_task_count++;
+    std::size_t slot_index;
     if (unused_slots.empty()) {
-      index = tasks.size();
+      slot_index = tasks.size();
       tasks.emplace_back(running_task_state{});
     } else {
-      index = unused_slots.back();
+      slot_index = unused_slots.back();
       unused_slots.pop_back();
     }
 
-    tasks[index] = running_task_state{
+    tasks[slot_index] = running_task_state{
       .pidfd = std::move(pidfd),
       .timerfd = std::move(timerfd),
       .stdoutfd = std::move(stdoutfd),
@@ -209,15 +213,17 @@ struct task_executor {
       .cgroup_dir = std::move(cgroup_dir),
       .task_identifier = task.identifier,
       .start_time_point = start_time_point,
-      .vector_index = index,
+      .task_index = task_index,
     };
     ++active_task_count;
 
+    task_index_to_slot[task_index] = slot_index;
+
     struct epoll_event event{};
     event.events = EPOLLIN;
-    event.data.u64 = index;
-    efd.ctl_add(sys::semantic, tasks[index].pidfd, event);
-    efd.ctl_add(sys::semantic, tasks[index].timerfd, event);
+    event.data.u64 = task_index;
+    efd.ctl_add(sys::semantic, tasks[slot_index].pidfd, event);
+    efd.ctl_add(sys::semantic, tasks[slot_index].timerfd, event);
   }
 
   task_outcome wait_for_death() {
@@ -225,12 +231,18 @@ struct task_executor {
     namespace sys = linux::throwing_syscalls;
     struct epoll_event event;
     efd.wait_block_forever(sys::semantic, {&event, &event + 1});
-    std::size_t index = event.data.u64;
+    std::size_t task_index = event.data.u64;
     --active_task_count;
-    contract_assert(index < tasks.size());
-    contract_assert(tasks[index].vector_index == index);
-    unused_slots.push_back(index);
-    return tasks[index].terminate_and_reap();
+    contract_assert(task_index < seen_task_count);
+    contract_assert(task_index_to_slot.contains(task_index));
+    auto slot_index = task_index_to_slot[task_index];
+    contract_assert(slot_index < tasks.size());
+    contract_assert(tasks[slot_index].task_index == task_index);
+    unused_slots.push_back(slot_index);
+    task_index_to_slot.erase(task_index);
+    contract_assert(!task_index_to_slot.contains(task_index));
+    contract_assert(task_index_to_slot.size() == active_task_count);
+    return tasks[slot_index].terminate_and_reap();
   }
 };
 } // namespace ivl::build_system
