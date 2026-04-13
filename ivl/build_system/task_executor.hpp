@@ -108,10 +108,6 @@ struct task_executor {
       contract_assert(info.si_code == CLD_EXITED || info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
       outcome.duration = std::chrono::steady_clock::now() - start_time_point;
       outcome.end_cgroup_files = collect_cgroup_files();
-      // TODO: should check and remove if there are child cgroups, shouldnt matter for a while
-      // UPDT: womp womp, this breaks if a child process isnt reaped quickly
-      // ....: either we become a subreaper, or just fudge around this
-      // ....: electing to fudge
       linux::write_file_slow(cgroup_dir / "memory.max", "0");
       linux::raw_syscalls::rmdir(cgroup_dir.c_str());
       // this should evict them from epoll fd
