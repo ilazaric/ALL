@@ -77,6 +77,7 @@ struct task_executor {
     }
 
     task_outcome terminate_and_reap() {
+      vector_index = -1;
       contract_assert(!pidfd.empty());
       namespace sys = linux::throwing_syscalls;
       terminate_cgroup();
@@ -112,6 +113,7 @@ struct task_executor {
 
   std::vector<running_task_state> tasks;
   std::size_t active_task_count = 0;
+  std::vector<std::size_t> unused_slots;
 
   std::filesystem::path create_new_cgroup() {
     namespace sys = linux::throwing_syscalls;
@@ -188,26 +190,34 @@ struct task_executor {
       });
       contract_assert(!pidfd.empty());
     }
+    auto start_time_point = std::chrono::steady_clock::now();
 
-    tasks.emplace_back(
-      running_task_state{
-        .pidfd = std::move(pidfd),
-        .timerfd = std::move(timerfd),
-        .stdoutfd = std::move(stdoutfd),
-        .stderrfd = std::move(stderrfd),
-        .cgroup_dir = std::move(cgroup_dir),
-        .task_identifier = task.identifier,
-        .start_time_point = std::chrono::steady_clock::now(),
-        .vector_index = tasks.size(),
-      }
-    );
+    std::size_t index;
+    if (unused_slots.empty()) {
+      index = tasks.size();
+      tasks.emplace_back(running_task_state{});
+    } else {
+      index = unused_slots.back();
+      unused_slots.pop_back();
+    }
+
+    tasks[index] = running_task_state{
+      .pidfd = std::move(pidfd),
+      .timerfd = std::move(timerfd),
+      .stdoutfd = std::move(stdoutfd),
+      .stderrfd = std::move(stderrfd),
+      .cgroup_dir = std::move(cgroup_dir),
+      .task_identifier = task.identifier,
+      .start_time_point = start_time_point,
+      .vector_index = index,
+    };
     ++active_task_count;
 
     struct epoll_event event{};
     event.events = EPOLLIN;
-    event.data.u64 = tasks.size() - 1;
-    efd.ctl_add(sys::semantic, tasks.back().pidfd, event);
-    efd.ctl_add(sys::semantic, tasks.back().timerfd, event);
+    event.data.u64 = index;
+    efd.ctl_add(sys::semantic, tasks[index].pidfd, event);
+    efd.ctl_add(sys::semantic, tasks[index].timerfd, event);
   }
 
   task_outcome wait_for_death() {
@@ -219,6 +229,7 @@ struct task_executor {
     --active_task_count;
     contract_assert(index < tasks.size());
     contract_assert(tasks[index].vector_index == index);
+    unused_slots.push_back(index);
     return tasks[index].terminate_and_reap();
   }
 };
