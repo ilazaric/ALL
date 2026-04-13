@@ -18,7 +18,26 @@ struct task_executor {
 
   explicit task_executor(const std::filesystem::path& root_cgroup_dir)
       : efd(linux::throwing_syscalls::semantic, linux::epoll_create_enum::EPOLL_CLOEXEC),
-        root_cgroup_dir(root_cgroup_dir) {}
+        root_cgroup_dir(root_cgroup_dir) {
+    namespace sys = linux::throwing_syscalls;
+    auto parent_dir = root_cgroup_dir / "parent.slice";
+    if (!exists(parent_dir)) sys::mkdir(parent_dir.c_str(), 0755);
+    contract_assert(linux::read_file_slow(parent_dir / "pids.current") == "0\n");
+    linux::write_file_slow(parent_dir / "cgroup.procs", "0");
+    contract_assert(linux::read_file_slow(parent_dir / "pids.current") == "1\n");
+
+    // TODO: test if root cgroup properly configured
+
+    // try to do some cleanup
+    for (auto&& entry : std::filesystem::directory_iterator(root_cgroup_dir))
+      if (entry.is_directory()) {
+        auto&& path = entry.path();
+        if (path.native().ends_with("parent.slice")) continue;
+        linux::write_file_slow(path / "cgroup.kill", "1");
+        linux::write_file_slow(path / "memory.max", "0");
+        linux::raw_syscalls::rmdir(path.c_str());
+      }
+  }
 
   struct running_task_state {
     linux::owned_file_descriptor pidfd;
@@ -27,6 +46,7 @@ struct task_executor {
     linux::owned_file_descriptor stderrfd;
     // can't be a fd, bc we couldn't remove it, can be a number + parent cgroup fd maybe TODO
     std::filesystem::path cgroup_dir;
+    // TODO: could replace `task_identifier` use with `task_index`, removing allocation
     std::string task_identifier;
     std::chrono::time_point<std::chrono::steady_clock> start_time_point;
     std::size_t task_index;
@@ -92,8 +112,8 @@ struct task_executor {
       // UPDT: womp womp, this breaks if a child process isnt reaped quickly
       // ....: either we become a subreaper, or just fudge around this
       // ....: electing to fudge
-      // sys::rmdir(cgroup_dir.c_str());
       linux::write_file_slow(cgroup_dir / "memory.max", "0");
+      linux::raw_syscalls::rmdir(cgroup_dir.c_str());
       // this should evict them from epoll fd
       (void)pidfd.close();
       (void)timerfd.close();
@@ -127,7 +147,7 @@ struct task_executor {
     while (true) {
       auto path = root_cgroup_dir / std::format("child.{:08X}.slice", rand());
       if (exists(path)) {
-        if (linux::read_file_slow(path / "memory.max") == "0\n") return path;
+        if (linux::read_file_slow(path / "memory.max") == "0\n") linux::raw_syscalls::rmdir(path.c_str());
         continue;
       }
       sys::mkdir(path.c_str(), 0755);
