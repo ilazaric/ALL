@@ -77,7 +77,7 @@ int ivl_main() {
     int j = 0;
     for (int i = 0; i < 20; ++i) {
       while (executor.active_task_count >= 4) outcomes[j++] = executor.wait_for_death();
-      executor.launch_task(tasks[i], 100, 1'000'000'000, 10s);
+      executor.launch_task(tasks[i], 50, 1'000'000'000, 10s);
     }
     while (executor.active_task_count) outcomes[j++] = executor.wait_for_death();
     contract_assert(j == 20);

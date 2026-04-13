@@ -31,7 +31,7 @@ struct task_executor {
     std::chrono::time_point<std::chrono::steady_clock> start_time_point;
     std::size_t task_index;
 
-    bool is_reaped() const { return pidfd.empty(); }
+    bool is_reaped() const { return task_index == (std::size_t)-1 || pidfd.empty(); }
 
     void terminate_cgroup() { linux::write_file_slow(cgroup_dir / "cgroup.kill", "1"); }
 
@@ -89,7 +89,11 @@ struct task_executor {
       outcome.duration = std::chrono::steady_clock::now() - start_time_point;
       outcome.end_cgroup_files = collect_cgroup_files();
       // TODO: should check and remove if there are child cgroups, shouldnt matter for a while
-      sys::rmdir(cgroup_dir.c_str());
+      // UPDT: womp womp, this breaks if a child process isnt reaped quickly
+      // ....: either we become a subreaper, or just fudge around this
+      // ....: electing to fudge
+      // sys::rmdir(cgroup_dir.c_str());
+      linux::write_file_slow(cgroup_dir / "memory.max", "0");
       // this should evict them from epoll fd
       (void)pidfd.close();
       (void)timerfd.close();
@@ -122,7 +126,10 @@ struct task_executor {
     namespace sys = linux::throwing_syscalls;
     while (true) {
       auto path = root_cgroup_dir / std::format("child.{:08X}.slice", rand());
-      if (exists(path)) continue;
+      if (exists(path)) {
+        if (linux::read_file_slow(path / "memory.max") == "0\n") return path;
+        continue;
+      }
       sys::mkdir(path.c_str(), 0755);
       return path;
     }
