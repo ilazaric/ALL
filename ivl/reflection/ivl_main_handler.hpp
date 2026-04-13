@@ -103,10 +103,10 @@ constexpr search_result_t search_result = find_main_declarations();
 
 template<typename arg_t, bool passthrough>
 int wrap_ivl_main(int argc, char** argv) {
-  if constexpr (^^arg_t == ^^void) {
-    return [:(passthrough ? ^^:: : ^^::):] ::ivl_main();
-  } else {
-    try {
+  try {
+    if constexpr (^^arg_t == ^^void) {
+      return [:(passthrough ? ^^:: : ^^::):] ::ivl_main();
+    } else {
       arg_t arg{};
 
       std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
@@ -133,12 +133,12 @@ int wrap_ivl_main(int argc, char** argv) {
           goto help;
         }
       }
-    } catch (const std::exception& e) {
-#ifdef __cpp_exceptions
-      std::println(stderr, "exception reached main\n{}", e.what());
-      return 1;
-#endif
     }
+  } catch (const std::exception& e) {
+#ifdef __cpp_exceptions
+    std::println(stderr, "exception reached main\n{}", e.what());
+    return 1;
+#endif
   }
 }
 
