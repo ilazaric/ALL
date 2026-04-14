@@ -96,42 +96,42 @@ struct parser : basic_parser {
     return global_state.variables.contains(id) ? global_state.variables.find(id)->second.value : "";
   }
 
-  // std::string parse_expanded_text(std::string end_chars, const state& global_state) {
-  //   std::string ret;
-  //   consume_spaces();
-  //   auto fin = [&] {
-  //     for (auto c : end_chars)
-  //       if (current_c() == c) return true;
-  //     return false;
-  //   };
-  //   while (!fin()) {
-  //     if (!consume_c_if('$')) {
-  //       ret += current_c();
-  //       consume_c_nocheck();
-  //       continue;
-  //     }
-  //     if (consume_c_if('\n')) continue;
-  //     if (consume_c_if(' ')) {
-  //       ret += ' ';
-  //       continue;
-  //     }
-  //     if (consume_c_if(':')) {
-  //       ret += ':';
-  //       continue;
-  //     }
-  //     if (consume_c_if('$')) {
-  //       ret += '$';
-  //       continue;
-  //     }
-  //     std::string_view id;
-  //     if (consume_c_if('{')) {
-  //       id = parse_identifier();
-  //       consume_c('}');
-  //     } else id = parse_identifier();
-  //     ret += variable_value(id, global_state);
-  //   }
-  //   return ret;
-  // }
+  std::string parse_expanded_text(std::string end_chars, const state& global_state) {
+    std::string ret;
+    consume_spaces();
+    auto fin = [&] {
+      for (auto c : end_chars)
+        if (current_c() == c) return true;
+      return false;
+    };
+    while (!fin()) {
+      if (!consume_c_if('$')) {
+        ret += current_c();
+        consume_c_nocheck();
+        continue;
+      }
+      if (consume_c_if('\n')) continue;
+      if (consume_c_if(' ')) {
+        ret += ' ';
+        continue;
+      }
+      if (consume_c_if(':')) {
+        ret += ':';
+        continue;
+      }
+      if (consume_c_if('$')) {
+        ret += '$';
+        continue;
+      }
+      std::string_view id;
+      if (consume_c_if('{')) {
+        id = parse_identifier();
+        consume_c('}');
+      } else id = parse_identifier();
+      ret += variable_value(id, global_state);
+    }
+    return ret;
+  }
 
   variable parse_variable(const state& global_state) {
     variable ret;
@@ -139,38 +139,8 @@ struct parser : basic_parser {
     consume_spaces();
     consume_c('=');
     consume_spaces();
-    // ret.value = parse_expanded_text("\n", global_state);
-
-    while (!consume_c_if('\n')) {
-      if (!consume_c_if('$')) {
-        ret.value += current_c();
-        consume_c_nocheck();
-        continue;
-      }
-
-      if (consume_c_if('\n')) continue;
-      if (consume_c_if(' ')) {
-        ret.value += ' ';
-        continue;
-      }
-      if (consume_c_if(':')) {
-        ret.value += ':';
-        continue;
-      }
-      if (consume_c_if('$')) {
-        ret.value += '$';
-        continue;
-      }
-
-      std::string_view id;
-      if (consume_c_if('{')) {
-        id = parse_identifier();
-        consume_c('}');
-      } else id = parse_identifier();
-
-      ret.value += variable_value(id, global_state);
-    }
-
+    ret.value = parse_expanded_text("\n", global_state);
+    consume_c('\n');
     return ret;
   }
 
