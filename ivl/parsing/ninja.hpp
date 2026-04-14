@@ -21,8 +21,12 @@ struct variable {
 };
 
 struct rule_variable {
-  struct text : std::string {};
-  struct identifier : std::string {};
+  struct text {
+    std::string value;
+  };
+  struct identifier {
+    std::string value;
+  };
 
   std::string name;
   std::vector<std::variant<text, identifier>> value;
@@ -41,6 +45,7 @@ struct pool {
 
 struct build {
   std::vector<std::string> outputs;
+  std::vector<std::string> implicit_outputs;
   std::string rulename;
   std::vector<std::string> inputs;
   std::vector<variable> variables;
@@ -52,6 +57,12 @@ struct state {
   std::map<std::string, pool, std::less<>> pools;
   // TODO
 };
+
+struct include {
+  std::string file;
+};
+
+inline void parse_into(const std::filesystem::path& file, state& global_state);
 
 struct parser : basic_parser {
   using basic_parser::basic_parser;
@@ -85,12 +96,50 @@ struct parser : basic_parser {
     return global_state.variables.contains(id) ? global_state.variables.find(id)->second.value : "";
   }
 
+  // std::string parse_expanded_text(std::string end_chars, const state& global_state) {
+  //   std::string ret;
+  //   consume_spaces();
+  //   auto fin = [&] {
+  //     for (auto c : end_chars)
+  //       if (current_c() == c) return true;
+  //     return false;
+  //   };
+  //   while (!fin()) {
+  //     if (!consume_c_if('$')) {
+  //       ret += current_c();
+  //       consume_c_nocheck();
+  //       continue;
+  //     }
+  //     if (consume_c_if('\n')) continue;
+  //     if (consume_c_if(' ')) {
+  //       ret += ' ';
+  //       continue;
+  //     }
+  //     if (consume_c_if(':')) {
+  //       ret += ':';
+  //       continue;
+  //     }
+  //     if (consume_c_if('$')) {
+  //       ret += '$';
+  //       continue;
+  //     }
+  //     std::string_view id;
+  //     if (consume_c_if('{')) {
+  //       id = parse_identifier();
+  //       consume_c('}');
+  //     } else id = parse_identifier();
+  //     ret += variable_value(id, global_state);
+  //   }
+  //   return ret;
+  // }
+
   variable parse_variable(const state& global_state) {
     variable ret;
     ret.name = std::string(parse_identifier());
     consume_spaces();
     consume_c('=');
     consume_spaces();
+    // ret.value = parse_expanded_text("\n", global_state);
 
     while (!consume_c_if('\n')) {
       if (!consume_c_if('$')) {
@@ -138,22 +187,22 @@ struct parser : basic_parser {
 
     while (!consume_c_if('\n')) {
       if (!consume_c_if('$')) {
-        *last_text += current_c();
+        last_text->value += current_c();
         consume_c_nocheck();
         continue;
       }
 
       if (consume_c_if('\n')) continue;
       if (consume_c_if(' ')) {
-        *last_text += ' ';
+        last_text->value += ' ';
         continue;
       }
       if (consume_c_if(':')) {
-        *last_text += ':';
+        last_text->value += ':';
         continue;
       }
       if (consume_c_if('$')) {
-        *last_text += '$';
+        last_text->value += '$';
         continue;
       }
 
@@ -198,6 +247,48 @@ struct parser : basic_parser {
     return ret;
   }
 
+  build parse_build(state& global_state) {
+    build ret;
+    consume("build");
+    consume_if(" ") || consume_if("$\n") || panic("malformed build declaration");
+    consume_spaces();
+
+    while (!consume_c_if(':')) {
+      std::string output;
+      while (current_c() != ' ' && current_c() != ':') {
+        if (!consume_c_if('$')) {
+          current_c() == '\n' && panic("unexpected newline, expected ':'");
+          output += current_c();
+          consume_c_nocheck();
+          continue;
+        }
+        if (consume_c_if('\n')) continue;
+        if (consume_c_if(' ')) {
+          output += ' ';
+          continue;
+        }
+        if (consume_c_if(':')) {
+          output += ':';
+          continue;
+        }
+        if (consume_c_if('$')) {
+          output += '$';
+          continue;
+        }
+        std::string_view id;
+        if (consume_c_if('{')) {
+          id = parse_identifier();
+          consume_c('}');
+        } else id = parse_identifier();
+        output += variable_value(id, global_state);
+      }
+      ret.outputs.push_back(output);
+      consume_spaces();
+    }
+
+    consume_spaces();
+  }
+
   pool parse_pool() {
     pool ret;
     consume("pool");
@@ -224,6 +315,45 @@ struct parser : basic_parser {
     consume_spaces();
     consume_c('\n');
 
+    return ret;
+  }
+
+  include parse_include(state& global_state) {
+    include ret;
+    consume("include");
+    consume_if(" ") || consume_if("$\n") || panic("malformed include declaration");
+    consume_spaces();
+    while (true) {
+      if (current_c() == ' ') break;
+      if (current_c() == '\n') break;
+      if (!consume_c_if('$')) {
+        if (current_c() != '\n') ret.file += current_c();
+        consume_c_nocheck();
+        continue;
+      }
+      if (consume_c_if(' ')) {
+        ret.file += ' ';
+        continue;
+      }
+      if (consume_c_if('$')) {
+        ret.file += '$';
+        continue;
+      }
+      if (consume_c_if('$')) {
+        ret.file += '$';
+        continue;
+      }
+      std::string_view id;
+      if (consume_c_if('{')) {
+        id = parse_identifier();
+        consume_c('}');
+      } else id = parse_identifier();
+      ret.file += variable_value(id, global_state);
+    }
+    consume_spaces();
+    if (consume_c_if('#'))
+      while (current_c() != '\n') consume_c_nocheck();
+    consume_c('\n');
     return ret;
   }
 
@@ -290,7 +420,9 @@ struct parser : basic_parser {
     }
 
     if (starts_with_and_space("include")) {
-      todo();
+      auto i = parse_include(global_state);
+      parse_into(i.file, global_state);
+      return;
     }
 
     // should be variable declaration
@@ -299,38 +431,19 @@ struct parser : basic_parser {
   }
 };
 
-// default: build.ninja in current working directory
-state parse(const std::filesystem::path& file) {
+inline void parse_into(const std::filesystem::path& file, state& global_state) {
   auto contents = linux::read_file(file);
-  if (contents.empty()) return state{};
+  if (contents.empty()) return;
   contents.ends_with("\n") || panic("file does not terminate with newline");
-
   parser parser(contents);
   EXCEPTION_CONTEXT("parser state -- {}", parser.debug_context());
-
-  state global_state;
-
-  // auto parse_build = [&] {
-  //   build ret;
-  //   consume("build");
-  //   consume_if(" ") || consume_if("$\n") || panic("malformed build declaration");
-  //   consume_spaces();
-
-  //   while (!consume_if_c(':')) {
-  //     ret.outputs.emplace_back(parse_identifier());
-  //     consume_spaces();
-  //   }
-
-  //   consume_spaces();
-  //   ret.rulename = std::string(parse_identifier());
-  //   consume_spaces();
-
-  //   while (current_c() != '\n' && current_c() != '|') {
-  //   }
-  // };
-
   while (!parser.finished()) parser.parse_declaration(global_state);
+}
 
+// default: build.ninja in current working directory
+inline state parse(const std::filesystem::path& file) {
+  state global_state;
+  parse_into(file, global_state);
   return global_state;
 }
 } // namespace ivl::parsing::ninja
