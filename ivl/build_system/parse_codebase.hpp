@@ -162,6 +162,7 @@ std::vector<source_target> parse_ivl(const std::filesystem::path& src, const pro
       } else {
         std::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", source.native());
         std::println(stderr, "ERROR: directive: {}", directive.pragma);
+        std::println(stderr, "ERROR: command: {}", command);
         std::println(stderr, "ERROR: from file: {}", directive.file.native());
         targets.pop_back();
         break;

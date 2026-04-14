@@ -8,6 +8,8 @@
 
 // IVL add_compiler_flags("-freflection -static")
 // IVL test_only()
+#pragma IVL add_compiler_flags "-freflection -static"
+#pragma IVL test_only
 
 inline int adder(int a, int b, int c) {
   return a + b; // whoops, missed c

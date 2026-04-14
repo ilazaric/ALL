@@ -237,6 +237,7 @@ struct manifest_part_t {
         } else {
           std::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", file);
           std::println(stderr, "ERROR: directive: {}", line);
+          std::println(stderr, "ERROR: command: {}", command);
           std::println(stderr, "ERROR: from file: {}", current_file);
           return std::nullopt;
         }
@@ -326,7 +327,7 @@ int main(int argc, char* argv[], char* envp[]) {
       pp.build_regular(cxx_cfg, out) || ivl::panic("Failed to build `{}`", target);
       auto out2 = build_dir / "bootstrap_dir" / target.stem();
       if (exists(out2)) remove(out2);
-      copy_file(out, out2);
+      copy_file(out, out2); 
       std::println("Re-execing ...");
       _.fn();
       auto exe = build_dir / "bootstrap_dir/builder";
