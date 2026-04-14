@@ -8,11 +8,11 @@ repo_root = Path(__file__).parent.resolve()
 ivl_dir = repo_root / "ivl"
 
 tests = glob.glob(f"{ivl_dir}/**/*@test", recursive=True)
-print(f"[RUNNER] test: {tests}")
+print(f"[RUNNER] tests: {tests}")
 
 failed = []
 for test in tests:
-    print(f"[RUNNER] running test {test} ...")
+    print(f"[RUNNER] running test {test} ...", flush=True)
     p = subprocess.run([test])
     if p.returncode == 0:
         continue
