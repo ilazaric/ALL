@@ -86,6 +86,9 @@ jobs:
     - name: build
       run: CXXVER=26 ./build.py /build_system /linux /process /algos /meta /utility /stl /reflection /parsing
 
+    - name: test
+      run: ./run_built_tests.py
+
   build2:
     needs: build-gcc
     runs-on: ubuntu-latest
