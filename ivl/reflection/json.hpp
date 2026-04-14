@@ -48,7 +48,25 @@ RetT from_to_json_impl(const InputT& arg) {
 
   using enum from_to_json_impl_direction;
 
-  if constexpr (reflection::is_instantiation_of(^^T, ^^std::optional)) {
+  if constexpr (reflection::is_instantiation_of(^^T, ^^std::variant)) {
+    // TODO: technically we could do non-unique as well
+    static_assert(extract<bool>(substitute(^^meta::is_unique, template_arguments_of(^^T))));
+    template for (constexpr auto VI : define_static_array(template_arguments_of(^^T))) {
+      using V = [:dealias(VI):];
+      if constexpr (Direction == TO) {
+        if (!std::holds_alternative<V>(arg)) continue;
+        auto ret = nlohmann::json::object();
+        ret["type"] = reflection::display_string_of(VI);
+        ret["value"] = from_to_json_impl<V, Direction>(std::get<V>(arg));
+        return ret;
+      } else {
+        if (arg["type"] != reflection::display_string_of(VI)) continue;
+        return T(std::in_place_type_t<V>{}, from_to_json_impl<V, Direction>(arg["value"]));
+      }
+    }
+    contract_assert(false);
+    throw std::runtime_error("womp womp");
+  } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::optional)) {
     if constexpr (Direction == TO) {
       return arg ? from_to_json_impl<T::value_type, Direction>(*arg) : RetT();
     } else {
@@ -113,6 +131,7 @@ RetT from_to_json_impl(const InputT& arg) {
   } else if constexpr (
     is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) && !reflection::is_child_of(^^T, ^^nlohmann)
   ) {
+    static_assert(bases_of(^^T, std::meta::access_context::unchecked()).empty());
     // static_assert(false, display_string_of(^^T));
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = nlohmann::json::object();
