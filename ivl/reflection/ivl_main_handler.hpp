@@ -113,7 +113,9 @@ int wrap_ivl_main(int argc, char** argv) {
 
       std::string_view program_name = argc ? argv[0] : "<program-name>";
 
-      if constexpr (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) {
+      if constexpr (
+        (!is_class_type(^^arg_t) || reflection::is_child_of(^^arg_t, ^^std)) && !ivl::cmdline_parsing::parseable<arg_t>
+      ) {
         static_assert(false);
         return 1;
         // static_assert(^^arg_t != ^^bool, "cannot use bool directly");

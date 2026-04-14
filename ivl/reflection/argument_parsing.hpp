@@ -153,6 +153,8 @@ consteval bool is_argument_optional(std::meta::info type) {
 }
 
 consteval bool validate_sanity(std::meta::info type) {
+  if (is_type(type) && is_parseable_type(type)) return true;
+  
   bool ret = true;
 
   if (!is_type(type)) {
@@ -214,11 +216,19 @@ inline void print_help(std::string_view program_name, bool passthrough) {
   auto section = term::colors::FG_LIGHTGREEN;
   auto option = term::colors::FG_CYAN;
   std::print("{}Usage: {} {}[--help]", section, program_name, option);
-  template for (constexpr auto member : reflection::nsdms(^^T)) {
-    if constexpr (is_argument_optional(type_of(member))) {
-      std::print(" [--{} [`{}`]]", identifier_of(member), reflection::display_string_of(type_of(member)));
+  if constexpr (parseable<T>) {
+    if constexpr (is_argument_optional(^^T)) {
+      std::print(" [`{}`]", reflection::display_string_of(^^T));
     } else {
-      std::print(" [--{} `{}`]", identifier_of(member), reflection::display_string_of(type_of(member)));
+      std::print(" `{}`", reflection::display_string_of(^^T));
+    }
+  } else {
+    template for (constexpr auto member : reflection::nsdms(^^T)) {
+      if constexpr (is_argument_optional(type_of(member))) {
+        std::print(" [--{} [`{}`]]", identifier_of(member), reflection::display_string_of(type_of(member)));
+      } else {
+        std::print(" [--{} `{}`]", identifier_of(member), reflection::display_string_of(type_of(member)));
+      }
     }
   }
   // TODO: name of passthrough args should be customizable
@@ -229,45 +239,50 @@ inline void print_help(std::string_view program_name, bool passthrough) {
 
 template<typename T>
 inline bool parse(T& state, command_line_arguments& args) {
-  while (!args.empty()) {
-    std::string_view current = args[0];
-    // TODO: allow for parsing plain non-option value
-    // ....: `gcc -c **src.cpp** -o src.o`
-    if (!current.starts_with('-')) break;
-    if (current == "--") break;
-    if (current == "--help") return false;
-    args = args.subspan(1);
-    if (!current.starts_with("--")) {
-      std::println("option should start with '--', got: {:?}", current);
-      return false;
-    }
-    auto name = current.substr(2);
+  if constexpr (parseable<T>) {
+    if (!args.empty() && args[0] == std::string_view("--help")) return false;
+    return parser<T>{}.parse(state, std::nullopt, args);
+  } else {
+    while (!args.empty()) {
+      std::string_view current = args[0];
+      // TODO: allow for parsing plain non-option value
+      // ....: `gcc -c **src.cpp** -o src.o`
+      if (!current.starts_with('-')) break;
+      if (current == "--") break;
+      if (current == "--help") return false;
+      args = args.subspan(1);
+      if (!current.starts_with("--")) {
+        std::println("option should start with '--', got: {:?}", current);
+        return false;
+      }
+      auto name = current.substr(2);
 
-    std::optional<std::string_view> eq;
-    if (auto loc = name.find('='); loc != std::string_view::npos) {
-      eq = name.substr(loc + 1);
-      name = name.substr(0, loc);
-    }
+      std::optional<std::string_view> eq;
+      if (auto loc = name.find('='); loc != std::string_view::npos) {
+        eq = name.substr(loc + 1);
+        name = name.substr(0, loc);
+      }
 
-    bool found = false;
-    template for (constexpr auto member : reflection::nsdms(^^T)) {
-      if (identifier_of(member) == name) {
-        parser<typename[:type_of(member):]> p;
-        if (!p.parse(state.[:member:], eq, args)) {
-          std::println("during parsing option: {:?}", current);
-          return false;
+      bool found = false;
+      template for (constexpr auto member : reflection::nsdms(^^T)) {
+        if (identifier_of(member) == name) {
+          parser<typename[:type_of(member):]> p;
+          if (!p.parse(state.[:member:], eq, args)) {
+            std::println("during parsing option: {:?}", current);
+            return false;
+          }
+          found = true;
+          break;
         }
-        found = true;
-        break;
+      }
+
+      if (!found) {
+        std::println("unrecognized option: {:?}", current);
+        return false;
       }
     }
 
-    if (!found) {
-      std::println("unrecognized option: {:?}", current);
-      return false;
-    }
+    return true;
   }
-
-  return true;
 }
 } // namespace ivl::cmdline_parsing
