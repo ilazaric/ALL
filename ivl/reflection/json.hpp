@@ -1,5 +1,6 @@
 #pragma once
 
+#include <ivl/meta>
 #include <ivl/reflection/utility>
 #include <nlohmann/json.hpp>
 #include <cassert>
