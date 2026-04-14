@@ -3,6 +3,7 @@
 #include <ivl/exception>
 #include <ivl/linux/utility>
 #include <ivl/parsing/basic_parser>
+#include <ivl/reflection/test_attribute>
 #include <ivl/stl/string>
 #include <ivl/utility>
 #include <filesystem>
@@ -415,5 +416,22 @@ inline state parse(const std::filesystem::path& file) {
   state global_state;
   parse_into(file, global_state);
   return global_state;
+}
+
+// IVL has_test_variant()
+
+[[= ivl::test]] inline void test_variables() {
+  parser p(R"ninja(
+a=A
+b=$a$a$a
+a=B
+c=$b${a}C
+)ninja");
+  state global_state;
+  while (!p.finished()) p.parse_declaration(global_state);
+  contract_assert(global_state.variables.size() == 3);
+  contract_assert(global_state.variables.at("a").value == "B");
+  contract_assert(global_state.variables.at("b").value == "AAA");
+  contract_assert(global_state.variables.at("c").value == "AAABC");
 }
 } // namespace ivl::parsing::ninja
