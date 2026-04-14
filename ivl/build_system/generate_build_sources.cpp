@@ -110,6 +110,10 @@ int main() {
     root / "submodules" / "nlohmann-json" / "include" / "nlohmann", build_dir / "submodule_source_copy" / "nlohmann"
   );
 
+  // TODO: if is in case its not fetched, maybe drop in future?
+  if (exists(root / "submodules" / "raylib" / "src"))
+    sync_dir(root / "submodules" / "raylib" / "src", build_dir / "submodule_source_copy" / "raylib");
+
   auto files = find_sources(copy_dir / "ivl");
 
   auto include_meta_dir = build_dir / "include_dirs";
