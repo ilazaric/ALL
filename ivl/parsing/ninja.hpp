@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ivl/exception>
+#include <ivl/linux/terminate_syscalls>
 #include <ivl/linux/utility>
 #include <ivl/parsing/basic_parser>
 #include <ivl/reflection/test_attribute>
@@ -498,5 +499,18 @@ pool gpu
   auto& gpu = global_state.pools.at("gpu");
   contract_assert(gpu.name == "gpu");
   contract_assert(gpu.depth == 67);
+}
+
+[[= ivl::test]] inline void test_include() {
+  namespace sys = ::ivl::linux::terminate_syscalls;
+  linux::owned_file_descriptor root(sys::memfd_create("root", 0));
+  linux::owned_file_descriptor mid(sys::memfd_create("mid", 0));
+  linux::owned_file_descriptor leaf(sys::memfd_create("leaf", 0));
+  linux::write_file_slow(root, std::format("include /proc/self/fd/{}\n", mid.get()));
+  linux::write_file_slow(mid, std::format("include /proc/self/fd/{}\n", leaf.get()));
+  linux::write_file_slow(leaf, "abc=def\n");
+  state global_state;
+  parse_file_into(std::format("/proc/self/fd/{}", root.get()), global_state);
+  contract_assert(global_state.variables.at("abc").value == "def");
 }
 } // namespace ivl::parsing::ninja
