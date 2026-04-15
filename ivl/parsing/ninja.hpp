@@ -484,4 +484,17 @@ rule touch
 }
                                 )json");
 }
+
+[[= ivl::test]] inline void test_pool() {
+  std::string_view text = R"ninja(
+pool gpu
+  depth = 67
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  contract_assert(global_state.pools.size() == 1);
+  auto& gpu = global_state.pools.at("gpu");
+  contract_assert(gpu.name == "gpu");
+  contract_assert(gpu.depth == 67);
+}
 } // namespace ivl::parsing::ninja
