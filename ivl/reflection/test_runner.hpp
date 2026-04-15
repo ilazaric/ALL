@@ -35,7 +35,7 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 }
 
 // `true` means that the test passed.
-template <std::meta::info I>
+template<std::meta::info I>
 bool invoke_function() {
   std::println("RUNNING TEST {}", display_string_of(I));
   auto pid = ivl::linux::raw_syscalls::fork();
@@ -56,7 +56,7 @@ bool invoke_function() {
   }
 }
 
-template <std::meta::info... Is>
+template<std::meta::info... Is>
 bool invoke_functions() {
   bool ret = true;
   ((ret &= invoke_function<Is>()), ...);
