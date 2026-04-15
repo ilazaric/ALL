@@ -154,28 +154,36 @@ struct parser : basic_parser {
     consume_c('=');
     consume_spaces();
 
-    ret.value.emplace_back(rule_variable::text{});
-    auto last_text = &std::get<rule_variable::text>(ret.value.back());
+    // ret.value.emplace_back(rule_variable::text{});
+    // auto last_text = &std::get<rule_variable::text>(ret.value.back());
 
+    std::string last_text;
+
+    // cant go through parse_expanded_text bc variables are not yet expanded
     while (!consume_c_if('\n')) {
       if (!consume_c_if('$')) {
-        last_text->value += current_c();
+        last_text += current_c();
         consume_c_nocheck();
         continue;
       }
 
       if (consume_c_if('\n')) continue;
       if (consume_c_if(' ')) {
-        last_text->value += ' ';
+        last_text += ' ';
         continue;
       }
       if (consume_c_if(':')) {
-        last_text->value += ':';
+        last_text += ':';
         continue;
       }
       if (consume_c_if('$')) {
-        last_text->value += '$';
+        last_text += '$';
         continue;
+      }
+
+      if (!last_text.empty()) {
+        ret.value.emplace_back(rule_variable::text(last_text));
+        last_text.clear();
       }
 
       std::string_view id;
@@ -185,9 +193,9 @@ struct parser : basic_parser {
       } else id = parse_identifier();
 
       ret.value.emplace_back(rule_variable::identifier(std::string(id)));
-      ret.value.emplace_back(rule_variable::text{});
-      last_text = &std::get<rule_variable::text>(ret.value.back());
     }
+
+    if (!last_text.empty()) ret.value.emplace_back(rule_variable::text(last_text));
 
     return ret;
   }
@@ -467,12 +475,6 @@ rule touch
               "type": "ivl::parsing::ninja::rule_variable::identifier",
               "value": {
                 "value": "out"
-              }
-            },
-            {
-              "type": "ivl::parsing::ninja::rule_variable::text",
-              "value": {
-                "value": ""
               }
             }
           ]
