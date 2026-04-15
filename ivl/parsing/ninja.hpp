@@ -5,6 +5,7 @@
 #include <ivl/parsing/basic_parser>
 #include <ivl/reflection/test_attribute>
 #include <ivl/stl/string>
+#include <ivl/testing>
 #include <ivl/utility>
 #include <filesystem>
 #include <map>
@@ -63,7 +64,7 @@ struct include {
   std::string file;
 };
 
-inline void parse_into(const std::filesystem::path& file, state& global_state);
+inline void parse_file_into(const std::filesystem::path& file, state& global_state);
 
 struct parser : basic_parser {
   using basic_parser::basic_parser;
@@ -392,7 +393,7 @@ struct parser : basic_parser {
 
     if (starts_with_and_space("include")) {
       auto i = parse_include(global_state);
-      parse_into(i.file, global_state);
+      parse_file_into(i.file, global_state);
       return;
     }
 
@@ -402,8 +403,7 @@ struct parser : basic_parser {
   }
 };
 
-inline void parse_into(const std::filesystem::path& file, state& global_state) {
-  auto contents = linux::read_file(file);
+inline void parse_text_into(std::string_view contents, state& global_state) {
   if (contents.empty()) return;
   contents.ends_with("\n") || panic("file does not terminate with newline");
   parser parser(contents);
@@ -411,27 +411,77 @@ inline void parse_into(const std::filesystem::path& file, state& global_state) {
   while (!parser.finished()) parser.parse_declaration(global_state);
 }
 
+inline void parse_file_into(const std::filesystem::path& file, state& global_state) {
+  auto contents = linux::read_file(file);
+  parse_text_into(contents, global_state);
+}
+
 // default: build.ninja in current working directory
 inline state parse(const std::filesystem::path& file) {
   state global_state;
-  parse_into(file, global_state);
+  parse_file_into(file, global_state);
   return global_state;
 }
 
 // IVL has_test_variant()
 
 [[= ivl::test]] inline void test_variables() {
-  parser p(R"ninja(
+  std::string_view text = R"ninja(
 a=A
 b=$a$a$a
 a=B
 c=$b${a}C
-)ninja");
+)ninja";
   state global_state;
-  while (!p.finished()) p.parse_declaration(global_state);
+  parse_text_into(text, global_state);
   contract_assert(global_state.variables.size() == 3);
   contract_assert(global_state.variables.at("a").value == "B");
   contract_assert(global_state.variables.at("b").value == "AAA");
   contract_assert(global_state.variables.at("c").value == "AAABC");
+}
+
+[[= ivl::test]] inline void test_rules() {
+  std::string_view text = R"ninja(
+rule touch
+  command = touch $out
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  testing::contract_assert_json(global_state, R"json(
+{
+  "pools": {},
+  "rules": {
+    "touch": {
+      "name": "touch",
+      "variables": {
+        "command": {
+          "name": "command",
+          "value": [
+            {
+              "type": "ivl::parsing::ninja::rule_variable::text",
+              "value": {
+                "value": "touch "
+              }
+            },
+            {
+              "type": "ivl::parsing::ninja::rule_variable::identifier",
+              "value": {
+                "value": "out"
+              }
+            },
+            {
+              "type": "ivl::parsing::ninja::rule_variable::text",
+              "value": {
+                "value": ""
+              }
+            }
+          ]
+        }
+      }
+    }
+  },
+  "variables": {}
+}
+                                )json");
 }
 } // namespace ivl::parsing::ninja
