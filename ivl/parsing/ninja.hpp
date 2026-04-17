@@ -235,39 +235,20 @@ struct parser : basic_parser {
     consume_spaces();
 
     while (!consume_c_if(':')) {
-      std::string output;
-      while (current_c() != ' ' && current_c() != ':') {
-        if (!consume_c_if('$')) {
-          current_c() == '\n' && panic("unexpected newline, expected ':'");
-          output += current_c();
-          consume_c_nocheck();
-          continue;
-        }
-        if (consume_c_if('\n')) continue;
-        if (consume_c_if(' ')) {
-          output += ' ';
-          continue;
-        }
-        if (consume_c_if(':')) {
-          output += ':';
-          continue;
-        }
-        if (consume_c_if('$')) {
-          output += '$';
-          continue;
-        }
-        std::string_view id;
-        if (consume_c_if('{')) {
-          id = parse_identifier();
-          consume_c('}');
-        } else id = parse_identifier();
-        output += variable_value(id, global_state);
-      }
+      std::string output = parse_expanded_text(" :\n", global_state);
+      current_c() == '\n' && panic("unexpected newline, expected ':'");
       ret.outputs.push_back(output);
       consume_spaces();
     }
-
     consume_spaces();
+    ret.rulename = std::string(parse_identifier());
+    consume_spaces();
+    while (!consume_c_if('\n')) {
+      std::string output = parse_expanded_text(" \n", global_state);
+      ret.outputs.push_back(output);
+      consume_spaces();
+    }
+    // TODO: variables
   }
 
   pool parse_pool() {
@@ -370,7 +351,7 @@ struct parser : basic_parser {
       return;
     }
 
-    // console??
+    // TODO: console??
     if (starts_with_and_space("pool")) {
       auto p = parse_pool();
       global_state.pools.contains(p.name) && panic("duplicate pool {:?}", p.name);
