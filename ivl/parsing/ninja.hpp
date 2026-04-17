@@ -47,8 +47,9 @@ struct pool {
 };
 
 struct build {
-  // TODO: implicit outputs, implicit inputs, order only inputs
+  // TODO: implicit inputs, order only inputs
   std::vector<std::string> outputs;
+  std::vector<std::string> implicit_outputs;
   std::vector<std::string> inputs;
   std::map<std::string, std::string> rule_vars; // including command
 };
@@ -236,11 +237,23 @@ struct parser : basic_parser {
 
     while (!consume_c_if(':')) {
       std::string output = parse_expanded_text(" :|\n", global_state);
-      current_c() == '\n' && panic("unexpected newline, expected ':'");
-      current_c() == '|' && panic("implicit outputs not implemented yet");
-      ret.outputs.push_back(output);
       consume_spaces();
+      current_c() == '\n' && panic("unexpected newline, expected ':'");
+      ret.outputs.push_back(output);
+      if (consume_c_if('|')) goto parse_implicit_outputs;
     }
+
+    if (0) {
+    parse_implicit_outputs:
+      while (!consume_c_if(':')) {
+        std::string output = parse_expanded_text(" :|\n", global_state);
+        consume_spaces();
+        current_c() == '\n' && panic("unexpected newline, expected ':'");
+        current_c() == '|' && panic("unexpected '|', expected ':'");
+        ret.implicit_outputs.push_back(output);
+      }
+    }
+
     consume_spaces();
     std::string rulename(parse_identifier());
     rulename == "phony" || global_state.rules.contains(rulename) || panic("rule not found: {:?}", rulename);
@@ -560,17 +573,14 @@ build foo: touch
   state global_state;
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state.builds, R"json(
-[
-  {
-    "inputs": [],
-    "outputs": [
-      "foo"
-    ],
-    "rule_vars": {
-      "command": "touch foo"
-    }
+[{
+  "inputs": [],
+  "outputs": ["foo"],
+  "implicit_outputs": [],
+  "rule_vars": {
+    "command": "touch foo"
   }
-]
+}]
 )json");
 }
 
@@ -584,6 +594,7 @@ build bar: phony foo
 [{
   "inputs": ["foo"],
   "outputs": ["bar"],
+  "implicit_outputs": [],
   "rule_vars": {}
 }]
 )json");
