@@ -243,7 +243,7 @@ struct parser : basic_parser {
     }
     consume_spaces();
     std::string rulename(parse_identifier());
-    global_state.rules.contains(rulename) || panic("rule not found: {:?}", rulename);
+    rulename == "phony" || global_state.rules.contains(rulename) || panic("rule not found: {:?}", rulename);
     consume_spaces();
     while (!consume_c_if('\n')) {
       std::string input = parse_expanded_text(" |\n", global_state);
@@ -278,6 +278,8 @@ struct parser : basic_parser {
     };
     local_vars["out"] = join(ret.outputs);
     local_vars["in"] = join(ret.inputs);
+
+    if (rulename == "phony") return ret;
 
     for (auto&& [outer_id, pieced_text] : global_state.rules.at(rulename).variables) {
       std::string text;
@@ -396,6 +398,7 @@ struct parser : basic_parser {
 
     if (starts_with_and_space("rule")) {
       auto r = parse_rule();
+      r.name == "phony" && panic("rule can't be called \"phony\"");
       global_state.rules.contains(r.name) && panic("duplicate rule {:?}", r.name);
       global_state.rules[r.name] = std::move(r);
       return;
@@ -568,6 +571,21 @@ build foo: touch
     }
   }
 ]
+)json");
+}
+
+[[= ivl::test]] inline void test_phony() {
+  std::string_view text = R"ninja(
+build bar: phony foo
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  testing::contract_assert_json(global_state.builds, R"json(
+[{
+  "inputs": ["foo"],
+  "outputs": ["bar"],
+  "rule_vars": {}
+}]
 )json");
 }
 } // namespace ivl::parsing::ninja
