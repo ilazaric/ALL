@@ -47,17 +47,17 @@ struct pool {
 };
 
 struct build {
+  // TODO: implicit outputs, implicit inputs, order only inputs
   std::vector<std::string> outputs;
-  std::vector<std::string> implicit_outputs;
-  std::string rulename;
   std::vector<std::string> inputs;
-  std::vector<variable> variables;
+  std::map<std::string, std::string> rule_vars; // including command
 };
 
 struct state {
   std::map<std::string, variable, std::less<>> variables;
   std::map<std::string, rule, std::less<>> rules;
   std::map<std::string, pool, std::less<>> pools;
+  std::vector<build> builds;
   // TODO
 };
 
@@ -235,20 +235,70 @@ struct parser : basic_parser {
     consume_spaces();
 
     while (!consume_c_if(':')) {
-      std::string output = parse_expanded_text(" :\n", global_state);
+      std::string output = parse_expanded_text(" :|\n", global_state);
       current_c() == '\n' && panic("unexpected newline, expected ':'");
+      current_c() == '|' && panic("implicit outputs not implemented yet");
       ret.outputs.push_back(output);
       consume_spaces();
     }
     consume_spaces();
-    ret.rulename = std::string(parse_identifier());
+    std::string rulename(parse_identifier());
+    global_state.rules.contains(rulename) || panic("rule not found: {:?}", rulename);
     consume_spaces();
     while (!consume_c_if('\n')) {
-      std::string output = parse_expanded_text(" \n", global_state);
-      ret.outputs.push_back(output);
+      std::string input = parse_expanded_text(" |\n", global_state);
+      current_c() == '|' && panic("implicit inputs not implemented yet");
+      ret.inputs.push_back(input);
       consume_spaces();
     }
     // TODO: variables
+
+    std::map<std::string, std::string> local_vars;
+    while (!finished()) {
+      if (current_c() == '#') {
+        while (!consume_c_if('\n')) consume_c_nocheck();
+        continue;
+      }
+      if (current_c() != ' ') break;
+      consume_spaces();
+      std::string var(parse_identifier());
+      consume_spaces();
+      consume_c('=');
+      consume_spaces();
+      std::string text = parse_expanded_text("\n", global_state);
+      consume_c('\n');
+      local_vars[var] = text;
+    }
+
+    auto join = [](const std::vector<std::string>& vec) -> std::string {
+      if (vec.empty()) return "";
+      auto ret = vec[0];
+      for (std::size_t i = 1; i < vec.size(); ++i) ret += " " + vec[i];
+      return ret;
+    };
+    local_vars["out"] = join(ret.outputs);
+    local_vars["in"] = join(ret.inputs);
+
+    for (auto&& [outer_id, pieced_text] : global_state.rules.at(rulename).variables) {
+      std::string text;
+      for (auto&& el : pieced_text.value) {
+        if (auto ptr = std::get_if<rule_variable::text>(&el)) {
+          text += ptr->value;
+          continue;
+        }
+        if (auto ptr = std::get_if<rule_variable::identifier>(&el)) {
+          auto&& inner_id = ptr->value;
+          if (local_vars.contains(inner_id)) text += local_vars.at(inner_id);
+          else if (global_state.variables.contains(inner_id)) text += global_state.variables.at(inner_id).value;
+          // unset is not an error, expands to empty string
+          continue;
+        }
+        panic("shouln't be reachable");
+      }
+      ret.rule_vars[outer_id] = text;
+    }
+
+    return ret;
   }
 
   pool parse_pool() {
@@ -360,7 +410,8 @@ struct parser : basic_parser {
     }
 
     if (starts_with_and_space("build")) {
-      todo();
+      global_state.builds.push_back(parse_build(global_state));
+      return;
     }
 
     if (starts_with_and_space("default")) {
@@ -439,6 +490,7 @@ rule touch
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state, R"json(
 {
+  "builds": [],
   "pools": {},
   "rules": {
     "touch": {
@@ -493,5 +545,29 @@ pool gpu
   state global_state;
   parse_file_into(std::format("/proc/self/fd/{}", root.get()), global_state);
   contract_assert(global_state.variables.at("abc").value == "def");
+}
+
+[[= ivl::test]] inline void test_build() {
+  std::string_view text = R"ninja(
+rule touch
+  command = touch $out
+
+build foo: touch
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  testing::contract_assert_json(global_state.builds, R"json(
+[
+  {
+    "inputs": [],
+    "outputs": [
+      "foo"
+    ],
+    "rule_vars": {
+      "command": "touch foo"
+    }
+  }
+]
+)json");
 }
 } // namespace ivl::parsing::ninja
