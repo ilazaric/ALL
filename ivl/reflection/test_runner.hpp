@@ -36,12 +36,17 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 
 // `true` means that the test passed.
 template<std::meta::info I>
-bool invoke_function() {
+bool invoke_function() noexcept {
   std::println("RUNNING TEST {}", display_string_of(I));
   auto pid = ivl::linux::raw_syscalls::fork();
   assert(pid >= 0);
   if (pid == 0) {
-    [:I:]();
+    try {
+      [:I:]();
+    } catch (const std::exception& e) {
+      std::println("!!! EXCEPTION:\n{}", e.what());
+      ivl::linux::raw_syscalls::exit_group(1);
+    }
     ivl::linux::raw_syscalls::exit_group(0);
   }
   int wstatus;
