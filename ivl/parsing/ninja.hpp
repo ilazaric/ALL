@@ -47,10 +47,12 @@ struct pool {
 };
 
 struct build {
-  // TODO: implicit inputs, order only inputs
+  // TODO: validations
   std::vector<std::string> outputs;
   std::vector<std::string> implicit_outputs;
   std::vector<std::string> inputs;
+  std::vector<std::string> implicit_inputs;
+  std::vector<std::string> order_only_inputs;
   std::map<std::string, std::string> rule_vars; // including command
 };
 
@@ -245,6 +247,7 @@ struct parser : basic_parser {
 
     if (0) {
     parse_implicit_outputs:
+      consume_spaces();
       while (!consume_c_if(':')) {
         std::string output = parse_expanded_text(" :|\n", global_state);
         consume_spaces();
@@ -260,11 +263,38 @@ struct parser : basic_parser {
     consume_spaces();
     while (!consume_c_if('\n')) {
       std::string input = parse_expanded_text(" |\n", global_state);
-      current_c() == '|' && panic("implicit inputs not implemented yet");
-      ret.inputs.push_back(input);
       consume_spaces();
+      ret.inputs.push_back(input);
+      if (consume_c_if('|')) {
+        if (consume_c_if('|')) goto parse_order_only_inputs;
+        else goto parse_implicit_inputs;
+      }
     }
-    // TODO: variables
+
+    if (0) {
+    parse_implicit_inputs:
+      consume_spaces();
+      while (!consume_c_if('\n')) {
+        std::string input = parse_expanded_text(" |\n", global_state);
+        consume_spaces();
+        ret.implicit_inputs.push_back(input);
+        if (consume_c_if('|')) {
+          consume_c('|');
+          goto parse_order_only_inputs;
+        }
+      }
+    }
+
+    if (0) {
+    parse_order_only_inputs:
+      consume_spaces();
+      while (!consume_c_if('\n')) {
+        std::string input = parse_expanded_text(" |\n", global_state);
+        current_c() == '|' && panic("unexpected '|', expected newline");
+        consume_spaces();
+        ret.order_only_inputs.push_back(input);
+      }
+    }
 
     std::map<std::string, std::string> local_vars;
     while (!finished()) {
@@ -577,6 +607,8 @@ build foo: touch
   "inputs": [],
   "outputs": ["foo"],
   "implicit_outputs": [],
+  "implicit_inputs": [],
+  "order_only_inputs": [],
   "rule_vars": {
     "command": "touch foo"
   }
@@ -595,6 +627,26 @@ build bar: phony foo
   "inputs": ["foo"],
   "outputs": ["bar"],
   "implicit_outputs": [],
+  "implicit_inputs": [],
+  "order_only_inputs": [],
+  "rule_vars": {}
+}]
+)json");
+}
+
+[[= ivl::test]] inline void test_build_io() {
+  std::string_view text = R"ninja(
+build a | b: phony c | d || e
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  testing::contract_assert_json(global_state.builds, R"json(
+[{
+  "inputs": ["c"],
+  "outputs": ["a"],
+  "implicit_outputs": ["b"],
+  "implicit_inputs": ["d"],
+  "order_only_inputs": ["e"],
   "rule_vars": {}
 }]
 )json");
