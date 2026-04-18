@@ -535,36 +535,36 @@ rule touch
   state global_state;
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state, R"json(
-{
-  "builds": [],
-  "pools": {},
-  "rules": {
-    "touch": {
-      "name": "touch",
-      "variables": {
-        "command": {
-          "name": "command",
-          "value": [
-            {
-              "type": "ivl::parsing::ninja::rule_variable::text",
-              "value": {
-                "value": "touch "
-              }
-            },
-            {
-              "type": "ivl::parsing::ninja::rule_variable::identifier",
-              "value": {
-                "value": "out"
-              }
+    {
+      "builds": [],
+      "pools": {},
+      "rules": {
+        "touch": {
+          "name": "touch",
+          "variables": {
+            "command": {
+              "name": "command",
+              "value": [
+                {
+                  "type": "ivl::parsing::ninja::rule_variable::text",
+                  "value": {
+                    "value": "touch "
+                  }
+                },
+                {
+                  "type": "ivl::parsing::ninja::rule_variable::identifier",
+                  "value": {
+                    "value": "out"
+                  }
+                }
+              ]
             }
-          ]
+          }
         }
-      }
+      },
+      "variables": {}
     }
-  },
-  "variables": {}
-}
-                                )json");
+  )json");
 }
 
 [[= ivl::test]] inline void test_pool() {
@@ -603,17 +603,19 @@ build foo: touch
   state global_state;
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state.builds, R"json(
-[{
-  "inputs": [],
-  "outputs": ["foo"],
-  "implicit_outputs": [],
-  "implicit_inputs": [],
-  "order_only_inputs": [],
-  "rule_vars": {
-    "command": "touch foo"
-  }
-}]
-)json");
+    [{
+      "inputs": [],
+      "outputs": [
+        "foo"
+      ],
+      "implicit_outputs": [],
+      "implicit_inputs": [],
+      "order_only_inputs": [],
+      "rule_vars": {
+        "command": "touch foo"
+      }
+    }]
+  )json");
 }
 
 [[= ivl::test]] inline void test_phony() {
@@ -623,15 +625,19 @@ build bar: phony foo
   state global_state;
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state.builds, R"json(
-[{
-  "inputs": ["foo"],
-  "outputs": ["bar"],
-  "implicit_outputs": [],
-  "implicit_inputs": [],
-  "order_only_inputs": [],
-  "rule_vars": {}
-}]
-)json");
+    [{
+      "inputs": [
+        "foo"
+      ],
+      "outputs": [
+        "bar"
+      ],
+      "implicit_outputs": [],
+      "implicit_inputs": [],
+      "order_only_inputs": [],
+      "rule_vars": {}
+    }]
+  )json");
 }
 
 [[= ivl::test]] inline void test_build_io() {
@@ -641,14 +647,24 @@ build a | b: phony c | d || e
   state global_state;
   parse_text_into(text, global_state);
   testing::contract_assert_json(global_state.builds, R"json(
-[{
-  "inputs": ["c"],
-  "outputs": ["a"],
-  "implicit_outputs": ["b"],
-  "implicit_inputs": ["d"],
-  "order_only_inputs": ["e"],
-  "rule_vars": {}
-}]
-)json");
+    [{
+      "inputs": [
+        "c"
+      ],
+      "outputs": [
+        "a"
+      ],
+      "implicit_outputs": [
+        "b"
+      ],
+      "implicit_inputs": [
+        "d"
+      ],
+      "order_only_inputs": [
+        "e"
+      ],
+      "rule_vars": {}
+    }]
+  )json");
 }
 } // namespace ivl::parsing::ninja

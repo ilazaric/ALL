@@ -38,3 +38,8 @@ SpaceBeforeCpp11BracedList: false
 Cpp11BracedListStyle: true
 BreakTemplateDeclarations: Yes
 KeepEmptyLinesAtTheStartOfBlocks: false
+
+RawStringFormats:
+  - Language: Json
+    Delimiters:
+      - json
