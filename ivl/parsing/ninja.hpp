@@ -61,11 +61,17 @@ struct state {
   std::map<std::string, rule, std::less<>> rules;
   std::map<std::string, pool, std::less<>> pools;
   std::vector<build> builds;
+  std::set<std::string> targets;
+  std::set<std::string> defaults;
   // TODO
 };
 
 struct include {
   std::string file;
+};
+
+struct default_decl {
+  std::vector<std::string> targets;
 };
 
 inline void parse_file_into(const std::filesystem::path& file, state& global_state);
@@ -96,7 +102,7 @@ struct parser : basic_parser {
     return std::string_view(start, end);
   }
 
-  // TODO: need to understand subninja and include
+  // TODO: need to understand subninja
   // TODO: maybe could return string_view
   std::string variable_value(std::string_view id, const state& global_state) {
     return global_state.variables.contains(id) ? global_state.variables.find(id)->second.value : "";
@@ -228,6 +234,19 @@ struct parser : basic_parser {
       ret.variables[var.name] = var;
     }
 
+    return ret;
+  }
+
+  default_decl parse_default(state& global_state) {
+    default_decl ret;
+    consume("default");
+    consume_if(" ") || consume_if("$\n") || panic("malformed rule declaration");
+    consume_spaces();
+    while (!consume_c_if('\n')) {
+      ret.targets.push_back(parse_expanded_text(" \n", global_state));
+      consume_spaces();
+    }
+    contract_assert(!ret.targets.empty());
     return ret;
   }
 
@@ -456,12 +475,26 @@ struct parser : basic_parser {
     }
 
     if (starts_with_and_space("build")) {
-      global_state.builds.push_back(parse_build(global_state));
+      auto b = parse_build(global_state);
+      auto check = [&](auto&& outs) {
+        for (auto&& out : outs) {
+          contract_assert(!global_state.targets.contains(out));
+          global_state.targets.insert(out);
+        }
+      };
+      check(b.outputs);
+      check(b.implicit_outputs);
+      global_state.builds.push_back(std::move(b));
       return;
     }
 
     if (starts_with_and_space("default")) {
-      todo();
+      auto d = parse_default(global_state);
+      for (auto&& target : d.targets) {
+        contract_assert(global_state.targets.contains(target));
+        global_state.defaults.insert(target);
+      }
+      return;
     }
 
     // variable
@@ -534,35 +567,30 @@ rule touch
 )ninja";
   state global_state;
   parse_text_into(text, global_state);
-  testing::contract_assert_json(global_state, R"json(
+  testing::contract_assert_json(global_state.rules, R"json(
     {
-      "builds": [],
-      "pools": {},
-      "rules": {
-        "touch": {
-          "name": "touch",
-          "variables": {
-            "command": {
-              "name": "command",
-              "value": [
-                {
-                  "type": "ivl::parsing::ninja::rule_variable::text",
-                  "value": {
-                    "value": "touch "
-                  }
-                },
-                {
-                  "type": "ivl::parsing::ninja::rule_variable::identifier",
-                  "value": {
-                    "value": "out"
-                  }
+      "touch": {
+        "name": "touch",
+        "variables": {
+          "command": {
+            "name": "command",
+            "value": [
+              {
+                "type": "ivl::parsing::ninja::rule_variable::text",
+                "value": {
+                  "value": "touch "
                 }
-              ]
-            }
+              },
+              {
+                "type": "ivl::parsing::ninja::rule_variable::identifier",
+                "value": {
+                  "value": "out"
+                }
+              }
+            ]
           }
         }
-      },
-      "variables": {}
+      }
     }
   )json");
 }
@@ -665,6 +693,26 @@ build a | b: phony c | d || e
       ],
       "rule_vars": {}
     }]
+  )json");
+}
+
+[[= ivl::test]] inline void test_default() {
+  std::string_view text = R"ninja(
+rule touch
+  command = touch $out
+build a: touch
+build b: touch
+build c: touch
+build d: touch
+default a
+default b c
+)ninja";
+  state global_state;
+  parse_text_into(text, global_state);
+  testing::contract_assert_json(global_state.defaults, R"json(
+    ["a",
+     "b",
+     "c"]
   )json");
 }
 } // namespace ivl::parsing::ninja
