@@ -46,3 +46,6 @@
 [submodule "submodules/glibc"]
 	path = submodules/glibc
 	url = git://sourceware.org/git/glibc.git
+[submodule "submodules/ninja"]
+	path = submodules/ninja
+	url = git@github.com:ninja-build/ninja.git
