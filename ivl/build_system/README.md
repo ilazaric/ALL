@@ -32,3 +32,10 @@ stale,
 unbuildable (nonzero exit)
 
 currently generate\_build\_sources copies all source files into build/
+
+multiple systems
+* process executor
+* something that understands dependencies
+* caching
+
+ninja & make can regenerate themselves
