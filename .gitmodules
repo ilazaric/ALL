@@ -49,3 +49,6 @@
 [submodule "submodules/ninja"]
 	path = submodules/ninja
 	url = git@github.com:ninja-build/ninja.git
+[submodule "submodules/ilazaric.github.io"]
+	path = submodules/ilazaric.github.io
+	url = git@github.com:ilazaric/ilazaric.github.io.git
