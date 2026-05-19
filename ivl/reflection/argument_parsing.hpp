@@ -9,6 +9,7 @@
 #include <meta>
 #include <optional>
 #include <print>
+#include <ranges>
 #include <span>
 #include <string_view>
 
@@ -153,7 +154,7 @@ consteval bool is_argument_optional(std::meta::info type) {
 
 consteval bool validate_sanity(std::meta::info type) {
   if (is_type(type) && is_parseable_type(type)) return true;
-  
+
   bool ret = true;
 
   if (!is_type(type)) {
