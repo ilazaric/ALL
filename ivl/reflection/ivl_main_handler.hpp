@@ -1,13 +1,7 @@
 // this file shouldn't be included, it is used by build system
 
-#include <ivl/meta>
 #include <ivl/reflection/argument_parsing>
-#include <ivl/reflection/prettier_types>
-#include <ivl/reflection/utility>
-#include <charconv>
-#include <filesystem>
 #include <meta>
-#include <optional>
 #include <print>
 #include <string>
 #include <string_view>

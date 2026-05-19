@@ -9,7 +9,6 @@
 #include <meta>
 #include <optional>
 #include <print>
-#include <ranges>
 #include <span>
 #include <string_view>
 
