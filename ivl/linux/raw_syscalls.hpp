@@ -224,6 +224,8 @@ inline long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, 
   return rax;
 }
 
+// TODO: maybe switch to "{rdi}" inputs
+  
 inline long manual_syscall(long nr, long arg0, long arg1, long arg2, long arg3, long arg4, long arg5) {
   register long rax asm("rax") = nr;
   register long rdi asm("rdi") = arg0;
