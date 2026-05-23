@@ -16,13 +16,18 @@
 
 // TODO: check symlinks (want to ignore them)
 // TODO: arg parsing, --help, --verbose-{x,y,z}
+// UPDT: should probably go through ivl_main shenanigans
 
 std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir) {
   std::vector<std::filesystem::path> ret;
   for (auto&& entry : std::filesystem::recursive_directory_iterator(dir)) {
     if (!entry.is_regular_file()) continue;
     auto&& p = entry.path();
-    if (p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h")
+    // TODO: this condition might not even be needed
+    if (
+      p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h" ||
+      p.extension() == ".cc"
+    )
       ret.emplace_back(p);
   }
   return ret;
