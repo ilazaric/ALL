@@ -292,6 +292,7 @@ int main(int argc, char* argv[], char* envp[]) {
     "-xc++",
     "-Wl,-rpath=/opt/GCC/lib64",
     "-DIVL_LOCAL",
+    "-DPUGIXML_HEADER_ONLY",
     "-O3",
     "-std=c++26",
     "-freflection",

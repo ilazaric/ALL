@@ -118,6 +118,8 @@ int main() {
   // TODO: if is in case its not fetched, maybe drop in future?
   if (exists(root / "submodules" / "raylib" / "src"))
     sync_dir(root / "submodules" / "raylib" / "src", build_dir / "submodule_source_copy" / "raylib");
+  if (exists(root / "submodules" / "pugixml" / "src"))
+    sync_dir(root / "submodules" / "pugixml" / "src", build_dir / "submodule_source_copy" / "pugixml");
 
   auto files = find_sources(copy_dir / "ivl");
 

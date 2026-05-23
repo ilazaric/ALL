@@ -144,6 +144,7 @@ for target in targets:
             cxxfmap +
             ["-DIVL_LOCAL",
              f"-DIVL_FILE=\"{path.relative_to(src)}\"",
+             "-DPUGIXML_HEADER_ONLY",
              # "-static",
              "-O3",
              # "-g1",
