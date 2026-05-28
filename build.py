@@ -134,6 +134,18 @@ cxxpost = os.getenv("CXXPOST", "")
 
 for target in targets:
     path = all_targets[target].path
+    relpath = path.relative_to(src)
+    incpath = None
+    if relpath.name == "default.hpp":
+        incpath = relpath.parent
+    elif relpath.suffix == ".hpp":
+        incpath = relpath.stem
+    elif relpath.suffix == ".cpp":
+        incpath = relpath
+    else:
+        assert False, relpath
+    assert incpath, relpath
+
     cxxadded = all_targets[target].added_compiler_flags
     cxxaddedpost = all_targets[target].added_compiler_flags_tail
     args = ([cxx] +
@@ -143,7 +155,7 @@ for target in targets:
             cxxinc +
             cxxfmap +
             ["-DIVL_LOCAL",
-             f"-DIVL_FILE=\"{path.relative_to(src)}\"",
+             f"-DIVL_FILE=\"{relpath}\"",
              "-DPUGIXML_HEADER_ONLY",
              # "-static",
              "-O3",
@@ -156,7 +168,7 @@ for target in targets:
              "-freflection",
              "-fcontracts",
              "-include",
-             path,
+             incpath,
              "-xc++",
              "/dev/null",
              "-o",
