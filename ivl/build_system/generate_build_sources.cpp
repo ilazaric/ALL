@@ -128,7 +128,6 @@ int main() {
   create_directory(include_meta_dir);
 
   std::ofstream rsp_file(include_meta_dir / "args.rsp");
-
   rsp_file << "-I " << build_dir / "submodule_source_copy" << std::endl;
 
   {
@@ -136,9 +135,8 @@ int main() {
     assert(create_directory(dir));
     rsp_file << "-I " << dir << std::endl;
     for (auto&& file : files) {
-      if (file.extension() != ".hpp") continue;
-      if (file.filename() == "default.hpp") continue;
-      auto target = dir / file.lexically_relative(copy_dir).parent_path() / file.stem();
+      auto target = dir / file.lexically_relative(copy_dir).parent_path() /
+                    (file.extension() == ".hpp" ? file.stem() : file.filename());
       create_directories(target.parent_path());
       create_hard_link(file, target);
     }
@@ -153,7 +151,9 @@ int main() {
       auto target = topdir / lexfile.parent_path();
       if (create_directory(topdir)) rsp_file << "-I " << topdir << std::endl;
       create_directories(target.parent_path());
-      create_hard_link(file, target);
+      // create_hard_link(file, target);
+      std::ofstream(target) << "#include <" << lexfile.parent_path().native() << "/default>\n";
+      last_write_time(target, last_write_time(file));
     }
   }
 }
