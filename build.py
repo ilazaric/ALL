@@ -139,7 +139,7 @@ for target in targets:
     if relpath.name == "default.hpp":
         incpath = relpath.parent
     elif relpath.suffix == ".hpp":
-        incpath = relpath.stem
+        incpath = relpath.parent / relpath.stem
     elif relpath.suffix == ".cpp":
         incpath = relpath
     else:
