@@ -82,9 +82,24 @@ struct pp_info_t {
     cxx_cfg.argv = cfg.argv;
     cxx_cfg.envp = cfg.envp;
 
+    auto src = file;
+    while (src.filename() != "source_copy") src = src.parent_path();
+    auto relfile = file.lexically_relative(src);
+    std::filesystem::path incfile;
+    if (relfile.filename() == "default.hpp") {
+      incfile = relfile.parent_path();
+    } else if (relfile.extension() == ".hpp") {
+      incfile = relfile.parent_path() / relfile.stem();
+    } else if (relfile.extension() == ".cpp") {
+      incfile = relfile;
+    } else {
+      ivl::panic("unreachable");
+    }
+    incfile.empty() && ivl::panic("unreachable");
+
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
     cxx_cfg.argv.push_back("-include");
-    cxx_cfg.argv.push_back(file);
+    cxx_cfg.argv.push_back(incfile);
     if (ivl_main_handler) {
       cxx_cfg.argv.push_back("-include");
       cxx_cfg.argv.push_back("ivl/reflection/ivl_main_handler");
@@ -93,6 +108,8 @@ struct pp_info_t {
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
+
+    LOG(std::format("{}", cxx_cfg.argv));
 
     auto wstatus = cxx_cfg.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
     if (wstatus != 0) {
@@ -116,17 +133,31 @@ struct pp_info_t {
 
     auto src = file;
     while (src.filename() != "source_copy") src = src.parent_path();
+    auto relfile = file.lexically_relative(src);
+    std::filesystem::path incfile;
+    if (relfile.filename() == "default.hpp") {
+      incfile = relfile.parent_path();
+    } else if (relfile.extension() == ".hpp") {
+      incfile = relfile.parent_path() / relfile.stem();
+    } else if (relfile.extension() == ".cpp") {
+      incfile = relfile;
+    } else {
+      ivl::panic("unreachable");
+    }
+    incfile.empty() && ivl::panic("unreachable");
 
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
     cxx_cfg.argv.push_back("-include");
-    cxx_cfg.argv.push_back(file);
-    cxx_cfg.argv.push_back(std::format("-DIVL_FILE=\"{}\"", file.lexically_relative(src)));
+    cxx_cfg.argv.push_back(incfile);
+    cxx_cfg.argv.push_back(std::format("-DIVL_FILE=\"{}\"", relfile));
     cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back("ivl/reflection/test_runner");
     cxx_cfg.argv.push_back("/dev/null");
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
+
+    LOG(std::format("{}", cxx_cfg.argv));
 
     auto wstatus = cxx_cfg.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
     if (wstatus != 0) {
@@ -199,8 +230,10 @@ struct manifest_part_t {
         current_file = file_sv;
         exists(current_file) ||
           ivl::panic("ICE\nfile=`{}`\ncurrent_file=`{:?}`\nlinemarker=`{:?}`", file, current_file, orig_line);
-        if (!current_file.native().starts_with("/usr/include/") && !current_file.native().starts_with("/opt/GCC/") &&
-            current_file.native().starts_with(build_dir.native()))
+        if (
+          !current_file.native().starts_with("/usr/include/") && !current_file.native().starts_with("/opt/GCC/") &&
+          current_file.native().starts_with(build_dir.native())
+        )
           files.insert(current_file);
         continue;
       }
@@ -328,7 +361,7 @@ int main(int argc, char* argv[], char* envp[]) {
       pp.build_regular(cxx_cfg, out) || ivl::panic("Failed to build `{}`", target);
       auto out2 = build_dir / "bootstrap_dir" / target.stem();
       if (exists(out2)) remove(out2);
-      copy_file(out, out2); 
+      copy_file(out, out2);
       std::println("Re-execing ...");
       _.fn();
       auto exe = build_dir / "bootstrap_dir/builder";
@@ -381,9 +414,10 @@ int main(int argc, char* argv[], char* envp[]) {
       if (kind == target_t::kind_t::REGULAR && file.extension() != ".cpp") continue;
       // TODO
       if (kind == target_t::kind_t::TEST && file.extension() != ".hpp") continue;
-      if (kind == target_t::kind_t::TEST &&
-          std::ranges::find(pp.files, build_dir / "include_dirs/regular/ivl/reflection/test_attribute") ==
-            pp.files.end())
+      if (
+        kind == target_t::kind_t::TEST &&
+        std::ranges::find(pp.files, build_dir / "include_dirs/regular/ivl/reflection/test_attribute") == pp.files.end()
+      )
         continue;
       targets.emplace(file, kind);
     }
