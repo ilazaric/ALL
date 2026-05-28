@@ -28,6 +28,7 @@ if ! [ -f "$DIR/builder" ]
 then
     "$DIR/generate_build_sources"
     g++ -Wl,-rpath=/opt/GCC/lib64 \
+        -DIVL_LOCAL \
         @"$ROOT/build/include_dirs/args.rsp" -freflection \
         "$ROOT/ivl/build_system/builder.cpp" \
         -O3 -std=c++26 -o "$DIR/builder" -lstdc++exp
