@@ -39,10 +39,40 @@ void create_node(std::string_view name, auto&& cb) { create_node(name, {}, cb); 
 void create_page(const std::filesystem::path& file, auto&& cb) {
   contract_assert(!exists(file));
   contract_assert(current_page == nullptr);
+  create_directories(file.parent_path());
   std::ofstream fout(file);
   current_page = &fout;
   ivl::util::scope_exit _{[] { current_page = nullptr; }};
   fout << "<!DOCTYPE html>\n";
   create_node("html", cb);
+}
+
+void create_cppref_head(std::string_view sv) {
+  create_node("head", [&] {
+    create_node("title", [&] {
+      if (sv.empty()) emit_raw("ivlreference");
+      else emit_raw(std::format("{} - ivlreference", sv));
+    });
+    emit_raw(R"html(<link rel="stylesheet" href="/reference/style1.css">)html");
+    emit_raw(R"html(<link rel="stylesheet" href="/reference/style2.css">)html");
+  });
+}
+
+void create_cppref_header() {
+  auto _ = create_node_raii("div", {{"id", "mw-head"}, {"class", "noprint"}});
+  {
+    auto _ = create_node_raii("div", {{"id", "cpp-head-first-base"}});
+    auto _ = create_node_raii("div", {{"id", "cpp-head-first"}});
+    auto _ = create_node_raii("h5");
+    auto _ = create_node_raii("a", {{"href", "/reference/gcc"}});
+    emit_raw("ivlreference");
+  }
+  if (0) {
+    auto _ = create_node_raii("div", {{"id", "cpp-head-second-base"}});
+    auto _ = create_node_raii("div", {{"id", "cpp-head-second"}});
+    auto _ = create_node_raii("div", {{"id", "cpp-head-tools-right"}});
+    auto _ = create_node_raii("p");
+    emit_raw("hello world\n");
+  }
 }
 } // namespace html

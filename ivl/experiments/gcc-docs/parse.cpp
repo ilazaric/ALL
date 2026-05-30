@@ -97,6 +97,13 @@ void display_edges(const edges& e) {
     for (auto&& [r, c] : rc) std::println("{} -> {} ({})", l, r, c);
 }
 
+std::vector<std::pair<std::string, std::string>> attrs(pugi::xml_node node) {
+  return node.attributes() | std::views::transform([](pugi::xml_attribute a) {
+           return std::pair(std::string(a.name()), std::string(a.value()));
+         }) |
+         std::ranges::to<std::vector>();
+}
+
 void path(pugi::xml_node node) {
   while (true) {
     std::println("{} {}", node.name(), node.attributes() | std::views::transform([](pugi::xml_attribute a) {
@@ -148,6 +155,9 @@ int ivl_main(const args& args) {
   auto output_dir = args.output / "reference" / "gcc";
   remove_all(output_dir);
   create_directories(output_dir);
+
+  for (auto file : {"style1.css", "style2.css"})
+    copy_file(std::filesystem::canonical("/proc/self/exe").parent_path() / file, args.output / "reference" / file);
 
   pugi::xml_document doc;
   if (!doc.load_file(args.file.native().c_str())) return 1;
@@ -258,7 +268,7 @@ int ivl_main(const args& args) {
     if (node.name() != std::string_view("email")) return true;
     auto child = node.first_child();
     auto parent = node.parent();
-    parent.append_move(child);
+    parent.insert_move_before(child, node);
     parent.remove_child(node);
     return false;
   });
@@ -522,38 +532,111 @@ int ivl_main(const args& args) {
     // texinfo.remove_child(node);
   }
 
-  html::create_page(output_dir / "index.html", [&] {
-    html::create_node("head", [&] {
-      html::create_node("title", [&] { html::emit_raw("GCC reference - ivlreference"); });
-      html::emit_raw(
-        R"html(<link rel="stylesheet" href="https://www.cppreference.com/load.php?lang=en&modules=skins.cppreference2.styles&only=styles&skin=cppreference2">)html"
-      );
-      html::emit_raw(
-        R"html(<link rel="stylesheet" href="https://www.cppreference.com/load.php?lang=en&modules=site.styles&only=styles&skin=cppreference2">)html"
-      );
+  auto replace = [](std::string& s, std::string_view from, std::string_view to) {
+    while (true) {
+      auto loc = s.find(from);
+      if (loc == std::string::npos) break;
+      s = s.substr(0, loc) + to + s.substr(loc + from.size());
+    }
+  };
+
+  auto replace_cmds = [&](std::string& s) {
+    replace(s, "&arobase;", "@");
+    replace(s, "&eosperiod;", ".");
+    replace(s, "&noeos;", "");
+    replace(s, "&textrsquo;", "'");
+    replace(s, "&textldquo;", "\"");
+    replace(s, "&textrdquo;", "\"");
+    // replace(s, "&textrsquo;", R"(’)");
+    // replace(s, "&textldquo;", R"(“)");
+    // replace(s, "&textrdquo;", R"(”)");
+    replace(s, "&textmdash;", R"(—)");
+    replace(s, "&dots;", R"(…)");
+  };
+
+  xml_recurse(doc, [&](pugi::xml_node node) {
+    if (node.name() != std::string_view("")) return true;
+    std::string value = node.value();
+    replace_cmds(value);
+    node.set_value(value);
+    return false;
+  });
+
+  xml_recurse(doc, [&](pugi::xml_node node) {
+    if (node.name() != std::string_view("emailaddress")) return true;
+    node.set_name("a");
+    node.append_attribute("class").set_value("email");
+    std::string email = node.text().get();
+    // LOG(email);
+    // replace_cmds(email);
+    // LOG(email);
+    node.append_attribute("href").set_value("mailto:" + email);
+    // node.first_child().set_value(email);
+    return false;
+  });
+
+  html::create_page(output_dir / "contributors" / "index.html", [&] {
+    auto node = texinfo.last_child();
+    contract_assert(node.name() == std::string_view("unnumbered"));
+    contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
+    // node.remove_attributes();
+    html::create_cppref_head("Contributors to GCC");
+    auto _ = html::create_node_raii(
+      "body",
+      {{"class",
+        "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
+        "skin-cppreference2 action-view cpp-navbar"}}
+    );
+    html::create_cppref_header();
+    auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
+    auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
+    html::emit_raw(R"html(<h1 id="firstHeading" class="firstHeading">Contributors to GCC</h1>)html");
+    auto _ = html::create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
+    // node.set_name("body");
+    // node.append_attribute("class").set_value(
+    //   "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
+    //   "skin-cppreference2 action-view cpp-navbar"
+    // );
+    contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
+    node.remove_child(node.first_child());
+    xml_recurse(node, [](pugi::xml_node node) {
+      std::string_view name = node.name();
+      if (name == "beforefirstitem" || name == "itemprepend") {
+        node.parent().remove_child(node);
+        return false;
+      }
+      if (name == "itemize") {
+        node.set_name("ul");
+        contract_assert(attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
+        node.remove_attributes();
+        node.append_attribute("class").set_value("itemize mark-bullet");
+        return true;
+      }
+      if (name == "listitem") {
+        node.set_name("li");
+        // LOG(stringify(node.first_child()));
+        contract_assert(stringify(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
+        node.remove_child(node.first_child());
+        return true;
+      }
+      return true;
     });
+    xml_recurse(node, [](pugi::xml_node node) {
+      contract_assert(node.name() != std::string_view("ivl_sectiontitle"));
+      return true;
+    });
+    for (auto child : node) child.print(*html::current_page, "  ");
+    texinfo.remove_child(node);
+  });
+
+  html::create_page(output_dir / "index.html", [&] {
+    html::create_cppref_head("GCC reference");
     html::create_node(
       "body",
       {{"class", "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp rootpage-cpp skin-cppreference2 "
                  "action-view cpp-navbar"}},
       [&] {
-        {
-          auto _ = html::create_node_raii("div", {{"id", "mw-head"}, {"class", "noprint"}});
-          {
-            auto _ = html::create_node_raii("div", {{"id", "cpp-head-first-base"}});
-            auto _ = html::create_node_raii("div", {{"id", "cpp-head-first"}});
-            auto _ = html::create_node_raii("h5");
-            auto _ = html::create_node_raii("a", {{"href", "/reference/gcc"}});
-            html::emit_raw("ivlreference");
-          }
-          {
-            auto _ = html::create_node_raii("div", {{"id", "cpp-head-second-base"}});
-            auto _ = html::create_node_raii("div", {{"id", "cpp-head-second"}});
-            auto _ = html::create_node_raii("div", {{"id", "cpp-head-tools-right"}});
-            auto _ = html::create_node_raii("p");
-            html::emit_raw("hello world\n");
-          }
-        }
+        html::create_cppref_header();
         {
           auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
           auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
@@ -593,8 +676,9 @@ int ivl_main(const args& args) {
 
   {
     std::set<std::string_view> bad{
-      "macro", "syncodeindex", "direntry", "titlepage",    "node",           "sectiontitle",    "menuleadingtext",
-      "top",   "appendix",     "cindex",   "indexcommand", "columnfraction", "columnfractions", "xrefinfofile",
+      "macro",           "syncodeindex", "direntry", "titlepage", "node",         "sectiontitle",
+      "menuleadingtext", "top",          "appendix", "cindex",    "indexcommand", "columnfraction",
+      "columnfractions", "xrefinfofile", "para",     "email",     "emailaddress",
     };
     xml_recurse(doc, [&bad](pugi::xml_node node) {
       contract_assert(!bad.contains(std::string_view(node.name())));
