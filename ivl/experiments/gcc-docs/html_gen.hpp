@@ -75,4 +75,22 @@ void create_cppref_header() {
     emit_raw("hello world\n");
   }
 }
+
+void create_cppref_page(const std::filesystem::path& file, std::string_view title, auto&& cb) {
+  create_page(file, [&] {
+    create_cppref_head(title);
+    auto _ = create_node_raii(
+      "body",
+      {{"class",
+        "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
+        "skin-cppreference2 action-view cpp-navbar"}}
+    );
+    create_cppref_header();
+    auto _ = create_node_raii("div", {{"id", "cpp-content-base"}});
+    auto _ = create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
+    emit_raw(std::format(R"html(<h1 id="firstHeading" class="firstHeading">{}</h1>)html", title));
+    auto _ = create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
+    cb();
+  });
+}
 } // namespace html

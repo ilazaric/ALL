@@ -156,8 +156,11 @@ int ivl_main(const args& args) {
   remove_all(output_dir);
   create_directories(output_dir);
 
-  for (auto file : {"style1.css", "style2.css"})
-    copy_file(std::filesystem::canonical("/proc/self/exe").parent_path() / file, args.output / "reference" / file);
+  // for (auto file : {"style1.css", "style2.css", "fonts", "resources", "skins", "mwiki"})
+  //   copy(
+  //     std::filesystem::canonical("/proc/self/exe").parent_path() / file, args.output / "reference" / file,
+  //     std::filesystem::copy_options::recursive
+  //   );
 
   pugi::xml_document doc;
   if (!doc.load_file(args.file.native().c_str())) return 1;
@@ -528,7 +531,7 @@ int ivl_main(const args& args) {
       ++names[std::string(node.name())];
       return true;
     });
-    for (auto&& [name, count] : names) LOG(name, count);
+    // for (auto&& [name, count] : names) LOG(name, count);
     // texinfo.remove_child(node);
   }
 
@@ -575,28 +578,22 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  html::create_page(output_dir / "contributors" / "index.html", [&] {
+  html::create_cppref_page(output_dir / "contributors" / "index.html", "Contributors to GCC", [&] {
     auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered"));
     contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
-    // node.remove_attributes();
-    html::create_cppref_head("Contributors to GCC");
-    auto _ = html::create_node_raii(
-      "body",
-      {{"class",
-        "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
-        "skin-cppreference2 action-view cpp-navbar"}}
-    );
-    html::create_cppref_header();
-    auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
-    auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
-    html::emit_raw(R"html(<h1 id="firstHeading" class="firstHeading">Contributors to GCC</h1>)html");
-    auto _ = html::create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
-    // node.set_name("body");
-    // node.append_attribute("class").set_value(
-    //   "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
-    //   "skin-cppreference2 action-view cpp-navbar"
+    // html::create_cppref_head("Contributors to GCC");
+    // auto _ = html::create_node_raii(
+    //   "body",
+    //   {{"class",
+    //     "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
+    //     "skin-cppreference2 action-view cpp-navbar"}}
     // );
+    // html::create_cppref_header();
+    // auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
+    // auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
+    // html::emit_raw(R"html(<h1 id="firstHeading" class="firstHeading">Contributors to GCC</h1>)html");
+    // auto _ = html::create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
     contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
     node.remove_child(node.first_child());
     xml_recurse(node, [](pugi::xml_node node) {
@@ -621,10 +618,13 @@ int ivl_main(const args& args) {
       }
       return true;
     });
-    xml_recurse(node, [](pugi::xml_node node) {
+    std::map<std::string, std::size_t> nodes;
+    xml_recurse(node, [&](pugi::xml_node node) {
       contract_assert(node.name() != std::string_view("ivl_sectiontitle"));
+      ++nodes[std::string(node.name())];
       return true;
     });
+    for (auto&& [node, count] : nodes) LOG(node, count);
     for (auto child : node) child.print(*html::current_page, "  ");
     texinfo.remove_child(node);
   });
