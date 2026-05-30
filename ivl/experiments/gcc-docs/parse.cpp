@@ -570,11 +570,7 @@ int ivl_main(const args& args) {
     node.set_name("a");
     node.append_attribute("class").set_value("email");
     std::string email = node.text().get();
-    // LOG(email);
-    // replace_cmds(email);
-    // LOG(email);
     node.append_attribute("href").set_value("mailto:" + email);
-    // node.first_child().set_value(email);
     return false;
   });
 
@@ -582,18 +578,6 @@ int ivl_main(const args& args) {
     auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered"));
     contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
-    // html::create_cppref_head("Contributors to GCC");
-    // auto _ = html::create_node_raii(
-    //   "body",
-    //   {{"class",
-    //     "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp_language_value_category rootpage-cpp "
-    //     "skin-cppreference2 action-view cpp-navbar"}}
-    // );
-    // html::create_cppref_header();
-    // auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
-    // auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
-    // html::emit_raw(R"html(<h1 id="firstHeading" class="firstHeading">Contributors to GCC</h1>)html");
-    // auto _ = html::create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
     contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
     node.remove_child(node.first_child());
     xml_recurse(node, [](pugi::xml_node node) {
@@ -629,49 +613,32 @@ int ivl_main(const args& args) {
     texinfo.remove_child(node);
   });
 
-  html::create_page(output_dir / "index.html", [&] {
-    html::create_cppref_head("GCC reference");
-    html::create_node(
-      "body",
-      {{"class", "mediawiki ltr sitedir-ltr mw-hide-empty-elt ns-0 ns-subject page-cpp rootpage-cpp skin-cppreference2 "
-                 "action-view cpp-navbar"}},
-      [&] {
-        html::create_cppref_header();
-        {
-          auto _ = html::create_node_raii("div", {{"id", "cpp-content-base"}});
-          auto _ = html::create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
-          html::create_node("h1", {{"id", "firstHeading"}, {"class", "firstHeading"}}, [&] {
-            html::emit_raw("GCC reference");
-          });
-          auto _ = html::create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
-          auto _ = html::create_node_raii("div", {{"id", "mw-content-text"}});
-          auto _ = html::create_node_raii("div", {{"id", "mw-content-ltr mw-parser-output"}, {"dir", "ltr"}});
-          auto _ = html::create_node_raii(
-            "table", {
-                       {"class", "mainpagetable"},
-                       {"cellspacing", "0"},
-                       {"style", "/*! width:100%; */ /*! white-space:nowrap; */"},
-                     }
-          );
-          auto _ = html::create_node_raii("tbody");
-          html::create_node("tr", {{"class", "row"}}, [&] {
-            auto pba = [&](std::string_view url, std::string_view text) {
-              html::create_node("p", [&] {
-                html::create_node("b", [&] { html::create_node("a", {{"href", url}}, [&] { html::emit_raw(text); }); });
-              });
-            };
-            html::create_node("td", [&] {});
-            html::create_node("td", [&] {});
-            html::create_node("td", [&] { pba("/reference/gcc/contributors", "Contributors"); });
-          });
-          html::create_node("tr", {{"class", "row rowbottom"}}, [&] {
-            auto _ = html::create_node_raii("td", {{"colspan", "3"}});
-            auto _ = html::create_node_raii("a", {{"href", "/reference/gcc/index"}});
-            html::emit_raw("Index");
-          });
-        }
-      }
+  html::create_cppref_page(output_dir / "index.html", "GCC reference", [&] {
+    auto _ = html::create_node_raii("div", {{"id", "mw-content-text"}});
+    auto _ = html::create_node_raii("div", {{"id", "mw-content-ltr mw-parser-output"}, {"dir", "ltr"}});
+    auto _ = html::create_node_raii(
+      "table", {
+                 {"class", "mainpagetable"},
+                 {"cellspacing", "0"},
+                 {"style", "/*! width:100%; */ /*! white-space:nowrap; */"},
+               }
     );
+    auto _ = html::create_node_raii("tbody");
+    html::create_node("tr", {{"class", "row"}}, [&] {
+      auto pba = [&](std::string_view url, std::string_view text) {
+        html::create_node("p", [&] {
+          html::create_node("b", [&] { html::create_node("a", {{"href", url}}, [&] { html::emit_raw(text); }); });
+        });
+      };
+      html::create_node("td", [&] {});
+      html::create_node("td", [&] {});
+      html::create_node("td", [&] { pba("/reference/gcc/contributors", "Contributors"); });
+    });
+    html::create_node("tr", {{"class", "row rowbottom"}}, [&] {
+      auto _ = html::create_node_raii("td", {{"colspan", "3"}});
+      auto _ = html::create_node_raii("a", {{"href", "/reference/gcc/index"}});
+      html::emit_raw("Index");
+    });
   });
 
   {

@@ -49,6 +49,7 @@ void create_page(const std::filesystem::path& file, auto&& cb) {
 
 void create_cppref_head(std::string_view sv) {
   create_node("head", [&] {
+    emit_raw(R"html(<meta charset="UTF-8">)html");
     create_node("title", [&] {
       if (sv.empty()) emit_raw("ivlreference");
       else emit_raw(std::format("{} - ivlreference", sv));
@@ -63,16 +64,24 @@ void create_cppref_header() {
   {
     auto _ = create_node_raii("div", {{"id", "cpp-head-first-base"}});
     auto _ = create_node_raii("div", {{"id", "cpp-head-first"}});
-    auto _ = create_node_raii("h5");
-    auto _ = create_node_raii("a", {{"href", "/reference/gcc"}});
-    emit_raw("ivlreference");
-  }
-  if (0) {
-    auto _ = create_node_raii("div", {{"id", "cpp-head-second-base"}});
-    auto _ = create_node_raii("div", {{"id", "cpp-head-second"}});
-    auto _ = create_node_raii("div", {{"id", "cpp-head-tools-right"}});
-    auto _ = create_node_raii("p");
-    emit_raw("hello world\n");
+    {
+      auto _ = create_node_raii("h5");
+      auto _ = create_node_raii("a", {{"href", "/reference"}});
+      emit_raw("ivlreference");
+    }
+    {
+      auto _ = create_node_raii("div", {{"id", "cpp-head-search"}});
+      auto _ = create_node_raii("div", {{"id", "p-search"}});
+      emit_raw("<h5>Search</h5>");
+      auto _ = create_node_raii("span");
+      emit_raw("No search either");
+    }
+    {
+      auto _ = create_node_raii("div", {{"id", "cpp-head-personal"}});
+      auto _ = create_node_raii("div", {{"id", "p-personal"}, {"class", ""}});
+      auto _ = create_node_raii("span", {{"id", "pt-createaccount"}});
+      emit_raw("No accounts");
+    }
   }
 }
 
