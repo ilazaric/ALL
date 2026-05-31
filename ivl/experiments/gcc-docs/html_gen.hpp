@@ -83,6 +83,16 @@ void create_cppref_header() {
       emit_raw("No accounts");
     }
   }
+  auto _ = create_node_raii("div", {{"id", "cpp-head-second-base"}});
+  auto _ = create_node_raii("div", {{"id", "cpp-head-second"}});
+  {
+    auto _ = create_node_raii("div", {{"id", "cpp-head-tools-left"}});
+    emit_raw("TODO");
+  }
+  {
+    auto _ = create_node_raii("div", {{"id", "cpp-head-tools-right"}});
+    emit_raw("TODO");
+  }
 }
 
 void create_cppref_page(const std::filesystem::path& file, std::string_view title, auto&& cb) {
@@ -99,6 +109,8 @@ void create_cppref_page(const std::filesystem::path& file, std::string_view titl
     auto _ = create_node_raii("div", {{"id", "content"}, {"class", "mw-body"}});
     emit_raw(std::format(R"html(<h1 id="firstHeading" class="firstHeading">{}</h1>)html", title));
     auto _ = create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
+    auto _ = create_node_raii("div", {{"id", "mw-content-text"}});
+    auto _ = create_node_raii("div", {{"class", "mw-content-ltr mw-parser-output"}, {"lang", "en"}, {"dir", "ltr"}});
     cb();
   });
 }

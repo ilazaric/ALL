@@ -287,7 +287,7 @@ int ivl_main(const args& args) {
     std::string_view name2 = nodename.text().get();
     // "G_002b_002b-and-GCC" != "G++ and GCC"
     // contract_assert(name1 == name2);
-    bool check = next.prepend_attribute("ivl_nodename").set_value(name2.data());
+    bool check = next.prepend_attribute("ivl_nodename").set_value(name1.data());
     contract_assert(check);
     node.parent().remove_child(node);
     return false;
@@ -547,14 +547,17 @@ int ivl_main(const args& args) {
     replace(s, "&arobase;", "@");
     replace(s, "&eosperiod;", ".");
     replace(s, "&noeos;", "");
-    replace(s, "&textrsquo;", "'");
-    replace(s, "&textldquo;", "\"");
-    replace(s, "&textrdquo;", "\"");
-    // replace(s, "&textrsquo;", R"(’)");
-    // replace(s, "&textldquo;", R"(“)");
-    // replace(s, "&textrdquo;", R"(”)");
+    // replace(s, "&textrsquo;", "'");
+    // replace(s, "&textldquo;", "\"");
+    // replace(s, "&textrdquo;", "\"");
+    replace(s, "&textrsquo;", R"(’)");
+    replace(s, "&textldquo;", R"(“)");
+    replace(s, "&textrdquo;", R"(”)");
     replace(s, "&textmdash;", R"(—)");
     replace(s, "&dots;", R"(…)");
+    replace(s, "&copyright;", R"(©)");
+    replace(s, "&tex;", R"(TeX)");
+    replace(s, "&textndash;", R"(–)");
   };
 
   xml_recurse(doc, [&](pugi::xml_node node) {
@@ -574,18 +577,162 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  html::create_cppref_page(output_dir / "contributors" / "index.html", "Contributors to GCC", [&] {
+  xml_recurse(doc, [&](pugi::xml_node node) {
+    if (node.name() != std::string_view("uref") && node.name() != std::string_view("url")) return true;
+    // LOG(stringify(node));
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    for (auto child : node) {
+      assert_wraps_text(child);
+      std::string_view name = child.name();
+      if (name == "urefurl") {
+        node.append_attribute("href").set_value(child.text().get());
+        node.prepend_move(child.first_child());
+      } else if (name == "urefreplacement") {
+        node.prepend_move(child.first_child());
+      } else if (name == "urefdesc") {
+        node.append_attribute("title").set_value(child.text().get());
+      } else {
+        contract_assert(false);
+      }
+    }
+    node.set_name("a");
+    while (std::ranges::distance(node) > 1) node.remove_child(node.last_child());
+    return false;
+  });
+
+  for (std::string_view name : {"option", "samp", "file", "command"}) {
+    xml_recurse(doc, [&](pugi::xml_node node) {
+      if (node.name() != name) return true;
+      node.set_name("code");
+      node.prepend_attribute("ivl_kind").set_value(name);
+      return true;
+    });
+  }
+
+  xml_recurse(doc, [](pugi::xml_node node) {
+    if (node.name() != std::string_view("accent")) return true;
+    if (stringify(node) == R"html(<accent type="uml" bracketed="off">o</accent>
+)html") {
+      node.first_child().set_value(R"(ö)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="uml" bracketed="off">u</accent>
+)html") {
+      node.first_child().set_value(R"(ü)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="cedil">c</accent>
+)html") {
+      node.first_child().set_value(R"(ç)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="acute" bracketed="off">o</accent>
+)html") {
+      node.first_child().set_value(R"(ó)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="acute" bracketed="off">e</accent>
+)html") {
+      node.first_child().set_value(R"(é)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="acute" bracketed="off">a</accent>
+)html") {
+      node.first_child().set_value(R"(á)");
+      return false;
+    }
+    if (stringify(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
+)html") {
+      node.first_child().set_value(R"(ñ)");
+      return false;
+    }
+    LOG(stringify(node));
+    contract_assert(false);
+    return true;
+  });
+
+  auto page_last = [&] {
     auto node = texinfo.last_child();
-    contract_assert(node.name() == std::string_view("unnumbered"));
-    contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
-    contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
-    node.remove_child(node.first_child());
-    xml_recurse(node, [](pugi::xml_node node) {
+    contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
+    std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
+    contract_assert(sectiontitle.size());
+    std::string_view nodename = node.attribute("ivl_nodename").value();
+    LOG(sectiontitle, nodename);
+    contract_assert(nodename.size());
+    // contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
+    // node.remove_child(node.first_child());
+    xml_recurse(node, [&](pugi::xml_node node) {
       std::string_view name = node.name();
-      if (name == "beforefirstitem" || name == "itemprepend") {
+      if (
+        name == "beforefirstitem" || name == "itemprepend" || name == "ivl_cindex_indexterm" || name == "ignore" ||
+        name == "noindent"
+      ) {
         node.parent().remove_child(node);
         return false;
       }
+      if (name == "heading") {
+        node.set_name("h3");
+        return true;
+      }
+      if (name == "center") {
+        assert_wraps_text(node);
+        node.set_name("div");
+        node.append_attribute("class").set_value("center");
+        return false;
+      }
+      if (name == "display") {
+        contract_assert(std::ranges::distance(node.attributes()) == 0);
+        node.set_name("div");
+        node.append_attribute("class").set_value("display");
+        return true;
+      }
+      if (name == "smallexample") {
+        contract_assert(std::ranges::distance(node.attributes()) == 0);
+        node.set_name("div");
+        node.append_attribute("class").set_value("example smallexample");
+        return true;
+      }
+      if (name == "acronym") {
+        contract_assert(std::ranges::distance(node) == 1);
+        contract_assert(std::ranges::distance(node.attributes()) == 0);
+        assert_wraps_text(node.first_child());
+        contract_assert(node.first_child().name() == std::string_view("acronymword"));
+        node.append_move(node.first_child().first_child());
+        node.remove_child(node.first_child());
+        node.set_name("abbr");
+        node.append_attribute("class").set_value("acronym");
+      }
+      contract_assert(name != std::string_view("acronymword"));
+      if (name == "enumerate") {
+        node.set_name("ol");
+        // LOG(std::format("{}", attrs(node)));
+        std::string first = node.attribute("first").value();
+        node.remove_attribute("first");
+        contract_assert(attrs(node).size() == 0);
+        contract_assert(std::ranges::distance(node));
+        contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
+        assert_wraps_text(node.first_child());
+        {
+          std::string ef = node.first_child().text().get();
+          node.remove_child(node.first_child());
+          if (first.size() && ef.size()) contract_assert(first == ef);
+          contract_assert(first.size() || ef.size());
+          if (first.empty()) first = ef;
+        }
+        contract_assert(first.size() == 1);
+        if ('a' <= first[0] && first[0] <= 'z') {
+          node.append_attribute("type").set_value("a");
+          node.append_attribute("start").set_value(std::to_string(first[0] - 'a' + 1));
+        } else if ('A' <= first[0] && first[0] <= 'Z') {
+          node.append_attribute("type").set_value("A");
+          node.append_attribute("start").set_value(std::to_string(first[0] - 'A' + 1));
+        } else if ('0' <= first[0] && first[0] <= '9') {
+          node.append_attribute("type").set_value("1");
+          node.append_attribute("start").set_value(std::to_string(first[0] - '0'));
+        } else contract_assert(false);
+        return true;
+      }
+      contract_assert(name != "enumeratefirst");
       if (name == "itemize") {
         node.set_name("ul");
         contract_assert(attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
@@ -596,8 +743,10 @@ int ivl_main(const args& args) {
       if (name == "listitem") {
         node.set_name("li");
         // LOG(stringify(node.first_child()));
-        contract_assert(stringify(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
-        node.remove_child(node.first_child());
+        if (std::ranges::distance(node) && node.first_child().name() == std::string_view("prepend")) {
+          contract_assert(stringify(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
+          node.remove_child(node.first_child());
+        }
         return true;
       }
       return true;
@@ -609,13 +758,21 @@ int ivl_main(const args& args) {
       return true;
     });
     for (auto&& [node, count] : nodes) LOG(node, count);
-    for (auto child : node) child.print(*html::current_page, "  ");
-    texinfo.remove_child(node);
-  });
+    html::create_cppref_page(output_dir / nodename / "index.html", sectiontitle, [&] {
+      for (auto child : node) child.print(*html::current_page, "  ");
+    });
+    // texinfo.remove_child(node);
+    return std::pair<std::string, std::string>(nodename, sectiontitle);
+  };
+
+  std::vector<std::pair<std::string, std::string>> nodes;
+  for (int i = 0; i < 8; ++i) {
+    nodes.push_back(page_last());
+    texinfo.remove_child(texinfo.last_child());
+  }
+  std::ranges::reverse(nodes);
 
   html::create_cppref_page(output_dir / "index.html", "GCC reference", [&] {
-    auto _ = html::create_node_raii("div", {{"id", "mw-content-text"}});
-    auto _ = html::create_node_raii("div", {{"id", "mw-content-ltr mw-parser-output"}, {"dir", "ltr"}});
     auto _ = html::create_node_raii(
       "table", {
                  {"class", "mainpagetable"},
@@ -630,9 +787,19 @@ int ivl_main(const args& args) {
           html::create_node("b", [&] { html::create_node("a", {{"href", url}}, [&] { html::emit_raw(text); }); });
         });
       };
-      html::create_node("td", [&] {});
-      html::create_node("td", [&] {});
-      html::create_node("td", [&] { pba("/reference/gcc/contributors", "Contributors"); });
+      html::create_node("td", [&] {
+        for (std::size_t i = 0; i < nodes.size() / 3; ++i)
+          pba(std::string("/reference/gcc/") + nodes[i].first, nodes[i].second);
+      });
+      html::create_node("td", [&] {
+        for (std::size_t i = nodes.size() / 3; i < nodes.size() * 2 / 3; ++i)
+          pba(std::string("/reference/gcc/") + nodes[i].first, nodes[i].second);
+      });
+      html::create_node("td", [&] {
+        for (std::size_t i = nodes.size() * 2 / 3; i < nodes.size(); ++i)
+          pba(std::string("/reference/gcc/") + nodes[i].first, nodes[i].second);
+        // pba("/reference/gcc/Contributors", "Contributors");
+      });
     });
     html::create_node("tr", {{"class", "row rowbottom"}}, [&] {
       auto _ = html::create_node_raii("td", {{"colspan", "3"}});
