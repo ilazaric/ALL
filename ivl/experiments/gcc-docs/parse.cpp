@@ -348,18 +348,6 @@ int ivl_main(const args& args) {
     return ret;
   };
 
-  auto assert_is_text = [](pugi::xml_node node) {
-    contract_assert(node.name() == std::string_view(""));
-    contract_assert(std::ranges::distance(node) == 0);
-    contract_assert(std::ranges::distance(node.attributes()) == 0);
-  };
-
-  auto assert_wraps_text = [&](pugi::xml_node node) {
-    contract_assert(std::ranges::distance(node) == 1);
-    contract_assert(std::ranges::distance(node.attributes()) == 0);
-    assert_is_text(node.first_child());
-  };
-
   xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
     if (name == "xref" || name == "pxref") {
@@ -368,7 +356,7 @@ int ivl_main(const args& args) {
       return true;
     }
     if (name != "xrefinfofile") return true;
-    assert_wraps_text(node);
+    xml::assert_wraps_text(node);
     auto parent = node.parent();
     std::string_view pname = parent.name();
     contract_assert(pname == "xref" || pname == "pxref");
@@ -465,7 +453,7 @@ int ivl_main(const args& args) {
     // LOG(xml::to_string(node));
     contract_assert(std::ranges::distance(node.attributes()) == 0);
     for (auto child : node) {
-      assert_wraps_text(child);
+      xml::assert_wraps_text(child);
       std::string_view name = child.name();
       if (name == "urefurl") {
         node.append_attribute("href").set_value(child.text().get());
@@ -556,7 +544,7 @@ int ivl_main(const args& args) {
         return true;
       }
       if (name == "center") {
-        assert_wraps_text(node);
+        xml::assert_wraps_text(node);
         node.set_name("div");
         node.append_attribute("class").set_value("center");
         return false;
@@ -576,7 +564,7 @@ int ivl_main(const args& args) {
       if (name == "acronym") {
         contract_assert(std::ranges::distance(node) == 1);
         contract_assert(std::ranges::distance(node.attributes()) == 0);
-        assert_wraps_text(node.first_child());
+        xml::assert_wraps_text(node.first_child());
         contract_assert(node.first_child().name() == std::string_view("acronymword"));
         node.append_move(node.first_child().first_child());
         node.remove_child(node.first_child());
@@ -592,7 +580,7 @@ int ivl_main(const args& args) {
         contract_assert(xml::attrs(node).size() == 0);
         contract_assert(std::ranges::distance(node));
         contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
-        assert_wraps_text(node.first_child());
+        xml::assert_wraps_text(node.first_child());
         {
           std::string ef = node.first_child().text().get();
           node.remove_child(node.first_child());
