@@ -175,22 +175,7 @@ int ivl_main(const args& args) {
     return true;
   });
 
-  // cindex always contains just an indexterm, merge them into ivl_cindex_indexterm
-  xml::recurse_name(doc, "cindex", [](pugi::xml_node node) {
-    // LOG(xml::to_string(node));
-    contract_assert(node.attribute("index").value() == std::string_view("cp"));
-    // contract_assert(node.attribute("spaces").value() == std::string_view(" "));
-    contract_assert(std::ranges::distance(node.attributes()) == 2 - 1);
-    contract_assert(std::ranges::distance(node.children()) == 1);
-    auto child = node.first_child();
-    contract_assert(child.name() == std::string_view("indexterm"));
-    contract_assert(child.attribute("index").value() == std::string_view("cp"));
-    child.set_name("ivl_cindex_indexterm");
-    node.parent().insert_move_before(child, node);
-    node.parent().remove_child(node);
-    return false;
-  });
-
+  gcc::merge_cindex_indexterm(doc);
   gcc::merge_indexcommand_indexterm(doc);
 
   xml::recurse(doc, [&](pugi::xml_node node) {

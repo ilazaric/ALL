@@ -40,6 +40,24 @@ void purge_duds(pugi::xml_node node) {
   });
 }
 
+void merge_cindex_indexterm(pugi::xml_node node) {
+  // cindex always contains just an indexterm, merge them into ivl_cindex_indexterm
+  xml::recurse_name(node, "cindex", [](pugi::xml_node node) {
+    // LOG(xml::to_string(node));
+    contract_assert(node.attribute("index").value() == std::string_view("cp"));
+    // contract_assert(node.attribute("spaces").value() == std::string_view(" "));
+    contract_assert(std::ranges::distance(node.attributes()) == 2 - 1);
+    contract_assert(std::ranges::distance(node.children()) == 1);
+    auto child = node.first_child();
+    contract_assert(child.name() == std::string_view("indexterm"));
+    contract_assert(child.attribute("index").value() == std::string_view("cp"));
+    child.set_name("ivl_cindex_indexterm");
+    node.parent().insert_move_before(child, node);
+    node.parent().remove_child(node);
+    return false;
+  });
+}
+
 void merge_indexcommand_indexterm(pugi::xml_node node) {
   xml::recurse_name(node, "indexcommand", [](pugi::xml_node node) {
     std::string_view index = node.attribute("index").value();
