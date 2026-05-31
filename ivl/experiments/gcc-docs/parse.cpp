@@ -304,50 +304,6 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  auto unhex = [](char c) {
-    if (c >= '0' && c <= '9') return c - '0';
-    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
-    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
-    contract_assert(false);
-    return -1;
-  };
-
-  auto deuglify = [&](std::string_view sv) {
-    std::string ret;
-    while (!sv.empty()) {
-      if (sv[0] == '-') {
-        ret.push_back(' ');
-        sv.remove_prefix(1);
-        continue;
-      }
-      if (sv[0] == '_') {
-        contract_assert(sv.size() >= 5);
-        contract_assert(sv[1] == '0');
-        contract_assert(sv[2] == '0');
-        ret.push_back((char)(unhex(sv[3]) * 16 + unhex(sv[4])));
-        sv.remove_prefix(5);
-        continue;
-      }
-      ret.push_back(sv[0]);
-      sv.remove_prefix(1);
-    }
-    return ret;
-  };
-
-  auto normalize_text = [](std::string_view sv) {
-    std::string ret;
-    while (!sv.empty()) {
-      if (sv[0] == '\n') {
-        ret.push_back(' ');
-        sv.remove_prefix(1);
-        continue;
-      }
-      ret.push_back(sv[0]);
-      sv.remove_prefix(1);
-    }
-    return ret;
-  };
-
   xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
     if (name == "xref" || name == "pxref") {
