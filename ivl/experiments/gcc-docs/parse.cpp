@@ -97,18 +97,6 @@ int ivl_main(const args& args) {
     return true;
   });
 
-  // email.emailaddress -> emailaddress
-  xml::recurse_name(doc, "email", [&](pugi::xml_node node) {
-    contract_assert(std::ranges::distance(node) == 1);
-    contract_assert(std::ranges::distance(node.attributes()) == 0);
-    contract_assert(node.first_child().name() == std::string_view("emailaddress"));
-    auto child = node.first_child();
-    auto parent = node.parent();
-    parent.insert_move_before(child, node);
-    parent.remove_child(node);
-    return false;
-  });
-
   xml::recurse_name(doc, "node", [&](pugi::xml_node node) {
     auto next = node.next_sibling();
     contract_assert(next);
@@ -169,12 +157,7 @@ int ivl_main(const args& args) {
     texinfo.remove_child(child);
   }
 
-  xml::recurse(doc, [](pugi::xml_node node) {
-    auto a = node.attribute("spaces");
-    if (a) node.remove_attribute(a);
-    return true;
-  });
-
+  gcc::purge_space_attributes(doc);
   gcc::merge_cindex_indexterm(doc);
   gcc::merge_indexcommand_indexterm(doc);
 
@@ -227,12 +210,6 @@ int ivl_main(const args& args) {
     contract_assert(std::string_view(at.value()) == node.text().get());
     parent.remove_child(node);
     return false;
-  });
-
-  xml::recurse(doc, [](pugi::xml_node node) {
-    auto a = node.attribute("endspaces");
-    if (a) node.remove_attribute(a);
-    return true;
   });
 
   {
@@ -302,14 +279,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml::recurse_name(doc, "emailaddress", [&](pugi::xml_node node) {
-    xml::assert_wraps_text(node);
-    node.set_name("a");
-    node.append_attribute("class").set_value("email");
-    std::string email = node.text().get();
-    node.append_attribute("href").set_value("mailto:" + email);
-    return false;
-  });
+  gcc::transform_email(doc);
 
   xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("uref") && node.name() != std::string_view("url")) return true;

@@ -40,6 +40,35 @@ void purge_duds(pugi::xml_node node) {
   });
 }
 
+void transform_email(pugi::xml_node node) {
+  xml::recurse(node, [](pugi::xml_node node) {
+    contract_assert(node.name() != std::string_view("emailaddress"));
+    if (node.name() != std::string_view("email")) return true;
+    contract_assert(std::ranges::distance(node) == 1);
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    contract_assert(node.first_child().name() == std::string_view("emailaddress"));
+    xml::assert_wraps_text(node.first_child());
+    node.parent().insert_move_before(node.first_child(), node);
+    node = node.previous_sibling();
+    node.parent().remove_child(node.next_sibling());
+    node.set_name("a");
+    node.append_attribute("class").set_value("email");
+    std::string email = node.text().get();
+    node.append_attribute("href").set_value("mailto:" + email);
+    return false;
+  });
+}
+
+void purge_space_attributes(pugi::xml_node node) {
+  xml::recurse(node, [](pugi::xml_node node) {
+    auto a = node.attribute("spaces");
+    if (a) node.remove_attribute(a);
+    a = node.attribute("endspaces");
+    if (a) node.remove_attribute(a);
+    return true;
+  });
+}
+
 void merge_cindex_indexterm(pugi::xml_node node) {
   // cindex always contains just an indexterm, merge them into ivl_cindex_indexterm
   xml::recurse_name(node, "cindex", [](pugi::xml_node node) {
