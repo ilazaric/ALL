@@ -2,6 +2,7 @@
 
 #include <pugixml/pugixml.hpp>
 #include <ranges>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -46,5 +47,22 @@ std::vector<std::pair<std::string, std::string>> attrs(pugi::xml_node node) {
            return std::pair(std::string(a.name()), std::string(a.value()));
          }) |
          std::ranges::to<std::vector>();
+}
+
+std::size_t name_count(pugi::xml_node node) {
+  std::set<std::string_view> names;
+  recurse(node, [&](pugi::xml_node node) {
+    names.insert(std::string_view(node.name()));
+    return true;
+  });
+  return names.size();
+}
+
+std::string extract_first_check_name(pugi::xml_node node, std::string_view name) {
+  auto child = node.first_child();
+  contract_assert(child.name() == name);
+  auto ret = xml::to_string(child);
+  node.remove_child(child);
+  return ret;
 }
 } // namespace xml
