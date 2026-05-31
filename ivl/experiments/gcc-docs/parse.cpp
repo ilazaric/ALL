@@ -1,6 +1,7 @@
 #include <ivl/logger>
 #include <ivl/utility>
 #include "html_gen"
+#include "xml_utils"
 #include <pugixml/pugixml.hpp>
 #include <algorithm>
 #include <filesystem>
@@ -11,53 +12,6 @@
 #include <set>
 #include <source_location>
 
-void describe(const pugi::xml_node& node, std::size_t current_depth, std::size_t max_depth) {
-  std::println("{:<{}}{}", "", current_depth * 2, node.name());
-  if (current_depth == max_depth) return;
-  for (auto&& el : node) describe(el, current_depth + 1, max_depth);
-}
-
-struct xml_string_writer : pugi::xml_writer {
-  std::string result;
-  virtual void write(const void* data, size_t size) { result.append(static_cast<const char*>(data), size); }
-};
-
-std::string stringify(const pugi::xml_node& node) {
-  xml_string_writer writer;
-  node.print(writer);
-  return writer.result;
-}
-
-void find_nodes_impl(pugi::xml_node node, std::string_view name, std::vector<pugi::xml_node>& out) {
-  if (node.name() == name) {
-    out.push_back(node);
-    return;
-  }
-  for (auto&& child : node) find_nodes_impl(child, name, out);
-}
-
-std::vector<pugi::xml_node> find_nodes(pugi::xml_node node, std::string_view name) {
-  std::vector<pugi::xml_node> ret;
-  find_nodes_impl(node, name, ret);
-  return ret;
-}
-
-void find_nodes_p_impl(pugi::xml_node node, auto&& pred, std::vector<pugi::xml_node>& out) {
-  if (pred(node)) {
-    out.push_back(node);
-    return;
-  }
-  for (auto&& child : node) find_nodes_p_impl(child, pred, out);
-}
-
-std::vector<pugi::xml_node> find_nodes_p(pugi::xml_node node, auto&& pred) {
-  std::vector<pugi::xml_node> ret;
-  find_nodes_p_impl(node, pred, ret);
-  return ret;
-}
-
-#define EXPECT(node, cond) expect(node, cond, #cond)
-
 struct args {
   std::filesystem::path file;
   // std::size_t depth;
@@ -65,58 +19,6 @@ struct args {
 };
 
 static_assert(sizeof(pugi::xml_node) == 8);
-
-struct selfref {
-  std::size_t count = 0;
-  std::map<std::string, selfref> children;
-};
-
-void populate_selfref(selfref& top, pugi::xml_node node) {
-  ++top.count;
-  for (auto child : node) populate_selfref(top.children[std::string(child.name())], child);
-}
-
-void display_selfref(const selfref& top, std::string_view name, std::size_t depth) {
-  std::println("{:<{}}{} ({})", "", depth * 2, name, top.count);
-  for (auto&& [nc, cc] : top.children) display_selfref(cc, nc, depth + 1);
-}
-
-struct edges {
-  std::map<std::string, std::map<std::string, std::size_t>> e;
-};
-
-void populate_edges(edges& e, pugi::xml_node node) {
-  for (auto child : node) {
-    ++e.e[std::string(node.name())][std::string(child.name())];
-    populate_edges(e, child);
-  }
-}
-
-void display_edges(const edges& e) {
-  for (auto&& [l, rc] : e.e)
-    for (auto&& [r, c] : rc) std::println("{} -> {} ({})", l, r, c);
-}
-
-std::vector<std::pair<std::string, std::string>> attrs(pugi::xml_node node) {
-  return node.attributes() | std::views::transform([](pugi::xml_attribute a) {
-           return std::pair(std::string(a.name()), std::string(a.value()));
-         }) |
-         std::ranges::to<std::vector>();
-}
-
-void path(pugi::xml_node node) {
-  while (true) {
-    std::println("{} {}", node.name(), node.attributes() | std::views::transform([](pugi::xml_attribute a) {
-                                         return std::pair(a.name(), a.value());
-                                       }));
-    auto parent = node.parent();
-    if (parent.empty()) break;
-    auto loc = std::distance(parent.begin(), std::ranges::find(parent, node));
-    contract_assert(loc != std::ranges::distance(parent));
-    std::println("INDEX: {}", loc);
-    node = parent;
-  }
-}
 
 struct command_options {
   // very useful, paras and cindices
@@ -165,23 +67,15 @@ int ivl_main(const args& args) {
   pugi::xml_document doc;
   if (!doc.load_file(args.file.native().c_str())) return 1;
 
-  auto xml_recurse = [](this auto&& self, pugi::xml_node node, auto&& pred) -> void {
-    for (auto it = node.begin(); it != node.end();) {
-      auto child = *it;
-      ++it;
-      if (pred(child)) self(child, pred);
-    }
-  };
-
   auto name_count = [&](pugi::xml_node node) {
     std::set<std::string_view> names;
-    xml_recurse(node, [&](pugi::xml_node node) {
+    xml::recurse(node, [&](pugi::xml_node node) {
       names.insert(std::string_view(node.name()));
       return true;
     });
     return names.size();
   };
-  LOG(stringify(doc).size());
+  LOG(xml::to_string(doc).size());
   LOG(name_count(doc));
 
   top_level t;
@@ -218,7 +112,7 @@ int ivl_main(const args& args) {
       "defindex",
 
     };
-    xml_recurse(doc, [&](pugi::xml_node node) {
+    xml::recurse(doc, [&](pugi::xml_node node) {
       if (duds.contains(std::string_view(node.name()))) {
         node.parent().remove_child(node);
         return false;
@@ -228,12 +122,12 @@ int ivl_main(const args& args) {
     });
   }
 
-  xml_recurse(texinfo, [&](pugi::xml_node node) {
+  xml::recurse(texinfo, [&](pugi::xml_node node) {
     if (node.name() == std::string_view("macro")) {
-      t.macros.push_back(stringify(node));
+      t.macros.push_back(xml::to_string(node));
       node.parent().remove_child(node);
     } else if (node.name() == std::string_view("syncodeindex")) {
-      t.syncodeindexs.push_back(stringify(node));
+      t.syncodeindexs.push_back(xml::to_string(node));
       node.parent().remove_child(node);
     }
     return false;
@@ -242,7 +136,7 @@ int ivl_main(const args& args) {
   auto take_first_check_name = [](pugi::xml_node node, std::string_view name) {
     auto child = node.first_child();
     contract_assert(child.name() == name);
-    auto ret = stringify(child);
+    auto ret = xml::to_string(child);
     node.remove_child(child);
     return ret;
   };
@@ -250,7 +144,7 @@ int ivl_main(const args& args) {
   t.direntry = take_first_check_name(texinfo, "direntry");
   t.titlepage = take_first_check_name(texinfo, "titlepage");
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("emailaddress")) return true;
     contract_assert(node.parent().name() == std::string_view("email"));
     contract_assert(std::ranges::distance(node) == 1);
@@ -261,13 +155,13 @@ int ivl_main(const args& args) {
     return true;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() == std::string_view("para")) node.set_name("p");
     return true;
   });
 
   // email.emailaddress -> emailaddress
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("email")) return true;
     auto child = node.first_child();
     auto parent = node.parent();
@@ -276,7 +170,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("node")) return true;
     auto next = node.next_sibling();
     contract_assert(next);
@@ -293,7 +187,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     if (node.name() != std::string_view("sectiontitle")) return true;
     auto parent = node.parent();
     contract_assert(node == parent.first_child());
@@ -303,9 +197,9 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     if (node.name() != std::string_view("menuleadingtext")) return true;
-    contract_assert(stringify(node) == "<menuleadingtext>* </menuleadingtext>\n");
+    contract_assert(xml::to_string(node) == "<menuleadingtext>* </menuleadingtext>\n");
     node.parent().remove_child(node);
     return false;
   });
@@ -315,7 +209,7 @@ int ivl_main(const args& args) {
   {
     auto child = texinfo.last_child();
     contract_assert(child.name() == std::string_view("appendix"));
-    t.appendix = stringify(child);
+    t.appendix = xml::to_string(child);
     texinfo.remove_child(child);
   }
 
@@ -325,7 +219,7 @@ int ivl_main(const args& args) {
     contract_assert(
       child.attribute("ivl_sectiontitle").value() == std::string_view("Programming Languages Supported by GCC")
     );
-    t.supported_languages = stringify(child);
+    t.supported_languages = xml::to_string(child);
     texinfo.remove_child(child);
   }
 
@@ -335,20 +229,20 @@ int ivl_main(const args& args) {
     contract_assert(
       child.attribute("ivl_sectiontitle").value() == std::string_view("Language Standards Supported by GCC")
     );
-    t.supported_standards = stringify(child);
+    t.supported_standards = xml::to_string(child);
     texinfo.remove_child(child);
   }
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     auto a = node.attribute("spaces");
     if (a) node.remove_attribute(a);
     return true;
   });
 
   // cindex always contains just an indexterm, merge them into ivl_cindex_indexterm
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     if (node.name() != std::string_view("cindex")) return true;
-    // LOG(stringify(node));
+    // LOG(xml::to_string(node));
     contract_assert(node.attribute("index").value() == std::string_view("cp"));
     // contract_assert(node.attribute("spaces").value() == std::string_view(" "));
     contract_assert(std::ranges::distance(node.attributes()) == 2 - 1);
@@ -362,9 +256,9 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     if (node.name() != std::string_view("indexcommand")) return true;
-    // LOG(stringify(node));
+    // LOG(xml::to_string(node));
     // contract_assert(node.attribute("index").value() == std::string_view("op"));
     // contract_assert(node.attribute("command").value() == std::string_view("opindex"));
     std::string_view index = node.attribute("index").value();
@@ -385,7 +279,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
     contract_assert(name != "columnfraction");
     if (name != "columnfractions") return true;
@@ -408,7 +302,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
     if (name != "columnfractions") return true;
     auto parent = node.parent();
@@ -475,7 +369,7 @@ int ivl_main(const args& args) {
     assert_is_text(node.first_child());
   };
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
     if (name == "xref" || name == "pxref") {
       if (!node.attribute("manual")) return true;
@@ -494,7 +388,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     auto a = node.attribute("endspaces");
     if (a) node.remove_attribute(a);
     return true;
@@ -508,15 +402,15 @@ int ivl_main(const args& args) {
     while (child) {
       std::string_view name = child.name();
       if (name != "p" && name != "ivl_cindex_indexterm") break;
-      t.opts.intro.push_back(stringify(child));
+      t.opts.intro.push_back(xml::to_string(child));
       child = child.next_sibling();
     }
     contract_assert(child.name() == std::string_view("menu"));
-    t.opts.menu = stringify(child);
+    t.opts.menu = xml::to_string(child);
     child = child.next_sibling();
     while (child) {
       contract_assert(child.name() == std::string_view("section"));
-      t.opts.sections.push_back(stringify(child));
+      t.opts.sections.push_back(xml::to_string(child));
       child = child.next_sibling();
     }
     texinfo.remove_child(chapter);
@@ -527,7 +421,7 @@ int ivl_main(const args& args) {
     contract_assert(node.name() == std::string_view("unnumbered"));
     contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
     std::map<std::string, std::size_t> names;
-    xml_recurse(node, [&](pugi::xml_node node) {
+    xml::recurse(node, [&](pugi::xml_node node) {
       ++names[std::string(node.name())];
       return true;
     });
@@ -560,7 +454,7 @@ int ivl_main(const args& args) {
     replace(s, "&textndash;", R"(–)");
   };
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("")) return true;
     std::string value = node.value();
     replace_cmds(value);
@@ -568,7 +462,7 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("emailaddress")) return true;
     node.set_name("a");
     node.append_attribute("class").set_value("email");
@@ -577,9 +471,9 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml_recurse(doc, [&](pugi::xml_node node) {
+  xml::recurse(doc, [&](pugi::xml_node node) {
     if (node.name() != std::string_view("uref") && node.name() != std::string_view("url")) return true;
-    // LOG(stringify(node));
+    // LOG(xml::to_string(node));
     contract_assert(std::ranges::distance(node.attributes()) == 0);
     for (auto child : node) {
       assert_wraps_text(child);
@@ -601,7 +495,7 @@ int ivl_main(const args& args) {
   });
 
   for (std::string_view name : {"option", "samp", "file", "command"}) {
-    xml_recurse(doc, [&](pugi::xml_node node) {
+    xml::recurse(doc, [&](pugi::xml_node node) {
       if (node.name() != name) return true;
       node.set_name("code");
       node.prepend_attribute("ivl_kind").set_value(name);
@@ -609,44 +503,44 @@ int ivl_main(const args& args) {
     });
   }
 
-  xml_recurse(doc, [](pugi::xml_node node) {
+  xml::recurse(doc, [](pugi::xml_node node) {
     if (node.name() != std::string_view("accent")) return true;
-    if (stringify(node) == R"html(<accent type="uml" bracketed="off">o</accent>
+    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>
 )html") {
       node.first_child().set_value(R"(ö)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="uml" bracketed="off">u</accent>
+    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">u</accent>
 )html") {
       node.first_child().set_value(R"(ü)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="cedil">c</accent>
+    if (xml::to_string(node) == R"html(<accent type="cedil">c</accent>
 )html") {
       node.first_child().set_value(R"(ç)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="acute" bracketed="off">o</accent>
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">o</accent>
 )html") {
       node.first_child().set_value(R"(ó)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="acute" bracketed="off">e</accent>
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">e</accent>
 )html") {
       node.first_child().set_value(R"(é)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="acute" bracketed="off">a</accent>
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">a</accent>
 )html") {
       node.first_child().set_value(R"(á)");
       return false;
     }
-    if (stringify(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
+    if (xml::to_string(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
 )html") {
       node.first_child().set_value(R"(ñ)");
       return false;
     }
-    LOG(stringify(node));
+    LOG(xml::to_string(node));
     contract_assert(false);
     return true;
   });
@@ -661,7 +555,7 @@ int ivl_main(const args& args) {
     contract_assert(nodename.size());
     // contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
     // node.remove_child(node.first_child());
-    xml_recurse(node, [&](pugi::xml_node node) {
+    xml::recurse(node, [&](pugi::xml_node node) {
       std::string_view name = node.name();
       if (
         name == "beforefirstitem" || name == "itemprepend" || name == "ivl_cindex_indexterm" || name == "ignore" ||
@@ -705,10 +599,10 @@ int ivl_main(const args& args) {
       contract_assert(name != std::string_view("acronymword"));
       if (name == "enumerate") {
         node.set_name("ol");
-        // LOG(std::format("{}", attrs(node)));
+        // LOG(std::format("{}", xml::attrs(node)));
         std::string first = node.attribute("first").value();
         node.remove_attribute("first");
-        contract_assert(attrs(node).size() == 0);
+        contract_assert(xml::attrs(node).size() == 0);
         contract_assert(std::ranges::distance(node));
         contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
         assert_wraps_text(node.first_child());
@@ -735,16 +629,16 @@ int ivl_main(const args& args) {
       contract_assert(name != "enumeratefirst");
       if (name == "itemize") {
         node.set_name("ul");
-        contract_assert(attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
+        contract_assert(xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
         node.remove_attributes();
         node.append_attribute("class").set_value("itemize mark-bullet");
         return true;
       }
       if (name == "listitem") {
         node.set_name("li");
-        // LOG(stringify(node.first_child()));
+        // LOG(xml::to_string(node.first_child()));
         if (std::ranges::distance(node) && node.first_child().name() == std::string_view("prepend")) {
-          contract_assert(stringify(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
+          contract_assert(xml::to_string(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
           node.remove_child(node.first_child());
         }
         return true;
@@ -752,7 +646,7 @@ int ivl_main(const args& args) {
       return true;
     });
     std::map<std::string, std::size_t> nodes;
-    xml_recurse(node, [&](pugi::xml_node node) {
+    xml::recurse(node, [&](pugi::xml_node node) {
       contract_assert(node.name() != std::string_view("ivl_sectiontitle"));
       ++nodes[std::string(node.name())];
       return true;
@@ -814,19 +708,20 @@ int ivl_main(const args& args) {
       "menuleadingtext", "top",          "appendix", "cindex",    "indexcommand", "columnfraction",
       "columnfractions", "xrefinfofile", "para",     "email",     "emailaddress",
     };
-    xml_recurse(doc, [&bad](pugi::xml_node node) {
+    xml::recurse(doc, [&bad](pugi::xml_node node) {
       contract_assert(!bad.contains(std::string_view(node.name())));
       return true;
     });
   }
 
   {
-    for (auto child : texinfo) LOG(child.name(), child.attribute("ivl_sectiontitle").value(), stringify(child).size());
-    // LOG(stringify(texinfo.last_child()));
+    for (auto child : texinfo)
+      LOG(child.name(), child.attribute("ivl_sectiontitle").value(), xml::to_string(child).size());
+    // LOG(xml::to_string(texinfo.last_child()));
   }
 
   {
-    LOG(stringify(doc).size());
+    LOG(xml::to_string(doc).size());
     LOG(name_count(doc));
     doc.print(std::cout, "  ");
     return 0;
