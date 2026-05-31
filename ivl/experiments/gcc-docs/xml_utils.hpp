@@ -14,6 +14,10 @@ void recurse(pugi::xml_node node, auto&& pred) {
   }
 }
 
+void recurse_name(pugi::xml_node node, std::string_view name, auto&& pred) {
+  recurse(node, [&](pugi::xml_node node) { return node.name() != name || pred(node); });
+}
+
 struct xml_string_writer : pugi::xml_writer {
   std::string result;
   virtual void write(const void* data, size_t size) { result.append(static_cast<const char*>(data), size); }
