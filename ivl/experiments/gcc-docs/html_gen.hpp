@@ -10,21 +10,30 @@
 #include <string_view>
 
 namespace html {
-std::ofstream* current_page = nullptr;
-std::size_t current_depth = 0;
+std::vector<std::ofstream*> pages;
+std::vector<std::size_t> depths;
 
-void emit_raw(std::string_view sv) { *current_page << std::string(current_depth * 2, ' ') << sv << "\n"; }
+std::ofstream& current_page() {
+  contract_assert(pages.size());
+  return *pages.back();
+}
+
+std::size_t& current_depth() {
+  contract_assert(depths.size());
+  return depths.back();
+}
+
+void emit_raw(std::string_view sv) { current_page() << std::string(current_depth() * 2, ' ') << sv << "\n"; }
 
 template<typename M = std::map<std::string_view, std::string_view>>
 auto create_node_raii(std::string_view name, const M& attrs = {}) {
-  contract_assert(current_page != nullptr);
-  *current_page << std::string(current_depth * 2, ' ') << "<" << name;
-  for (auto&& [name, value] : attrs) *current_page << std::format(" {}={:?}", name, value);
-  *current_page << ">\n";
-  ++current_depth;
+  current_page() << std::string(current_depth() * 2, ' ') << "<" << name;
+  for (auto&& [name, value] : attrs) current_page() << std::format(" {}={:?}", name, value);
+  current_page() << ">\n";
+  ++current_depth();
   return ivl::util::scope_exit{[name = std::string(name)] {
-    --current_depth;
-    *current_page << std::string(current_depth * 2, ' ') << "</" << name << ">\n";
+    --current_depth();
+    current_page() << std::string(current_depth() * 2, ' ') << "</" << name << ">\n";
   }};
 }
 
@@ -38,11 +47,12 @@ void create_node(std::string_view name, auto&& cb) { create_node(name, {}, cb); 
 
 void create_page(const std::filesystem::path& file, auto&& cb) {
   contract_assert(!exists(file));
-  contract_assert(current_page == nullptr);
   create_directories(file.parent_path());
   std::ofstream fout(file);
-  current_page = &fout;
-  ivl::util::scope_exit _{[] { current_page = nullptr; }};
+  pages.push_back(&fout);
+  ivl::util::scope_exit _{[] { pages.pop_back(); }};
+  depths.push_back(0);
+  ivl::util::scope_exit _{[] { depths.pop_back(); }};
   fout << "<!DOCTYPE html>\n";
   create_node("html", cb);
 }
@@ -111,6 +121,7 @@ void create_cppref_page(const std::filesystem::path& file, std::string_view titl
     auto _ = create_node_raii("div", {{"id", "bodyContent"}, {"class", "mw-body-content"}});
     auto _ = create_node_raii("div", {{"id", "mw-content-text"}});
     auto _ = create_node_raii("div", {{"class", "mw-content-ltr mw-parser-output"}, {"lang", "en"}, {"dir", "ltr"}});
+    emit_raw(R"html(<p><br></p>)html");
     cb();
   });
 }

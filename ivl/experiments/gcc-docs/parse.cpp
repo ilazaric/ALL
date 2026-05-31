@@ -759,7 +759,7 @@ int ivl_main(const args& args) {
     });
     for (auto&& [node, count] : nodes) LOG(node, count);
     html::create_cppref_page(output_dir / nodename / "index.html", sectiontitle, [&] {
-      for (auto child : node) child.print(*html::current_page, "  ");
+      for (auto child : node) child.print(html::current_page(), "  ");
     });
     // texinfo.remove_child(node);
     return std::pair<std::string, std::string>(nodename, sectiontitle);
@@ -777,7 +777,7 @@ int ivl_main(const args& args) {
       "table", {
                  {"class", "mainpagetable"},
                  {"cellspacing", "0"},
-                 {"style", "/*! width:100%; */ /*! white-space:nowrap; */"},
+                 {"style", "width:100%; white-space:nowrap;"},
                }
     );
     auto _ = html::create_node_raii("tbody");
