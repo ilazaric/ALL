@@ -116,6 +116,27 @@ void replace_text_commands(pugi::xml_node node) {
   });
 }
 
+void purge_ref(pugi::xml_node node) {
+  xml::recurse(node, [&](pugi::xml_node node) {
+    std::string_view name = node.name();
+    if (name == "xref" || name == "pxref") {
+      if (!node.attribute("manual")) return true;
+      contract_assert(node.child("xrefinfofile"));
+      return true;
+    }
+    if (name != "xrefinfofile") return true;
+    xml::assert_wraps_text(node);
+    auto parent = node.parent();
+    std::string_view pname = parent.name();
+    contract_assert(pname == "xref" || pname == "pxref");
+    auto at = parent.attribute("manual");
+    contract_assert(at);
+    contract_assert(std::string_view(at.value()) == node.text().get());
+    parent.remove_child(node);
+    return false;
+  });
+}
+
 void purge_node(pugi::xml_node node) {
   xml::recurse_name(node, "node", [&](pugi::xml_node node) {
     auto next = node.next_sibling();

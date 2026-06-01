@@ -76,6 +76,7 @@ int ivl_main(const args& args) {
   auto texinfo = doc.first_child();
   contract_assert(texinfo.name() == std::string_view("texinfo"));
 
+  gcc::replace_text_commands(doc);
   gcc::purge_duds(doc);
 
   xml::recurse(texinfo, [&](pugi::xml_node node) {
@@ -134,25 +135,7 @@ int ivl_main(const args& args) {
   gcc::merge_cindex_indexterm(doc);
   gcc::merge_indexcommand_indexterm(doc);
   gcc::purge_columnfractions(doc);
-
-  xml::recurse(doc, [&](pugi::xml_node node) {
-    std::string_view name = node.name();
-    if (name == "xref" || name == "pxref") {
-      if (!node.attribute("manual")) return true;
-      contract_assert(node.child("xrefinfofile"));
-      return true;
-    }
-    if (name != "xrefinfofile") return true;
-    xml::assert_wraps_text(node);
-    auto parent = node.parent();
-    std::string_view pname = parent.name();
-    contract_assert(pname == "xref" || pname == "pxref");
-    auto at = parent.attribute("manual");
-    contract_assert(at);
-    contract_assert(std::string_view(at.value()) == node.text().get());
-    parent.remove_child(node);
-    return false;
-  });
+  gcc::purge_ref(doc);
 
   {
     auto chapter = texinfo.first_child();
@@ -181,8 +164,6 @@ int ivl_main(const args& args) {
     contract_assert(node.name() == std::string_view("unnumbered"));
     contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
   }
-
-  gcc::replace_text_commands(doc);
 
   gcc::transform_email(doc);
   gcc::transform_url(doc);
