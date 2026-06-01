@@ -111,7 +111,7 @@ int ivl_main(const args& args) {
     texinfo.remove_child(child);
   }
 
-  {
+  if (0) {
     auto child = texinfo.first_child();
     contract_assert(child.name() == std::string_view("chapter"));
     contract_assert(
@@ -121,7 +121,7 @@ int ivl_main(const args& args) {
     texinfo.remove_child(child);
   }
 
-  {
+  if (0) {
     auto child = texinfo.first_child();
     contract_assert(child.name() == std::string_view("chapter"));
     contract_assert(
@@ -137,7 +137,7 @@ int ivl_main(const args& args) {
   gcc::purge_columnfractions(doc);
   gcc::purge_ref(doc);
 
-  {
+  if (0) {
     auto chapter = texinfo.first_child();
     contract_assert(chapter.name() == std::string_view("chapter"));
     contract_assert(chapter.attribute("ivl_sectiontitle").value() == std::string_view("GCC Command Options"));

@@ -65,15 +65,17 @@ void transform_url(pugi::xml_node node) {
     // LOG(xml::to_string(node));
     contract_assert(std::ranges::distance(node.attributes()) == 0);
     for (auto child : node) {
-      xml::assert_wraps_text(child);
       std::string_view name = child.name();
       if (name == "urefurl") {
+        xml::assert_wraps_text(child);
         node.append_attribute("href").set_value(child.text().get());
         node.prepend_move(child.first_child());
       } else if (name == "urefreplacement") {
         node.prepend_move(child.first_child());
       } else if (name == "urefdesc") {
-        node.append_attribute("title").set_value(child.text().get());
+        // TODO: weird
+        node.prepend_move(child.first_child());
+        // node.append_attribute("title").set_value(child.text().get());
       } else {
         contract_assert(false);
       }
