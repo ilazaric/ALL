@@ -122,6 +122,7 @@ int ivl_main(const args& args) {
     gcc::transform_divlike(node);
     gcc::transform_acronym(node);
     gcc::transform_heading(node);
+    gcc::transform_listlike(node);
     // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
@@ -129,58 +130,6 @@ int ivl_main(const args& args) {
     std::string_view nodename = node.attribute("ivl_nodename").value();
     LOG(sectiontitle, nodename);
     contract_assert(nodename.size());
-    // contract_assert(node.first_child().name() == std::string_view("ivl_cindex_indexterm"));
-    // node.remove_child(node.first_child());
-    xml::recurse(node, [&](pugi::xml_node node) {
-      std::string_view name = node.name();
-      if (name == "enumerate") {
-        node.set_name("ol");
-        // LOG(std::format("{}", xml::attrs(node)));
-        std::string first = node.attribute("first").value();
-        node.remove_attribute("first");
-        contract_assert(xml::attrs(node).size() == 0);
-        contract_assert(std::ranges::distance(node));
-        contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
-        xml::assert_wraps_text(node.first_child());
-        {
-          std::string ef = node.first_child().text().get();
-          node.remove_child(node.first_child());
-          if (first.size() && ef.size()) contract_assert(first == ef);
-          contract_assert(first.size() || ef.size());
-          if (first.empty()) first = ef;
-        }
-        contract_assert(first.size() == 1);
-        if ('a' <= first[0] && first[0] <= 'z') {
-          node.append_attribute("type").set_value("a");
-          node.append_attribute("start").set_value(std::to_string(first[0] - 'a' + 1));
-        } else if ('A' <= first[0] && first[0] <= 'Z') {
-          node.append_attribute("type").set_value("A");
-          node.append_attribute("start").set_value(std::to_string(first[0] - 'A' + 1));
-        } else if ('0' <= first[0] && first[0] <= '9') {
-          node.append_attribute("type").set_value("1");
-          node.append_attribute("start").set_value(std::to_string(first[0] - '0'));
-        } else contract_assert(false);
-        return true;
-      }
-      contract_assert(name != "enumeratefirst");
-      if (name == "itemize") {
-        node.set_name("ul");
-        contract_assert(xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
-        node.remove_attributes();
-        node.append_attribute("class").set_value("itemize mark-bullet");
-        return true;
-      }
-      if (name == "listitem") {
-        node.set_name("li");
-        // LOG(xml::to_string(node.first_child()));
-        if (std::ranges::distance(node) && node.first_child().name() == std::string_view("prepend")) {
-          contract_assert(xml::to_string(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
-          node.remove_child(node.first_child());
-        }
-        return true;
-      }
-      return true;
-    });
     std::map<std::string, std::size_t> nodes;
     xml::recurse(node, [&](pugi::xml_node node) {
       contract_assert(node.name() != std::string_view("ivl_sectiontitle"));
