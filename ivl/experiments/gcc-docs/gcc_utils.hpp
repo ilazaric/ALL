@@ -300,4 +300,25 @@ void merge_indexcommand_indexterm(pugi::xml_node node) {
     return false;
   });
 }
+
+void transform_divlike(pugi::xml_node node) {
+  xml::recurse_name(node, "center", [](pugi::xml_node node) {
+    xml::assert_wraps_text(node);
+    node.set_name("div");
+    node.append_attribute("class").set_value("center");
+    return false;
+  });
+  xml::recurse_name(node, "display", [](pugi::xml_node node) {
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    node.set_name("div");
+    node.append_attribute("class").set_value("display");
+    return true;
+  });
+  xml::recurse_name(node, "smallexample", [](pugi::xml_node node) {
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    node.set_name("div");
+    node.append_attribute("class").set_value("example smallexample");
+    return true;
+  });
+}
 } // namespace gcc

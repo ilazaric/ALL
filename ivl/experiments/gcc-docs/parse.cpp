@@ -119,6 +119,7 @@ int ivl_main(const args& args) {
     xml::purge_name(node, "ivl_cindex_indexterm");
     xml::purge_name(node, "ignore");
     xml::purge_name(node, "noindent");
+    gcc::transform_divlike(node);
     // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
@@ -132,24 +133,6 @@ int ivl_main(const args& args) {
       std::string_view name = node.name();
       if (name == "heading") {
         node.set_name("h3");
-        return true;
-      }
-      if (name == "center") {
-        xml::assert_wraps_text(node);
-        node.set_name("div");
-        node.append_attribute("class").set_value("center");
-        return false;
-      }
-      if (name == "display") {
-        contract_assert(std::ranges::distance(node.attributes()) == 0);
-        node.set_name("div");
-        node.append_attribute("class").set_value("display");
-        return true;
-      }
-      if (name == "smallexample") {
-        contract_assert(std::ranges::distance(node.attributes()) == 0);
-        node.set_name("div");
-        node.append_attribute("class").set_value("example smallexample");
         return true;
       }
       if (name == "acronym") {
