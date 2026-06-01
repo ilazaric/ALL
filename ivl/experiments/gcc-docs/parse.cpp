@@ -120,6 +120,7 @@ int ivl_main(const args& args) {
     xml::purge_name(node, "ignore");
     xml::purge_name(node, "noindent");
     gcc::transform_divlike(node);
+    gcc::transform_acronym(node);
     // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
@@ -135,17 +136,6 @@ int ivl_main(const args& args) {
         node.set_name("h3");
         return true;
       }
-      if (name == "acronym") {
-        contract_assert(std::ranges::distance(node) == 1);
-        contract_assert(std::ranges::distance(node.attributes()) == 0);
-        xml::assert_wraps_text(node.first_child());
-        contract_assert(node.first_child().name() == std::string_view("acronymword"));
-        node.append_move(node.first_child().first_child());
-        node.remove_child(node.first_child());
-        node.set_name("abbr");
-        node.append_attribute("class").set_value("acronym");
-      }
-      contract_assert(name != std::string_view("acronymword"));
       if (name == "enumerate") {
         node.set_name("ol");
         // LOG(std::format("{}", xml::attrs(node)));

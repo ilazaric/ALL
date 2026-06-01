@@ -321,4 +321,22 @@ void transform_divlike(pugi::xml_node node) {
     return true;
   });
 }
+
+void transform_acronym(pugi::xml_node node) {
+  xml::recurse_name(node, "acronym", [](pugi::xml_node node) {
+    contract_assert(std::ranges::distance(node) == 1);
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    xml::assert_wraps_text(node.first_child());
+    contract_assert(node.first_child().name() == std::string_view("acronymword"));
+    node.append_move(node.first_child().first_child());
+    node.remove_child(node.first_child());
+    node.set_name("abbr");
+    node.append_attribute("class").set_value("acronym");
+    return true;
+  });
+  xml::recurse_name(node, "acronymword", [](pugi::xml_node node) {
+    contract_assert(false);
+    return true;
+  });
+}
 } // namespace gcc
