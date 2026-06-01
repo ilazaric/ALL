@@ -31,10 +31,6 @@ void recurse_name(pugi::xml_node node, std::string_view name, auto&& pred) {
 }
 
 void assert_is_text(pugi::xml_node node) {
-  if (node.name() != std::string_view("")) {
-    LOG(std::stacktrace::current());
-    LOG(to_string(node));
-  }
   contract_assert(node.name() == std::string_view(""));
   contract_assert(std::ranges::distance(node) == 0);
   contract_assert(std::ranges::distance(node.attributes()) == 0);
