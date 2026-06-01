@@ -360,9 +360,10 @@ void transform_listlike(pugi::xml_node node) {
       node.remove_attribute("first");
       contract_assert(xml::attrs(node).size() == 0);
       contract_assert(std::ranges::distance(node));
-      contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
-      xml::assert_wraps_text(node.first_child());
-      {
+      // LOG(xml::to_string(node));
+      if (node.first_child().name() == std::string_view("enumeratefirst")) {
+        contract_assert(node.first_child().name() == std::string_view("enumeratefirst"));
+        xml::assert_wraps_text(node.first_child());
         std::string ef = node.first_child().text().get();
         node.remove_child(node.first_child());
         if (first.size() && ef.size()) contract_assert(first == ef);
@@ -385,16 +386,28 @@ void transform_listlike(pugi::xml_node node) {
     contract_assert(name != "enumeratefirst");
     if (name == "itemize") {
       node.set_name("ul");
-      contract_assert(xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}});
+      // LOG(xml::to_string(node));
+      contract_assert(
+        xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}} ||
+        xml::attrs(node) ==
+          std::vector<std::pair<std::string, std::string>>{{"commandarg", "bullet"}, {"automaticcommandarg", "on"}} ||
+        xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "minus"}} ||
+        xml::attrs(node) == std::vector<std::pair<std::string, std::string>>{{"commandarg", "w"}}
+      );
+      std::string command = node.attribute("commandarg").value();
       node.remove_attributes();
-      node.append_attribute("class").set_value("itemize mark-bullet");
+      node.append_attribute("class").set_value("itemize mark-" + command);
       return true;
     }
     if (name == "listitem") {
       node.set_name("li");
       // LOG(xml::to_string(node.first_child()));
       if (std::ranges::distance(node) && node.first_child().name() == std::string_view("prepend")) {
-        contract_assert(xml::to_string(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n");
+        contract_assert(
+          xml::to_string(node.first_child()) == "<prepend>&amp;bullet;</prepend>\n" ||
+          xml::to_string(node.first_child()) == "<prepend>&amp;minus;</prepend>\n" ||
+          xml::to_string(node.first_child()) == "<prepend>\n\t<w />\n</prepend>\n"
+        );
         node.remove_child(node.first_child());
       }
       return true;
@@ -429,7 +442,8 @@ void inline_group(pugi::xml_node node) {
 
 void transform_dfn(pugi::xml_node node) {
   xml::recurse_name(node, "dfn", [](pugi::xml_node node) {
-    xml::assert_wraps_text(node);
+    // <dfn>basic <code>asm</code></dfn>
+    // xml::assert_wraps_text(node);
     node.set_name("em");
     node.append_attribute("class").set_value("dfn");
     return false;

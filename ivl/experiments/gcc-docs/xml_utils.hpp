@@ -37,6 +37,7 @@ void assert_is_text(pugi::xml_node node) {
 };
 
 void assert_wraps_text(pugi::xml_node node) {
+  // LOG(to_string(node));
   contract_assert(std::ranges::distance(node) == 1);
   contract_assert(std::ranges::distance(node.attributes()) == 0);
   assert_is_text(node.first_child());

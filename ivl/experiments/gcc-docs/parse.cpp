@@ -113,6 +113,18 @@ int ivl_main(const args& args) {
 
   gcc::transform_accent(doc);
 
+  {
+    std::set<std::string_view> bad{
+      "macro",           "syncodeindex", "direntry", "titlepage", "node",         "sectiontitle",
+      "menuleadingtext", "top",          "appendix", "cindex",    "indexcommand", "columnfraction",
+      "columnfractions", "xrefinfofile", "para",     "email",     "emailaddress",
+    };
+    xml::recurse(doc, [&bad](pugi::xml_node node) {
+      contract_assert(!bad.contains(std::string_view(node.name())));
+      return true;
+    });
+  }
+
   auto page_last = [&](pugi::xml_node node) {
     xml::purge_name(node, "beforefirstitem");
     xml::purge_name(node, "itemprepend");
@@ -155,11 +167,12 @@ int ivl_main(const args& args) {
   };
 
   std::vector<std::pair<std::string, std::string>> nodes;
-  for (int i = 0; i < 8; ++i) {
-    nodes.push_back(page_last(texinfo.last_child()));
-    texinfo.remove_child(texinfo.last_child());
-  }
-  std::ranges::reverse(nodes);
+  for (auto child : texinfo) nodes.push_back(page_last(child));
+  // for (int i = 0; i < 8; ++i) {
+  //   nodes.push_back(page_last(texinfo.last_child()));
+  //   texinfo.remove_child(texinfo.last_child());
+  // }
+  // std::ranges::reverse(nodes);
 
   html::create_cppref_page(output_dir / "index.html", "GCC reference", [&] {
     auto _ = html::create_node_raii(
@@ -196,18 +209,6 @@ int ivl_main(const args& args) {
       html::emit_raw("Index");
     });
   });
-
-  {
-    std::set<std::string_view> bad{
-      "macro",           "syncodeindex", "direntry", "titlepage", "node",         "sectiontitle",
-      "menuleadingtext", "top",          "appendix", "cindex",    "indexcommand", "columnfraction",
-      "columnfractions", "xrefinfofile", "para",     "email",     "emailaddress",
-    };
-    xml::recurse(doc, [&bad](pugi::xml_node node) {
-      contract_assert(!bad.contains(std::string_view(node.name())));
-      return true;
-    });
-  }
 
   {
     for (auto child : texinfo)
