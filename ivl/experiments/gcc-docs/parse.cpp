@@ -121,6 +121,7 @@ int ivl_main(const args& args) {
     xml::purge_name(node, "noindent");
     gcc::transform_divlike(node);
     gcc::transform_acronym(node);
+    gcc::transform_heading(node);
     // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
@@ -132,10 +133,6 @@ int ivl_main(const args& args) {
     // node.remove_child(node.first_child());
     xml::recurse(node, [&](pugi::xml_node node) {
       std::string_view name = node.name();
-      if (name == "heading") {
-        node.set_name("h3");
-        return true;
-      }
       if (name == "enumerate") {
         node.set_name("ol");
         // LOG(std::format("{}", xml::attrs(node)));

@@ -339,4 +339,11 @@ void transform_acronym(pugi::xml_node node) {
     return true;
   });
 }
+
+void transform_heading(pugi::xml_node node) {
+  xml::recurse_name(node, "heading", [](pugi::xml_node node) {
+    node.set_name("h3");
+    return true;
+  });
+}
 } // namespace gcc
