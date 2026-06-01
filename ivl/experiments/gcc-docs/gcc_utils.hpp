@@ -211,42 +211,45 @@ void purge_columnfractions(pugi::xml_node node) {
 
 void transform_accent(pugi::xml_node node) {
   xml::recurse_name(node, "accent", [](pugi::xml_node node) {
-    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>
+    auto str = xml::to_string(node);
+    node.remove_attributes();
+    node.set_name("span");
+    if (str == R"html(<accent type="uml" bracketed="off">o</accent>
 )html") {
       node.first_child().set_value(R"(ö)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">u</accent>
+    if (str == R"html(<accent type="uml" bracketed="off">u</accent>
 )html") {
       node.first_child().set_value(R"(ü)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="cedil">c</accent>
+    if (str == R"html(<accent type="cedil">c</accent>
 )html") {
       node.first_child().set_value(R"(ç)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">o</accent>
+    if (str == R"html(<accent type="acute" bracketed="off">o</accent>
 )html") {
       node.first_child().set_value(R"(ó)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">e</accent>
+    if (str == R"html(<accent type="acute" bracketed="off">e</accent>
 )html") {
       node.first_child().set_value(R"(é)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">a</accent>
+    if (str == R"html(<accent type="acute" bracketed="off">a</accent>
 )html") {
       node.first_child().set_value(R"(á)");
       return false;
     }
-    if (xml::to_string(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
+    if (str == R"html(<accent type="tilde" bracketed="off">n</accent>
 )html") {
       node.first_child().set_value(R"(ñ)");
       return false;
     }
-    LOG(xml::to_string(node));
+    LOG(str);
     contract_assert(false);
     return true;
   });
@@ -397,6 +400,39 @@ void transform_listlike(pugi::xml_node node) {
       return true;
     }
     return true;
+  });
+}
+
+void transform_sc(pugi::xml_node node) {
+  xml::recurse_name(node, "sc", [](pugi::xml_node node) {
+    xml::assert_wraps_text(node);
+    node.set_name("small");
+    node.append_attribute("class").set_value("sc");
+    std::string text = node.text().get();
+    for (auto& c : text) c = std::toupper(c);
+    node.first_child().set_value(text);
+    return false;
+  });
+}
+
+void inline_group(pugi::xml_node node) {
+  xml::recurse_name(node, "group", [](pugi::xml_node node) {
+    contract_assert(node.parent().name() == std::string_view("smallexample"));
+    contract_assert(std::ranges::distance(node) == 1);
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    contract_assert(node.first_child().name() == std::string_view("pre"));
+    node.parent().insert_move_before(node.first_child(), node);
+    node.parent().remove_child(node);
+    return false;
+  });
+}
+
+void transform_dfn(pugi::xml_node node) {
+  xml::recurse_name(node, "dfn", [](pugi::xml_node node) {
+    xml::assert_wraps_text(node);
+    node.set_name("em");
+    node.append_attribute("class").set_value("dfn");
+    return false;
   });
 }
 } // namespace gcc

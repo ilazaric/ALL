@@ -119,10 +119,13 @@ int ivl_main(const args& args) {
     xml::purge_name(node, "ivl_cindex_indexterm");
     xml::purge_name(node, "ignore");
     xml::purge_name(node, "noindent");
+    gcc::inline_group(node);
     gcc::transform_divlike(node);
     gcc::transform_acronym(node);
     gcc::transform_heading(node);
     gcc::transform_listlike(node);
+    gcc::transform_sc(node);
+    gcc::transform_dfn(node);
     // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
@@ -132,7 +135,14 @@ int ivl_main(const args& args) {
     contract_assert(nodename.size());
     std::map<std::string, std::size_t> nodes;
     xml::recurse(node, [&](pugi::xml_node node) {
-      contract_assert(node.name() != std::string_view("ivl_sectiontitle"));
+      std::string_view name = node.name();
+      contract_assert(name != "ivl_sectiontitle");
+      if (
+        name == "" || name == "p" || name == "a" || name == "div" || name == "span" || name == "ul" || name == "ol" ||
+        name == "li" || name == "h3" || name == "abbr" || name == "code" || name == "pre" || name == "var" ||
+        name == "small" || name == "em"
+      )
+        return true;
       ++nodes[std::string(node.name())];
       return true;
     });
