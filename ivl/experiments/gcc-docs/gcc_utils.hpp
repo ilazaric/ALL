@@ -59,6 +59,31 @@ void transform_email(pugi::xml_node node) {
   });
 }
 
+void transform_url(pugi::xml_node node) {
+  xml::recurse(node, [&](pugi::xml_node node) {
+    if (node.name() != std::string_view("uref") && node.name() != std::string_view("url")) return true;
+    // LOG(xml::to_string(node));
+    contract_assert(std::ranges::distance(node.attributes()) == 0);
+    for (auto child : node) {
+      xml::assert_wraps_text(child);
+      std::string_view name = child.name();
+      if (name == "urefurl") {
+        node.append_attribute("href").set_value(child.text().get());
+        node.prepend_move(child.first_child());
+      } else if (name == "urefreplacement") {
+        node.prepend_move(child.first_child());
+      } else if (name == "urefdesc") {
+        node.append_attribute("title").set_value(child.text().get());
+      } else {
+        contract_assert(false);
+      }
+    }
+    node.set_name("a");
+    while (std::ranges::distance(node) > 1) node.remove_child(node.last_child());
+    return false;
+  });
+}
+
 void transform_accent(pugi::xml_node node) {
   xml::recurse_name(node, "accent", [](pugi::xml_node node) {
     if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>

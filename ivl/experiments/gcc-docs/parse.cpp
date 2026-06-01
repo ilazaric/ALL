@@ -280,29 +280,7 @@ int ivl_main(const args& args) {
   });
 
   gcc::transform_email(doc);
-
-  xml::recurse(doc, [&](pugi::xml_node node) {
-    if (node.name() != std::string_view("uref") && node.name() != std::string_view("url")) return true;
-    // LOG(xml::to_string(node));
-    contract_assert(std::ranges::distance(node.attributes()) == 0);
-    for (auto child : node) {
-      xml::assert_wraps_text(child);
-      std::string_view name = child.name();
-      if (name == "urefurl") {
-        node.append_attribute("href").set_value(child.text().get());
-        node.prepend_move(child.first_child());
-      } else if (name == "urefreplacement") {
-        node.prepend_move(child.first_child());
-      } else if (name == "urefdesc") {
-        node.append_attribute("title").set_value(child.text().get());
-      } else {
-        contract_assert(false);
-      }
-    }
-    node.set_name("a");
-    while (std::ranges::distance(node) > 1) node.remove_child(node.last_child());
-    return false;
-  });
+  gcc::transform_url(doc);
 
   for (auto name : {"option", "samp", "file", "command"}) {
     xml::recurse_name(doc, name, [&](pugi::xml_node node) {
