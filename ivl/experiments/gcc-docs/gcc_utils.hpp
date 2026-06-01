@@ -116,6 +116,25 @@ void replace_text_commands(pugi::xml_node node) {
   });
 }
 
+void purge_sectiontitle(pugi::xml_node node) {
+  xml::recurse_name(node, "sectiontitle", [](pugi::xml_node node) {
+    auto parent = node.parent();
+    contract_assert(node == parent.first_child());
+    bool check = parent.prepend_attribute("ivl_sectiontitle").set_value(node.text().get());
+    contract_assert(check);
+    parent.remove_child(node);
+    return false;
+  });
+}
+
+void purge_menuleadingtext(pugi::xml_node node) {
+  xml::recurse_name(node, "menuleadingtext", [](pugi::xml_node node) {
+    contract_assert(xml::to_string(node) == "<menuleadingtext>* </menuleadingtext>\n");
+    node.parent().remove_child(node);
+    return false;
+  });
+}
+
 void purge_columnfractions(pugi::xml_node node) {
   xml::recurse(node, [&](pugi::xml_node node) {
     std::string_view name = node.name();

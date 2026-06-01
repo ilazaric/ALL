@@ -113,20 +113,8 @@ int ivl_main(const args& args) {
     return false;
   });
 
-  xml::recurse_name(doc, "sectiontitle", [](pugi::xml_node node) {
-    auto parent = node.parent();
-    contract_assert(node == parent.first_child());
-    bool check = parent.prepend_attribute("ivl_sectiontitle").set_value(node.text().get());
-    contract_assert(check);
-    parent.remove_child(node);
-    return false;
-  });
-
-  xml::recurse_name(doc, "menuleadingtext", [](pugi::xml_node node) {
-    contract_assert(xml::to_string(node) == "<menuleadingtext>* </menuleadingtext>\n");
-    node.parent().remove_child(node);
-    return false;
-  });
+  gcc::purge_sectiontitle(doc);
+  gcc::purge_menuleadingtext(doc);
 
   t.top = xml::extract_first_check_name(texinfo, "top");
 
