@@ -97,22 +97,7 @@ int ivl_main(const args& args) {
     return true;
   });
 
-  xml::recurse_name(doc, "node", [&](pugi::xml_node node) {
-    auto next = node.next_sibling();
-    contract_assert(next);
-    contract_assert(next.name() != std::string_view("node"));
-    auto nodename = node.first_child();
-    contract_assert(nodename.name() == std::string_view("nodename"));
-    std::string_view name1 = node.attribute("name").value();
-    std::string_view name2 = nodename.text().get();
-    // "G_002b_002b-and-GCC" != "G++ and GCC"
-    // contract_assert(name1 == name2);
-    bool check = next.prepend_attribute("ivl_nodename").set_value(name1.data());
-    contract_assert(check);
-    node.parent().remove_child(node);
-    return false;
-  });
-
+  gcc::purge_node(doc);
   gcc::purge_sectiontitle(doc);
   gcc::purge_menuleadingtext(doc);
 
