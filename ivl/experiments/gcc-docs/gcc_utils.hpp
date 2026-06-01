@@ -84,6 +84,71 @@ void transform_url(pugi::xml_node node) {
   });
 }
 
+void replace_text_commands(pugi::xml_node node) {
+  auto replace = [](std::string& s, std::string_view from, std::string_view to) {
+    while (true) {
+      auto loc = s.find(from);
+      if (loc == std::string::npos) break;
+      s = s.substr(0, loc) + to + s.substr(loc + from.size());
+    }
+  };
+  auto replace_cmds = [&](std::string& s) {
+    replace(s, "&arobase;", "@");
+    replace(s, "&eosperiod;", ".");
+    replace(s, "&noeos;", "");
+    // replace(s, "&textrsquo;", "'");
+    // replace(s, "&textldquo;", "\"");
+    // replace(s, "&textrdquo;", "\"");
+    replace(s, "&textrsquo;", R"(’)");
+    replace(s, "&textldquo;", R"(“)");
+    replace(s, "&textrdquo;", R"(”)");
+    replace(s, "&textmdash;", R"(—)");
+    replace(s, "&dots;", R"(…)");
+    replace(s, "&copyright;", R"(©)");
+    replace(s, "&tex;", R"(TeX)");
+    replace(s, "&textndash;", R"(–)");
+  };
+  xml::recurse_name(node, "", [&](pugi::xml_node node) {
+    std::string value = node.value();
+    replace_cmds(value);
+    node.set_value(value);
+    return false;
+  });
+}
+
+void purge_columnfractions(pugi::xml_node node) {
+  xml::recurse(node, [&](pugi::xml_node node) {
+    std::string_view name = node.name();
+    contract_assert(name != "columnfraction");
+    if (name != "columnfractions") return true;
+    auto at_line = node.attribute("line");
+    contract_assert(at_line);
+    contract_assert(std::ranges::distance(node.attributes()) == 1);
+    std::string acc;
+    for (auto child : node) {
+      contract_assert(child.name() == std::string_view("columnfraction"));
+      contract_assert(std::ranges::distance(child) == 0);
+      auto at_value = child.attribute("value");
+      contract_assert(at_value);
+      contract_assert(std::ranges::distance(child.attributes()) == 1);
+      acc += at_value.value();
+      acc += " ";
+    }
+    if (!acc.empty()) acc.pop_back();
+    contract_assert(at_line.value() == acc);
+    node.remove_children();
+    return false;
+  });
+  xml::recurse_name(node, "columnfractions", [&](pugi::xml_node node) {
+    auto parent = node.parent();
+    contract_assert(parent.name() == std::string_view("multitable"));
+    auto at = parent.append_attribute("ivl_cf_line");
+    at.set_value(node.attribute("line").value());
+    parent.remove_child(node);
+    return false;
+  });
+}
+
 void transform_accent(pugi::xml_node node) {
   xml::recurse_name(node, "accent", [](pugi::xml_node node) {
     if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>

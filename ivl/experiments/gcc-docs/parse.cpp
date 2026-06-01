@@ -160,38 +160,7 @@ int ivl_main(const args& args) {
   gcc::purge_space_attributes(doc);
   gcc::merge_cindex_indexterm(doc);
   gcc::merge_indexcommand_indexterm(doc);
-
-  xml::recurse(doc, [&](pugi::xml_node node) {
-    std::string_view name = node.name();
-    contract_assert(name != "columnfraction");
-    if (name != "columnfractions") return true;
-    auto at_line = node.attribute("line");
-    contract_assert(at_line);
-    contract_assert(std::ranges::distance(node.attributes()) == 1);
-    std::string acc;
-    for (auto child : node) {
-      contract_assert(child.name() == std::string_view("columnfraction"));
-      contract_assert(std::ranges::distance(child) == 0);
-      auto at_value = child.attribute("value");
-      contract_assert(at_value);
-      contract_assert(std::ranges::distance(child.attributes()) == 1);
-      acc += at_value.value();
-      acc += " ";
-    }
-    if (!acc.empty()) acc.pop_back();
-    contract_assert(at_line.value() == acc);
-    node.remove_children();
-    return false;
-  });
-
-  xml::recurse_name(doc, "columnfractions", [&](pugi::xml_node node) {
-    auto parent = node.parent();
-    contract_assert(parent.name() == std::string_view("multitable"));
-    auto at = parent.append_attribute("ivl_cf_line");
-    at.set_value(node.attribute("line").value());
-    parent.remove_child(node);
-    return false;
-  });
+  gcc::purge_columnfractions(doc);
 
   xml::recurse(doc, [&](pugi::xml_node node) {
     std::string_view name = node.name();
@@ -238,46 +207,9 @@ int ivl_main(const args& args) {
     auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered"));
     contract_assert(node.attribute("ivl_sectiontitle").value() == std::string_view("Contributors to GCC"));
-    std::map<std::string, std::size_t> names;
-    xml::recurse(node, [&](pugi::xml_node node) {
-      ++names[std::string(node.name())];
-      return true;
-    });
-    // for (auto&& [name, count] : names) LOG(name, count);
-    // texinfo.remove_child(node);
   }
 
-  auto replace = [](std::string& s, std::string_view from, std::string_view to) {
-    while (true) {
-      auto loc = s.find(from);
-      if (loc == std::string::npos) break;
-      s = s.substr(0, loc) + to + s.substr(loc + from.size());
-    }
-  };
-
-  auto replace_cmds = [&](std::string& s) {
-    replace(s, "&arobase;", "@");
-    replace(s, "&eosperiod;", ".");
-    replace(s, "&noeos;", "");
-    // replace(s, "&textrsquo;", "'");
-    // replace(s, "&textldquo;", "\"");
-    // replace(s, "&textrdquo;", "\"");
-    replace(s, "&textrsquo;", R"(’)");
-    replace(s, "&textldquo;", R"(“)");
-    replace(s, "&textrdquo;", R"(”)");
-    replace(s, "&textmdash;", R"(—)");
-    replace(s, "&dots;", R"(…)");
-    replace(s, "&copyright;", R"(©)");
-    replace(s, "&tex;", R"(TeX)");
-    replace(s, "&textndash;", R"(–)");
-  };
-
-  xml::recurse_name(doc, "", [&](pugi::xml_node node) {
-    std::string value = node.value();
-    replace_cmds(value);
-    node.set_value(value);
-    return false;
-  });
+  gcc::replace_text_commands(doc);
 
   gcc::transform_email(doc);
   gcc::transform_url(doc);
