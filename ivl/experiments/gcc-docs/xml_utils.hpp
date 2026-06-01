@@ -65,4 +65,11 @@ std::string extract_first_check_name(pugi::xml_node node, std::string_view name)
   node.remove_child(child);
   return ret;
 }
+
+void purge_name(pugi::xml_node node, std::string_view name) {
+  recurse_name(node, name, [](pugi::xml_node node) {
+    node.parent().remove_child(node);
+    return false;
+  });
+}
 } // namespace xml

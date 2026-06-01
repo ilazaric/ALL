@@ -21,15 +21,6 @@ struct args {
 
 static_assert(sizeof(pugi::xml_node) == 8);
 
-struct command_options {
-  // very useful, paras and cindices
-  std::vector<std::string> intro;
-  // less useful prob
-  std::string menu;
-  // mountains of good stuff
-  std::vector<std::string> sections;
-};
-
 struct top_level {
   // dunno if important
   std::vector<std::string> macros;
@@ -42,14 +33,6 @@ struct top_level {
 
   // shouldnt be useful
   std::string appendix;
-
-  // has some paras, but seems nondescript
-  std::string supported_languages;
-
-  // has a lot more paras, will need to think if info can be extracted
-  std::string supported_standards;
-
-  command_options opts;
 };
 
 int ivl_main(const args& args) {
@@ -58,12 +41,6 @@ int ivl_main(const args& args) {
   auto output_dir = args.output / "reference" / "gcc";
   remove_all(output_dir);
   create_directories(output_dir);
-
-  // for (auto file : {"style1.css", "style2.css", "fonts", "resources", "skins", "mwiki"})
-  //   copy(
-  //     std::filesystem::canonical("/proc/self/exe").parent_path() / file, args.output / "reference" / file,
-  //     std::filesystem::copy_options::recursive
-  //   );
 
   pugi::xml_document doc;
   if (!doc.load_file(args.file.native().c_str())) return 1;
@@ -111,53 +88,11 @@ int ivl_main(const args& args) {
     texinfo.remove_child(child);
   }
 
-  if (0) {
-    auto child = texinfo.first_child();
-    contract_assert(child.name() == std::string_view("chapter"));
-    contract_assert(
-      child.attribute("ivl_sectiontitle").value() == std::string_view("Programming Languages Supported by GCC")
-    );
-    t.supported_languages = xml::to_string(child);
-    texinfo.remove_child(child);
-  }
-
-  if (0) {
-    auto child = texinfo.first_child();
-    contract_assert(child.name() == std::string_view("chapter"));
-    contract_assert(
-      child.attribute("ivl_sectiontitle").value() == std::string_view("Language Standards Supported by GCC")
-    );
-    t.supported_standards = xml::to_string(child);
-    texinfo.remove_child(child);
-  }
-
   gcc::purge_space_attributes(doc);
   gcc::merge_cindex_indexterm(doc);
   gcc::merge_indexcommand_indexterm(doc);
   gcc::purge_columnfractions(doc);
   gcc::purge_ref(doc);
-
-  if (0) {
-    auto chapter = texinfo.first_child();
-    contract_assert(chapter.name() == std::string_view("chapter"));
-    contract_assert(chapter.attribute("ivl_sectiontitle").value() == std::string_view("GCC Command Options"));
-    auto child = chapter.first_child();
-    while (child) {
-      std::string_view name = child.name();
-      if (name != "p" && name != "ivl_cindex_indexterm") break;
-      t.opts.intro.push_back(xml::to_string(child));
-      child = child.next_sibling();
-    }
-    contract_assert(child.name() == std::string_view("menu"));
-    t.opts.menu = xml::to_string(child);
-    child = child.next_sibling();
-    while (child) {
-      contract_assert(child.name() == std::string_view("section"));
-      t.opts.sections.push_back(xml::to_string(child));
-      child = child.next_sibling();
-    }
-    texinfo.remove_child(chapter);
-  }
 
   {
     auto node = texinfo.last_child();
@@ -178,8 +113,13 @@ int ivl_main(const args& args) {
 
   gcc::transform_accent(doc);
 
-  auto page_last = [&] {
-    auto node = texinfo.last_child();
+  auto page_last = [&](pugi::xml_node node) {
+    xml::purge_name(node, "beforefirstitem");
+    xml::purge_name(node, "itemprepend");
+    xml::purge_name(node, "ivl_cindex_indexterm");
+    xml::purge_name(node, "ignore");
+    xml::purge_name(node, "noindent");
+    // auto node = texinfo.last_child();
     contract_assert(node.name() == std::string_view("unnumbered") || node.name() == std::string_view("chapter"));
     std::string_view sectiontitle = node.attribute("ivl_sectiontitle").value();
     contract_assert(sectiontitle.size());
@@ -190,13 +130,6 @@ int ivl_main(const args& args) {
     // node.remove_child(node.first_child());
     xml::recurse(node, [&](pugi::xml_node node) {
       std::string_view name = node.name();
-      if (
-        name == "beforefirstitem" || name == "itemprepend" || name == "ivl_cindex_indexterm" || name == "ignore" ||
-        name == "noindent"
-      ) {
-        node.parent().remove_child(node);
-        return false;
-      }
       if (name == "heading") {
         node.set_name("h3");
         return true;
@@ -294,7 +227,7 @@ int ivl_main(const args& args) {
 
   std::vector<std::pair<std::string, std::string>> nodes;
   for (int i = 0; i < 8; ++i) {
-    nodes.push_back(page_last());
+    nodes.push_back(page_last(texinfo.last_child()));
     texinfo.remove_child(texinfo.last_child());
   }
   std::ranges::reverse(nodes);
