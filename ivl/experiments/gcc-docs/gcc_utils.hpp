@@ -59,6 +59,49 @@ void transform_email(pugi::xml_node node) {
   });
 }
 
+void transform_accent(pugi::xml_node node) {
+  xml::recurse_name(node, "accent", [](pugi::xml_node node) {
+    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>
+)html") {
+      node.first_child().set_value(R"(ö)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">u</accent>
+)html") {
+      node.first_child().set_value(R"(ü)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="cedil">c</accent>
+)html") {
+      node.first_child().set_value(R"(ç)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">o</accent>
+)html") {
+      node.first_child().set_value(R"(ó)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">e</accent>
+)html") {
+      node.first_child().set_value(R"(é)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">a</accent>
+)html") {
+      node.first_child().set_value(R"(á)");
+      return false;
+    }
+    if (xml::to_string(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
+)html") {
+      node.first_child().set_value(R"(ñ)");
+      return false;
+    }
+    LOG(xml::to_string(node));
+    contract_assert(false);
+    return true;
+  });
+}
+
 void purge_space_attributes(pugi::xml_node node) {
   xml::recurse(node, [](pugi::xml_node node) {
     auto a = node.attribute("spaces");

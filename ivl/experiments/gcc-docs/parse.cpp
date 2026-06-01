@@ -312,46 +312,7 @@ int ivl_main(const args& args) {
     });
   }
 
-  xml::recurse_name(doc, "accent", [](pugi::xml_node node) {
-    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">o</accent>
-)html") {
-      node.first_child().set_value(R"(ö)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="uml" bracketed="off">u</accent>
-)html") {
-      node.first_child().set_value(R"(ü)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="cedil">c</accent>
-)html") {
-      node.first_child().set_value(R"(ç)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">o</accent>
-)html") {
-      node.first_child().set_value(R"(ó)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">e</accent>
-)html") {
-      node.first_child().set_value(R"(é)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="acute" bracketed="off">a</accent>
-)html") {
-      node.first_child().set_value(R"(á)");
-      return false;
-    }
-    if (xml::to_string(node) == R"html(<accent type="tilde" bracketed="off">n</accent>
-)html") {
-      node.first_child().set_value(R"(ñ)");
-      return false;
-    }
-    LOG(xml::to_string(node));
-    contract_assert(false);
-    return true;
-  });
+  gcc::transform_accent(doc);
 
   auto page_last = [&] {
     auto node = texinfo.last_child();
