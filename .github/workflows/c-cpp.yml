@@ -50,8 +50,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    # - name: install apt packages
-    #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+    - name: install apt packages
+      run: sudo apt update && sudo apt install libboost-all-dev
 
     - uses: webfactory/ssh-agent@v0.10.0
       with:
@@ -95,8 +95,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v6
-    # - name: install apt packages
-    #   run: sudo apt update && sudo apt install g++-14 nlohmann-json3-dev bzip2 flex build-essential
+    - name: install apt packages
+      run: sudo apt update && sudo apt install libboost-all-dev
 
     - uses: webfactory/ssh-agent@v0.10.0
       with:
