@@ -12,6 +12,7 @@ from dataclasses import dataclass
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
 src = build_dir / "source_copy"
+regsrc = build_dir / "include_dirs" / "regular"
 
 build_prep = repo_root / "ivl/build_system/generate_build_sources"
 assert build_prep.with_suffix(".cpp").exists(), build_prep
@@ -145,6 +146,7 @@ for target in targets:
     else:
         assert False, relpath
     assert incpath, relpath
+    incpath = regsrc / incpath
 
     cxxadded = all_targets[target].added_compiler_flags
     cxxaddedpost = all_targets[target].added_compiler_flags_tail
