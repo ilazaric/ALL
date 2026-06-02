@@ -84,7 +84,7 @@ jobs:
       run: echo | g++ -xc++ -E --verbose -
       
     - name: build
-      run: CXXVER=26 ./build.py /build_system /linux /process /algos /meta /utility /stl /reflection /parsing
+      run: CXXVER=26 ./build.py /build_system /linux /process /algos /meta /utility /stl /reflection /parsing /frankl /context
 
     - name: test
       run: ./run_built_tests.py
@@ -129,5 +129,5 @@ jobs:
       run: echo | g++ -xc++ -E --verbose -
 
     - name: build2
-      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/utility /ivl/stl /ivl/reflection /ivl/parsing
+      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/utility /ivl/stl /ivl/reflection /ivl/parsing /ivl/frankl /ivl/context
 
