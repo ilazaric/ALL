@@ -26,10 +26,12 @@ IncludeBlocks: Preserve
 IncludeCategories:
   - Regex:           '^<ivl.*>$'
     Priority:        1
-  - Regex:           '^<.*/.*>$'
+  - Regex:           '^".*"$'
     Priority:        2
-  - Regex:           '^.*$'
+  - Regex:           '^<.*/.*>$'
     Priority:        3
+  - Regex:           '^<.*>$'
+    Priority:        4
 
 DerivePointerAlignment: false
 SpaceAroundPointerQualifiers: Default
