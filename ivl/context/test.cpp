@@ -1,4 +1,4 @@
-#include "context.hpp"
+#include "context"
 
 using namespace ivl::ctx;
 
@@ -66,3 +66,5 @@ namespace test3 {
   }
 
 } // namespace test3
+
+int main(){}
