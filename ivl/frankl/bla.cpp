@@ -9,8 +9,8 @@
 #include <set>
 #include <unordered_set>
 
-#include "family.hpp"
-#include "tester.hpp"
+#include "family"
+#include "tester"
 
 std::mt19937 gen(42);
 

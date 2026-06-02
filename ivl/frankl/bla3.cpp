@@ -1,7 +1,7 @@
 #include <chrono>
 #include <iostream>
 
-#include "big-family.hpp"
+#include "big-family"
 
 std::mt19937 gen(101);
 

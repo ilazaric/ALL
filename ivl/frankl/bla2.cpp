@@ -4,13 +4,13 @@
 #include <iostream>
 #include <ranges>
 
-#include "family.hpp"
-#include "tester.hpp"
+#include "family"
+#include "tester"
 
 // constexpr std::size_t N = 10;
 // constexpr std::size_t MAXSIZE = (1uz << N);
 
-using Fam = Family<N>;
+// using Fam = Family<N>;
 
 template <std::size_t N>
 void dump() {

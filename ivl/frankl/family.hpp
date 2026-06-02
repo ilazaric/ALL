@@ -4,6 +4,7 @@
 #include <bitset>
 #include <cstddef>
 #include <iosfwd>
+#include <vector>
 
 template <std::size_t N>
 using Underlying = std::bitset<(1uz << N)>;
@@ -40,6 +41,15 @@ struct Family : Underlying<N> {
 
   auto begin() const { return ++Iterator{this, -1uz}; }
   auto end() const { return Iterator{this, (1uz << N)}; }
+
+  bool operator==(const Family&) const = default;
+
+  std::strong_ordering operator<=>(const Family& o) const {
+    for (std::size_t i = 0; i < N; ++i)
+      if ((*this)[i] != o[i])
+        return (*this)[i] <=> o[i];
+    return std::strong_ordering::equal;
+  }
 };
 
 template <std::size_t N>
