@@ -67,42 +67,29 @@ std::vector<point> fixup(std::span<const point> points) {
   for (int i = 0; i < points.size(); ++i) {
     g[i] -= points[i] * dot(g[i], points[i]);
   }
-  // LOG(std::format("{}", points));
-  // LOG(std::format("{}", g));
   auto mix = [&](double r) {
     std::vector copy(std::from_range, points);
     for (std::size_t i = 0; i < points.size(); ++i) copy[i] += -r * g[i];
-    // LOG(std::format("{}", copy));
+    normalize(copy);
     return copy;
   };
   double lo = 0;
-  double lo_e = evaluate(mix(lo));
+  double lo_e = evaluate_assume_normed(mix(lo));
   double hi = 1;
-  double hi_e = evaluate(mix(hi));
+  double hi_e = evaluate_assume_normed(mix(hi));
   while (true) {
     double nhi = hi * 2;
-    double nhi_e = evaluate(mix(nhi));
+    double nhi_e = evaluate_assume_normed(mix(nhi));
     if (nhi_e > hi_e - 1e-5) break;
     hi = nhi;
     hi_e = nhi_e;
   }
-  // while (true) {
-  //   double nlo = lo * 2;
-  //   double nlo_e = evaluate(mix(nlo));
-  //   if (nlo_e > lo_e - 1e-5) break;
-  //   lo = nlo;
-  //   lo_e = nlo_e;
-  // }
-  // LOG(lo, lo_e);
-  // LOG(hi, hi_e);
   while ((hi - lo) > 1e-9) {
     double mid = (hi + lo) / 2;
-    double mid_e = evaluate(mix(mid));
-    // LOG(mid, mid_e);
+    double mid_e = evaluate_assume_normed(mix(mid));
     if (lo_e < hi_e) hi = mid, hi_e = mid_e;
     else lo = mid, lo_e = mid_e;
   }
-  // LOG(lo, lo_e);
   return mix(lo);
 }
 
