@@ -3,6 +3,7 @@
 #include "gradient"
 #include "point"
 #include <format>
+#include <iomanip>
 #include <span>
 #include <vector>
 
@@ -62,7 +63,7 @@ void normalize(std::span<point> points) {
 //   void reset_eval() { eval = UNINIT; }
 // };
 
-std::vector<point> fixup(std::span<const point> points) {
+std::vector<point> fixup(std::span<const point> points, double* last = nullptr) {
   auto g = gradient(points);
   for (int i = 0; i < points.size(); ++i) {
     g[i] -= points[i] * dot(g[i], points[i]);
@@ -75,12 +76,13 @@ std::vector<point> fixup(std::span<const point> points) {
   };
   double lo = 0;
   double lo_e = evaluate_assume_normed(mix(lo));
-  double hi = 1;
+  double hi = last ? *last : 1;
   double hi_e = evaluate_assume_normed(mix(hi));
+  if (hi_e < lo_e - 1e-2) return mix(hi);
   while (true) {
-    double nhi = hi * 2;
+    double nhi = hi * 1.5;
     double nhi_e = evaluate_assume_normed(mix(nhi));
-    if (nhi_e > hi_e - 1e-5) break;
+    if (nhi_e > hi_e - 1e-6) break;
     hi = nhi;
     hi_e = nhi_e;
   }
@@ -90,11 +92,13 @@ std::vector<point> fixup(std::span<const point> points) {
     if (lo_e < hi_e) hi = mid, hi_e = mid_e;
     else lo = mid, lo_e = mid_e;
   }
+  // LOG(lo);
+  if (last) *last = lo;
   return mix(lo);
 }
 
-bool try_gradient_fixup(std::span<point> points, double& ev) {
-  auto nxt = fixup(points);
+bool try_gradient_fixup(std::span<point> points, double& ev, double* last = nullptr) {
+  auto nxt = fixup(points, last);
   auto nxt_ev = evaluate(nxt);
   if (nxt_ev > ev - 1e-5) return false;
   for (std::size_t i = 0; i < points.size(); ++i) points[i] = nxt[i];
@@ -104,7 +108,8 @@ bool try_gradient_fixup(std::span<point> points, double& ev) {
 }
 
 void repeat_gradient_fixup(std::span<point> points, double& ev) {
-  while (try_gradient_fixup(points, ev)) LOG(ev);
+  double last = 1.0;
+  while (try_gradient_fixup(points, ev, &last)) LOG(ev, last);
 }
 
 double attempt(int n) {
@@ -241,6 +246,7 @@ double attempt4(int n) {
 }
 
 int ivl_main() {
+  std::cerr << std::setprecision(5) << std::fixed;
   if (1) {
     double mini = 1e100;
     for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(972));
