@@ -1,5 +1,6 @@
 #include <ivl/logger>
 #include "eval"
+#include "gradient"
 #include "point"
 #include <format>
 #include <span>
@@ -34,17 +35,6 @@
   -0.5 * ((x-t)^2+u)^-1.5 * 2(x-t)
  */
 
-// double
-// std::array<double, N>
-// std::vector<double>
-
-// struct scale {
-//   double coef;
-//   auto operator()(const auto& input) const {
-//     return input * coef;
-//   }
-// };
-
 /*
   f : sum 1/|p-ti| = sum (p-ti)^2 ^-0.5
   df/dx : sum -0.5 * (p-ti)^2 ^-1.5 * 2(x-tix)
@@ -71,19 +61,6 @@ void normalize(std::span<point> points) {
 //   }
 //   void reset_eval() { eval = UNINIT; }
 // };
-
-// assumes points are normed
-std::vector<point> gradient(std::span<const point> points) {
-  std::vector<point> ret(points.size(), point{});
-  for (std::size_t i = 0; i < points.size(); ++i)
-    for (std::size_t j = 0; j < i; ++j) {
-      auto c = 1 / distance(points[i], points[j]);
-      c = -c * c * c;
-      ret[i] += (points[i] - points[j]) * c;
-      ret[j] += (points[j] - points[i]) * c;
-    }
-  return ret;
-}
 
 std::vector<point> fixup(std::span<const point> points) {
   auto g = gradient(points);
@@ -139,7 +116,9 @@ bool try_gradient_fixup(std::span<point> points, double& ev) {
   return true;
 }
 
-void repeat_gradient_fixup(std::span<point> points, double& ev) { while (try_gradient_fixup(points, ev)); }
+void repeat_gradient_fixup(std::span<point> points, double& ev) {
+  while (try_gradient_fixup(points, ev)) LOG(ev);
+}
 
 double attempt(int n) {
   std::vector<point> points(n);
@@ -201,13 +180,13 @@ std::vector<point> restricted_fixup(std::span<const point> points) {
     std::vector copy(std::from_range, points);
     for (std::size_t i = 0; i < points.size(); ++i) copy[i] += -r * g[i];
     for (auto& p : copy) {
-      p.x = std::max(p.x, 0.1);
-      p.y = std::max(p.y, 0.1);
-      p.z = std::max(p.z, 0.1);
+      p.x = std::max(p.x, 0.02);
+      p.y = std::max(p.y, 0.02);
+      p.z = std::max(p.z, 0.02);
     }
     return copy;
   };
-  double lo = -1;
+  double lo = 0;
   double lo_e = evaluate(mix(lo));
   double hi = 1;
   double hi_e = evaluate(mix(hi));
@@ -217,13 +196,6 @@ std::vector<point> restricted_fixup(std::span<const point> points) {
     if (nhi_e > hi_e - 1e-5) break;
     hi = nhi;
     hi_e = nhi_e;
-  }
-  while (true) {
-    double nlo = lo * 2;
-    double nlo_e = evaluate(mix(nlo));
-    if (nlo_e > lo_e - 1e-5) break;
-    lo = nlo;
-    lo_e = nlo_e;
   }
   while ((hi - lo) > 1e-9) {
     double mid = (hi + lo) / 2;
@@ -284,7 +256,7 @@ double attempt4(int n) {
 int ivl_main() {
   if (1) {
     double mini = 1e100;
-    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(100));
+    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(972));
     LOG(mini);
   }
   if (0) {
