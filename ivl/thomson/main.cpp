@@ -1,4 +1,5 @@
 #include <ivl/logger>
+#include "eval"
 #include "point"
 #include <format>
 #include <span>
@@ -56,15 +57,6 @@
   |a-b| = sqrt((ax-bx)^2 + (ay-by)^2 + (az-bz)^2)
  */
 
-double evaluate(point a, point b) { return 1 / normed_distance(a, b); }
-
-double evaluate(std::span<const point> points) {
-  double ret = 0;
-  for (std::size_t i = 0; i < points.size(); ++i)
-    for (std::size_t j = 0; j < i; ++j) ret += evaluate(points[i], points[j]);
-  return ret;
-}
-
 void normalize(std::span<point> points) {
   for (auto& p : points) p = p / norm(p);
 }
@@ -95,6 +87,9 @@ std::vector<point> gradient(std::span<const point> points) {
 
 std::vector<point> fixup(std::span<const point> points) {
   auto g = gradient(points);
+  for (int i = 0; i < points.size(); ++i) {
+    g[i] -= points[i] * dot(g[i], points[i]);
+  }
   // LOG(std::format("{}", points));
   // LOG(std::format("{}", g));
   auto mix = [&](double r) {
@@ -103,7 +98,7 @@ std::vector<point> fixup(std::span<const point> points) {
     // LOG(std::format("{}", copy));
     return copy;
   };
-  double lo = -1;
+  double lo = 0;
   double lo_e = evaluate(mix(lo));
   double hi = 1;
   double hi_e = evaluate(mix(hi));
@@ -114,13 +109,13 @@ std::vector<point> fixup(std::span<const point> points) {
     hi = nhi;
     hi_e = nhi_e;
   }
-  while (true) {
-    double nlo = lo * 2;
-    double nlo_e = evaluate(mix(nlo));
-    if (nlo_e > lo_e - 1e-5) break;
-    lo = nlo;
-    lo_e = nlo_e;
-  }
+  // while (true) {
+  //   double nlo = lo * 2;
+  //   double nlo_e = evaluate(mix(nlo));
+  //   if (nlo_e > lo_e - 1e-5) break;
+  //   lo = nlo;
+  //   lo_e = nlo_e;
+  // }
   // LOG(lo, lo_e);
   // LOG(hi, hi_e);
   while ((hi - lo) > 1e-9) {
@@ -153,6 +148,11 @@ double attempt(int n) {
   auto ev = evaluate(points);
   repeat_gradient_fixup(points, ev);
   LOG(n, ev);
+  auto g = gradient(points);
+  for (int i = 0; i < n; ++i) {
+    g[i] -= points[i] * dot(g[i], points[i]);
+  }
+  LOG(std::format("{}", g));
   return ev;
 }
 
@@ -179,15 +179,127 @@ double attempt2(int n) {
   return best_ev;
 }
 
+double attempt3(int n) {
+  if (n == 0) return {};
+  std::vector<point> points{random_point()};
+  normalize(points);
+  auto ev = evaluate(points);
+  while (points.size() < n) {
+    points.push_back(random_point());
+    normalize(points);
+    ev = evaluate(points);
+    repeat_gradient_fixup(points, ev);
+  }
+  LOG(n, ev);
+  return ev;
+}
+
+template<typename = void>
+std::vector<point> restricted_fixup(std::span<const point> points) {
+  auto g = gradient(points);
+  auto mix = [&](double r) {
+    std::vector copy(std::from_range, points);
+    for (std::size_t i = 0; i < points.size(); ++i) copy[i] += -r * g[i];
+    for (auto& p : copy) {
+      p.x = std::max(p.x, 0.1);
+      p.y = std::max(p.y, 0.1);
+      p.z = std::max(p.z, 0.1);
+    }
+    return copy;
+  };
+  double lo = -1;
+  double lo_e = evaluate(mix(lo));
+  double hi = 1;
+  double hi_e = evaluate(mix(hi));
+  while (true) {
+    double nhi = hi * 2;
+    double nhi_e = evaluate(mix(nhi));
+    if (nhi_e > hi_e - 1e-5) break;
+    hi = nhi;
+    hi_e = nhi_e;
+  }
+  while (true) {
+    double nlo = lo * 2;
+    double nlo_e = evaluate(mix(nlo));
+    if (nlo_e > lo_e - 1e-5) break;
+    lo = nlo;
+    lo_e = nlo_e;
+  }
+  while ((hi - lo) > 1e-9) {
+    double mid = (hi + lo) / 2;
+    double mid_e = evaluate(mix(mid));
+    if (lo_e < hi_e) hi = mid, hi_e = mid_e;
+    else lo = mid, lo_e = mid_e;
+  }
+  return mix(lo);
+}
+
+bool try_restricted_gradient_fixup(std::span<point> points, double& ev) {
+  auto nxt = restricted_fixup(points);
+  auto nxt_ev = evaluate(nxt);
+  if (nxt_ev > ev - 1e-5) return false;
+  for (std::size_t i = 0; i < points.size(); ++i) points[i] = nxt[i];
+  ev = nxt_ev;
+  normalize(points);
+  return true;
+}
+
+void repeat_restricted_gradient_fixup(std::span<point> points, double& ev) {
+  while (try_restricted_gradient_fixup(points, ev));
+}
+
+std::vector<point> restricted_attempt(int n) {
+  std::vector<point> points(n);
+  for (int i = 0; i < n; ++i) points[i] = random_point();
+  for (auto& p : points) {
+    p.x += 2;
+    p.y += 2;
+    p.z += 2;
+  }
+  normalize(points);
+  auto ev = evaluate(points);
+  repeat_restricted_gradient_fixup(points, ev);
+  LOG(n, ev);
+  return points;
+}
+
+double attempt4(int n) {
+  std::vector<point> all;
+  for (int piece = 0; piece < 8; ++piece) {
+    auto bla = restricted_attempt(n * (piece + 1) / 8 - n * piece / 8);
+    if (piece & 1)
+      for (auto& p : bla) p.x *= -1;
+    if (piece & 2)
+      for (auto& p : bla) p.y *= -1;
+    if (piece & 4)
+      for (auto& p : bla) p.z *= -1;
+    all.insert_range(all.end(), bla);
+  }
+  auto ev = evaluate(all);
+  repeat_gradient_fixup(all, ev);
+  LOG(n, ev);
+  return ev;
+}
+
 int ivl_main() {
-  {
+  if (1) {
     double mini = 1e100;
     for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(100));
     LOG(mini);
   }
-  {
+  if (0) {
     double mini = 1e100;
     for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt2(100));
+    LOG(mini);
+  }
+  if (0) {
+    double mini = 1e100;
+    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt3(100));
+    LOG(mini);
+  }
+  if (0) {
+    double mini = 1e100;
+    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt4(100));
     LOG(mini);
   }
   if (0) {

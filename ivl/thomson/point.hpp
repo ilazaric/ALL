@@ -55,6 +55,7 @@ point operator*(double r, point a) {
 }
 
 point& operator+=(point& a, point b) { return a = a + b; }
+point& operator-=(point& a, point b) { return a = a - b; }
 
 template<typename = void>
 double dot(point a, point b) {
