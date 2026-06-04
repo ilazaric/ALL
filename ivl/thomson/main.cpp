@@ -144,20 +144,50 @@ bool try_gradient_fixup(std::span<point> points, double& ev) {
   return true;
 }
 
+void repeat_gradient_fixup(std::span<point> points, double& ev) { while (try_gradient_fixup(points, ev)); }
+
 double attempt(int n) {
   std::vector<point> points(n);
   for (int i = 0; i < n; ++i) points[i] = random_point();
   normalize(points);
   auto ev = evaluate(points);
-  while (try_gradient_fixup(points, ev));
+  repeat_gradient_fixup(points, ev);
   LOG(n, ev);
   return ev;
+}
+
+template<typename = void>
+void perturb(std::span<point> points, double r) {
+  static std::mt19937 gen(40101041);
+  for (auto& [... els] : points) ((els += std::uniform_real_distribution(-r, r)(gen)), ...);
+}
+
+double attempt2(int n) {
+  std::vector<point> points(n);
+  for (int i = 0; i < n; ++i) points[i] = random_point();
+  normalize(points);
+  auto ev = evaluate(points);
+  auto best_ev = ev;
+  for (int i = 0; i < 10; ++i) {
+    repeat_gradient_fixup(points, ev);
+    if (ev < best_ev) best_ev = ev;
+    perturb(points, 0.1);
+    normalize(points);
+    ev = evaluate(points);
+  }
+  LOG(n, best_ev);
+  return best_ev;
 }
 
 int ivl_main() {
   {
     double mini = 1e100;
     for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(100));
+    LOG(mini);
+  }
+  {
+    double mini = 1e100;
+    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt2(100));
     LOG(mini);
   }
   if (0) {
