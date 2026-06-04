@@ -77,7 +77,7 @@ std::vector<point> gradient(std::span<const point> points) {
   std::vector<point> ret(points.size(), point{});
   for (std::size_t i = 0; i < points.size(); ++i)
     for (std::size_t j = 0; j < i; ++j) {
-      auto c = distance(points[i], points[j]);
+      auto c = 1 / distance(points[i], points[j]);
       c = -c * c * c;
       ret[i] += (points[i] - points[j]) * c;
       ret[j] += (points[j] - points[i]) * c;
@@ -148,11 +148,11 @@ double attempt(int n) {
   auto ev = evaluate(points);
   repeat_gradient_fixup(points, ev);
   LOG(n, ev);
-  auto g = gradient(points);
-  for (int i = 0; i < n; ++i) {
-    g[i] -= points[i] * dot(g[i], points[i]);
-  }
-  LOG(std::format("{}", g));
+  // auto g = gradient(points);
+  // for (int i = 0; i < n; ++i) {
+  //   g[i] -= points[i] * dot(g[i], points[i]);
+  // }
+  // LOG(std::format("{}", g));
   return ev;
 }
 
