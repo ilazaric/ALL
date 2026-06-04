@@ -48,6 +48,12 @@
   f : sum 1/|p-ti| = sum (p-ti)^2 ^-0.5
   df/dx : sum -0.5 * (p-ti)^2 ^-1.5 * 2(x-tix)
   Df : sum -|p-ti|^-3 * (p-ti)
+  we want Df to be perpendicular to surface
+  equiv. to: Df(p) || p
+  p || sum -|p-ti|^-3 * (p-ti)
+  p || sum |p-ti|^-3 * ti
+
+  |a-b| = sqrt((ax-bx)^2 + (ay-by)^2 + (az-bz)^2)
  */
 
 double evaluate(point a, point b) { return 1 / normed_distance(a, b); }
@@ -58,6 +64,21 @@ double evaluate(std::span<const point> points) {
     for (std::size_t j = 0; j < i; ++j) ret += evaluate(points[i], points[j]);
   return ret;
 }
+
+void normalize(std::span<point> points) {
+  for (auto& p : points) p = p / norm(p);
+}
+
+// struct construction {
+//   inline static constexpr double UNINIT = -1;
+//   std::vector<point> points;
+//   double eval = UNINIT;
+//   double evaluate() {
+//     if (eval == UNINIT) eval = ::evaluate(points);
+//     return eval;
+//   }
+//   void reset_eval() { eval = UNINIT; }
+// };
 
 // assumes points are normed
 std::vector<point> gradient(std::span<const point> points) {
@@ -74,8 +95,8 @@ std::vector<point> gradient(std::span<const point> points) {
 
 std::vector<point> fixup(std::span<const point> points) {
   auto g = gradient(points);
-  LOG(std::format("{}", points));
-  LOG(std::format("{}", g));
+  // LOG(std::format("{}", points));
+  // LOG(std::format("{}", g));
   auto mix = [&](double r) {
     std::vector copy(std::from_range, points);
     for (std::size_t i = 0; i < points.size(); ++i) copy[i] += -r * g[i];
@@ -100,48 +121,63 @@ std::vector<point> fixup(std::span<const point> points) {
     lo = nlo;
     lo_e = nlo_e;
   }
-  LOG(lo, lo_e);
-  LOG(hi, hi_e);
+  // LOG(lo, lo_e);
+  // LOG(hi, hi_e);
   while ((hi - lo) > 1e-9) {
     double mid = (hi + lo) / 2;
     double mid_e = evaluate(mix(mid));
-    LOG(mid, mid_e);
+    // LOG(mid, mid_e);
     if (lo_e < hi_e) hi = mid, hi_e = mid_e;
     else lo = mid, lo_e = mid_e;
   }
-  LOG(lo, lo_e);
+  // LOG(lo, lo_e);
   return mix(lo);
 }
 
-int ivl_main() {
-  int n = 6;
-  std::vector<point> points;
-  for (int i = 0; i < n; ++i) {
-    auto p = random_point();
-    points.push_back(p / norm(p));
-  }
+bool try_gradient_fixup(std::span<point> points, double& ev) {
+  auto nxt = fixup(points);
+  auto nxt_ev = evaluate(nxt);
+  if (nxt_ev > ev - 1e-5) return false;
+  for (std::size_t i = 0; i < points.size(); ++i) points[i] = nxt[i];
+  ev = nxt_ev;
+  normalize(points);
+  return true;
+}
+
+double attempt(int n) {
+  std::vector<point> points(n);
+  for (int i = 0; i < n; ++i) points[i] = random_point();
+  normalize(points);
   auto ev = evaluate(points);
-  LOG(ev);
-  while (true) {
-    auto nxt = fixup(points);
-    auto nxt_ev = evaluate(nxt);
-    LOG(nxt_ev);
-    if (nxt_ev > ev - 1e-5) break;
-    ev = nxt_ev;
-    points = nxt;
-    for (auto& p : points) p = p / norm(p);
-  }
+  while (try_gradient_fixup(points, ev));
+  LOG(n, ev);
+  return ev;
+}
+
+int ivl_main() {
   {
-    contract_assert(n == 6);
-    std::vector<point> correct(6, point{});
-    correct[0].x = +1;
-    correct[1].x = -1;
-    correct[2].y = +1;
-    correct[3].y = -1;
-    correct[4].z = +1;
-    correct[5].z = -1;
-    LOG(evaluate(correct));
-    // LOG(std::format("{}", gradient(correct)));
+    double mini = 1e100;
+    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(100));
+    LOG(mini);
+  }
+  if (0) {
+    int n = 100;
+    std::vector<point> points;
+    for (int i = 0; i < n; ++i) {
+      auto p = random_point();
+      points.push_back(p / norm(p));
+    }
+    auto ev = evaluate(points);
+    LOG(ev);
+    while (true) {
+      auto nxt = fixup(points);
+      auto nxt_ev = evaluate(nxt);
+      LOG(nxt_ev);
+      if (nxt_ev > ev - 1e-5) break;
+      ev = nxt_ev;
+      points = nxt;
+      for (auto& p : points) p = p / norm(p);
+    }
   }
   return 0;
 }
