@@ -52,6 +52,29 @@ void normalize(std::span<point> points) {
   for (auto& p : points) p = p / norm(p);
 }
 
+// struct scale_t {
+//   auto operator()(double c, auto v) {
+//     return c * v;
+//   }
+// };
+
+// f: R -> R
+// Df: R -> L(R,R) ? ew
+struct monomial_t {
+  double coef;
+  double exp;
+  double operator()(double x) const { return coef * std::pow(x, exp); }
+  auto diff() const { return monomial_t{coef * exp, exp - 1}; }
+};
+
+struct norm_t {
+  static double operator()(point p) {}
+};
+
+struct normalize_t {
+  point operator()(point p) { return p / norm(p); }
+};
+
 // struct construction {
 //   inline static constexpr double UNINIT = -1;
 //   std::vector<point> points;
@@ -96,6 +119,17 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
   if (last) *last = lo;
   return mix(lo);
 }
+
+/*
+  f : R -> R
+  f(t) = evaluate(points + t * gradient)
+  f'(t) = ?
+  f = evaluate o (t -> points + t * gradient)
+  Df(t) = Devaluate o -||- (t) * gradient
+  Df(t) = Devaluate(points + t * gradient) * gradient
+  DDf(t) = D[ Devaluate(points + t * gradient) ] * gradient
+  DDf(t) = DDevaluate(points + t * gradient) * gradient * gradient
+ */
 
 bool try_gradient_fixup(std::span<point> points, double& ev, double* last = nullptr) {
   auto nxt = fixup(points, last);
