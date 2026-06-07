@@ -3,60 +3,6 @@
 #include <span>
 #include <vector>
 
-// template<typename T>
-// struct vector;
-
-// template<typename>
-// concept vector_space = true;
-
-// template<typename... Ts>
-// struct cartesian_product_t {
-//   Ts... ts;
-// };
-
-// // static extent should not increase size
-// // dynamic extent has to increase size
-// // complex shape could be all-static or some-dynamic
-// // all-static does not exist in class
-// // some-dynamic exists in class
-// // should be min size that way
-
-// template<auto... extents>
-// struct sum_extent {
-
-// };
-
-// template<auto... shapes>
-// struct product_extent {
-
-// };
-
-// struct
-
-// // shape | data
-
-// // A -> B
-// // A -> B -> 1
-// // M(a).b
-// // V ~? V* should be
-
-// auto cartesian_product(vector_space auto, vector_space auto) {
-
-// }
-
-// auto tensor_product(vector_space auto, vector_space auto);
-
-// auto cartesian_product(auto... as) { return std::tuple{std::move(as)...}; }
-
-// auto tensor_product(auto a, auto b) {
-
-// }
-
-// template<typename MD>
-// class owned_mdspan {
-//   MD md;
-// };
-
 struct ranked {
   std::size_t index;
   std::size_t rank;
@@ -112,14 +58,17 @@ struct mdarray_ref {
     return data[0];
   }
 
-  mdarray_ref operator[](std::size_t i) pre(rank() > 0 && i < extent(0)) {
+  mdarray_ref operator[](std::size_t i) const pre(rank() > 0 && i < extent(0)) {
     std::size_t foo = data.size() / shape[0];
     return mdarray_ref{shape.subspan(1), data.subspan(i * foo, foo)};
   }
 
-  mdarray_cref operator[](std::size_t i) const pre(rank() > 0 && i < extent(0)) {
-    std::size_t foo = data.size() / shape[0];
-    return mdarray_cref{shape.subspan(1), data.subspan(i * foo, foo)};
+  mdarray_ref operator[](ranked r) const pre(rank() >= r.rank) {
+    std::size_t prefix = 1;
+    for (std::size_t i = 0; i < r.rank; ++i) prefix *= shape[i];
+    contract_assert(r.index < prefix);
+    std::size_t foo = data.size() / prefix;
+    return mdarray_ref{shape.subspan(r.rank), data.subspan(r.index * foo, foo)};
   }
 };
 
@@ -185,6 +134,15 @@ struct mdarray {
     }
     return ret;
   }
+
+  mdarray_ref as_ref() { return mdarray_ref{.shape{shape}, .data{data}}; }
+  mdarray_cref as_cref() const { return mdarray_cref{.shape{shape}, .data{data}}; }
+
+  mdarray_ref operator[](std::size_t i) { return as_ref()[i]; }
+  mdarray_ref operator[](ranked r) { return as_ref()[r]; }
+
+  mdarray_cref operator[](std::size_t i) const { return as_cref()[i]; }
+  mdarray_cref operator[](ranked r) const { return as_cref()[r]; }
 };
 
 // A -> B -> F
