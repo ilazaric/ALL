@@ -70,7 +70,15 @@ struct mdarray_ref {
     std::size_t foo = data.size() / prefix;
     return mdarray_ref{shape.subspan(r.rank), data.subspan(r.index * foo, foo)};
   }
+
+  double& operator=(double x) pre(rank() == 0) {
+    contract_assert(data.size() == 1);
+    return data[0] = x;
+  }
 };
+
+struct shaped_t {};
+inline constexpr shaped_t shaped;
 
 // invariant: data.size() == (shape[i] * ...)
 struct mdarray {
@@ -103,13 +111,6 @@ struct mdarray {
     return shape_size == data.size();
   }
 
-  double extract_number() const pre(rank() == 0) {
-    contract_assert(data.size() == 1);
-    return data[0];
-  }
-
-  std::vector<double> extract_vector() const pre(rank() == 1) { return data; }
-
   void match_size() {
     std::size_t sz = 1;
     for (std::size_t i = 0; i < rank(); ++i) {
@@ -119,6 +120,19 @@ struct mdarray {
     data.resize(sz, 0.0);
     contract_assert(check_size_invariant());
   }
+
+  explicit mdarray(shaped_t, auto... extents) : shape{(std::size_t)extents...} {
+    // TODO: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125645
+    contract_assert(((extents > 0) && ...));
+    match_size();
+  }
+
+  double extract_number() const pre(rank() == 0) {
+    contract_assert(data.size() == 1);
+    return data[0];
+  }
+
+  std::vector<double> extract_vector() const pre(rank() == 1) { return data; }
 
   // e_i --> data[Li...L(i+1)] (L == size / extent(0))
   mdarray operator()(std::span<double> vec) const pre(rank() > 0 && extent(0) == vec.size()) {
