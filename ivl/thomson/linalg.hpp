@@ -57,10 +57,70 @@
 //   MD md;
 // };
 
+struct ranked {
+  std::size_t index;
+  std::size_t rank;
+};
+
+// TODO: different shape might make more sense
+// ....: instead of {extent, extent, ...}
+// ....: it could be {product[0..], product[1..], ...}
+// ....: that way everything is cheap
+// ....: size() == shape[0]
+// ....: extent(i) == shape[i] / shape[i+1]
+// ....: size of suffix: shape[i]
+
+// invariant: data.size() == (shape[i] * ...)
+struct mdarray_cref {
+  std::span<const std::size_t> shape;
+  std::span<const double> data;
+
+  std::size_t rank() const { return shape.size(); }
+  std::size_t size() const { return data.size(); }
+  std::size_t extent(std::size_t i) const pre(i < rank()) { return shape[i]; }
+
+  double extract_number() const pre(rank() == 0) {
+    contract_assert(size() == 1);
+    return data[0];
+  }
+
+  mdarray_cref operator[](std::size_t i) const pre(rank() > 0 && i < extent(0)) {
+    std::size_t foo = data.size() / shape[0];
+    return mdarray_cref{shape.subspan(1), data.subspan(i * foo, foo)};
+  }
+
+  mdarray_cref operator[](ranked r) const pre(rank() >= r.rank) {
+    std::size_t prefix = 1;
+    for (std::size_t i = 0; i < r.rank; ++i) prefix *= shape[i];
+    contract_assert(r.index < prefix);
+    std::size_t foo = data.size() / prefix;
+    return mdarray_cref{shape.subspan(r.rank), data.subspan(r.index * foo, foo)};
+  }
+};
+
 // invariant: data.size() == (shape[i] * ...)
 struct mdarray_ref {
-  std::span<std::size_t> shape;
+  std::span<const std::size_t> shape;
   std::span<double> data;
+
+  std::size_t rank() const { return shape.size(); }
+  std::size_t size() const { return data.size(); }
+  std::size_t extent(std::size_t i) const pre(i < rank()) { return shape[i]; }
+
+  double extract_number() const pre(rank() == 0) {
+    contract_assert(size() == 1);
+    return data[0];
+  }
+
+  mdarray_ref operator[](std::size_t i) pre(rank() > 0 && i < extent(0)) {
+    std::size_t foo = data.size() / shape[0];
+    return mdarray_ref{shape.subspan(1), data.subspan(i * foo, foo)};
+  }
+
+  mdarray_cref operator[](std::size_t i) const pre(rank() > 0 && i < extent(0)) {
+    std::size_t foo = data.size() / shape[0];
+    return mdarray_cref{shape.subspan(1), data.subspan(i * foo, foo)};
+  }
 };
 
 // invariant: data.size() == (shape[i] * ...)
