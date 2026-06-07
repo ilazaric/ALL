@@ -152,6 +152,9 @@ struct mdarray {
   mdarray_ref as_ref() { return mdarray_ref{.shape{shape}, .data{data}}; }
   mdarray_cref as_cref() const { return mdarray_cref{.shape{shape}, .data{data}}; }
 
+  operator mdarray_ref() { return as_ref(); }
+  operator mdarray_cref() const { return as_cref(); }
+
   mdarray_ref operator[](std::size_t i) { return as_ref()[i]; }
   mdarray_ref operator[](ranked r) { return as_ref()[r]; }
 
