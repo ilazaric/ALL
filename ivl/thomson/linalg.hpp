@@ -135,7 +135,7 @@ struct mdarray {
   std::vector<double> extract_vector() const pre(rank() == 1) { return data; }
 
   // e_i --> data[Li...L(i+1)] (L == size / extent(0))
-  mdarray operator()(std::span<double> vec) const pre(rank() > 0 && extent(0) == vec.size()) {
+  mdarray operator()(std::span<const double> vec) const pre(rank() > 0 && extent(0) == vec.size()) {
     std::size_t n = vec.size();
     mdarray ret;
     for (std::size_t i = 1; i < rank(); ++i) ret.shape.push_back(extent(i));
@@ -167,6 +167,8 @@ struct mdarray {
 // b : Z -> W -> T (-> F)
 // compose(a,b) : X -> Y -> W -> T (-> F)
 auto compose(const mdarray& a, const mdarray& b) {
+  // LOG(std::format("{}", a.shape));
+  // LOG(std::format("{}", b.shape));
   // TODO: pre
   contract_assert(a.rank() > 0);
   contract_assert(b.rank() > 0);
