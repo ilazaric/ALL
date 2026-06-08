@@ -6,6 +6,23 @@
 using extent_t = std::size_t;
 using shape_t = std::vector<extent_t>;
 
+// f  : R -> R
+// Df : R -> L(R,R)
+
+// R != R^1
+
+// {}     --- R
+// {N}    --- R^N (-> R)
+// {A, B} --- R^A -> R^B (-> R)
+// {????} --- (R^A -> R^B) -> R^C (-> R)
+// struct shape_type {};
+
+// i must differentiate between A and A -> R i think
+
+// shape:
+// * field
+// *
+
 struct ranked {
   std::size_t index;
   std::size_t rank;
