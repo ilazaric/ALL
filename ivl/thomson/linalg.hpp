@@ -3,6 +3,9 @@
 #include <span>
 #include <vector>
 
+using extent_t = std::size_t;
+using shape_t = std::vector<extent_t>;
+
 struct ranked {
   std::size_t index;
   std::size_t rank;
@@ -160,6 +163,11 @@ struct mdarray {
 
   mdarray_cref operator[](std::size_t i) const { return as_cref()[i]; }
   mdarray_cref operator[](ranked r) const { return as_cref()[r]; }
+
+  double& operator=(double x) pre(rank() == 0) {
+    contract_assert(data.size() == 1);
+    return data[0] = x;
+  }
 };
 
 // A -> B -> F
@@ -169,7 +177,7 @@ struct mdarray {
 // a : X -> Y -> Z (-> F)
 // b : Z -> W -> T (-> F)
 // compose(a,b) : X -> Y -> W -> T (-> F)
-auto compose(const mdarray& a, const mdarray& b) {
+mdarray compose(mdarray_cref a, mdarray_cref b) {
   // LOG(std::format("{}", a.shape));
   // LOG(std::format("{}", b.shape));
   // TODO: pre
