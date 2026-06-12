@@ -5,42 +5,44 @@
 
 namespace autodiff {
 struct zero {
-  extent_t is;
+  shape_t is;
   shape_t os;
-  shape_t input_shape() const { return {is}; }
+  shape_t input_shape() const { return is; }
   shape_t output_shape() const { return os; }
-
   mdarray operator()(const mdarray&) const {
     mdarray ret;
     ret.shape = os;
     ret.match_size();
     return ret;
   }
-
   zero diff() const {
     zero ret = *this;
-    ret.os.insert(ret.os.begin(), is);
+    ret.os.insert(ret.os.begin(), is.size());
     return ret;
   }
 };
 
 struct constant {
-  extent_t is;
+  shape_t is;
   mdarray c;
-  shape_t input_shape() const { return {is}; }
+  shape_t input_shape() const { return is; }
   shape_t output_shape() const { return c.shape; }
   mdarray operator()(const mdarray&) const { return c; }
   zero diff() const { return zero{.is = is, .os = c.shape}.diff(); }
 };
 
 struct id {
-  extent_t e;
-  shape_t input_shape() const { return {e}; }
-  shape_t output_shape() const { return {e}; }
+  shape_t e;
+  shape_t input_shape() const { return e; }
+  shape_t output_shape() const { return e; }
   mdarray operator()(const mdarray& arg) const { return arg; }
   auto diff() const {
-    constant ret{.is = e, .c{shaped, e, e}};
-    for (extent_t i = 0; i < e; ++i) ret.c[i][i] = 1;
+    constant ret; //{.is = e, .c{shaped, e, e}};
+    ret.is = e;
+    ret.c.shape = e;
+    ret.c.shape.insert(ret.c.shape.begin(), e.size());
+    ret.c.match_size();
+    for (extent_t i = 0; i < e.size(); ++i) ret.c[i][ranked(i, e.rank())] = 1;
     return ret;
   }
 };

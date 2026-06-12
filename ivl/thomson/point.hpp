@@ -2,15 +2,11 @@
 
 #include <cmath>
 #include <random>
+#include <format>
 
 struct point {
   double x, y, z;
 };
-
-namespace std {
-template<typename, typename>
-struct formatter;
-} // namespace std
 
 template<>
 struct std::formatter<point, char> {

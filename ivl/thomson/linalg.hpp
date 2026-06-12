@@ -1,10 +1,11 @@
 #pragma once
 
 #include <span>
+#include <variant>
 #include <vector>
 
-using extent_t = std::size_t;
-using shape_t = std::vector<extent_t>;
+// using extent_t = std::size_t;
+// using shape_t = std::vector<extent_t>;
 
 // f  : R -> R
 // Df : R -> L(R,R)
@@ -21,7 +22,89 @@ using shape_t = std::vector<extent_t>;
 
 // shape:
 // * field
-// *
+// * N-dimensional vector space
+// * cartesian product
+// * linear operator
+
+struct shape_t {
+  struct field_t {};
+  struct vector_t {
+    std::size_t n;
+  };
+  struct cartesian_t {
+    std::vector<shape_t> shapes;
+  };
+  struct tensor_t {
+    std::vector<shape_t> shapes;
+  };
+
+  std::size_t total_size;
+  std::variant<field_t, vector_t, cartesian_t, tensor_t> data;
+
+  bool is_field() const { return std::holds_alternative<field_t>(data); }
+  bool is_vector() const { return std::holds_alternative<vector_t>(data); }
+  bool is_cartesian_product() const { return std::holds_alternative<cartesian_t>(data); }
+  bool is_linear_operator() const { return std::holds_alternative<tensor_t>(data); }
+
+  std::size_t size() const { return total_size; }
+
+  decltype(auto) cartesian_product_elements(this auto&& self) {
+    // not pre bc of gcc bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125733
+    contract_assert(self.is_cartesian_product());
+    return std::forward_like<decltype(self)>(std::get<cartesian_t>(self.data).shapes);
+  }
+  decltype(auto) linear_operator_elements(this auto&& self) {
+    // not pre bc of gcc bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125733
+    contract_assert(self.is_linear_operator());
+    return std::forward_like<decltype(self)>(std::get<tensor_t>(self.data).shapes);
+  }
+  decltype(auto) vector_size(this auto&& self) {
+    // not pre bc of gcc bug: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125733
+    contract_assert(self.is_vector());
+    return std::forward_like<decltype(self)>(std::get<vector_t>(self.data).n);
+  }
+
+  template<auto Member>
+  std::size_t fixup_size_generic() {
+    if (is_field()) return total_size = 1;
+    if (is_vector()) return total_size = std::get<vector_t>(data).n;
+    if (is_cartesian_product()) {
+      total_size = 0;
+      for (auto&& el : cartesian_product_elements()) total_size += (el.*Member)();
+      return total_size;
+    }
+    if (is_linear_operator()) {
+      total_size = 1;
+      for (auto&& el : linear_operator_elements()) total_size *= (el.*Member)();
+      return total_size;
+    }
+    contract_assert(false);
+  }
+
+  std::size_t fixup_size_deep() { return fixup_size_generic<&shape_t::fixup_size_deep>(); }
+  std::size_t fixup_size_shallow() { return fixup_size_generic<&shape_t::size>(); }
+
+  static shape_t field() { return shape_t{.total_size = 1, .data{field_t{}}}; }
+  static shape_t vector(std::size_t n) { return shape_t{.total_size = n, .data{vector_t{n}}}; }
+
+  template<typename... Ts>
+    requires(std::same_as<Ts, shape_t> && ...)
+  static shape_t cartesian_product(Ts&&... args) {
+    return shape_t{
+      .total_size = (args.size() + ...),
+      .data{cartesian_t{std::forward<decltype(args)>(args)...}},
+    };
+  }
+
+  template<typename... Ts>
+    requires(std::same_as<Ts, shape_t> && ...)
+  static shape_t linear_operator(Ts&&... args) {
+    return shape_t{
+      .total_size = (args.size() * ...),
+      .data{tensor_t{std::forward<decltype(args)>(args)...}},
+    };
+  }
+};
 
 struct ranked {
   std::size_t index;
