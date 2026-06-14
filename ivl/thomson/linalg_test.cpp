@@ -7,11 +7,12 @@
 // IVL test_only()
 
 [[= ivl::test]] void test_fib1() {
-  mdarray m(shape_t::linear_operator(shape_t::vector(2), shape_t::vector(2)));
+  auto v2 = shape_t::vector(2);
+  mdarray m(shape_t::linear_operator(v2, v2));
   m[1][1] = m[1][0] = m[0][1] = 1;
-  mdarray v(shape_t::vector(2));
+  mdarray v(v2);
   v[1] = 1;
-  for (int i = 0; i < 10; ++i) v = compose(m, v);
+  for (int i = 0; i < 10; ++i) v = apply(v, m);
   contract_assert((int)std::round(v[0].extract_number()) == 55);
   contract_assert((int)std::round(v[1].extract_number()) == 89);
 }
@@ -62,8 +63,8 @@ struct rnd_gen {
   auto v1 = g.getmd(shape_t::vector(3));
   auto v2 = g.getmd(shape_t::vector(4));
   auto v3 = g.getmd(shape_t::vector(5));
-  auto a = m(v1)(v2)(v3).extract_number();
-  auto b = compose(v3, compose(v2, compose(v1, m))).extract_number();
+  auto a = dot(m(v1)(v2), v3).extract_number();
+  auto b = dot(v3, apply(v2, apply(v1, m))).extract_number();
   std::cerr << a << std::endl;
   std::cerr << b << std::endl;
   contract_assert(abs(a - b) < 1e-5);
@@ -82,8 +83,8 @@ struct rnd_gen {
   auto v2 = g.getmd(2, shape_t::vector(4));
   auto v3 = g.getmd(2, shape_t::vector(4));
   auto v4 = g.getmd(2, shape_t::vector(3));
-  auto x = b(a(v1)(v2))(v3)(v4).extract_number();
-  auto y = c(v1)(v2)(v3)(v4).extract_number();
+  auto x = dot(b(a(v1)(v2))(v3), v4).extract_number();
+  auto y = dot(c(v1)(v2)(v3), v4).extract_number();
   std::cerr << x << std::endl;
   std::cerr << y << std::endl;
   contract_assert(abs(x - y) < 1e-5);

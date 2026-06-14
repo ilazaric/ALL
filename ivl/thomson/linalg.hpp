@@ -99,6 +99,8 @@ struct shape_t {
     }
     if (is_linear_operator()) return total_size = (linear_operator_from().*Member)() * (linear_operator_to().*Member)();
     contract_assert(false);
+    std::unreachable();
+    return 0;
   }
 
   std::size_t fixup_size_deep() { return fixup_size_generic<&shape_t::fixup_size_deep>(); }
@@ -158,6 +160,8 @@ struct shape_t {
 // ....: extent(i) == shape[i] / shape[i+1]
 // ....: size of suffix: shape[i]
 
+inline const shape_t field_global = shape_t::field();
+
 // invariant: data.size() == (shape[i] * ...)
 struct mdarray_cref {
   // std::span<const std::size_t> shape;
@@ -175,8 +179,10 @@ struct mdarray_cref {
 
   mdarray_cref operator[](std::size_t i) const pre(
     shape->is_linear_operator() && i < shape->linear_operator_from().size()
+    || shape->is_vector() && i < shape->size()
     // rank() > 0 && i < extent(0)
   ) {
+    if (shape->is_vector()) return mdarray_cref{&field_global, data.subspan(i, 1)};
     std::size_t foo = shape->linear_operator_to().size();
     return mdarray_cref{&shape->linear_operator_to(), data.subspan(i * foo, foo)};
   }
@@ -207,8 +213,10 @@ struct mdarray_ref {
 
   mdarray_ref operator[](std::size_t i) const pre(
     shape->is_linear_operator() && i < shape->linear_operator_from().size()
+    || shape->is_vector() && i < shape->size()
     // rank() > 0 && i < extent(0)
   ) {
+    if (shape->is_vector()) return mdarray_ref{&field_global, data.subspan(i, 1)};
     std::size_t foo = shape->linear_operator_to().size();
     return mdarray_ref{&shape->linear_operator_to(), data.subspan(i * foo, foo)};
   }
@@ -323,25 +331,77 @@ struct mdarray {
 // a : X -> Y -> Z (-> F)
 // b : Z -> W -> T (-> F)
 // compose(a,b) : X -> Y -> W -> T (-> F)
-mdarray compose(mdarray_cref a, mdarray_cref b);
-// {
-//   // LOG(std::format("{}", a.shape));
-//   // LOG(std::format("{}", b.shape));
-//   // TODO: pre
-//   contract_assert(a.rank() > 0);
-//   contract_assert(b.rank() > 0);
-//   contract_assert(a.extent(a.rank() - 1) == b.extent(0));
-//   mdarray ret;
-//   for (std::size_t i = 0; i < a.rank() - 1; ++i) ret.shape.push_back(a.extent(i));
-//   for (std::size_t i = 1; i < b.rank(); ++i) ret.shape.push_back(b.extent(i));
-//   ret.match_size();
-//   std::size_t overlap = b.extent(0);
-//   std::size_t a_ex = a.size() / overlap;
-//   std::size_t b_ex = b.size() / overlap;
-//   // TODO: perf
-//   for (std::size_t ai = 0; ai < a_ex; ++ai)
-//     for (std::size_t ov = 0; ov < overlap; ++ov)
-//       for (std::size_t bi = 0; bi < b_ex; ++bi)
-//         ret.data[ai * b_ex + bi] += a.data[ai * overlap + ov] * b.data[ov * b_ex + bi];
-//   return ret;
-// }
+mdarray compose(mdarray_cref a, mdarray_cref b) {
+  // LOG(std::format("{}", a.shape));
+  // LOG(std::format("{}", b.shape));
+  // TODO: pre
+  contract_assert(a.shape->is_linear_operator());
+  contract_assert(b.shape->is_linear_operator());
+  contract_assert(a.shape->final_to() == b.shape->linear_operator_from());
+  mdarray ret;
+  ret.shape = *a.shape;
+  ret.shape.final_to() = b.shape->linear_operator_to();
+  ret.shape.fixup_size_deep();
+  ret.match_size();
+  // for (std::size_t i = 0; i < a.rank() - 1; ++i) ret.shape.push_back(a.extent(i));
+  // for (std::size_t i = 1; i < b.rank(); ++i) ret.shape.push_back(b.extent(i));
+  // ret.match_size();
+  std::size_t overlap = b.shape->linear_operator_from().size(); // b.extent(0);
+  std::size_t a_ex = a.size() / overlap;
+  std::size_t b_ex = b.size() / overlap;
+  // TODO: perf
+  for (std::size_t ai = 0; ai < a_ex; ++ai)
+    for (std::size_t ov = 0; ov < overlap; ++ov)
+      for (std::size_t bi = 0; bi < b_ex; ++bi)
+        ret.data[ai * b_ex + bi] += a.data[ai * overlap + ov] * b.data[ov * b_ex + bi];
+  return ret;
+}
+
+mdarray apply(mdarray_cref a, mdarray_cref b) {
+  // LOG(std::format("{}", a.shape));
+  // LOG(std::format("{}", b.shape));
+  // TODO: pre
+  // contract_assert(a.shape->is_linear_operator());
+  contract_assert(b.shape->is_linear_operator());
+  contract_assert(*a.shape == b.shape->linear_operator_from());
+  mdarray ret;
+  ret.shape = b.shape->linear_operator_to();
+  ret.match_size();
+  // for (std::size_t i = 0; i < a.rank() - 1; ++i) ret.shape.push_back(a.extent(i));
+  // for (std::size_t i = 1; i < b.rank(); ++i) ret.shape.push_back(b.extent(i));
+  // ret.match_size();
+  std::size_t overlap = b.shape->linear_operator_from().size(); // b.extent(0);
+  std::size_t a_ex = a.size() / overlap;
+  std::size_t b_ex = b.size() / overlap;
+  // TODO: perf
+  for (std::size_t ai = 0; ai < a_ex; ++ai)
+    for (std::size_t ov = 0; ov < overlap; ++ov)
+      for (std::size_t bi = 0; bi < b_ex; ++bi)
+        ret.data[ai * b_ex + bi] += a.data[ai * overlap + ov] * b.data[ov * b_ex + bi];
+  return ret;
+}
+
+mdarray dot(mdarray_cref a, mdarray_cref b) {
+  // LOG(std::format("{}", a.shape));
+  // LOG(std::format("{}", b.shape));
+  // TODO: pre
+  // contract_assert(a.shape->is_linear_operator());
+  contract_assert(b.shape->is_vector());
+  contract_assert(a.shape->is_vector());
+  contract_assert(*a.shape == *b.shape);
+  mdarray ret;
+  ret.shape = shape_t::field();
+  ret.match_size();
+  // for (std::size_t i = 0; i < a.rank() - 1; ++i) ret.shape.push_back(a.extent(i));
+  // for (std::size_t i = 1; i < b.rank(); ++i) ret.shape.push_back(b.extent(i));
+  // ret.match_size();
+  std::size_t overlap = a.size();
+  std::size_t a_ex = a.size() / overlap;
+  std::size_t b_ex = b.size() / overlap;
+  // TODO: perf
+  for (std::size_t ai = 0; ai < a_ex; ++ai)
+    for (std::size_t ov = 0; ov < overlap; ++ov)
+      for (std::size_t bi = 0; bi < b_ex; ++bi)
+        ret.data[ai * b_ex + bi] += a.data[ai * overlap + ov] * b.data[ov * b_ex + bi];
+  return ret;
+}
