@@ -10,7 +10,7 @@ int ivl_main() {
   auto b = random_point();
   // auto ev1 = evaluate(a, b);
   auto ev1 = dot(a - b, a - b);
-  mdarray in(shaped, 6);
+  mdarray in(shape_t::vector(6));
   in[0] = a.x;
   in[1] = a.y;
   in[2] = a.z;

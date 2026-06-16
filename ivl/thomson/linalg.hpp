@@ -178,8 +178,7 @@ struct mdarray_cref {
   }
 
   mdarray_cref operator[](std::size_t i) const pre(
-    shape->is_linear_operator() && i < shape->linear_operator_from().size()
-    || shape->is_vector() && i < shape->size()
+    shape->is_linear_operator() && i < shape->linear_operator_from().size() || shape->is_vector() && i < shape->size()
     // rank() > 0 && i < extent(0)
   ) {
     if (shape->is_vector()) return mdarray_cref{&field_global, data.subspan(i, 1)};
@@ -212,8 +211,7 @@ struct mdarray_ref {
   }
 
   mdarray_ref operator[](std::size_t i) const pre(
-    shape->is_linear_operator() && i < shape->linear_operator_from().size()
-    || shape->is_vector() && i < shape->size()
+    shape->is_linear_operator() && i < shape->linear_operator_from().size() || shape->is_vector() && i < shape->size()
     // rank() > 0 && i < extent(0)
   ) {
     if (shape->is_vector()) return mdarray_ref{&field_global, data.subspan(i, 1)};

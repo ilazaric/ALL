@@ -9,17 +9,8 @@ struct zero {
   shape_t os;
   shape_t input_shape() const { return is; }
   shape_t output_shape() const { return os; }
-  mdarray operator()(const mdarray&) const {
-    mdarray ret;
-    ret.shape = os;
-    ret.match_size();
-    return ret;
-  }
-  zero diff() const {
-    zero ret = *this;
-    ret.os.insert(ret.os.begin(), is.size());
-    return ret;
-  }
+  mdarray operator()(const mdarray&) const { return mdarray(os); }
+  zero diff() const { return zero{.is = is, .os = shape_t::linear_operator(is, os)}; }
 };
 
 struct constant {
@@ -37,28 +28,24 @@ struct id {
   shape_t output_shape() const { return e; }
   mdarray operator()(const mdarray& arg) const { return arg; }
   auto diff() const {
-    constant ret; //{.is = e, .c{shaped, e, e}};
-    ret.is = e;
-    ret.c.shape = e;
-    ret.c.shape.insert(ret.c.shape.begin(), e.size());
-    ret.c.match_size();
-    for (extent_t i = 0; i < e.size(); ++i) ret.c[i][ranked(i, e.rank())] = 1;
+    constant ret{.is = e, .c{shape_t::linear_operator(e, e)}};
+    for (std::size_t i = 0; i < e.size(); ++i) ret.c.data[i * e.size() + i] = 1;
     return ret;
   }
 };
 
 struct scale {
-  extent_t e;
+  shape_t e;
   double c;
-  shape_t input_shape() const { return {e}; }
-  shape_t output_shape() const { return {e}; }
+  shape_t input_shape() const { return e; }
+  shape_t output_shape() const { return e; }
   mdarray operator()(mdarray arg) const {
-    for (extent_t i = 0; i < e; ++i) arg[i] = arg[i].extract_number() * c;
+    for (auto&& el : arg.data) el *= c;
     return arg;
   }
   auto diff() const {
-    constant ret{.is = e, .c{shaped, e, e}};
-    for (extent_t i = 0; i < e; ++i) ret.c[i][i] = c;
+    constant ret{.is = e, .c{shape_t::linear_operator(e, e)}};
+    for (std::size_t i = 0; i < e.size(); ++i) ret.c.data[i * e.size() + i] = c;
     return ret;
   }
 };
@@ -66,17 +53,17 @@ struct scale {
 // V -> R
 // f(v) = v.v
 struct norm2 {
-  shape_t input_shape() const { return {3}; }
-  shape_t output_shape() const { return {}; }
+  shape_t input_shape() const { return shape_t::vector(3); }
+  shape_t output_shape() const { return shape_t::field(); }
   mdarray operator()(const mdarray& arg) const {
-    mdarray ret(shaped);
+    mdarray ret(shape_t::field());
     for (std::size_t i = 0; i < 3; ++i) {
-      double v = arg[i].extract_number();
-      ret = ret.extract_number() + v * v;
+      double v = arg.data[i];
+      ret.data[0] += v * v;
     }
     return ret;
   }
-  scale diff() const { return scale{.e = 3, .c = 2}; }
+  scale diff() const { return scale{.e = shape_t::vector(3), .c = 2}; }
 };
 
 template<typename A, typename B>
@@ -101,11 +88,12 @@ struct tenmul {
   B b;
   shape_t input_shape() const { return a.input_shape(); }
   shape_t output_shape() const {
-    shape_t ret = b.output_shape();
-    ret.pop_back();
-    auto ret2 = a.output_shape();
-    ret.insert(ret.end(), ret2.begin() + 1, ret2.end());
-    return ret;
+    return shape_t::linear_operator(b.output_shape().linear_operator_from(), a.output_shape().linear_operator_to());
+    // shape_t ret = b.output_shape();
+    // ret.pop_back();
+    // auto ret2 = a.output_shape();
+    // ret.insert(ret.end(), ret2.begin() + 1, ret2.end());
+    // return ret;
   }
   mdarray operator()(const mdarray& arg) const { return ::compose(b(arg), a(arg)); }
   auto diff() const {
@@ -128,17 +116,17 @@ struct comp {
 };
 
 struct delta {
-  shape_t input_shape() const { return {6}; }
-  shape_t output_shape() const { return {3}; }
+  shape_t input_shape() const { return shape_t::vector(6); }
+  shape_t output_shape() const { return shape_t::vector(3); }
   mdarray operator()(const mdarray& arg) const {
-    mdarray ret(shaped, 3);
+    mdarray ret(shape_t::vector(3));
     ret[0] = arg[0].extract_number() - arg[3].extract_number();
     ret[1] = arg[1].extract_number() - arg[4].extract_number();
     ret[2] = arg[2].extract_number() - arg[5].extract_number();
     return ret;
   }
   auto diff() const {
-    constant ret{.is = 6, .c{shaped, 6, 3}};
+    constant ret{.is = shape_t::vector(6), .c{shape_t::linear_operator(shape_t::vector(6), shape_t::vector(3))}};
     ret.c[0][0] = 1;
     ret.c[1][1] = 1;
     ret.c[2][2] = 1;
@@ -149,15 +137,15 @@ struct delta {
   }
 };
 
-struct monomial {
-  double c;
-  double e;
-  shape_t input_shape() const { return {}; }
-  shape_t output_shape() const { return {}; }
-  mdarray operator()(mdarray arg) const {
-    arg = c * std::pow(arg.extract_number(), e);
-    return arg;
-  }
-  monomial diff() const { return monomial{.c = c * e, .e = e - 1}; }
-};
+// struct monomial {
+//   double c;
+//   double e;
+//   shape_t input_shape() const { return {}; }
+//   shape_t output_shape() const { return {}; }
+//   mdarray operator()(mdarray arg) const {
+//     arg = c * std::pow(arg.extract_number(), e);
+//     return arg;
+//   }
+//   monomial diff() const { return monomial{.c = c * e, .e = e - 1}; }
+// };
 } // namespace autodiff
