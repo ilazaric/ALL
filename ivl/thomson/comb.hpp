@@ -140,23 +140,49 @@ std::size_t encode_weird2(std::size_t n, std::size_t m, std::vector<std::size_t>
   return ret;
 }
 
-std::vector<std::size_t> decode_first(std::size_t n, std::size_t m, std::size_t enc) {
-  contract_assert(enc < comb_count_smart(n, m));
-  std::size_t last = 0;
-  std::vector<std::size_t> ret(m);
-  for (std::size_t i = 0; i < m; ++i) {
-    while (last < n) {
-      auto foo = comb_count_smart(n - last, m - i - 1);
-      if (enc < foo) break;
-      enc -= foo;
-      ++last;
-    }
-    ret[i] = last;
+std::size_t encode_weird3(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[el];
+  for (std::size_t i = n; i; --i) counts[i - 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    ret += choose(n - i - 1 + counts[i + 1], n - i);
   }
   return ret;
 }
 
-std::vector<std::size_t> decode_second(std::size_t n, std::size_t m, std::size_t enc) {
+std::size_t encode_weird4(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[n - el];
+  for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    ret += choose(n - i - 1 + counts[n - i - 1], n - i);
+  }
+  return ret;
+}
+
+std::size_t encode_weird5(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[n - el];
+  for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    ret += choose(i + counts[i], i + 1);
+  }
+  return ret;
+}
+
+std::vector<std::size_t> decode_first(std::size_t n, std::size_t m, std::size_t enc) {
   contract_assert(enc < comb_count_smart(n, m));
   std::size_t last = 0;
   std::vector<std::size_t> ret(m);

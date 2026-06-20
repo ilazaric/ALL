@@ -1,6 +1,8 @@
 #include <ivl/logger>
 #include "comb"
+#include <map>
 #include <meta>
+#include <print>
 
 void gen_combs_r(
   std::size_t n, std::size_t m, std::size_t idx, std::vector<std::size_t>& curr,
@@ -24,6 +26,14 @@ std::vector<std::vector<std::size_t>> gen_combs(std::size_t n, std::size_t m) {
 }
 
 std::size_t comb_count_stupid(std::size_t n, std::size_t m) { return gen_combs(n, m).size(); }
+
+std::size_t concat(std::size_t n, std::size_t m1, std::size_t enc1, std::size_t m2, std::size_t enc2) {
+  contract_assert(enc1 < comb_count_smart(n, m1));
+  contract_assert(enc2 < comb_count_smart(n, m2));
+  auto dec = decode_first(n, m1, enc1);
+  dec.insert_range(dec.end(), decode_first(n, m2, enc2));
+  return encode_weird2(n, m1 + m2, dec);
+}
 
 int ivl_main() {
   contract_assert(choose(4, 2) == 6);
@@ -53,6 +63,56 @@ int ivl_main() {
         }
       }
     }
+  }
+
+  {
+    std::size_t n = 4;
+    std::size_t m1 = 3;
+    std::size_t m2 = 4;
+    LOG(n, m1, comb_count_smart(n, m1));
+    LOG(n, m2, comb_count_smart(n, m2));
+    LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
+    std::string sep;
+    std::print(" \\ ");
+    sep += "---";
+    for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
+      std::print(" | {: ^3}", e1);
+      sep += "-+----";
+    }
+    std::println();
+    std::map<std::size_t, std::size_t> counts;
+    for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
+      std::println("{}", sep);
+      std::print("{: ^3}", e2);
+      for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
+        std::print(" | {: ^3}", concat(n, m1, e1, m2, e2));
+        if (e1) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2)];
+        if (e2) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1)];
+      }
+      std::println();
+    }
+    for (auto&& [k, v] : counts) LOG(k, v);
+  }
+
+  {
+    std::size_t n = 4;
+    std::size_t m1 = 3;
+    std::size_t m2 = 4;
+    LOG(n, m1, comb_count_smart(n, m1));
+    LOG(n, m2, comb_count_smart(n, m2));
+    LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
+    std::size_t e1 = 12;
+    LOG(e1);
+    std::println("e2  | mix | delta");
+    std::size_t last = 12;
+    std::map<std::size_t, std::size_t> counts;
+    for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
+      std::size_t curr = concat(n, m1, e1, m2, e2);
+      std::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - last);
+      if (e2) ++counts[curr - last];
+      last = curr;
+    }
+    for (auto&& [k, v] : counts) LOG(k, v);
   }
 
   return 0;
