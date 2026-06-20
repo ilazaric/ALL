@@ -97,3 +97,77 @@ std::size_t encode_smart5(std::size_t n, std::size_t m, std::vector<std::size_t>
   }
   return ret;
 }
+
+std::size_t encode_smart6(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::size_t ret = choose(m + n, m) - 1;
+  for (std::size_t i = 0; i < m; ++i) {
+    ret -= choose(m - i + n - data[i] - 1, m - i);
+  }
+  return ret;
+}
+
+std::size_t comb_count_smart(std::size_t n, std::size_t m) { return choose(n + m, n); }
+
+std::size_t encode_weird(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[el];
+  for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i <= n; ++i) {
+    if (counts[i] == m) break;
+    ret += comb_count_smart(n - i, m - counts[i] - 1);
+  }
+  return ret;
+}
+
+std::size_t encode_weird2(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
+  contract_assert(data.size() == m);
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[el];
+  for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    ret += choose(n - i + m - 1 - counts[i], n - i);
+  }
+  return ret;
+}
+
+std::vector<std::size_t> decode_first(std::size_t n, std::size_t m, std::size_t enc) {
+  contract_assert(enc < comb_count_smart(n, m));
+  std::size_t last = 0;
+  std::vector<std::size_t> ret(m);
+  for (std::size_t i = 0; i < m; ++i) {
+    while (last < n) {
+      auto foo = comb_count_smart(n - last, m - i - 1);
+      if (enc < foo) break;
+      enc -= foo;
+      ++last;
+    }
+    ret[i] = last;
+  }
+  return ret;
+}
+
+std::vector<std::size_t> decode_second(std::size_t n, std::size_t m, std::size_t enc) {
+  contract_assert(enc < comb_count_smart(n, m));
+  std::size_t last = 0;
+  std::vector<std::size_t> ret(m);
+  for (std::size_t i = 0; i < m; ++i) {
+    while (last < n) {
+      auto foo = comb_count_smart(n - last, m - i - 1);
+      if (enc < foo) break;
+      enc -= foo;
+      ++last;
+    }
+    ret[i] = last;
+  }
+  return ret;
+}

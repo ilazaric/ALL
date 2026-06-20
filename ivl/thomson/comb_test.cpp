@@ -24,7 +24,6 @@ std::vector<std::vector<std::size_t>> gen_combs(std::size_t n, std::size_t m) {
 }
 
 std::size_t comb_count_stupid(std::size_t n, std::size_t m) { return gen_combs(n, m).size(); }
-std::size_t comb_count_smart(std::size_t n, std::size_t m) { return choose(n + m, n); }
 
 int ivl_main() {
   contract_assert(choose(4, 2) == 6);
@@ -38,7 +37,6 @@ int ivl_main() {
     std::size_t m = 8;
     auto combs = gen_combs(n, m);
     LOG(combs.size());
-
     template for (constexpr auto refl : define_static_array(members_of(^^::, std::meta::access_context::unchecked()))) {
       if constexpr (has_identifier(refl) && identifier_of(refl).starts_with("encode_")) {
         std::cerr << "validating " << identifier_of(refl) << " ...\n";
@@ -47,16 +45,14 @@ int ivl_main() {
           contract_assert(i == [:refl:](n, m, combs[i]));
         }
       }
+      if constexpr (has_identifier(refl) && identifier_of(refl).starts_with("decode_")) {
+        std::cerr << "validating " << identifier_of(refl) << " ...\n";
+        for (std::size_t i = 0; i < combs.size(); ++i) {
+          0; // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125904
+          contract_assert(combs[i] == [:refl:](n, m, i));
+        }
+      }
     }
-
-    // for (std::size_t i = 0; i < combs.size(); ++i) {
-    //   contract_assert(i == encode_stupid(n, m, combs[i]));
-    //   contract_assert(i == encode_smart(n, m, combs[i]));
-    //   contract_assert(i == encode_smart2(n, m, combs[i]));
-    //   contract_assert(i == encode_smart3(n, m, combs[i]));
-    //   contract_assert(i == encode_smart4(n, m, combs[i]));
-    //   contract_assert(i == encode_smart5(n, m, combs[i]));
-    // }
   }
 
   return 0;
