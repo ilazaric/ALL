@@ -65,7 +65,7 @@ int ivl_main() {
     }
   }
 
-  {
+  if (0) {
     std::size_t n = 4;
     std::size_t m1 = 3;
     std::size_t m2 = 4;
@@ -80,18 +80,62 @@ int ivl_main() {
       sep += "-+----";
     }
     std::println();
-    std::map<std::size_t, std::size_t> counts;
     for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
       std::println("{}", sep);
       std::print("{: ^3}", e2);
       for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
         std::print(" | {: ^3}", concat(n, m1, e1, m2, e2));
-        if (e1) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2)];
-        if (e2) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1)];
       }
       std::println();
     }
+  }
+
+  if (0) {
+    std::size_t n = 5;
+    std::size_t m1 = 8;
+    std::size_t m2 = 8;
+    LOG(n, m1, comb_count_smart(n, m1));
+    LOG(n, m2, comb_count_smart(n, m2));
+    LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
+    std::map<std::size_t, std::size_t> counts;
+    for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
+      for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
+        if (e1) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2)];
+        if (e2) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1)];
+      }
+    }
     for (auto&& [k, v] : counts) LOG(k, v);
+  }
+
+  {
+    std::size_t n = 4;
+    std::size_t m1 = 3;
+    std::size_t m2 = 4;
+    LOG(n, m1, comb_count_smart(n, m1));
+    LOG(n, m2, comb_count_smart(n, m2));
+    LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
+    std::string nines;
+    for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
+      for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
+        if (e1) {
+          std::size_t delta = concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2);
+          if (delta == 9)
+            std::format_to(
+              std::back_inserter(nines), "{}+{}:{} -- {}+{}:{}\n", e1, e2, concat(n, m1, e1, m2, e2), e1 - 1, e2,
+              concat(n, m1, e1 - 1, m2, e2)
+            );
+        }
+        if (e2) {
+          std::size_t delta = concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1);
+          if (delta == 9)
+            std::format_to(
+              std::back_inserter(nines), "{}+{}:{} -- {}+{}:{}\n", e1, e2, concat(n, m1, e1, m2, e2), e1, e2 - 1,
+              concat(n, m1, e1, m2, e2 - 1)
+            );
+        }
+      }
+    }
+    std::println("nines:\n{}", nines);
   }
 
   {
@@ -114,6 +158,8 @@ int ivl_main() {
     }
     for (auto&& [k, v] : counts) LOG(k, v);
   }
+
+  // m actually doesnt matter
 
   return 0;
 }
