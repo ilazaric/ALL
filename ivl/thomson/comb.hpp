@@ -197,3 +197,34 @@ std::vector<std::size_t> decode_first(std::size_t n, std::size_t m, std::size_t 
   }
   return ret;
 }
+
+std::size_t generic_encode_weird5(std::size_t n, std::vector<std::size_t> data) {
+  std::ranges::sort(data);
+  contract_assert(data.empty() || data.back() <= n);
+  std::vector<std::size_t> counts(n + 1, 0);
+  for (auto el : data) ++counts[n - el];
+  for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+  std::size_t ret = 0;
+  for (std::size_t i = 0; i < n; ++i) {
+    ret += choose(i + counts[i], i + 1);
+  }
+  return ret;
+}
+
+std::vector<std::size_t> generic_decode_weird5(std::size_t n, std::size_t enc) {
+  contract_assert(n != 0);
+  std::vector<std::size_t> counts(n + 1, 0);
+  std::vector<std::size_t> ret;
+  for (std::size_t i = n - 1; i + 1; --i) {
+    while (enc >= choose(i + 1 + counts[i], i + 1)) ++counts[i];
+    enc -= choose(i + counts[i], i + 1);
+    // for (std::size_t j = counts[i + 1]; j < counts[i]; ++j) ret.push_back(n - i);
+    // LOG(i, counts[i]);
+  }
+  for (std::size_t i = n - 1; i + 1; --i) {
+    std::size_t cnt = counts[i] - (i ? counts[i - 1] : 0);
+    for (std::size_t j = 0; j < cnt; ++j) ret.push_back(n - i);
+  }
+  contract_assert(enc == 0);
+  return ret;
+}

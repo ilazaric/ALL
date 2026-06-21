@@ -63,6 +63,22 @@ int ivl_main() {
         }
       }
     }
+    std::cerr << "validating generic_encode_weird5 ...\n";
+    for (std::size_t i = 0; i < combs.size(); ++i) {
+      0; // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125904
+      contract_assert(i == generic_encode_weird5(n, combs[i]));
+    }
+    std::cerr << "validating generic_decode_weird5 ...\n";
+    for (std::size_t i = 0; i < combs.size(); ++i) {
+      0; // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125904
+      auto vec = combs[i];
+      while (!vec.empty() && vec.front() == 0) vec.erase(vec.begin());
+      // LOG(i);
+      // LOG(std::format("{}", combs[i]));
+      // LOG(std::format("{}", vec));
+      // LOG(std::format("{}", generic_decode_weird5(n, i)));
+      contract_assert(vec == generic_decode_weird5(n, i));
+    }
   }
 
   if (0) {
