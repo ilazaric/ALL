@@ -79,6 +79,13 @@ int ivl_main() {
       // LOG(std::format("{}", generic_decode_weird5(n, i)));
       contract_assert(vec == generic_decode_weird5(n, i));
     }
+    std::cerr << "validating count ...\n";
+    for (std::size_t i = 0; i < combs.size(); ++i) {
+      for (std::size_t d = 1; d <= n; ++d) {
+        0; // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=125904
+        contract_assert(count(n, i, d) == std::ranges::count(combs[i], d));
+      }
+    }
   }
 
   if (0) {
@@ -154,17 +161,17 @@ int ivl_main() {
     std::println("nines:\n{}", nines);
   }
 
-  {
+  if (0) {
     std::size_t n = 4;
     std::size_t m1 = 3;
     std::size_t m2 = 4;
     LOG(n, m1, comb_count_smart(n, m1));
     LOG(n, m2, comb_count_smart(n, m2));
     LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
-    std::size_t e1 = 12;
+    std::size_t e1 = 1;
     LOG(e1);
     std::println("e2  | mix | delta");
-    std::size_t last = 12;
+    std::size_t last = e1;
     std::map<std::size_t, std::size_t> counts;
     for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
       std::size_t curr = concat(n, m1, e1, m2, e2);
@@ -175,7 +182,33 @@ int ivl_main() {
     for (auto&& [k, v] : counts) LOG(k, v);
   }
 
-  // m actually doesnt matter
+  if (1) {
+    std::size_t n = 4;
+    std::size_t m1 = 3;
+    std::size_t m2 = 4;
+    LOG(n, m1, comb_count_smart(n, m1));
+    LOG(n, m2, comb_count_smart(n, m2));
+    LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
+    std::size_t e1 = 2;
+    LOG(e1);
+    std::println("e2  | mix | delta");
+    for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
+      std::size_t curr = concat(n, m1, e1, m2, e2);
+      std::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - e2);
+    }
+  }
+
+  {
+    std::size_t n = 4;
+    std::size_t m = 6;
+    state s{n};
+    auto combs = gen_combs(n, m);
+    for (auto&& el : combs) {
+      0;
+      std::size_t e = generic_encode_weird5(n, el);
+      contract_assert(s.width(e) == generic_decode_weird5(n, e).size());
+    }
+  }
 
   return 0;
 }

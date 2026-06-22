@@ -109,7 +109,7 @@ std::size_t encode_smart6(std::size_t n, std::size_t m, std::vector<std::size_t>
   return ret;
 }
 
-std::size_t comb_count_smart(std::size_t n, std::size_t m) { return choose(n + m, n); }
+std::size_t comb_count_smart(std::size_t n, std::size_t m) { return m == (std::size_t)-1 ? 0 : choose(n + m, n); }
 
 std::size_t encode_weird(std::size_t n, std::size_t m, std::vector<std::size_t> data) {
   contract_assert(data.size() == m);
@@ -228,3 +228,64 @@ std::vector<std::size_t> generic_decode_weird5(std::size_t n, std::size_t enc) {
   contract_assert(enc == 0);
   return ret;
 }
+
+std::size_t width(std::size_t n, std::size_t x) {
+  std::size_t m = 0;
+  while (choose(n + m, n) <= x) ++m;
+  return m;
+}
+
+std::size_t count(std::size_t n, std::size_t enc, std::size_t digit) {
+  contract_assert(digit <= n);
+  contract_assert(digit != 0);
+  std::size_t bigw = 0;
+  while (digit) {
+    bigw = width(n, enc);
+    enc -= comb_count_smart(n, bigw - 1);
+    --n;
+    --digit;
+  }
+  return bigw - width(n, enc);
+}
+
+struct state {
+  std::size_t n;
+
+  std::size_t width(std::size_t x) const {
+    std::size_t m = 0;
+    while (choose(n + m, n) <= x) ++m;
+    return m;
+  }
+
+  std::size_t encode(std::span<const std::size_t> dec) const {
+    std::vector<std::size_t> counts(n + 1, 0);
+    for (auto el : dec) {
+      contract_assert(el <= n);
+      ++counts[n - el];
+    }
+    for (std::size_t i = 0; i < n; ++i) counts[i + 1] += counts[i];
+    std::size_t ret = 0;
+    for (std::size_t i = 0; i < n; ++i) {
+      ret += choose(i + counts[i], i + 1);
+    }
+    return ret;
+  }
+
+  std::vector<std::size_t> decode(std::size_t enc) const {
+    contract_assert(n != 0);
+    std::vector<std::size_t> counts(n + 1, 0);
+    std::vector<std::size_t> ret;
+    for (std::size_t i = n - 1; i + 1; --i) {
+      while (enc >= choose(i + 1 + counts[i], i + 1)) ++counts[i];
+      enc -= choose(i + counts[i], i + 1);
+      // for (std::size_t j = counts[i + 1]; j < counts[i]; ++j) ret.push_back(n - i);
+      // LOG(i, counts[i]);
+    }
+    for (std::size_t i = n - 1; i + 1; --i) {
+      std::size_t cnt = counts[i] - (i ? counts[i - 1] : 0);
+      for (std::size_t j = 0; j < cnt; ++j) ret.push_back(n - i);
+    }
+    contract_assert(enc == 0);
+    return ret;
+  }
+};
