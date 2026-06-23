@@ -35,6 +35,12 @@ std::size_t concat(std::size_t n, std::size_t m1, std::size_t enc1, std::size_t 
   return encode_weird2(n, m1 + m2, dec);
 }
 
+std::size_t generic_concat(std::size_t n, std::size_t enc1, std::size_t enc2) {
+  auto dec = generic_decode_weird5(n, enc1);
+  dec.insert_range(dec.end(), generic_decode_weird5(n, enc2));
+  return generic_encode_weird5(n, dec);
+}
+
 int ivl_main() {
   contract_assert(choose(4, 2) == 6);
   contract_assert(choose(6, 2) == 15);
@@ -88,7 +94,7 @@ int ivl_main() {
     }
   }
 
-  if (0) {
+  if (1) {
     std::size_t n = 4;
     std::size_t m1 = 3;
     std::size_t m2 = 4;
@@ -108,12 +114,13 @@ int ivl_main() {
       std::print("{: ^3}", e2);
       for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
         std::print(" | {: ^3}", concat(n, m1, e1, m2, e2));
+        contract_assert(concat(n, m1, e1, m2, e2) == generic_concat(n, e1, e2));
       }
       std::println();
     }
   }
 
-  if (0) {
+  if (1) {
     std::size_t n = 5;
     std::size_t m1 = 8;
     std::size_t m2 = 8;
@@ -125,9 +132,10 @@ int ivl_main() {
       for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
         if (e1) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2)];
         if (e2) ++counts[concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1)];
+        contract_assert(concat(n, m1, e1, m2, e2) == generic_concat(n, e1, e2));
       }
     }
-    for (auto&& [k, v] : counts) LOG(k, v);
+    // for (auto&& [k, v] : counts) LOG(k, v);
   }
 
   {

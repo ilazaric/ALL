@@ -1,7 +1,9 @@
 #pragma once
 
 #include <cstdint>
+#include <span>
 #include <tuple>
+#include <vector>
 
 struct autodiff_t {
   std::size_t in_size;
@@ -14,16 +16,20 @@ struct autodiff_t {
   autodiff_t(std::size_t in_size, std::size_t out_size, std::size_t dr)
       : in_size(in_size), out_size(out_size), data(dr) {
     std::size_t curr = out_size;
-    for (std::size_t i = 0; i < diff_rank; ++i) {
-      data[i].resize(curr);
+    for (std::size_t i = 0; i < diff_rank(); ++i) {
+      data[i].resize(curr, 0.0);
       curr *= in_size;
     }
   }
 
+  using shape_t = std::tuple<std::size_t, std::size_t, std::size_t>;
+
+  explicit autodiff_t(shape_t shape) : autodiff_t(std::get<0>(shape), std::get<1>(shape), std::get<2>(shape)) {}
+
   std::size_t input_size() const { return in_size; }
   std::size_t output_size() const { return out_size; }
   std::size_t diff_rank() const { return data.size(); }
-  auto shape() const { return std::tuple{input_size(), output_size(), diff_rank()}; }
+  shape_t shape() const { return std::tuple{input_size(), output_size(), diff_rank()}; }
 
   void decompose_index(std::size_t index, std::span<std::size_t> in, std::size_t& out) const {
     out = index % out_size;
@@ -35,8 +41,6 @@ struct autodiff_t {
     contract_assert(index == 0);
   }
 
-  std::size_t associated_index() {}
-
   void verify_symmetry() const {
     for (std::size_t rank = 2, foo = 1; rank < diff_rank(); ++rank, foo *= input_size())
       for (std::size_t i0 = 0; i0 < input_size(); ++i0)
@@ -46,8 +50,8 @@ struct autodiff_t {
             std::size_t j = i1 * input_size() * foo + i0 * foo + ir;
             std::size_t k = i1 * input_size() * foo + ir * input_size() + i0;
             for (std::size_t l = 0; l < output_size(); ++l) {
-              contract_assert(abs(data[i * output_size() + l] - data[j * output_size() + l]) < 1e-5);
-              contract_assert(abs(data[i * output_size() + l] - data[k * output_size() + l]) < 1e-5);
+              contract_assert(abs(data[rank][i * output_size() + l] - data[rank][j * output_size() + l]) < 1e-5);
+              contract_assert(abs(data[rank][i * output_size() + l] - data[rank][k * output_size() + l]) < 1e-5);
             }
           }
   }
@@ -117,9 +121,6 @@ struct autodiff_t {
 // is it really exponential ?
 // methinks i dont understand multilinear maps well enough
 // this is a weird sort of convolution of multilinear maps
-
-std::size_t bit_compress(std::size_t x, std::size_t m) { return _pext_u64(x, m); }
-std::size_t bit_expand(std::size_t x, std::size_t m) { return _pdep_u64(x, m); }
 
 // f,g : R^a -> R^b
 // f.g = f.g : R^a -> R
