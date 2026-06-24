@@ -25,7 +25,7 @@ autodiff_t norm2(const autodiff_t& arg) { return dot(arg, arg); }
 // (exp o g)'(x) = exp(g(x)) * g'(x)
 // '' = exp(g(x)) * g'(x)^2 + exp(g(x)) * g''(x)
 // TODO: not best, taylor up to 100
-autodiff_t exp(const autodiff_t& arg) {
+autodiff_t exp_bad(const autodiff_t& arg) {
   contract_assert(arg.output_size() == 1);
   autodiff_t ret(arg.shape());
   autodiff_t tmp(arg.shape());
@@ -42,6 +42,16 @@ autodiff_t exp(const autodiff_t& arg) {
     }
   return ret;
 }
+
+// autodiff_t exp_good(const autodiff_t& arg) {
+//   contract_assert(arg.output_size() == 1);
+//   autodiff_t ret(arg.shape());
+//   ret.data[0][0] = std::exp(arg.data[0][0]);
+//   for (std::size_t i = 1; i < arg.diff_rank(); ++i) {
+    
+//   }
+//   return ret;
+// }
 
 // 1/f
 // -f'/f^2
@@ -89,8 +99,8 @@ int main() {
   }
 
   {
-    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp(arg)); };
-    auto f2 = [](const autodiff_t& arg) { return exp(arg * 2.0); };
+    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_bad(arg)); };
+    auto f2 = [](const autodiff_t& arg) { return exp_bad(arg * 2.0); };
     autodiff_t arg(1, 1, 5);
     arg.data[0][0] = 3;
     arg.data[1][0] = 1;

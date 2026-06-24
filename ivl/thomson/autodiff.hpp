@@ -13,7 +13,7 @@ struct autodiff_t {
   // shape: R^in -> R^in -> ... -> R^out
   // layout: data[i][a][b][c] is always contiguous
 
-  autodiff_t(std::size_t in_size, std::size_t out_size, std::size_t dr)
+  autodiff_t(std::size_t in_size, std::size_t out_size, std::size_t dr) pre(in_size > 0 && out_size > 0 && dr > 0)
       : in_size(in_size), out_size(out_size), data(dr) {
     std::size_t curr = out_size;
     for (std::size_t i = 0; i < diff_rank(); ++i) {
