@@ -74,6 +74,8 @@ void show1(const autodiff_t& arg) {
   std::println();
 }
 
+bool close(double a, double b) { return abs(a - b) < 1e-5; }
+
 int main() {
   {
     autodiff_t arg(1, 1, 3);
@@ -81,6 +83,9 @@ int main() {
     arg.data[1][0] = 1;
     auto ret = polynomial({3, 2, 1}, arg);
     show1(ret);
+    contract_assert(close(ret.data[0][0], 38.0));
+    contract_assert(close(ret.data[1][0], 12.0));
+    contract_assert(close(ret.data[2][0], 2.0));
   }
 
   {
