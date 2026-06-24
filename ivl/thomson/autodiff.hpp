@@ -153,11 +153,11 @@ double dot_specific(const autodiff_t& left, const autodiff_t& right, std::size_t
   const std::size_t M = left.output_size();
   const std::size_t DR = left.diff_rank();
   std::vector<std::size_t> carved(rank);
-  ;
   double ret = 0.0;
   {
     std::size_t copy = i;
     for (std::size_t r = 0; r < rank; ++r, copy /= N) carved[r] = copy % N;
+    contract_assert(copy == 0);
   }
   for (std::size_t left_mask = 0; left_mask < (1UZ << rank); ++left_mask) {
     std::size_t left_rank = std::popcount(left_mask);
@@ -170,6 +170,38 @@ double dot_specific(const autodiff_t& left, const autodiff_t& right, std::size_t
     }
     for (std::size_t m = 0; m < M; ++m)
       ret += left.data[left_rank][left_i * M + m] * right.data[right_rank][right_i * M + m];
+  }
+  return ret;
+}
+
+double scale_specific(const autodiff_t& left, const autodiff_t& right, std::size_t rank, std::size_t i) {
+  contract_assert(left.input_size() == right.input_size());
+  contract_assert(left.diff_rank() == right.diff_rank());
+  contract_assert(right.output_size() == 1);
+  contract_assert(left.diff_rank() <= 64);
+  contract_assert(left.diff_rank() > rank);
+  contract_assert(left.data[rank].size() > i);
+  const std::size_t N = left.input_size();
+  const std::size_t M = left.output_size();
+  const std::size_t DR = left.diff_rank();
+  const std::size_t m = i % M;
+  std::vector<std::size_t> carved(rank);
+  double ret = 0.0;
+  {
+    std::size_t copy = i / M;
+    for (std::size_t r = 0; r < rank; ++r, copy /= N) carved[r] = copy % N;
+    contract_assert(copy == 0);
+  }
+  for (std::size_t left_mask = 0; left_mask < (1UZ << rank); ++left_mask) {
+    std::size_t left_rank = std::popcount(left_mask);
+    std::size_t right_rank = rank - left_rank;
+    std::size_t left_i = 0;
+    std::size_t right_i = 0;
+    for (std::size_t r = 0; r < rank; ++r) {
+      std::size_t& store = ((left_mask >> r) & 1) ? left_i : right_i;
+      store = store * N + carved[r];
+    }
+    ret += left.data[left_rank][left_i * M + m] * right.data[right_rank][right_i];
   }
   return ret;
 }
@@ -188,5 +220,19 @@ autodiff_t dot(const autodiff_t& left, const autodiff_t& right) {
   autodiff_t ret(N, 1, DR);
   for (std::size_t rank = 0; rank < DR; ++rank)
     for (std::size_t i = 0; i < ret.data[rank].size(); ++i) ret.data[rank][i] = dot_specific(left, right, rank, i);
+  return ret;
+}
+
+autodiff_t scale(const autodiff_t& left, const autodiff_t& right) {
+  contract_assert(left.input_size() == right.input_size());
+  contract_assert(left.diff_rank() == right.diff_rank());
+  contract_assert(right.output_size() == 1);
+  contract_assert(left.diff_rank() <= 64);
+  const std::size_t N = left.input_size();
+  const std::size_t M = left.output_size();
+  const std::size_t DR = left.diff_rank();
+  autodiff_t ret(N, M, DR);
+  for (std::size_t rank = 0; rank < DR; ++rank)
+    for (std::size_t i = 0; i < ret.data[rank].size(); ++i) ret.data[rank][i] = scale_specific(left, right, rank, i);
   return ret;
 }
