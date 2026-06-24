@@ -187,5 +187,6 @@ int main() {
     std::println("validating pow ...");
     contract_assert(close(pow(arg2, 3), polynomial({0, 0, 0, 1}, arg2)));
     contract_assert(close(polynomial({0, 0, 0, 1}, pow(arg2, 1.0 / 3.0)), arg2));
+    contract_assert(close(dot(pow(arg2, 1.6), pow(arg2, 1.9)), pow(arg2, 3.5)));
   }
 }
