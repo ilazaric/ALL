@@ -116,6 +116,14 @@ autodiff_t pow(autodiff_t arg, double e) {
   return ret;
 }
 
+autodiff_t norm(const autodiff_t& arg) { return pow(norm2(arg), 0.5); }
+
+autodiff_t distance(const autodiff_t& left, const autodiff_t& right) { return norm(left - right); }
+
+// autodiff_t normed_distance(const autodiff_t& left, const autodiff_t& right) {
+//   return distance(dot(left, inverse(norm(left))), dot(right, inverse(norm(right))));
+// }
+
 void show1(const autodiff_t& arg) {
   for (std::size_t r = 0; r < arg.diff_rank(); ++r) {
     std::println("rank: {}", r);
