@@ -1,4 +1,5 @@
 #include "autodiff"
+#include <cmath>
 #include <print>
 
 autodiff_t polynomial(const std::vector<double>& coefs, const autodiff_t& arg) {
@@ -43,15 +44,40 @@ autodiff_t exp_bad(const autodiff_t& arg) {
   return ret;
 }
 
-// autodiff_t exp_good(const autodiff_t& arg) {
-//   contract_assert(arg.output_size() == 1);
-//   autodiff_t ret(arg.shape());
-//   ret.data[0][0] = std::exp(arg.data[0][0]);
-//   for (std::size_t i = 1; i < arg.diff_rank(); ++i) {
-    
-//   }
-//   return ret;
-// }
+autodiff_t exp_good(const autodiff_t& arg) {
+  contract_assert(arg.output_size() == 1);
+  autodiff_t ret(arg.shape());
+  ret.data[0][0] = std::exp(arg.data[0][0]);
+  for (std::size_t i = 1; i < arg.diff_rank(); ++i) {
+    autodiff_t tmp(arg.shape());
+    tmp.data[i] = arg.data[i];
+    autodiff_t tmp2(arg.shape());
+    tmp2.data[0][0] = 1.0;
+    std::size_t cnt = (arg.diff_rank() - 1) / i + 1;
+    for (std::size_t j = 0; j < cnt; ++j) {
+      tmp2 = dot(tmp2, tmp);
+      tmp2 /= (double)(cnt - j);
+      tmp2.data[0][0] = 1.0;
+    }
+    ret = dot(ret, tmp2);
+  }
+  return ret;
+}
+
+autodiff_t exp_best(autodiff_t arg) {
+  contract_assert(arg.output_size() == 1);
+  autodiff_t ret(arg.shape());
+  double final_coef = std::exp(arg.data[0][0]);
+  arg.data[0][0] = 0.0;
+  ret.data[0][0] = 1.0;
+  for (std::size_t r = 1; r < arg.diff_rank(); ++r) {
+    ret = dot(ret, arg);
+    ret /= (double)(arg.diff_rank() - r);
+    ret.data[0][0] = 1.0;
+  }
+  ret *= final_coef;
+  return ret;
+}
 
 // 1/f
 // -f'/f^2
@@ -88,6 +114,7 @@ bool close(double a, double b) { return abs(a - b) < 1e-5; }
 
 int main() {
   {
+    std::println("validating polynomial ...");
     autodiff_t arg(1, 1, 3);
     arg.data[0][0] = 5;
     arg.data[1][0] = 1;
@@ -99,12 +126,55 @@ int main() {
   }
 
   {
+    std::println("validating exp_bad ...");
     auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_bad(arg)); };
     auto f2 = [](const autodiff_t& arg) { return exp_bad(arg * 2.0); };
     autodiff_t arg(1, 1, 5);
     arg.data[0][0] = 3;
     arg.data[1][0] = 1;
     show1(f1(arg) - f2(arg));
+  }
+
+  {
+    std::println("validating exp_good ...");
+    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
+    auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
+    autodiff_t arg(1, 1, 5);
+    arg.data[0][0] = 3;
+    arg.data[1][0] = 1;
+    show1(f1(arg) - f2(arg));
+  }
+
+  {
+    std::println("validating exp_best ...");
+    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_best(arg)); };
+    auto f2 = [](const autodiff_t& arg) { return exp_best(arg * 2.0); };
+    autodiff_t arg(1, 1, 5);
+    arg.data[0][0] = 3;
+    arg.data[1][0] = 1;
+    show1(f1(arg) - f2(arg));
+  }
+
+  {
+    std::println("comparing exp_bad and exp_good ...");
+    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
+    auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
+    autodiff_t arg(1, 1, 5);
+    arg.data[0][0] = 3;
+    arg.data[1][0] = 1;
+    autodiff_t arg2 = polynomial({2, 1, 3, 4, 5}, arg);
+    show1(exp_bad(arg) - exp_good(arg));
+  }
+
+  {
+    std::println("comparing exp_bad and exp_best ...");
+    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
+    auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
+    autodiff_t arg(1, 1, 5);
+    arg.data[0][0] = 3;
+    arg.data[1][0] = 1;
+    autodiff_t arg2 = polynomial({2, 1, 3, 4, 5}, arg);
+    show1(exp_bad(arg) - exp_best(arg));
   }
 
   {
