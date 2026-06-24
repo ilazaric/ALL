@@ -79,6 +79,29 @@ struct autodiff_t {
     left -= right;
     return left;
   }
+
+  autodiff_t& operator*=(double x) {
+    for (auto& vec : data)
+      for (auto& el : vec) el *= x;
+    return *this;
+  }
+
+  friend autodiff_t operator*(autodiff_t arg, double x) {
+    arg *= x;
+    return arg;
+  }
+
+  friend autodiff_t operator*(double x, autodiff_t arg) {
+    arg *= x;
+    return arg;
+  }
+
+  autodiff_t& operator/=(double x) { return *this *= (1.0 / x); }
+
+  friend autodiff_t operator/(autodiff_t arg, double x) {
+    arg /= x;
+    return arg;
+  }
 };
 
 // f : A -> B
@@ -122,6 +145,35 @@ struct autodiff_t {
 // methinks i dont understand multilinear maps well enough
 // this is a weird sort of convolution of multilinear maps
 
+double dot_specific(const autodiff_t& left, const autodiff_t& right, std::size_t rank, std::size_t i) {
+  contract_assert(left.shape() == right.shape());
+  contract_assert(left.diff_rank() > rank);
+  contract_assert(left.data[rank].size() > i);
+  const std::size_t N = left.input_size();
+  const std::size_t M = left.output_size();
+  const std::size_t DR = left.diff_rank();
+  std::vector<std::size_t> carved(rank);
+  ;
+  double ret = 0.0;
+  {
+    std::size_t copy = i;
+    for (std::size_t r = 0; r < rank; ++r, copy /= N) carved[r] = copy % N;
+  }
+  for (std::size_t left_mask = 0; left_mask < (1UZ << rank); ++left_mask) {
+    std::size_t left_rank = std::popcount(left_mask);
+    std::size_t right_rank = rank - left_rank;
+    std::size_t left_i = 0;
+    std::size_t right_i = 0;
+    for (std::size_t r = 0; r < rank; ++r) {
+      std::size_t& store = ((left_mask >> r) & 1) ? left_i : right_i;
+      store = store * N + carved[r];
+    }
+    for (std::size_t m = 0; m < M; ++m)
+      ret += left.data[left_rank][left_i * M + m] * right.data[right_rank][right_i * M + m];
+  }
+  return ret;
+}
+
 // f,g : R^a -> R^b
 // f.g = f.g : R^a -> R
 // D(f.g)(x) = Df(x)(g(x)) + Dg(x)((f(x))
@@ -139,22 +191,23 @@ autodiff_t dot(const autodiff_t& left, const autodiff_t& right) {
   for (std::size_t rank = 0; rank < DR; ++rank) {
     if (rank) carved.emplace_back();
     for (std::size_t i = 0; i < ret.data[rank].size(); ++i) {
-      {
-        std::size_t copy = i;
-        for (std::size_t r = 0; r < rank; ++r, copy /= N) carved[r] = copy % N;
-      }
-      for (std::size_t left_mask = 0; left_mask < (1UZ << rank); ++left_mask) {
-        std::size_t left_rank = std::popcount(left_mask);
-        std::size_t right_rank = rank - left_rank;
-        std::size_t left_i = 0;
-        std::size_t right_i = 0;
-        for (std::size_t r = 0; r < rank; ++r) {
-          std::size_t& store = ((left_mask >> r) & 1) ? left_i : right_i;
-          store = store * N + carved[r];
-        }
-        for (std::size_t m = 0; m < M; ++m)
-          ret.data[rank][i] += left.data[left_rank][left_i * M + m] * right.data[right_rank][right_i * M + m];
-      }
+      ret.data[rank][i] = dot_specific(left, right, rank, i);
+      // {
+      //   std::size_t copy = i;
+      //   for (std::size_t r = 0; r < rank; ++r, copy /= N) carved[r] = copy % N;
+      // }
+      // for (std::size_t left_mask = 0; left_mask < (1UZ << rank); ++left_mask) {
+      //   std::size_t left_rank = std::popcount(left_mask);
+      //   std::size_t right_rank = rank - left_rank;
+      //   std::size_t left_i = 0;
+      //   std::size_t right_i = 0;
+      //   for (std::size_t r = 0; r < rank; ++r) {
+      //     std::size_t& store = ((left_mask >> r) & 1) ? left_i : right_i;
+      //     store = store * N + carved[r];
+      //   }
+      //   for (std::size_t m = 0; m < M; ++m)
+      //     ret.data[rank][i] += left.data[left_rank][left_i * M + m] * right.data[right_rank][right_i * M + m];
+      // }
     }
   }
   return ret;
