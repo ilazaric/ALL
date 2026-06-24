@@ -31,7 +31,7 @@ autodiff_t exp_bad(const autodiff_t& arg) {
   autodiff_t ret(arg.shape());
   autodiff_t tmp(arg.shape());
   tmp.data[0][0] = 1;
-  for (std::size_t i = 0; i < 100; ++i) {
+  for (std::size_t i = 0; i < 10000; ++i) {
     ret += tmp;
     tmp /= i + 1.0;
     tmp = dot(tmp, arg);
@@ -100,7 +100,21 @@ autodiff_t inverse(const autodiff_t& arg) {
 // df(x) = a x^(a-1)
 // d(fog)(x) = a g(x)^(a-1) * dg(x)
 
-// autodiff_t pow(const autodiff_t& arg, double e) { contract_assert(arg.output_size() == 1); }
+autodiff_t pow(autodiff_t arg, double e) {
+  contract_assert(arg.output_size() == 1);
+  contract_assert(arg.data[0][0] > 1e-5);
+  double free_coef = std::pow(arg.data[0][0], e);
+  arg /= arg.data[0][0];
+  arg.data[0][0] = 0.0;
+  autodiff_t ret(arg.shape());
+  for (std::size_t r = arg.diff_rank(); r; --r) {
+    ret = dot(ret, arg);
+    ret *= (e - (double)(r - 1)) / (double)r;
+    ret.data[0][0] = 1.0;
+  }
+  ret *= free_coef;
+  return ret;
+}
 
 void show1(const autodiff_t& arg) {
   for (std::size_t r = 0; r < arg.diff_rank(); ++r) {
@@ -111,6 +125,14 @@ void show1(const autodiff_t& arg) {
 }
 
 bool close(double a, double b) { return abs(a - b) < 1e-5; }
+
+bool close(const autodiff_t& a, const autodiff_t& b) {
+  contract_assert(a.shape() == b.shape());
+  for (std::size_t r = 0; r < a.diff_rank(); ++r)
+    for (std::size_t i = 0; i < a.data[r].size(); ++i)
+      if (!close(a.data[r][i], b.data[r][i])) return false;
+  return true;
+}
 
 int main() {
   {
@@ -125,63 +147,50 @@ int main() {
     contract_assert(close(ret.data[2][0], 2.0));
   }
 
+  autodiff_t arg(1, 1, 5);
+  arg.data[0][0] = 1.5;
+  arg.data[1][0] = 1;
+  autodiff_t arg2 = polynomial({0.1, 0.2, 0.1, -0.2, 0.1}, arg);
+
   {
     std::println("validating exp_bad ...");
     auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_bad(arg)); };
     auto f2 = [](const autodiff_t& arg) { return exp_bad(arg * 2.0); };
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    show1(f1(arg) - f2(arg));
+    contract_assert(close(f1(arg2), f2(arg2)));
   }
 
   {
     std::println("validating exp_good ...");
     auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
     auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    show1(f1(arg) - f2(arg));
+    contract_assert(close(f1(arg2), f2(arg2)));
   }
 
   {
     std::println("validating exp_best ...");
     auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_best(arg)); };
     auto f2 = [](const autodiff_t& arg) { return exp_best(arg * 2.0); };
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    show1(f1(arg) - f2(arg));
+    // show1(f1(arg) - f2(arg));
+    contract_assert(close(f1(arg2), f2(arg2)));
   }
 
   {
     std::println("comparing exp_bad and exp_good ...");
-    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
-    auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    autodiff_t arg2 = polynomial({2, 1, 3, 4, 5}, arg);
-    show1(exp_bad(arg) - exp_good(arg));
+    // show1(exp_bad(arg) - exp_good(arg));
+    contract_assert(close(exp_bad(arg2), exp_good(arg2)));
   }
 
   {
     std::println("comparing exp_bad and exp_best ...");
-    auto f1 = [](const autodiff_t& arg) { return polynomial({0, 0, 1}, exp_good(arg)); };
-    auto f2 = [](const autodiff_t& arg) { return exp_good(arg * 2.0); };
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    autodiff_t arg2 = polynomial({2, 1, 3, 4, 5}, arg);
-    show1(exp_bad(arg) - exp_best(arg));
+    // show1(exp_bad(arg) - exp_best(arg));
+    contract_assert(close(exp_bad(arg2), exp_best(arg2)));
   }
 
   {
-    autodiff_t arg(1, 1, 5);
-    arg.data[0][0] = 3;
-    arg.data[1][0] = 1;
-    auto ret = polynomial({7, 6, 5, 4, 3, 2, 1}, arg);
-    show1(dot(ret, inverse(ret)));
+    std::println("validating inverse ...");
+    autodiff_t one(arg2.shape());
+    one.data[0][0] = 1.0;
+    // show1(dot(ret, inverse(ret)));
+    contract_assert(close(one, dot(arg2, inverse(arg2))));
   }
 }
