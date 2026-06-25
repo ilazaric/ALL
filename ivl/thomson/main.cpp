@@ -283,8 +283,9 @@ int ivl_main() {
   std::cerr << std::setprecision(5) << std::fixed;
   if (1) {
     double mini = 1e100;
-    for (int i = 0; i < 10; ++i) mini = std::min(mini, attempt(972));
+    for (int i = 0; i < 1; ++i) mini = std::min(mini, attempt(50));
     LOG(mini);
+    return 0;
   }
   if (0) {
     double mini = 1e100;

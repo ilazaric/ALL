@@ -126,6 +126,8 @@ autodiff_t normed_distance(const autodiff_t& left, const autodiff_t& right) {
   return distance(normed(left), normed(right));
 }
 
+autodiff_t evaluate(const autodiff_t& left, const autodiff_t& right) { return inverse(normed_distance(left, right)); }
+
 void show1(const autodiff_t& arg) {
   for (std::size_t r = 0; r < arg.diff_rank(); ++r) {
     std::println("rank: {}", r);
