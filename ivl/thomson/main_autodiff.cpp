@@ -152,8 +152,8 @@ std::vector<point> gradient(std::span<const point> points) {
       right.data[0][2] = points[j].z;
       // show1(left);
       // show1(right);
-      auto foo = inverse(distance(left, right));
-      // auto foo = evaluate_basic(left, right);
+      // auto foo = inverse(distance(left, right));
+      auto foo = evaluate_basic(left, right);
       contract_assert(foo.input_size() == 6);
       contract_assert(foo.output_size() == 1);
       contract_assert(foo.diff_rank() == 2);
