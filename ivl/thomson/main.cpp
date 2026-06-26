@@ -87,7 +87,7 @@ struct normalize_t {
 // };
 
 std::vector<point> fixup(std::span<const point> points, double* last = nullptr) {
-  auto g = gradient(points);
+  auto g = gradient2(points);
   for (int i = 0; i < points.size(); ++i) {
     g[i] -= points[i] * dot(g[i], points[i]);
   }
@@ -99,16 +99,16 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
   };
   double lo = 0;
   double lo_e = evaluate_assume_normed(mix(lo));
-  double hi = last ? *last : 1;
+  double hi = 1; // last ? *last : 1;
   double hi_e = evaluate_assume_normed(mix(hi));
-  if (hi_e < lo_e - 1e-2) return mix(hi);
-  while (true) {
-    double nhi = hi * 1.5;
-    double nhi_e = evaluate_assume_normed(mix(nhi));
-    if (nhi_e > hi_e - 1e-6) break;
-    hi = nhi;
-    hi_e = nhi_e;
-  }
+  // if (hi_e < lo_e - 1e-2) return mix(hi);
+  // while (true) {
+  //   double nhi = hi * 1.5;
+  //   double nhi_e = evaluate_assume_normed(mix(nhi));
+  //   if (nhi_e > hi_e - 1e-6) break;
+  //   hi = nhi;
+  //   hi_e = nhi_e;
+  // }
   while ((hi - lo) > 1e-9) {
     double mid = (hi + lo) / 2;
     double mid_e = evaluate_assume_normed(mix(mid));
@@ -143,7 +143,9 @@ bool try_gradient_fixup(std::span<point> points, double& ev, double* last = null
 
 void repeat_gradient_fixup(std::span<point> points, double& ev) {
   double last = 1.0;
-  while (try_gradient_fixup(points, ev, &last)) LOG(ev, last);
+  // while (try_gradient_fixup(points, ev, &last)) ;//LOG(ev, last);
+  for (std::size_t i = 0; i < 500; ++i)
+    try_gradient_fixup(points, ev, &last);
 }
 
 double attempt(int n) {
@@ -283,7 +285,7 @@ int ivl_main() {
   std::cerr << std::setprecision(5) << std::fixed;
   if (1) {
     double mini = 1e100;
-    for (int i = 0; i < 1; ++i) mini = std::min(mini, attempt(50));
+    for (int i = 0; i < 30; ++i) mini = std::min(mini, attempt(100));
     LOG(mini);
     return 0;
   }
