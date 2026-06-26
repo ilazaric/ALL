@@ -121,17 +121,6 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
   return copy;
 }
 
-/*
-  f : R -> R
-  f(t) = evaluate(points + t * gradient)
-  f'(t) = ?
-  f = evaluate o (t -> points + t * gradient)
-  Df(t) = Devaluate o -||- (t) * gradient
-  Df(t) = Devaluate(points + t * gradient) * gradient
-  DDf(t) = D[ Devaluate(points + t * gradient) ] * gradient
-  DDf(t) = DDevaluate(points + t * gradient) * gradient * gradient
- */
-
 bool try_gradient_fixup(std::span<point> points, double& ev, double* last = nullptr) {
   auto nxt = fixup(points, last);
   auto nxt_ev = evaluate(nxt);
@@ -154,6 +143,54 @@ double attempt(int n) {
   normalize(points);
   auto ev = evaluate(points);
   repeat_gradient_fixup(points, ev);
+  LOG(n, ev);
+  // auto g = gradient(points);
+  // for (int i = 0; i < n; ++i) {
+  //   g[i] -= points[i] * dot(g[i], points[i]);
+  // }
+  // LOG(std::format("{}", g));
+  return ev;
+}
+
+/*
+  f : R -> R
+  f(t) = evaluate(points + t * gradient)
+  f'(t) = ?
+  f = evaluate o (t -> points + t * gradient)
+  Df(t) = Devaluate o -||- (t) * gradient
+  Df(t) = Devaluate(points + t * gradient) * gradient
+  DDf(t) = D[ Devaluate(points + t * gradient) ] * gradient
+  DDf(t) = DDevaluate(points + t * gradient) * gradient * gradient
+ */
+
+bool try_newton_fixup(std::span<point> points, double& ev) {
+  auto g = gradient2(points);
+  auto g2 = diff2(points);
+  double up = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i) up += dot(g[i], g[i]);
+  double down = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i)
+    for (std::size_t j = 0; j < points.size(); ++j)
+      for (int k = 0; k < 3; ++k)
+        for (int l = 0; l < 3; ++l) down += g2[i * points.size() + j][k][l] * g[i][k] * g[j][l];
+  double coef = -up / down;
+  // LOG(coef);
+  std::vector nxt(std::from_range, points);
+  for (std::size_t i = 0; i < points.size(); ++i) nxt[i] += coef * g[i];
+  auto nxt_ev = evaluate(nxt);
+  // if (nxt_ev > ev - 1e-5) return false;
+  for (std::size_t i = 0; i < points.size(); ++i) points[i] = nxt[i];
+  ev = nxt_ev;
+  normalize(points);
+  return true;
+}
+
+double attempt_newton(int n) {
+  std::vector<point> points(n);
+  for (int i = 0; i < n; ++i) points[i] = random_point();
+  normalize(points);
+  auto ev = evaluate(points);
+  for (int i = 0; i < 3000; ++i) try_newton_fixup(points, ev);
   LOG(n, ev);
   // auto g = gradient(points);
   // for (int i = 0; i < n; ++i) {
@@ -286,6 +323,11 @@ int ivl_main() {
   if (1) {
     double mini = 1e100;
     for (int i = 0; i < 30; ++i) mini = std::min(mini, attempt(100));
+    LOG(mini);
+  }
+  if (1) {
+    double mini = 1e100;
+    for (int i = 0; i < 5; ++i) mini = std::min(mini, attempt_newton(100));
     LOG(mini);
     return 0;
   }
