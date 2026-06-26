@@ -1,11 +1,28 @@
 #pragma once
 
 #include <cmath>
-#include <random>
 #include <format>
+#include <random>
+#include <utility>
 
 struct point {
   double x, y, z;
+
+  // TODO: shite asm
+  double& operator[](int i) {
+    if (i == 0) return x;
+    if (i == 1) return y;
+    if (i == 2) return z;
+    contract_assert(false);
+    std::unreachable();
+  }
+  const double& operator[](int i) const {
+    if (i == 0) return x;
+    if (i == 1) return y;
+    if (i == 2) return z;
+    contract_assert(false);
+    std::unreachable();
+  }
 };
 
 template<>

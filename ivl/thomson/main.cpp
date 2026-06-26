@@ -91,9 +91,9 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
   for (int i = 0; i < points.size(); ++i) {
     g[i] -= points[i] * dot(g[i], points[i]);
   }
-  auto mix = [&](double r) {
-    std::vector copy(std::from_range, points);
-    for (std::size_t i = 0; i < points.size(); ++i) copy[i] += -r * g[i];
+  std::vector<point> copy(points.size());
+  auto mix = [&](double r) -> std::span<const point> {
+    for (std::size_t i = 0; i < points.size(); ++i) copy[i] = points[i] - r * g[i];
     normalize(copy);
     return copy;
   };
@@ -117,7 +117,8 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
   }
   // LOG(lo);
   if (last) *last = lo;
-  return mix(lo);
+  mix(lo);
+  return copy;
 }
 
 /*
@@ -144,8 +145,7 @@ bool try_gradient_fixup(std::span<point> points, double& ev, double* last = null
 void repeat_gradient_fixup(std::span<point> points, double& ev) {
   double last = 1.0;
   // while (try_gradient_fixup(points, ev, &last)) ;//LOG(ev, last);
-  for (std::size_t i = 0; i < 500; ++i)
-    try_gradient_fixup(points, ev, &last);
+  for (std::size_t i = 0; i < 500; ++i) try_gradient_fixup(points, ev, &last);
 }
 
 double attempt(int n) {
