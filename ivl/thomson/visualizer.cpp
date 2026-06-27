@@ -255,15 +255,17 @@ struct plot_render {
     auto last = baseline;
     const int delta = 1;
     for (int i = delta; i <= 500; i += delta) {
-      auto curr = fn((float)i / 500 * hi);
-      DrawLine(i - delta + 500, scale * (last - baseline) + 250, i + 500, scale * (curr - baseline) + 250, BLACK);
-      last = curr;
+      double x = (float)i / 500 * hi;
+      auto y = fn(x);
+      DrawLineV(coord(x, y), coord(x - (double)delta / 500 * hi, last), BLACK);
+      last = y;
     }
     last = baseline;
     for (int i = -delta; i >= -500; i -= delta) {
-      auto curr = fn((float)i / 500 * hi);
-      DrawLine(i + delta + 500, scale * (last - baseline) + 250, i + 500, scale * (curr - baseline) + 250, BLACK);
-      last = curr;
+      double x = (float)i / 500 * hi;
+      auto y = fn(x);
+      DrawLineV(coord(x, y), coord(x + (double)delta / 500 * hi, last), BLACK);
+      last = y;
     }
     auto [up, down] = newton_coef2(points);
     DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
