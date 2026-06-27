@@ -124,7 +124,7 @@ int ivl_main(std::size_t point_count) {
   for (auto& p : points) p = random_point();
   normalize(points);
   double ev = evaluate(points);
-  SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+  // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
   InitWindow(screenWidth, screenHeight, "visualizer");
 
   Camera camera = {0};
@@ -134,13 +134,13 @@ int ivl_main(std::size_t point_count) {
   camera.fovy = 45.0f;
   camera.projection = CAMERA_PERSPECTIVE;
 
-  SetTargetFPS(60);
+  SetTargetFPS(30);
   float rotation_speed = 1.0f;
   int iteration = 0;
   auto iterate = [&](std::size_t num) {
     while (num--) {
       ++iteration;
-      try_gradient_fixup(points, ev);
+      try_newton_fixup(points, ev);
     }
   };
   while (!WindowShouldClose()) {
