@@ -59,6 +59,19 @@ double newton_coef(std::span<const point> points) {
   return coef;
 }
 
+std::pair<double, double> newton_coef2(std::span<const point> points) {
+  auto g = gradient2(points);
+  auto g2 = diff2(points);
+  double up = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i) up += dot(g[i], g[i]);
+  double down = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i)
+    for (std::size_t j = 0; j < points.size(); ++j)
+      for (int k = 0; k < 3; ++k)
+        for (int l = 0; l < 3; ++l) down += g2[i * points.size() + j][k][l] * g[i][k] * g[j][l];
+  return {up, down};
+}
+
 bool try_newton_fixup(std::span<point> points, double& ev) {
   auto g = gradient2(points);
   auto g2 = diff2(points);
@@ -217,27 +230,47 @@ template<typename T>
 struct plot_render {
   T fn;
   std::span<const point> points;
-  RenderTexture2D RT = LoadRenderTexture(500, 500);
-  double hi = 1.0;
-  double scale = 1.0;
+  RenderTexture2D RT = LoadRenderTexture(1000, 500);
+  // double hi = 1.0;
+  // double scale = 1.0;
+  double hi = 0.0001;
+  double scale = 2.0;
 
   void render() {
     BeginTextureMode(RT);
     ClearBackground(WHITE);
-    DrawLine(0, 250, 500, 250, GRAY);
-    DrawLine(0, 375, 500, 375, RED);
-    DrawLine(0, 125, 500, 125, GREEN);
+    DrawLine(0, 250, 1000, 250, GRAY);
+    DrawLine(0, 375, 1000, 375, RED);
+    DrawLine(0, 125, 1000, 125, GREEN);
     auto baseline = fn(0.0);
+    auto coord = [&](float x, float y) {
+      y -= baseline;
+      x /= hi;
+      x *= 500;
+      x += 500;
+      y *= scale;
+      y += 250;
+      return Vector2{x, y};
+    };
     auto last = baseline;
     const int delta = 1;
     for (int i = delta; i <= 500; i += delta) {
       auto curr = fn((float)i / 500 * hi);
-      DrawLine(i - delta, scale * (last - baseline) + 250, i, scale * (curr - baseline) + 250, BLACK);
+      DrawLine(i - delta + 500, scale * (last - baseline) + 250, i + 500, scale * (curr - baseline) + 250, BLACK);
       last = curr;
     }
+    last = baseline;
+    for (int i = -delta; i >= -500; i -= delta) {
+      auto curr = fn((float)i / 500 * hi);
+      DrawLine(i + delta + 500, scale * (last - baseline) + 250, i + 500, scale * (curr - baseline) + 250, BLACK);
+      last = curr;
+    }
+    auto [up, down] = newton_coef2(points);
+    DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
     DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
     DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
     DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
+    DrawText(std::format("down: {}", down).c_str(), 10, 100, 30, GREEN);
     EndTextureMode();
   }
 
@@ -282,7 +315,7 @@ int ivl_main(std::size_t point_count) {
     BeginDrawing();
     ClearBackground(WHITE);
     draw_texture(sr.RT.texture, {0, 0});
-    draw_texture(pr.RT.texture, {500, 0});
+    draw_texture(pr.RT.texture, {0, 500});
     // DrawTexture(sr.RT.texture, 0, 0, WHITE);
     // DrawTexture(pr.RT.texture, 500, 0, WHITE);
     DrawFPS(10, 10);
