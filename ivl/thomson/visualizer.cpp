@@ -252,23 +252,34 @@ struct plot_render {
       y += 250;
       return Vector2{x, y};
     };
-    auto last = baseline;
+    Vector2 last = coord(0, baseline);
     const int delta = 1;
     for (int i = delta; i <= 500; i += delta) {
       double x = (float)i / 500 * hi;
       auto y = fn(x);
-      DrawLineV(coord(x, y), coord(x - (double)delta / 500 * hi, last), BLACK);
-      last = y;
+      auto next = coord(x, y);
+      DrawLineV(last, next, BLACK);
+      last = next;
     }
-    last = baseline;
+    last = coord(0, baseline);
     for (int i = -delta; i >= -500; i -= delta) {
       double x = (float)i / 500 * hi;
       auto y = fn(x);
-      DrawLineV(coord(x, y), coord(x + (double)delta / 500 * hi, last), BLACK);
-      last = y;
+      auto next = coord(x, y);
+      DrawLineV(last, next, BLACK);
+      last = next;
     }
     auto [up, down] = newton_coef2(points);
     DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
+    auto approx = [&](double x) { return baseline - x * up + x * x * down; };
+    last = coord(-hi, approx(-hi));
+    for (int i = -500 + delta; i <= 500; i += delta) {
+      double x = (double)i / 500 * hi;
+      double y = approx(x);
+      auto next = coord(x, y);
+      DrawLineV(last, next, LIME);
+      last = next;
+    }
     DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
     DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
     DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
