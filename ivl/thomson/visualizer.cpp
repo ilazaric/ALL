@@ -112,48 +112,69 @@ bool try_gradient_fixup(std::span<point> points, double& ev, double* last = null
   return true;
 }
 
-int ivl_main(std::size_t point_count) {
-  const int screenWidth = 1000;
-  const int screenHeight = 1000;
-  const Vector3 sphere_center{0.0, 0.0, 0.0};
-  const double sphere_radius = 1.0;
-  const Color sphere_color = ColorAlpha(RED, 0.5);
-  const Color point_color = GREEN;
-  const float point_radius = 0.01f;
-  std::vector<point> points(point_count);
-  for (auto& p : points) p = random_point();
-  normalize(points);
-  double ev = evaluate(points);
-  // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
-  InitWindow(screenWidth, screenHeight, "visualizer");
-
-  Camera camera = {0};
-  camera.position = (Vector3){0.0f, 2.0f, 2.0f};
-  camera.target = (Vector3){0.0f, 0.0f, 0.0f};
-  camera.up = (Vector3){0.0f, 1.0f, 0.0f};
-  camera.fovy = 45.0f;
-  camera.projection = CAMERA_PERSPECTIVE;
-
-  SetTargetFPS(30);
+struct sphere_render {
+  RenderTexture2D RT = LoadRenderTexture(500, 500);
+  Camera camera{};
+  Vector3 sphere_center{0.0, 0.0, 0.0};
+  double sphere_radius = 1.0;
+  Color sphere_color = ColorAlpha(RED, 0.5);
+  Color point_color = GREEN;
+  float point_radius = 0.01f;
+  std::vector<point> points;
+  double ev;
   float rotation_speed = 1.0f;
   int iteration = 0;
-  auto iterate = [&](std::size_t num) {
-    while (num--) {
-      ++iteration;
-      try_newton_fixup(points, ev);
+
+  explicit sphere_render(std::size_t point_count) : points(point_count) {
+    for (auto& p : points) p = random_point();
+    normalize(points);
+    ev = evaluate(points);
+    camera.position = (Vector3){0.0f, 2.0f, 2.0f};
+    camera.target = (Vector3){0.0f, 0.0f, 0.0f};
+    camera.up = (Vector3){0.0f, 1.0f, 0.0f};
+    camera.fovy = 45.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+  }
+
+  void render() {
+    BeginTextureMode(RT);
+    ClearBackground(WHITE);
+    BeginMode3D(camera);
+    // draw_arc(point2vec(points[0]), point2vec(points[1]), BLUE);
+    if (!IsKeyDown(KEY_P)) {
+      auto g = gradient2(points);
+      for (std::size_t i = 0; i < points.size(); ++i) {
+        draw_arrow(point2vec(points[i]), point2vec(g[i]), BLUE);
+      }
     }
-  };
-  while (!WindowShouldClose()) {
-    float dt = GetFrameTime();
+    for (auto&& p : points) {
+      DrawSphereEx(point2vec(p), point_radius, 8, 8, point_color);
+      // draw_circle(point2vec(p), 0.01f, point2vec(p), point_color);
+      // DrawCircle3D(point2vec(p), 0.01f, point2vec(p), 0.0f, point_color);
+    }
+    if (!IsKeyDown(KEY_C)) {
+      DrawSphereEx(sphere_center, sphere_radius, 64, 64, sphere_color);
+    }
+    EndMode3D();
+    EndTextureMode();
+  }
+
+  void handle_input(float dt) {
+    auto iterate = [&](std::size_t num) {
+      while (num--) {
+        ++iteration;
+        try_newton_fixup(points, ev);
+      }
+    };
     if (IsKeyPressed(KEY_KP_ADD)) rotation_speed *= 2;
     if (IsKeyPressed(KEY_KP_SUBTRACT)) rotation_speed /= 2;
     {
       float dx = 0;
       float dy = 0;
-      if (IsKeyDown(KEY_W)) --dy;
-      if (IsKeyDown(KEY_S)) ++dy;
-      if (IsKeyDown(KEY_A)) ++dx;
-      if (IsKeyDown(KEY_D)) --dx;
+      if (IsKeyDown(KEY_W)) ++dy;
+      if (IsKeyDown(KEY_S)) --dy;
+      if (IsKeyDown(KEY_A)) --dx;
+      if (IsKeyDown(KEY_D)) ++dx;
       dx *= dt * rotation_speed;
       dy *= dt * rotation_speed;
       Vector3 new_position = Vector3Scale(
@@ -171,37 +192,32 @@ int ivl_main(std::size_t point_count) {
       camera.position = new_position;
       camera.up = new_up;
     }
-    // if (IsKeyPressed(KEY_ENTER)) {
-    //   ++iteration;
-    //   try_newton_fixup(points, ev);
-    // }
     if (IsKeyPressed(KEY_ONE)) iterate(1);
     if (IsKeyPressed(KEY_TWO)) iterate(10);
     if (IsKeyPressed(KEY_THREE)) iterate(100);
     if (IsKeyPressed(KEY_FOUR)) iterate(1000);
+  }
+};
+
+int ivl_main(std::size_t point_count) {
+  const int screenWidth = 1000;
+  const int screenHeight = 1000;
+  // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
+  InitWindow(screenWidth, screenHeight, "visualizer");
+  sphere_render sr(point_count);
+
+  SetTargetFPS(30);
+  while (!WindowShouldClose()) {
+    float dt = GetFrameTime();
+    sr.handle_input(dt);
+    sr.render();
     BeginDrawing();
     ClearBackground(WHITE);
-    BeginMode3D(camera);
-    // draw_arc(point2vec(points[0]), point2vec(points[1]), BLUE);
-    if (!IsKeyDown(KEY_P)) {
-      auto g = gradient2(points);
-      for (std::size_t i = 0; i < point_count; ++i) {
-        draw_arrow(point2vec(points[i]), point2vec(g[i]), BLUE);
-      }
-    }
-    for (auto&& p : points) {
-      DrawSphereEx(point2vec(p), point_radius, 8, 8, point_color);
-      // draw_circle(point2vec(p), 0.01f, point2vec(p), point_color);
-      // DrawCircle3D(point2vec(p), 0.01f, point2vec(p), 0.0f, point_color);
-    }
-    if (!IsKeyDown(KEY_C)) {
-      DrawSphereEx(sphere_center, sphere_radius, 64, 64, sphere_color);
-    }
-    EndMode3D();
+    DrawTexture(sr.RT.texture, 0, 0, WHITE);
     DrawFPS(10, 10);
-    DrawText(std::format("rotation speed: {}", rotation_speed).c_str(), 10, 30, 30, GREEN);
-    DrawText(std::format("iteration: {}", iteration).c_str(), 10, 60, 30, GREEN);
-    DrawText(std::format("eval: {}", ev).c_str(), 10, 90, 30, GREEN);
+    DrawText(std::format("rotation speed: {}", sr.rotation_speed).c_str(), 10, 30, 30, GREEN);
+    DrawText(std::format("iteration: {}", sr.iteration).c_str(), 10, 60, 30, GREEN);
+    DrawText(std::format("eval: {}", sr.ev).c_str(), 10, 90, 30, GREEN);
     EndDrawing();
   }
   CloseWindow();
