@@ -45,6 +45,20 @@ void draw_arrow(Vector3 from, Vector3 direction, Color color) {
   DrawTriangle3D(to, Vector3Subtract(mid, delta), Vector3Add(mid, delta), color);
 }
 
+double newton_coef(std::span<const point> points) {
+  auto g = gradient2(points);
+  auto g2 = diff2(points);
+  double up = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i) up += dot(g[i], g[i]);
+  double down = 0.0;
+  for (std::size_t i = 0; i < points.size(); ++i)
+    for (std::size_t j = 0; j < points.size(); ++j)
+      for (int k = 0; k < 3; ++k)
+        for (int l = 0; l < 3; ++l) down += g2[i * points.size() + j][k][l] * g[i][k] * g[j][l];
+  double coef = -up / down;
+  return coef;
+}
+
 bool try_newton_fixup(std::span<point> points, double& ev) {
   auto g = gradient2(points);
   auto g2 = diff2(points);
@@ -163,7 +177,7 @@ struct sphere_render {
     auto iterate = [&](std::size_t num) {
       while (num--) {
         ++iteration;
-        try_gradient_fixup(points, ev);
+        try_newton_fixup(points, ev);
       }
     };
     if (IsKeyPressed(KEY_KP_ADD)) rotation_speed *= 2;
@@ -202,6 +216,7 @@ struct sphere_render {
 template<typename T>
 struct plot_render {
   T fn;
+  std::span<const point> points;
   RenderTexture2D RT = LoadRenderTexture(500, 500);
   double hi = 1.0;
   double scale = 1.0;
@@ -221,7 +236,8 @@ struct plot_render {
       last = curr;
     }
     DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
-    DrawText(std::format("scale: {}", hi).c_str(), 10, 40, 30, GREEN);
+    DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
+    DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
     EndTextureMode();
   }
 
@@ -243,11 +259,14 @@ int ivl_main(std::size_t point_count) {
   // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
   InitWindow(screenWidth, screenHeight, "visualizer");
   sphere_render sr(point_count);
-  plot_render pr{[&](double x) {
-    auto g = gradient2(sr.points);
-    for (std::size_t i = 0; i < sr.points.size(); ++i) g[i] = sr.points[i] - g[i] * x;
-    return evaluate(g);
-  }};
+  plot_render pr{
+    [&](double x) {
+      auto g = gradient2(sr.points);
+      for (std::size_t i = 0; i < sr.points.size(); ++i) g[i] = sr.points[i] - g[i] * x;
+      return evaluate(g);
+    },
+    sr.points
+  };
 
   bool active = true;
   SetTargetFPS(30);
@@ -255,9 +274,9 @@ int ivl_main(std::size_t point_count) {
     float dt = GetFrameTime();
     if (IsKeyPressed(KEY_TAB)) active = !active;
     // if (active)
-      sr.handle_input(dt);
+    sr.handle_input(dt);
     // else
-      pr.handle_input(dt);
+    pr.handle_input(dt);
     sr.render();
     pr.render();
     BeginDrawing();
