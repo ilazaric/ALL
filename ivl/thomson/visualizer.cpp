@@ -150,6 +150,7 @@ struct sphere_render {
   double ev;
   float rotation_speed = 1.0f;
   int iteration = 0;
+  std::vector<point> g;
 
   explicit sphere_render(std::size_t point_count) : points(point_count) {
     for (auto& p : points) p = random_point();
@@ -160,15 +161,17 @@ struct sphere_render {
     camera.up = (Vector3){0.0f, 1.0f, 0.0f};
     camera.fovy = 45.0f;
     camera.projection = CAMERA_PERSPECTIVE;
+    g = gradient2(points);
   }
 
   void render() {
+    // g = gradient2(points);
     BeginTextureMode(RT);
     ClearBackground(WHITE);
     BeginMode3D(camera);
     // draw_arc(point2vec(points[0]), point2vec(points[1]), BLUE);
     if (!IsKeyDown(KEY_P)) {
-      auto g = gradient2(points);
+      // auto g = gradient2(points);
       for (std::size_t i = 0; i < points.size(); ++i) {
         draw_arrow(point2vec(points[i]), point2vec(g[i]), BLUE);
       }
@@ -190,9 +193,10 @@ struct sphere_render {
       ++iteration;
       try_newton_fixup(points, ev);
     }
+    g = gradient2(points);
   }
 
-  void handle_input(float dt) {
+  bool handle_input(float dt) {
     if (IsKeyPressed(KEY_KP_ADD)) rotation_speed *= 2;
     if (IsKeyPressed(KEY_KP_SUBTRACT)) rotation_speed /= 2;
     {
@@ -219,10 +223,19 @@ struct sphere_render {
       camera.position = new_position;
       camera.up = new_up;
     }
-    if (IsKeyPressed(KEY_ONE)) iterate(1);
-    if (IsKeyPressed(KEY_TWO)) iterate(10);
-    if (IsKeyPressed(KEY_THREE)) iterate(100);
-    if (IsKeyPressed(KEY_FOUR)) iterate(1000);
+    bool ret = false;
+    if (IsKeyPressed(KEY_ONE)) iterate(1), ret = true;
+    if (IsKeyPressed(KEY_TWO)) iterate(10), ret = true;
+    if (IsKeyPressed(KEY_THREE)) iterate(100), ret = true;
+    if (IsKeyPressed(KEY_FOUR)) iterate(1000), ret = true;
+    if (IsKeyPressed(KEY_R)) {
+      for (auto& p : points) p = random_point();
+      normalize(points);
+      ev = evaluate(points);
+      g = gradient2(points);
+      ret = true;
+    }
+    return ret;
   }
 };
 
@@ -231,12 +244,12 @@ struct plot_render {
   T fn;
   std::span<const point> points;
   RenderTexture2D RT = LoadRenderTexture(1000, 500);
-  // double hi = 1.0;
-  // double scale = 1.0;
+  double hi = 1.0;
+  double scale = 1.0;
   // double hi = 0.0001;
   // double scale = 2.0;
-  double hi = 0.015;
-  double scale = 32000.0;
+  // double hi = 0.015;
+  // double scale = 32000.0;
 
   void render() {
     BeginTextureMode(RT);
@@ -271,33 +284,35 @@ struct plot_render {
       DrawLineV(last, next, BLACK);
       last = next;
     }
-    auto [up, down] = newton_coef2(points);
-    DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
-    auto approx = [&](double x) { return baseline - x * up + x * x * down; };
-    last = coord(-hi, approx(-hi));
-    static bool should_log = true;
-    if (should_log) LOG(up, down);
-    for (int i = -500 + delta; i <= 500; i += delta) {
-      double x = ((double)i) / 500 * hi;
-      double y = approx(x);
-      auto next = coord(x, y);
-      if (should_log) LOG(x, y, next.x - last.x, next.y - last.y);
-      DrawLineV(last, next, LIME);
-      last = next;
-    }
-    should_log = false;
+    // auto [up, down] = newton_coef2(points);
+    // DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
+    // auto approx = [&](double x) { return baseline - x * up + x * x * down; };
+    // last = coord(-hi, approx(-hi));
+    // static bool should_log = true;
+    // if (should_log) LOG(up, down);
+    // for (int i = -500 + delta; i <= 500; i += delta) {
+    //   double x = ((double)i) / 500 * hi;
+    //   double y = approx(x);
+    //   auto next = coord(x, y);
+    //   if (should_log) LOG(x, y, next.x - last.x, next.y - last.y);
+    //   DrawLineV(last, next, LIME);
+    //   last = next;
+    // }
+    // should_log = false;
     DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
     DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
-    DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
-    DrawText(std::format("down: {}", down).c_str(), 10, 100, 30, GREEN);
+    // DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
+    // DrawText(std::format("down: {}", down).c_str(), 10, 100, 30, GREEN);
     EndTextureMode();
   }
 
-  void handle_input(float dt) {
-    if (IsKeyPressed(KEY_UP)) scale *= 2;
-    if (IsKeyPressed(KEY_DOWN)) scale /= 2;
-    if (IsKeyPressed(KEY_RIGHT)) hi /= 2;
-    if (IsKeyPressed(KEY_LEFT)) hi *= 2;
+  bool handle_input(float dt) {
+    bool ret = false;
+    if (IsKeyPressed(KEY_UP)) scale *= 2, ret = true;
+    if (IsKeyPressed(KEY_DOWN)) scale /= 2, ret = true;
+    if (IsKeyPressed(KEY_RIGHT)) hi /= 2, ret = true;
+    if (IsKeyPressed(KEY_LEFT)) hi *= 2, ret = true;
+    return ret;
   }
 };
 
@@ -313,14 +328,16 @@ int ivl_main(std::size_t point_count) {
   sphere_render sr(point_count);
   plot_render pr{
     [&](double x) {
-      auto g = gradient2(sr.points);
-      for (std::size_t i = 0; i < sr.points.size(); ++i) g[i] = sr.points[i] - g[i] * x;
-      return evaluate(g);
+      auto pts = sr.points;
+      for (std::size_t i = 0; i < pts.size(); ++i) pts[i] -= sr.g[i] * x;
+      return evaluate(pts);
     },
     sr.points
   };
 
-  sr.iterate(103);
+  // sr.iterate(103);
+
+  pr.render();
 
   bool active = true;
   SetTargetFPS(30);
@@ -328,11 +345,11 @@ int ivl_main(std::size_t point_count) {
     float dt = GetFrameTime();
     if (IsKeyPressed(KEY_TAB)) active = !active;
     // if (active)
-    sr.handle_input(dt);
+    bool bla = sr.handle_input(dt);
     // else
-    pr.handle_input(dt);
+    bool truc = pr.handle_input(dt);
     sr.render();
-    pr.render();
+    if (bla || truc) pr.render();
     BeginDrawing();
     ClearBackground(WHITE);
     draw_texture(sr.RT.texture, {0, 0});
