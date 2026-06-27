@@ -163,7 +163,7 @@ struct sphere_render {
     auto iterate = [&](std::size_t num) {
       while (num--) {
         ++iteration;
-        try_newton_fixup(points, ev);
+        try_gradient_fixup(points, ev);
       }
     };
     if (IsKeyPressed(KEY_KP_ADD)) rotation_speed *= 2;
@@ -171,10 +171,10 @@ struct sphere_render {
     {
       float dx = 0;
       float dy = 0;
-      if (IsKeyDown(KEY_W)) ++dy;
-      if (IsKeyDown(KEY_S)) --dy;
-      if (IsKeyDown(KEY_A)) --dx;
-      if (IsKeyDown(KEY_D)) ++dx;
+      if (IsKeyDown(KEY_W)) --dy;
+      if (IsKeyDown(KEY_S)) ++dy;
+      if (IsKeyDown(KEY_A)) ++dx;
+      if (IsKeyDown(KEY_D)) --dx;
       dx *= dt * rotation_speed;
       dy *= dt * rotation_speed;
       Vector3 new_position = Vector3Scale(
@@ -199,21 +199,73 @@ struct sphere_render {
   }
 };
 
+template<typename T>
+struct plot_render {
+  T fn;
+  RenderTexture2D RT = LoadRenderTexture(500, 500);
+  double hi = 1.0;
+  double scale = 1.0;
+
+  void render() {
+    BeginTextureMode(RT);
+    ClearBackground(WHITE);
+    DrawLine(0, 250, 500, 250, GRAY);
+    DrawLine(0, 375, 500, 375, RED);
+    DrawLine(0, 125, 500, 125, GREEN);
+    auto baseline = fn(0.0);
+    auto last = baseline;
+    const int delta = 1;
+    for (int i = delta; i <= 500; i += delta) {
+      auto curr = fn((float)i / 500 * hi);
+      DrawLine(i - delta, scale * (last - baseline) + 250, i, scale * (curr - baseline) + 250, BLACK);
+      last = curr;
+    }
+    DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
+    DrawText(std::format("scale: {}", hi).c_str(), 10, 40, 30, GREEN);
+    EndTextureMode();
+  }
+
+  void handle_input(float dt) {
+    if (IsKeyPressed(KEY_UP)) scale *= 2;
+    if (IsKeyPressed(KEY_DOWN)) scale /= 2;
+    if (IsKeyPressed(KEY_RIGHT)) hi /= 2;
+    if (IsKeyPressed(KEY_LEFT)) hi *= 2;
+  }
+};
+
+void draw_texture(Texture2D texture, Vector2 position) {
+  DrawTextureRec(texture, Rectangle{0.0f, 0.0f, (float)texture.width, -(float)texture.height}, position, WHITE);
+}
+
 int ivl_main(std::size_t point_count) {
   const int screenWidth = 1000;
   const int screenHeight = 1000;
   // SetConfigFlags(FLAG_WINDOW_HIGHDPI);
   InitWindow(screenWidth, screenHeight, "visualizer");
   sphere_render sr(point_count);
+  plot_render pr{[&](double x) {
+    auto g = gradient2(sr.points);
+    for (std::size_t i = 0; i < sr.points.size(); ++i) g[i] = sr.points[i] - g[i] * x;
+    return evaluate(g);
+  }};
 
+  bool active = true;
   SetTargetFPS(30);
   while (!WindowShouldClose()) {
     float dt = GetFrameTime();
-    sr.handle_input(dt);
+    if (IsKeyPressed(KEY_TAB)) active = !active;
+    // if (active)
+      sr.handle_input(dt);
+    // else
+      pr.handle_input(dt);
     sr.render();
+    pr.render();
     BeginDrawing();
     ClearBackground(WHITE);
-    DrawTexture(sr.RT.texture, 0, 0, WHITE);
+    draw_texture(sr.RT.texture, {0, 0});
+    draw_texture(pr.RT.texture, {500, 0});
+    // DrawTexture(sr.RT.texture, 0, 0, WHITE);
+    // DrawTexture(pr.RT.texture, 500, 0, WHITE);
     DrawFPS(10, 10);
     DrawText(std::format("rotation speed: {}", sr.rotation_speed).c_str(), 10, 30, 30, GREEN);
     DrawText(std::format("iteration: {}", sr.iteration).c_str(), 10, 60, 30, GREEN);
