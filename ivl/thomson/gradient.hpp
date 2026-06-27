@@ -156,44 +156,32 @@ std::vector<point2> diff2(std::span<const point> points) {
   // ((a/an - b/bn)^2)^-1.5 * d [ ani * bni * (a.b) ]
   // ((a/an - b/bn)^2)^-1.5 * ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] )
   //
-  // d [ ((a/an - b/bn)^2)^-1.5 * ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) ]
+  // d2 [ ((a/an - b/bn)^2)^-1.5 * ( (d1 ani) * bni * (a.b) + ani * (d1 bni) * (a.b) + ani * bni * d1 [ a.b ] ) ]
   //
-  // d [ ((a/an - b/bn)^2)^-1.5 ] * ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) +
-  // +   ((a/an - b/bn)^2)^-1.5 * d [ ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) ]
+  // d2 [ ((a/an - b/bn)^2)^-1.5 ] * ( (d1 ani) * bni * (a.b) + ani * (d1 bni) * (a.b) + ani * bni * d1 [ a.b ] ) +
+  // +   ((a/an - b/bn)^2)^-1.5 * d2 [ ( (d1 ani) * bni * (a.b) + ani * (d1 bni) * (a.b) + ani * bni * d1 [ a.b ] ) ]
   //
-  // -1.5 * ((a/an - b/bn)^2)^-2.5 * d [ (a/an - b/bn)^2 ] *
-  // ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) +
+  // -1.5 * ((a/an - b/bn)^2)^-2.5 * d2 [ (a/an - b/bn)^2 ] *
+  // ( (d1 ani) * bni * (a.b) + ani * (d1 bni) * (a.b) + ani * bni * d1 [ a.b ] ) +
   // ((a/an - b/bn)^2)^-1.5 * (
-  //   d [ (d ani) * bni * (a.b) ] +
-  //   d [ ani * (d bni) * (a.b) ] +
-  //   d [ ani * bni * d [ a.b ] ]
+  //   d2 [ (d1 ani) * bni * (a.b) ] +
+  //   d2 [ ani * (d1 bni) * (a.b) ] +
+  //   d2 [ ani * bni * d1 [ a.b ] ]
   // )
   //
   // 3 * ((a/an - b/bn)^2)^-2.5 *
-  // ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) *
-  // ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) +
+  // ( (d2 ani) * bni * (a.b) + ani * (d2 bni) * (a.b) + ani * bni * d2 [ a.b ] ) *
+  // ( (d1 ani) * bni * (a.b) + ani * (d1 bni) * (a.b) + ani * bni * d1 [ a.b ] ) +
   // ((a/an - b/bn)^2)^-1.5 * (
   //   (dd ani) * bni * (a.b) +
-  //   (d ani) * (d bni) * (a.b) +
-  //   (d ani) * bni * d [ a.b ] +
-  //   (d ani) * (d bni) * (a.b) +
+  //   (d1 ani) * (d2 bni) * (a.b) +
+  //   (d1 ani) * bni * d2 [ a.b ] +
+  //   (d2 ani) * (d1 bni) * (a.b) +
   //   ani * (dd bni) * (a.b) +
-  //   ani * (d bni) * d [a.b ] +
-  //   (d ani) * bni * d [ a.b ] +
-  //   ani * (d bni) * d [ a.b ] +
+  //   ani * (d1 bni) * d2 [ a.b ] +
+  //   (d2 ani) * bni * d1 [ a.b ] +
+  //   ani * (d2 bni) * d1 [ a.b ] +
   //   ani * bni * dd [ a.b ]
-  // )
-  //
-  // 3 * ((a/an - b/bn)^2)^-2.5 *
-  // ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) *
-  // ( (d ani) * bni * (a.b) + ani * (d bni) * (a.b) + ani * bni * d [ a.b ] ) +
-  // ((a/an - b/bn)^2)^-1.5 * (
-  //   (dd ani) * bni * (a.b) +
-  //   ani * (dd bni) * (a.b) +
-  //   ani * bni * dd [ a.b ] +
-  //   2 * (d ani) * (d bni) * (a.b) +
-  //   2 * (d ani) * bni * d [ a.b ] +
-  //   2 * ani * (d bni) * d [ a.b ]
   // )
   for (std::size_t i = 0; i < points.size(); ++i) {
     for (std::size_t j = 0; j < i; ++j) {
@@ -235,23 +223,28 @@ std::vector<point2> diff2(std::span<const point> points) {
       {
         double first = rdist * rdist * rdist;
         //   (dd ani) * bni * (a.b)
-        daa += first * ddani * bni * dotab;
+        daa += ddani * bni * dotab;
+        //   (d1 ani) * (d2 bni) * (a.b)
+        dab += ppmul(dani, dbni) * dotab;
+        //   (d1 ani) * bni * d2 [ a.b ]
+        daa += ppmul(dani, b) * bni;
+        dab += ppmul(dani, a) * bni;
+        //   (d2 ani) * (d1 bni) * (a.b)
+        dba += ppmul(dbni, dani) * dotab;
         //   ani * (dd bni) * (a.b)
-        dbb += first * ddbni * ani * dotab;
+        dbb += ddbni * ani * dotab;
+        //   ani * (d1 bni) * d2 [ a.b ]
+        dba += ppmul(dbni, b) * ani;
+        dbb += ppmul(dbni, a) * ani;
+        //   (d2 ani) * bni * d1 [ a.b ]
+        daa += ppmul(b, dani) * bni;
+        dba += ppmul(a, dani) * bni;
+        //   ani * (d2 bni) * d1 [ a.b ]
+        dab += ppmul(b, dbni) * ani;
+        dbb += ppmul(a, dbni) * ani;
         //   ani * bni * dd [ a.b ]
-        dab += first * ani * bni * ppid();
-        dba += first * ani * bni * ppid();
-        //   2 * (d ani) * (d bni) * (a.b)
-        dab += first * (ppmul(dani, dbni) + ppmul(dbni, dani)) * dotab;
-        dba += first * (ppmul(dani, dbni) + ppmul(dbni, dani)) * dotab;
-        //   2 * (d ani) * bni * d [ a.b ]
-        daa += first * bni * (ppmul(dani, b) + ppmul(b, dani));
-        dab += first * 2.0 * bni * ppmul(dani, a);
-        dba += first * 2.0 * bni * ppmul(dani, a);
-        //   2 * ani * (d bni) * d [ a.b ]
-        dbb += first * ani * (ppmul(dbni, a) + ppmul(a, dbni));
-        dab += first * 2.0 * ani * ppmul(dbni, b);
-        dba += first * 2.0 * ani * ppmul(dbni, b);
+        dab += ppid() * ani * bni;
+        dba += ppid() * ani * bni;
       }
     }
   }

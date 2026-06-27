@@ -1,3 +1,4 @@
+#include <ivl/logger>
 #include "eval"
 #include "gradient"
 #include "point"
@@ -83,7 +84,6 @@ bool try_newton_fixup(std::span<point> points, double& ev) {
       for (int k = 0; k < 3; ++k)
         for (int l = 0; l < 3; ++l) down += g2[i * points.size() + j][k][l] * g[i][k] * g[j][l];
   double coef = -up / down;
-  // LOG(coef);
   std::vector nxt(std::from_range, points);
   for (std::size_t i = 0; i < points.size(); ++i) nxt[i] += coef * g[i];
   auto nxt_ev = evaluate(nxt);
@@ -123,7 +123,6 @@ std::vector<point> fixup(std::span<const point> points, double* last = nullptr) 
     if (lo_e < hi_e) hi = mid, hi_e = mid_e;
     else lo = mid, lo_e = mid_e;
   }
-  // LOG(lo);
   if (last) *last = lo;
   mix(lo);
   return copy;
@@ -186,13 +185,14 @@ struct sphere_render {
     EndTextureMode();
   }
 
+  void iterate(std::size_t num) {
+    while (num--) {
+      ++iteration;
+      try_newton_fixup(points, ev);
+    }
+  }
+
   void handle_input(float dt) {
-    auto iterate = [&](std::size_t num) {
-      while (num--) {
-        ++iteration;
-        try_newton_fixup(points, ev);
-      }
-    };
     if (IsKeyPressed(KEY_KP_ADD)) rotation_speed *= 2;
     if (IsKeyPressed(KEY_KP_SUBTRACT)) rotation_speed /= 2;
     {
@@ -233,8 +233,10 @@ struct plot_render {
   RenderTexture2D RT = LoadRenderTexture(1000, 500);
   // double hi = 1.0;
   // double scale = 1.0;
-  double hi = 0.0001;
-  double scale = 2.0;
+  // double hi = 0.0001;
+  // double scale = 2.0;
+  double hi = 0.015;
+  double scale = 32000.0;
 
   void render() {
     BeginTextureMode(RT);
@@ -253,9 +255,9 @@ struct plot_render {
       return Vector2{x, y};
     };
     Vector2 last = coord(0, baseline);
-    const int delta = 1;
+    const int delta = 4;
     for (int i = delta; i <= 500; i += delta) {
-      double x = (float)i / 500 * hi;
+      double x = ((float)i) / 500 * hi;
       auto y = fn(x);
       auto next = coord(x, y);
       DrawLineV(last, next, BLACK);
@@ -263,7 +265,7 @@ struct plot_render {
     }
     last = coord(0, baseline);
     for (int i = -delta; i >= -500; i -= delta) {
-      double x = (float)i / 500 * hi;
+      double x = ((float)i) / 500 * hi;
       auto y = fn(x);
       auto next = coord(x, y);
       DrawLineV(last, next, BLACK);
@@ -273,13 +275,17 @@ struct plot_render {
     DrawLine(0, up * hi * scale + 250, 1000, -up * hi * scale + 250, BLUE);
     auto approx = [&](double x) { return baseline - x * up + x * x * down; };
     last = coord(-hi, approx(-hi));
+    static bool should_log = true;
+    if (should_log) LOG(up, down);
     for (int i = -500 + delta; i <= 500; i += delta) {
-      double x = (double)i / 500 * hi;
+      double x = ((double)i) / 500 * hi;
       double y = approx(x);
       auto next = coord(x, y);
+      if (should_log) LOG(x, y, next.x - last.x, next.y - last.y);
       DrawLineV(last, next, LIME);
       last = next;
     }
+    should_log = false;
     DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
     DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
     DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
@@ -313,6 +319,8 @@ int ivl_main(std::size_t point_count) {
     },
     sr.points
   };
+
+  sr.iterate(103);
 
   bool active = true;
   SetTargetFPS(30);
