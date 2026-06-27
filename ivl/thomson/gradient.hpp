@@ -223,28 +223,28 @@ std::vector<point2> diff2(std::span<const point> points) {
       {
         double first = rdist * rdist * rdist;
         //   (dd ani) * bni * (a.b)
-        daa += ddani * bni * dotab;
+        daa += first * ddani * bni * dotab;
         //   (d1 ani) * (d2 bni) * (a.b)
-        dab += ppmul(dani, dbni) * dotab;
+        dab += first * ppmul(dani, dbni) * dotab;
         //   (d1 ani) * bni * d2 [ a.b ]
-        daa += ppmul(dani, b) * bni;
-        dab += ppmul(dani, a) * bni;
+        daa += first * ppmul(dani, b) * bni;
+        dab += first * ppmul(dani, a) * bni;
         //   (d2 ani) * (d1 bni) * (a.b)
-        dba += ppmul(dbni, dani) * dotab;
+        dba += first * ppmul(dbni, dani) * dotab;
         //   ani * (dd bni) * (a.b)
-        dbb += ddbni * ani * dotab;
+        dbb += first * ddbni * ani * dotab;
         //   ani * (d1 bni) * d2 [ a.b ]
-        dba += ppmul(dbni, b) * ani;
-        dbb += ppmul(dbni, a) * ani;
+        dba += first * ppmul(dbni, b) * ani;
+        dbb += first * ppmul(dbni, a) * ani;
         //   (d2 ani) * bni * d1 [ a.b ]
-        daa += ppmul(b, dani) * bni;
-        dba += ppmul(a, dani) * bni;
+        daa += first * ppmul(b, dani) * bni;
+        dba += first * ppmul(a, dani) * bni;
         //   ani * (d2 bni) * d1 [ a.b ]
-        dab += ppmul(b, dbni) * ani;
-        dbb += ppmul(a, dbni) * ani;
+        dab += first * ppmul(b, dbni) * ani;
+        dbb += first * ppmul(a, dbni) * ani;
         //   ani * bni * dd [ a.b ]
-        dab += ppid() * ani * bni;
-        dba += ppid() * ani * bni;
+        dab += first * ppid() * ani * bni;
+        dba += first * ppid() * ani * bni;
       }
     }
   }
