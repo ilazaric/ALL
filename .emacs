@@ -110,8 +110,15 @@ Removes LaTeX preview overlays in region or entire buffer."
 
 
 ;; save temporaries in ~/.emacs.d/auto-save/ instead alongside
+(defconst my/auto-save-directory
+  (expand-file-name "auto-save/" user-emacs-directory))
+
+(make-directory my/auto-save-directory t)
+
 (setq auto-save-file-name-transforms
-          `((".*" ,(concat user-emacs-directory "auto-save/") t))) 
+      `((".*" ,my/auto-save-directory t)))
+;; (setq auto-save-file-name-transforms
+;;           `((".*" ,(concat user-emacs-directory "auto-save/") t))) 
 
 
 
