@@ -1,4 +1,4 @@
-#include <ivl/build_system/safe_run>
+#include "safe_run"
 
 // IVL add_compiler_flags("-static -flto -Wno-write-strings")
 
