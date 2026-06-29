@@ -34,7 +34,6 @@ function sync_system_programs() {
 }
 
 mount -t tmpfs -o size=512M tmpfs /tmp
-# mkdir /tmp/old-root
 
 sync_system_programs ls {,u}mount rm{,dir} tree df mkdir cat tr env awk grep ln
 
@@ -46,14 +45,11 @@ do
 done
 
 cd /tmp
-# pivot_root /tmp /tmp/old-root
 pivot_root '.' '.'
 cd /
 
 mkdir /proc
 mount -t proc proc /proc
-
-# grep CapEff /proc/self/status
 
 mkdir /sys
 mount -t sysfs sysfs /sys
@@ -67,23 +63,6 @@ ln -s /proc/self/fd/0 /dev/stdin
 ln -s /proc/self/fd/1 /dev/stdout
 ln -s /proc/self/fd/2 /dev/stderr
 
-# awk '$5 == "/" {print}' /proc/self/mountinfo
 umount -l /
-# awk '$5 == "/" {print}' /proc/self/mountinfo
 
-cat /proc/self/mountinfo
-exit 0
-
-df -a
-
-echo "pid: $$"
-
-ls /
-ls /proc
-cat /proc/1/cmdline | tr '\0' ' '
-echo
-tree -I proc -I sys /
-df
-# env
-# env -i
-# env
+exec "$@"

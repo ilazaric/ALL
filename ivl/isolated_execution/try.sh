@@ -2,4 +2,4 @@
 
 set -euo pipefail
 
-unshare -UrmpniuCT --fork ./try2.sh
+unshare -UrmpniuCT --fork ./try2.sh "$@"
