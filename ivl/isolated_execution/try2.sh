@@ -35,7 +35,8 @@ function sync_system_programs() {
 
 mount -t tmpfs -o size=512M tmpfs /tmp
 
-sync_system_programs ls {,u}mount rm{,dir} tree df mkdir cat tr env awk grep ln
+sync_system_programs ls {,u}mount rm{,dir} tree df mkdir cat tr env awk grep ln file taskset echo
+sync_file "/usr/share/misc/magic.mgc" # for `file`
 
 mkdir /tmp/dev
 for f in null zero random urandom
@@ -53,6 +54,7 @@ mount -t proc proc /proc
 
 mkdir /sys
 mount -t sysfs sysfs /sys
+mount -t cgroup2 cgroup2 /sys/fs/cgroup
 mkdir /tmp
 mount -t tmpfs tmpfs /tmp
 

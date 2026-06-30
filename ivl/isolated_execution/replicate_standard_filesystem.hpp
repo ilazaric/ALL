@@ -26,13 +26,14 @@ void replicate_standard_filesystem(const std::filesystem::path& directory) {
   // TODO: needs fork
   // create_mount(directory / "proc", 0707, "proc");
   create_mount(directory / "sys", 0707, "sysfs");
+  sys::mount("cgroup2", (char*)(directory / "sys/fs/cgroup").c_str(), "cgroup2", 0, nullptr);
   sys::mkdir((directory / "dev").c_str(), 0755);
-  bind_mount(directory / "dev" / "null", "/dev/null", 0770);
-  bind_mount(directory / "dev" / "zero", "/dev/zero", 0770);
-  bind_mount(directory / "dev" / "random", "/dev/random", 0770);
-  bind_mount(directory / "dev" / "urandom", "/dev/urandom", 0770);
-  sys::symlink("/proc/self/fd/0", (directory / "dev" / "stdin").c_str());
-  sys::symlink("/proc/self/fd/1", (directory / "dev" / "stdout").c_str());
-  sys::symlink("/proc/self/fd/2", (directory / "dev" / "stderr").c_str());
+  bind_mount(directory / "dev/null", "/dev/null", 0770);
+  bind_mount(directory / "dev/zero", "/dev/zero", 0770);
+  bind_mount(directory / "dev/random", "/dev/random", 0770);
+  bind_mount(directory / "dev/urandom", "/dev/urandom", 0770);
+  sys::symlink("/proc/self/fd/0", (directory / "dev/stdin").c_str());
+  sys::symlink("/proc/self/fd/1", (directory / "dev/stdout").c_str());
+  sys::symlink("/proc/self/fd/2", (directory / "dev/stderr").c_str());
 }
 } // namespace ivl::isolated_execution
