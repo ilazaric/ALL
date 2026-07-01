@@ -149,3 +149,64 @@ ilazaric@debian-perf-1:~$ cat /proc/irq/0/smp_affinity
 `CV = 1.86%`
 
 once again increased, which is bad, but unsure if actually bad
+
+### v4: cpu frequency
+
+make cpu frequency less jumpy, probably can do more here by changing the governor but good start
+
+```
+root@debian-perf-1:/home/ilazaric# echo 2500000 > /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq
+root@debian-perf-1:/home/ilazaric# echo 2500000 > /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq
+```
+
+```
+ilazaric@debian-perf-1:~$ for f in  /sys/devices/system/cpu/cpu3/cpufreq/* ; do ls -lah $f ; cat $f ; echo ; done
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/affected_cpus
+3
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/base_frequency
+2500000
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/cpuinfo_max_freq
+3100000
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/cpuinfo_min_freq
+800000
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/cpuinfo_transition_latency
+0
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/energy_performance_available_preferences
+default performance balance_performance balance_power power 
+
+-rw-r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/energy_performance_preference
+balance_performance
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/related_cpus
+3
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/scaling_available_governors
+performance powersave
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq
+2500000
+
+-r--r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/scaling_driver
+intel_pstate
+
+-rw-r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor
+powersave
+
+-rw-r--r-- 1 root root 4.0K Jul  1 10:46 /sys/devices/system/cpu/cpu3/cpufreq/scaling_max_freq
+2500000
+
+-rw-r--r-- 1 root root 4.0K Jul  1 10:46 /sys/devices/system/cpu/cpu3/cpufreq/scaling_min_freq
+2500000
+
+-rw-r--r-- 1 root root 4.0K Jul  1 10:45 /sys/devices/system/cpu/cpu3/cpufreq/scaling_setspeed
+<unsupported>
+
+```
+
+`CV = 1.64%`
+
