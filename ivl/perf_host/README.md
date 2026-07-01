@@ -1,5 +1,5 @@
 # low variance benchmarking
-
+11;rgb:0000/0000/0000
 on a crappy host i installed minimal debian, no X11  
 the host is intended to be a low variance environment for performance testing  
 
@@ -135,3 +135,17 @@ added 'taskset -c 3' prefix to submit script
 
 CV increased for some reason , the benchmark is quite fast so maybe it didnt have time to context switch
 
+### v3: irq affinity
+
+added `irqaffinity=0,1,2` to kernel params
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2
+ilazaric@debian-perf-1:~$ cat /proc/irq/0/smp_affinity 
+7
+```
+
+`CV = 1.86%`
+
+once again increased, which is bad, but unsure if actually bad
