@@ -117,3 +117,21 @@ generated 1k samples in `v1_default/data.csv`
 
 `CV = 1.29%`
 
+### v2: isolcpus/taskset
+
+added `isolcpus=3` to kernel parameters
+
+```
+ilazaric@debian-perf-1:~$ cat /etc/default/grub | grep DEF
+GRUB_DEFAULT=0
+GRUB_CMDLINE_LINUX_DEFAULT="quiet isolcpus=3"
+ilazaric@debian-perf-1:~$ cat /proc/cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3
+```
+
+added 'taskset -c 3' prefix to submit script
+
+`CV = 1.72%`
+
+CV increased for some reason , the benchmark is quite fast so maybe it didnt have time to context switch
+
