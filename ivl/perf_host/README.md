@@ -210,3 +210,15 @@ powersave
 
 `CV = 1.64%`
 
+### v5: cpu frequency 2: scaling governor
+
+```
+root@debian-perf-1:/home/ilazaric# echo performance > /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor 
+```
+
+```
+-rw-r--r-- 1 root root 4.0K Jul  1 12:47 /sys/devices/system/cpu/cpu3/cpufreq/scaling_governor
+performance
+```
+
+`CV = 1.47%`
