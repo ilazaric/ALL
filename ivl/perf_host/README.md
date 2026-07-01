@@ -113,3 +113,7 @@ and consider the data, try to minimize variance
 
 literally nothing, we just copy the benchmark and run it, not even `taskset`
 
+generated 1k samples in `v1_default/data.csv`
+
+`CV = 1.29%`
+
