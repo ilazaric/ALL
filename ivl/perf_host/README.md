@@ -252,3 +252,16 @@ BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f
 
 `CV = 1.52%`
 
+### v8: no turbo
+
+```
+root@debian-perf-1:/home/ilazaric# cat /sys/devices/system/cpu/intel_pstate/no_turbo
+0
+root@debian-perf-1:/home/ilazaric# echo 1 | tee /sys/devices/system/cpu/intel_pstate/no_turbo
+1
+root@debian-perf-1:/home/ilazaric# cat /sys/devices/system/cpu/intel_pstate/no_turbo
+1
+```
+
+`CV = 1.33%`
+
