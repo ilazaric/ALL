@@ -222,3 +222,33 @@ performance
 ```
 
 `CV = 1.47%`
+
+### v6: disable aslr
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/sys/kernel/randomize_va_space
+2
+ilazaric@debian-perf-1:~$ su
+Password: 
+root@debian-perf-1:/home/ilazaric# echo 0 > /proc/sys/kernel/randomize_va_space
+root@debian-perf-1:/home/ilazaric# 
+exit
+ilazaric@debian-perf-1:~$ cat /proc/sys/kernel/randomize_va_space
+0
+```
+
+`CV = 1.50%`
+
+### v7: `mitigations=off`
+
+also adding `norandmaps`, was achieved already with v6, but this way we don't need to do it on every restart
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/sys/kernel/randomize_va_space
+0
+ilazaric@debian-perf-1:~$ cat /proc/cmdline 
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps
+```
+
+`CV = 1.52%`
+
