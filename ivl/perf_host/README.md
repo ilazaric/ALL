@@ -265,3 +265,18 @@ root@debian-perf-1:/home/ilazaric# cat /sys/devices/system/cpu/intel_pstate/no_t
 
 `CV = 1.33%`
 
+### v9: perf
+
+added `sysctl.kernel.perf_event_paranoid=-1` kernel param so i can collect stats with perf
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1
+```
+
+added binary `delayed_exec` , can talk to `perf` to start measurements right before benchmark exec  
+added perfing magic to `run.sh` , and a couple of new columns
+
+cpu-migrations is consistently 0, good  
+context-switches though can be really high  
+filtering out `context-switches>=10` (~2%) reduces CV quite a bit, from `1.54%` to `0.61%`
