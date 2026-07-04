@@ -313,3 +313,115 @@ ilazaric@debian-perf-1:~$ (for i in {1..100}; do perf stat -e context-switches t
       1                751      context-switches                                                      
       1                911      context-switches                                                      
 ```
+
+```
+ilazaric@ilazaric-gram:~/repos/ALL/ivl/perf_host/v10$ (for i in {1..1000}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+      2                  1      context-switches                                                      
+     21                  2      context-switches                                                      
+     84                  3      context-switches                                                      
+    201                  4      context-switches                                                      
+    206                  5      context-switches                                                      
+    199                  6      context-switches                                                      
+    112                  7      context-switches                                                      
+     89                  8      context-switches                                                      
+     33                  9      context-switches                                                      
+     15                 10      context-switches                                                      
+     10                 11      context-switches                                                      
+      7                 12      context-switches                                                      
+      4                 13      context-switches                                                      
+      1                 14      context-switches                                                      
+      3                 15      context-switches                                                      
+      3                 17      context-switches                                                      
+      1                 18      context-switches                                                      
+      1                 19      context-switches                                                      
+      1                 20      context-switches                                                      
+      1                 21      context-switches                                                      
+      1                 22      context-switches                                                      
+      1                 23      context-switches                                                      
+      1                 27      context-switches                                                      
+      2                 30      context-switches                                                      
+      1                 36      context-switches                                                      
+```
+
+```
+ilazaric@debian-perf-1:~$ (for i in {1..1000}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+     11                  1      context-switches                                                      
+     97                  2      context-switches                                                      
+    315                  3      context-switches                                                      
+    335                  4      context-switches                                                      
+    161                  5      context-switches                                                      
+     55                  6      context-switches                                                      
+      6                  7      context-switches                                                      
+      1                 32      context-switches                                                      
+      1                103      context-switches                                                      
+      1                150      context-switches                                                      
+      1                212      context-switches                                                      
+      1                230      context-switches                                                      
+      1                325      context-switches                                                      
+      1                459      context-switches                                                      
+      1                494      context-switches                                                      
+      1                560      context-switches                                                      
+      1                606      context-switches                                                      
+      1                703      context-switches                                                      
+      2                747      context-switches                                                      
+      1                748      context-switches                                                      
+      2                809      context-switches                                                      
+      1                811      context-switches                                                      
+      1                839      context-switches                                                      
+      1                846      context-switches                                                      
+      1                877      context-switches                                                      
+```
+
+```
+ilazaric@ilazaric-gram:~/repos/ALL/ivl/perf_host$ cat /proc/cmdline 
+BOOT_IMAGE=/boot/vmlinuz-6.17.0-35-generic root=UUID=f10b36fd-5baa-4f1b-ad23-b8e4d53e23da ro quiet splash apparmor=0 vt.handoff=7
+```
+
+could apparmor be creating noise?
+
+#### kill apparmor
+
+adding `apparmor=0` kernel param
+
+```
+root@debian-perf-1:/home/ilazaric# systemctl stop apparmor
+root@debian-perf-1:/home/ilazaric# systemctl disable apparmor
+Synchronizing state of apparmor.service with SysV service script with /usr/lib/systemd/systemd-sysv-install.
+Executing: /usr/lib/systemd/systemd-sysv-install disable apparmor
+Removed '/etc/systemd/system/sysinit.target.wants/apparmor.service'.
+```
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline 
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1 apparmor=0
+```
+
+```
+ilazaric@debian-perf-1:~$ (for i in {1..1000}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+      3                  1      context-switches                                                      
+     99                  2      context-switches                                                      
+    321                  3      context-switches                                                      
+    313                  4      context-switches                                                      
+    193                  5      context-switches                                                      
+     46                  6      context-switches                                                      
+      4                  7      context-switches                                                      
+      4                  8      context-switches                                                      
+      1                665      context-switches                                                      
+      2                708      context-switches                                                      
+      1                727      context-switches                                                      
+      1                737      context-switches                                                      
+      1                762      context-switches                                                      
+      1                772      context-switches                                                      
+      1                776      context-switches                                                      
+      1                786      context-switches                                                      
+      1                793      context-switches                                                      
+      1                802      context-switches                                                      
+      1                809      context-switches                                                      
+      2                810      context-switches                                                      
+      1                811      context-switches                                                      
+      1                828      context-switches                                                      
+      1                847      context-switches                                                      
+```
+
+nope
+
