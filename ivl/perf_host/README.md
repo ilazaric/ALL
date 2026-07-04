@@ -280,3 +280,36 @@ added perfing magic to `run.sh` , and a couple of new columns
 cpu-migrations is consistently 0, good  
 context-switches though can be really high  
 filtering out `context-switches>=10` (~2%) reduces CV quite a bit, from `1.54%` to `0.61%`
+
+### interlude: perf -e context-switches
+
+further testing of `context-switches` event, it is dependent on paranoid value,  
+`2` is consistently `0`, but `-1` shows varied results
+
+```
+ilazaric@ilazaric-gram:~/repos/ALL/ivl/perf_host/v10$ (for i in {1..100}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+      3                  1      context-switches                                                      
+      2                  2      context-switches                                                      
+      7                  3      context-switches                                                      
+     13                  4      context-switches                                                      
+     30                  5      context-switches                                                      
+     13                  6      context-switches                                                      
+     18                  7      context-switches                                                      
+      8                  8      context-switches                                                      
+      2                  9      context-switches                                                      
+      2                 10      context-switches                                                      
+      1                 11      context-switches                                                      
+      1                 14      context-switches                                                      
+```
+
+```
+ilazaric@debian-perf-1:~$ (for i in {1..100}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+      1                  1      context-switches                                                      
+     15                  2      context-switches                                                      
+     31                  3      context-switches                                                      
+     24                  4      context-switches                                                      
+     21                  5      context-switches                                                      
+      6                  6      context-switches                                                      
+      1                751      context-switches                                                      
+      1                911      context-switches                                                      
+```
