@@ -499,3 +499,24 @@ so i guess seen ctxt switches probably related to the few syscalls bench2 calls?
 
 ignoring for now as it seems small, but a TODO to take a look once more
 
+### interlude: data analysis
+
+we added some perf columns, in particular various cache misses, might be good to check if they predict duration well
+
+using data from v10
+
+```
+checking perf:cache-misses predictability ...
+ratios.std() / ratios.mean() = 8.65%
+checking perf:l2_rqsts.all_demand_miss predictability ...
+ratios.std() / ratios.mean() = 1.23%
+checking perf:L1-dcache-misses predictability ...
+ratios.std() / ratios.mean() = 1.17%
+```
+
+dunno what that means really
+
+gonna rerun sampling, 10k samples instead of just 1k
+
+saw a big outlier, seems related to cache-misses
+
