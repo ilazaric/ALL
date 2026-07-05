@@ -425,3 +425,35 @@ ilazaric@debian-perf-1:~$ (for i in {1..1000}; do perf stat -e context-switches 
 
 nope
 
+#### nohz_full ?
+
+reading through the series of blogposts: https://www.suse.com/c/cpu-isolation-nohz_full-part-3/  
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1 apparmor=0 nohz_full=3
+```
+
+```
+ilazaric@debian-perf-1:~$ (for i in {1..1000}; do perf stat -e context-switches taskset -c 3 /tmp/benchmark 2>&1 >/dev/null | head -4 | tail -1; done) | sort | uniq -c
+    965                  1      context-switches                                                      
+     35                  2      context-switches                                                      
+```
+
+incredible!
+
+### v10: nohz_full
+
+from the interlude (mainly suse blog) we concluded `nohz_full=3` kernel param is good to try
+
+i left the apparmor disabling bc im lazy
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline 
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1 apparmor=0 nohz_full=3
+```
+
+`CV = 0.64%` , big improvement!
+
+also, max `context-switches` is `2` , the outliers have vanished
+
