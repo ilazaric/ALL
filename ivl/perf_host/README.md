@@ -540,3 +540,12 @@ cache_cols=[
 
 this seems to match with my past bwrap thinking, normalizing cache effects  
 (which are physical address related) is important
+
+### v12: nokalsr
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline 
+BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1 apparmor=0 nohz_full=3 nokalsr
+```
+
+`CV = 0.68%`
