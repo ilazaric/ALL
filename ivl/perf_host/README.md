@@ -457,3 +457,45 @@ BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f
 
 also, max `context-switches` is `2` , the outliers have vanished
 
+### interlude: checking context switches
+
+perf event context-switches combines voluntary and nonvoluntary, but we can separate them via `/proc/$pid/status`
+
+```
+ilazaric@ilazaric-gram:~/repos/ALL/ivl/perf_host$ cat /proc/$$/status | grep ctxt
+voluntary_ctxt_switches:	17633
+nonvoluntary_ctxt_switches:	873
+```
+
+problem though, perf reaps the child immediately  
+we could hack up perf to dump `/proc/$pid/status` somewhere, but for now we can just get the benchmark to do it  
+specifically, dump it before and after (in case taskset incurs some ctxt switches)
+
+```
+# generating a bunch of outputs
+ilazaric@debian-perf-1:~$ for i in {1..100}; do echo $i ; taskset -c 3 /tmp/bench2 > /tmp/out$i ; done
+...
+# looking for outputs with diff in ctxt switches
+ilazaric@debian-perf-1:~$ for i in {1..100}; do if [ $(cat /tmp/out$i | grep ctxt | sort | uniq | wc -l) -ne 2 ]; then echo $i ; fi; done
+8
+35
+ilazaric@debian-perf-1:~$ cat /tmp/out8 | grep ctxt
+voluntary_ctxt_switches:	0
+nonvoluntary_ctxt_switches:	1
+voluntary_ctxt_switches:	1
+nonvoluntary_ctxt_switches:	1
+ilazaric@debian-perf-1:~$ cat /tmp/out35 | grep ctxt
+voluntary_ctxt_switches:	0
+nonvoluntary_ctxt_switches:	1
+voluntary_ctxt_switches:	0
+nonvoluntary_ctxt_switches:	2
+```
+
+so both voluntary and nonvoluntary is possible, kinda weird
+
+i spawned a cpu stress hog , pinned to core 3 , and watched `/proc/$pid/status` , no change in both ctxt switches  
+did same with memory hog  
+so i guess seen ctxt switches probably related to the few syscalls bench2 calls?
+
+ignoring for now as it seems small, but a TODO to take a look once more
+
