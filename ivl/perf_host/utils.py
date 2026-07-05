@@ -3,6 +3,7 @@
 import polars as rs
 import sys
 import matplotlib.pyplot as plt
+import numpy as np
 
 data = rs.read_csv(sys.argv[1])
 
@@ -28,7 +29,14 @@ for col in ["perf:context-switches", "perf:cpu-migrations"]:
     print(samples.describe())
     print(f"{(samples == 0).mean() = :.2%}")
 
-for col in ["perf:cache-misses", "perf:l2_rqsts.all_demand_miss", "perf:L1-dcache-misses"]:
+cache_cols=[
+    "perf:L1-dcache-loads",
+    "perf:L1-dcache-load-misses",
+    "perf:LLC-loads",
+    "perf:LLC-load-misses",
+]
+
+for col in cache_cols:
     if col not in data:
         print(f"missing column {col}, skipping predictability")
         continue
@@ -40,7 +48,7 @@ for col in ["perf:cache-misses", "perf:l2_rqsts.all_demand_miss", "perf:L1-dcach
 
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_absolute_error, root_mean_squared_error
-x = data.select(["perf:cache-misses", "perf:l2_rqsts.all_demand_miss", "perf:L1-dcache-misses"]).to_numpy()
+x = data.select(cache_cols).to_numpy()
 y = durations.to_numpy()
 model = LinearRegression(fit_intercept=False)
 model.fit(x, y)
@@ -56,8 +64,10 @@ def normalized(foo):
 def normalized2(foo):
     return foo / foo.mean()
 
-plt.scatter(data["timestamp"], data["duration"]/data["perf:cache-misses"], marker=".")
-# plt.scatter(range(len(data)), normalized2(durations), marker=".")
+window_length = 20
+# plt.scatter(data["timestamp"], durations, marker=".")
+plt.scatter(range(len(data)), durations, marker=".")
+plt.plot(range(len(data)-window_length+1), np.convolve(durations, np.ones(window_length) / window_length, mode="valid"), color='red')
 # plt.scatter(range(len(data)), normalized2(data["perf:l2_rqsts.all_demand_miss"]), marker=".")
 # plt.scatter(range(len(data)), normalized(data["perf:cache-misses"]), marker=".")
 plt.show()

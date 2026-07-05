@@ -520,3 +520,23 @@ gonna rerun sampling, 10k samples instead of just 1k
 
 saw a big outlier, seems related to cache-misses
 
+want to try different set of perf events, in past i used just `-d` , moving to new version
+
+### v11: perf stat -d
+
+in bwrap past i just used `-d` instead of explicit events, lets go with that
+
+trying to predict perf via cache stats:
+```
+cache_cols=[
+    "perf:L1-dcache-loads",
+    "perf:L1-dcache-load-misses",
+    "perf:LLC-loads",
+    "perf:LLC-load-misses",
+]
+```
+
+`R2 = 96.77%` (no intercept)
+
+this seems to match with my past bwrap thinking, normalizing cache effects  
+(which are physical address related) is important
