@@ -64,7 +64,7 @@ def normalized(foo):
 def normalized2(foo):
     return foo / foo.mean()
 
-window_length = 20
+window_length = 100
 # plt.scatter(data["timestamp"], durations, marker=".")
 plt.scatter(range(len(data)), durations, marker=".")
 plt.plot(range(len(data)-window_length+1), np.convolve(durations, np.ones(window_length) / window_length, mode="valid"), color='red')

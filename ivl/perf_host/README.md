@@ -549,3 +549,11 @@ BOOT_IMAGE=/boot/vmlinuz-6.12.94+deb13-amd64 root=UUID=2f5fb668-5b04-4469-9731-f
 ```
 
 `CV = 0.68%`
+
+looking at the graph (window averaged), it seems to start low then increase and stabilize?  
+the start is interesting, TODO
+
+generated a 10k dataset, there seems to be some clustering but i dont understand it
+
+unrelated, from suse blog, TODO: https://man7.org/linux/man-pages/man2/mlock.2.html
+
