@@ -557,3 +557,11 @@ generated a 10k dataset, there seems to be some clustering but i dont understand
 
 unrelated, from suse blog, TODO: https://man7.org/linux/man-pages/man2/mlock.2.html
 
+### v13: faster sampling
+
+i was noticing running a sample was significantly slower than just running the benchmark locally  
+turns out rsync-ing on every sample was slow (200ms)  
+also some overhead around parsing the run.sh output into a csv row  
+now submit.sh accepts an N - number of samples to generate
+
+`CV = 0.63%`
