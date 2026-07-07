@@ -565,3 +565,18 @@ also some overhead around parsing the run.sh output into a csv row
 now submit.sh accepts an N - number of samples to generate
 
 `CV = 0.63%`
+
+### v14: experiment on cpu driver
+
+in past bwrap stuff i had `intel_pstate=disable intel_idle.max_cstate=0 idle=poll cpufreq.default_governor=performance` kernel params, trying again
+
+```
+ilazaric@debian-perf-1:~$ cat /proc/cmdline
+root=UUID=2f5fb668-5b04-4469-9731-f83447e7f283 ro quiet isolcpus=3 irqaffinity=0,1,2 mitigations=off norandmaps sysctl.kernel.perf_event_paranoid=-1 apparmor=0 nohz_full=3 nokalsr intel_pstate=disable intel_idle.max_cstate=0 idle=poll cpufreq.default_governor=performance
+```
+
+`CV = 0.78%`
+
+did this experiment via kexec , hope it went well
+
+not keeping this change, kinda freaks me out
