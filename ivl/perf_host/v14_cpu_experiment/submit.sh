@@ -19,7 +19,7 @@ HOST_INIT="$DATADIR/host-init.sh"
 [ -x "$HOST_INIT" ]
 
 # has header?
-[ "$(cat "$OUTPUT" | wc -l)" -ge 1 ]
+[ "$(cat "$CSV" | wc -l)" -ge 1 ]
 
 rsync -a "$HOST_INIT" "$HOST:/tmp/host_init"
 rsync -a "$BENCHMARK" "$HOST:/tmp/benchmark"
