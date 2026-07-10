@@ -67,7 +67,7 @@ def normalized2(foo):
 window_length = 100
 # plt.scatter(data["timestamp"], durations, marker=".")
 plt.scatter(range(len(data)), durations, marker=".")
-plt.plot(range(len(data)-window_length+1), np.convolve(durations, np.ones(window_length) / window_length, mode="valid"), color='red')
+plt.plot(np.array(range(len(data)-window_length+1)) + (window_length-1) / 2, np.convolve(durations, np.ones(window_length) / window_length, mode="valid"), color='red')
 # plt.scatter(range(len(data)), normalized2(data["perf:l2_rqsts.all_demand_miss"]), marker=".")
 # plt.scatter(range(len(data)), normalized(data["perf:cache-misses"]), marker=".")
 plt.show()
