@@ -1,0 +1,6 @@
+callgrind.out.*
+gcm.cache/
+perf.data
+perf.data.old
+slow.s
+strace.log
