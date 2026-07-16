@@ -26,7 +26,7 @@ int ivl_main(args, std::span<const char*> cmd) {
 
   char out[5]{};
   auto len = sys::read(ctl_ack_fd, &out[0], 4);
-  contract_assert(len == 4);
+  contract_assert(len == 4); // "ack\n"
   // printf("%s\n", out);
   sys::execve(cmd[0], &cmd[0], nullptr /* TODO */);
   return 0;
