@@ -3,8 +3,8 @@
 #include <ivl/cpp-parser/spliced_cxx_file>
 #include <ivl/logger>
 #include <ivl/meta>
-#include <ivl/reflection/enumerators>
 #include <ivl/reflection/test_attribute>
+#include <ivl/utility/enum>
 #include <ivl/utility>
 #include <algorithm>
 #include <cassert>
@@ -339,7 +339,7 @@ struct non_whitespace_garbage {
 
 // gets synthesized in phase 4
 struct placemarker {
-  auto operator<=>(const non_whitespace_garbage&) const = default;
+  auto operator<=>(const placemarker&) const = default;
 };
 
 // module, import, export keywords not implemented (treated as regular identifier)
@@ -480,14 +480,16 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
 
   auto delimiter = std::string_view(file.original_contents).substr(0, delimiter_end_pos).substr(delimiter_start_pos);
   // https://eel.is/c++draft/lex#nt:d-char
-  if (auto bad_char_pos = delimiter.find_first_of(
-        " ()\\"
-        "\x{09}"
-        "\x{0B}"
-        "\x{0C}"
-        "\n"
-      );
-      bad_char_pos != std::string_view::npos) {
+  if (
+    auto bad_char_pos = delimiter.find_first_of(
+      " ()\\"
+      "\x{09}"
+      "\x{0B}"
+      "\x{0C}"
+      "\n"
+    );
+    bad_char_pos != std::string_view::npos
+  ) {
     throw std::runtime_error(
       std::format(
         "Malformed raw string literal, delimiter contains illegal character [{}]\n{}", (int)delimiter[bad_char_pos],
@@ -591,10 +593,11 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
       current_conditional = conditional::START_OF_LINE;
       return;
     }
-    if (std::holds_alternative<whitespace>(token.payload) ||
-        std::holds_alternative<single_line_comment>(token.payload) ||
-        std::holds_alternative<multi_line_comment>(token.payload) || current_conditional == conditional::FAILED ||
-        current_conditional == conditional::CORRECT)
+    if (
+      std::holds_alternative<whitespace>(token.payload) || std::holds_alternative<single_line_comment>(token.payload) ||
+      std::holds_alternative<multi_line_comment>(token.payload) || current_conditional == conditional::FAILED ||
+      current_conditional == conditional::CORRECT
+    )
       return;
     if (current_conditional == conditional::START_OF_LINE) {
       if (auto ptr = std::get_if<preprocessing_op_or_punc>(&token.payload); ptr && ptr->kind == "#")
@@ -603,8 +606,10 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
       return;
     }
     assert(current_conditional == conditional::HASH);
-    if (auto ptr = std::get_if<identifier>(&token.payload);
-        ptr && (ptr->text == "if" || ptr->text == "elif" || ptr->text == "embed"))
+    if (
+      auto ptr = std::get_if<identifier>(&token.payload);
+      ptr && (ptr->text == "if" || ptr->text == "elif" || ptr->text == "embed")
+    )
       current_conditional = conditional::CORRECT;
     else current_conditional = conditional::FAILED;
   };
@@ -643,9 +648,7 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
 
     if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc(state);
 
-    if (!parsed) {
-      throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context()));
-    }
+    if (!parsed) { throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context())); }
 
     // a big like this can blow up memory
     assert(copy_state.begin() != state.begin());
