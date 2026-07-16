@@ -35,7 +35,7 @@ function sync_system_programs() {
 
 mount -t tmpfs -o size=512M tmpfs /tmp
 
-sync_system_programs ls {,u}mount rm{,dir} tree df mkdir cat tr env awk grep ln file taskset echo
+sync_system_programs ls {,u}mount rm{,dir} tree df mkdir cat tr env awk grep ln file taskset echo ps bash env
 sync_file "/usr/share/misc/magic.mgc" # for `file`
 
 mkdir /tmp/dev
@@ -65,6 +65,7 @@ ln -s /proc/self/fd/0 /dev/stdin
 ln -s /proc/self/fd/1 /dev/stdout
 ln -s /proc/self/fd/2 /dev/stderr
 
+# TODO: not mounting proc breaks this, why?
 umount -l /
 
-exec "$@"
+exec env -i "$@"
