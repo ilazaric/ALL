@@ -8,7 +8,7 @@ namespace ivl::isolated_execution {
 // for the purposes of pivot_root-ing into the directory.
 //
 // Relevant: https://refspecs.linuxfoundation.org/FHS_3.0/fhs/index.html
-// Noting we doesn't follow FHS identically.
+// Noting we doesn't follow FHS identically, specifically /dev/tty is not exposed.
 //
 // Requires ability to `mount()`, likely from unshared user & mount namespaces.
 void replicate_standard_filesystem(const std::filesystem::path& directory) {
