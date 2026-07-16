@@ -1,3 +1,5 @@
-#include <ivl/linux/terminate_syscalls>
+#include <print>
 
-int main() {}
+int main() {
+  std::println("hello world {} {} {} {}", 1, 2, 3, 4, 5, 6);
+}
