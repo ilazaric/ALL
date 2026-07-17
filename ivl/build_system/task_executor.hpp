@@ -106,9 +106,10 @@ struct task_executor {
       terminate_cgroup();
       task_outcome outcome;
       outcome.identifier = task_identifier;
-      siginfo_t info{};
-      sys::waitid(P_PIDFD, pidfd.get(), (siginfo*)&info, WEXITED | __WALL, &outcome.end_rusage);
-      contract_assert(info.si_code == CLD_EXITED || info.si_code == CLD_KILLED || info.si_code == CLD_DUMPED);
+      sys::waitid(P_PIDFD, pidfd.get(), (siginfo*)&outcome.info, WEXITED | __WALL, &outcome.end_rusage);
+      contract_assert(
+        outcome.info.si_code == CLD_EXITED || outcome.info.si_code == CLD_KILLED || outcome.info.si_code == CLD_DUMPED
+      );
       outcome.duration = std::chrono::steady_clock::now() - start_time_point;
       outcome.end_cgroup_files = collect_cgroup_files();
       linux::write_file_slow(cgroup_dir / "memory.max", "0");
@@ -116,8 +117,6 @@ struct task_executor {
       // this should evict them from epoll fd
       (void)pidfd.close();
       (void)timerfd.close();
-      // TODO: might want to encode si_code too
-      outcome.exit_status = info.si_status;
       outcome.stdout = linux::read_file(stdoutfd);
       outcome.stderr = linux::read_file(stderrfd);
       return outcome;

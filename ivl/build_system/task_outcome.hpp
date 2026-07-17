@@ -2,14 +2,16 @@
 
 #include <sys/resource.h>
 #include <map>
+#include <signal.h>
 #include <string>
 
 namespace ivl::build_system {
 struct task_outcome {
   std::string identifier;
 
-  // TODO: also code
-  int exit_status;
+  // whatever waitid() fills in the infop ptr, exit status etc
+  siginfo_t info;
+
   std::string stdout;
   std::string stderr;
 

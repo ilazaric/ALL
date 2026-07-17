@@ -51,23 +51,23 @@ int ivl_main() {
     };
   };
 
-  if (0) {
-    executor.launch_task(bash("fd-check", "echo STDOUT; echo STDERR > /dev/stderr"));
-    executor.launch_task(bash("ls-root", "ls /"));
-    executor.launch_task(bash("df-root", "df /"));
-    executor.launch_task(bash("pwd", "pwd"));
+  // if (0) {
+  //   executor.launch_task(bash("fd-check", "echo STDOUT; echo STDERR > /dev/stderr"));
+  //   executor.launch_task(bash("ls-root", "ls /"));
+  //   executor.launch_task(bash("df-root", "df /"));
+  //   executor.launch_task(bash("pwd", "pwd"));
 
-    {
-      auto task = bash("stalling-out", "sleep 20");
-      task.time_limit = 1s;
-      executor.launch_task(task);
-    }
+  //   {
+  //     auto task = bash("stalling-out", "sleep 20");
+  //     task.time_limit = 1s;
+  //     executor.launch_task(task);
+  //   }
 
-    while (executor.active_task_count) {
-      auto outcome = executor.wait_for_death();
-      std::cout << ivl::to_json(outcome).dump(2) << std::endl;
-    }
-  }
+  //   while (executor.active_task_count) {
+  //     auto outcome = executor.wait_for_death();
+  //     std::cout << ivl::to_json(outcome).dump(2) << std::endl;
+  //   }
+  // }
 
   if (1) {
     auto start_tp = std::chrono::steady_clock::now();
@@ -94,7 +94,7 @@ int ivl_main() {
 
     auto end_tp = std::chrono::steady_clock::now();
     LOG(end_tp - start_tp);
-    for (auto&& outcome : outcomes) LOG(outcome.identifier, outcome.exit_status, outcome.duration);
+    for (auto&& outcome : outcomes) LOG(outcome.identifier, outcome.info.si_status, outcome.duration);
   }
 
   return 0;
