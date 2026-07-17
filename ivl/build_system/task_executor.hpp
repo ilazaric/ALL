@@ -15,6 +15,9 @@ namespace ivl::build_system {
 struct task_executor {
   linux::epoll_file_descriptor efd;
   std::filesystem::path root_cgroup_dir;
+  std::size_t default_cpu_max_percentage = 100;
+  std::size_t default_memory_limit = 1'000'000'000;
+  std::chrono::nanoseconds default_time_limit = std::chrono::seconds(10);
 
   explicit task_executor(const std::filesystem::path& root_cgroup_dir)
       : efd(linux::throwing_syscalls::semantic, linux::epoll_create_enum::EPOLL_CLOEXEC),
@@ -151,10 +154,12 @@ struct task_executor {
     }
   }
 
-  void launch_task(
-    const task_config& task, std::size_t cpu_max_percentage, std::size_t memory_max, std::chrono::nanoseconds time_limit
-  ) {
+  void launch_task(const task_config& task) {
     namespace sys = linux::throwing_syscalls;
+
+    auto cpu_max_percentage = task.cpu_max_percentage.value_or(default_cpu_max_percentage);
+    auto memory_limit = task.memory_limit.value_or(default_memory_limit);
+    auto time_limit = task.time_limit.value_or(default_time_limit);
 
     contract_assert(time_limit > std::chrono::nanoseconds(0));
 
@@ -185,7 +190,7 @@ struct task_executor {
     contract_assert(stdoutfd.get() != 1);
     contract_assert(stderrfd.get() != 2);
     auto cgroup_dir = create_new_cgroup();
-    linux::write_file_slow(cgroup_dir / "memory.max", std::to_string(memory_max));
+    linux::write_file_slow(cgroup_dir / "memory.max", std::to_string(memory_limit));
     linux::write_file_slow(cgroup_dir / "cpu.max", std::format("{}000 100000", cpu_max_percentage));
     linux::write_file_slow(cgroup_dir / "memory.swap.max", "0");
     linux::write_file_slow(cgroup_dir / "memory.zswap.max", "0");

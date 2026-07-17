@@ -16,5 +16,10 @@ struct task_config {
   std::filesystem::path process_pathname;
   std::vector<std::string> process_argv;
   std::vector<std::string> process_envp;
+
+  // if unset uses executor defaults
+  std::optional<std::size_t> cpu_max_percentage;
+  std::optional<std::size_t> memory_limit;
+  std::optional<std::chrono::nanoseconds> time_limit;
 };
 } // namespace ivl::build_system

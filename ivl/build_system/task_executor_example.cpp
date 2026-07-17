@@ -7,6 +7,10 @@
 int ivl_main() {
   using namespace std::literals::chrono_literals;
 
+  // requires:
+  // mkdir /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl.slice
+  // echo '+cpu +memory +pids' > \
+  //   /sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl.slice/cgroup.subtree_control
   ivl::build_system::task_executor executor("/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/ivl.slice");
 
   auto bash = [](std::string_view id, std::string_view arg) {
@@ -48,12 +52,16 @@ int ivl_main() {
   };
 
   if (0) {
-    executor.launch_task(bash("fd-check", "echo STDOUT; echo STDERR > /dev/stderr"), 100, 1'000'000'000, 10s);
-    executor.launch_task(bash("ls-root", "ls /"), 100, 1'000'000'000, 10s);
-    executor.launch_task(bash("df-root", "df /"), 100, 1'000'000'000, 10s);
-    executor.launch_task(bash("pwd", "pwd"), 100, 1'000'000'000, 10s);
+    executor.launch_task(bash("fd-check", "echo STDOUT; echo STDERR > /dev/stderr"));
+    executor.launch_task(bash("ls-root", "ls /"));
+    executor.launch_task(bash("df-root", "df /"));
+    executor.launch_task(bash("pwd", "pwd"));
 
-    executor.launch_task(bash("stalling-out", "sleep 20"), 100, 1'000'000'000, 1s);
+    {
+      auto task = bash("stalling-out", "sleep 20");
+      task.time_limit = 1s;
+      executor.launch_task(task);
+    }
 
     while (executor.active_task_count) {
       auto outcome = executor.wait_for_death();
@@ -71,20 +79,22 @@ int ivl_main() {
         std::to_string(i), "/home/ilazaric/repos/ALL/ivl/build_system/test_program.cpp",
         "/home/ilazaric/repos/ALL/ivl/build_system/outputs/test_program." + std::to_string(i)
       ));
+      tasks.back().cpu_max_percentage = 50;
+      tasks.back().time_limit = 20s;
       outcomes.emplace_back();
     }
 
     int j = 0;
     for (int i = 0; i < 20; ++i) {
       while (executor.active_task_count >= 4) outcomes[j++] = executor.wait_for_death();
-      executor.launch_task(tasks[i], 50, 1'000'000'000, 10s);
+      executor.launch_task(tasks[i]);
     }
     while (executor.active_task_count) outcomes[j++] = executor.wait_for_death();
     contract_assert(j == 20);
 
     auto end_tp = std::chrono::steady_clock::now();
-
     LOG(end_tp - start_tp);
+    for (auto&& outcome : outcomes) LOG(outcome.identifier, outcome.exit_status, outcome.duration);
   }
 
   return 0;
