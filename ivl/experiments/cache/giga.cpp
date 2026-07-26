@@ -60,54 +60,56 @@ template<class Tp>
   asm volatile("" : : "r,m"(value) : "memory");
 }
 
+#include <ivl/utility/tsc>
+
 // dont use, go through multi_run
 [[gnu::always_inline]]
-inline std::size_t single_run(cache_line* start) {
-  std::size_t cycle_start = _rdtsc();
+inline ivl::tsc_duration single_run(cache_line* start) {
+  auto cycle_start = ivl::tsc_now();
   auto current = start;
   do {
-    cycle_start += current->unused[0]; // zero
+    cycle_start += ivl::tsc_duration{(int64_t)current->unused[0]}; // zero
     current = current->next;
   } while (current != start);
   // DoNotOptimize(current);
-  std::size_t cycle_end = _rdtsc();
-  return cycle_end - cycle_start - 25 /* noop */;
+  auto cycle_end = ivl::tsc_now();
+  return cycle_end - cycle_start - ivl::tsc_duration{25} /* noop */;
 }
 
 // TODO: take a look at the asm
 [[gnu::noinline]]
-std::size_t multi_run(cache_line* start, std::size_t n) {
+ivl::tsc_duration multi_run(cache_line* start, std::size_t n) {
   DoNotOptimize(single_run(start)); // to warm up the memory, so every run is uniform
-  std::size_t ret = 0;
+  ivl::tsc_duration ret{};
   while (n--) ret += single_run(start);
   return ret;
 }
 
 // dont use, go through multi_run
 [[gnu::always_inline]]
-inline std::size_t single_run2(cache_line* start) {
+inline ivl::tsc_duration single_run2(cache_line* start) {
   std::size_t cycle_start = 0;
   auto current = start;
   do {
     cycle_start += current->unused[0]; // zero
     current = current->next;
   } while (current != start);
-  return cycle_start;
+  return ivl::tsc_duration{(int64_t)cycle_start};
 }
 
 // TODO: take a look at the asm
 [[gnu::noinline]]
-std::size_t multi_run2(cache_line* start, std::size_t n) {
+ivl::tsc_duration multi_run2(cache_line* start, std::size_t n) {
   DoNotOptimize(single_run(start)); // to warm up the memory, so every run is uniform
-  std::size_t cycle_start = _rdtsc();
+  auto cycle_start = ivl::tsc_now();
   while (n--) cycle_start += single_run2(start);
-  std::size_t cycle_end = _rdtsc();
-  return cycle_end - cycle_start - 25;
+  auto cycle_end = ivl::tsc_now();
+  return cycle_end - cycle_start - ivl::tsc_duration{25};
 }
 
 // TODO: take a look at the asm
 [[gnu::noinline]]
-std::size_t multi_run3(cache_line* start, std::size_t n) {
+ivl::tsc_duration multi_run3(cache_line* start, std::size_t n) {
   auto current = start;
   asm volatile(".Lwarmup_start_%=:\n\t"
                "mov (%0), %0\n\t"
@@ -116,7 +118,7 @@ std::size_t multi_run3(cache_line* start, std::size_t n) {
                : "+r"(current), "+r"(start) /* outputs */
                :                            /* inputs */
                : /* clobbers */);
-  std::size_t ret = _rdtsc();
+  auto ret = ivl::tsc_now();
   while (n--) {
     asm volatile(".Lbody_start_%=:\n\t"
                  "mov (%0), %0\n\t"
@@ -126,14 +128,14 @@ std::size_t multi_run3(cache_line* start, std::size_t n) {
                  :                                       /* inputs */
                  : /* clobbers */);
   }
-  std::size_t e = _rdtsc();
+  auto e = ivl::tsc_now();
   return e - ret;
 }
 
 // TODO: take a look at the asm
 // TODO: i think this is a bit incorrect, constraints should say it reads from memory
 [[gnu::noinline]]
-std::size_t multi_run4(cache_line* start, std::size_t n) {
+ivl::tsc_duration multi_run4(cache_line* start, std::size_t n) {
   auto current = start;
   asm volatile(".Lwarmup_start_%=:\n\t"
                "test %0, %0\n\t"
@@ -144,7 +146,7 @@ std::size_t multi_run4(cache_line* start, std::size_t n) {
                : "+r"(current), "+r"(start) /* outputs */
                :                            /* inputs */
                : /* clobbers */);
-  std::size_t ret = _rdtsc();
+  auto ret = ivl::tsc_now();
   while (n--) {
     current = start;
     asm volatile(".Lbody_start_%=:\n\t"
@@ -157,16 +159,35 @@ std::size_t multi_run4(cache_line* start, std::size_t n) {
                  :                                       /* inputs */
                  : /* clobbers */);
   }
-  std::size_t e = _rdtsc();
+  auto e = ivl::tsc_now();
   return e - ret;
 }
 
 [[gnu::noinline]]
-std::size_t noop() {
-  std::size_t a = __rdtsc();
-  std::size_t b = __rdtsc();
+ivl::tsc_duration noop() {
+  auto a = ivl::tsc_now();
+  auto b = ivl::tsc_now();
   return b - a;
 }
+
+namespace ivl {
+std::ostream& operator<<(std::ostream& out, ivl::tsc_time_point tp) { return out << tp.value; }
+std::ostream& operator<<(std::ostream& out, ivl::tsc_duration d) { return out << d.value; }
+} // namespace ivl
+
+template<>
+struct std::formatter<ivl::tsc_time_point, char> {
+  std::formatter<int64_t> f;
+  constexpr auto parse(auto& ctx) { return f.parse(ctx); }
+  constexpr auto format(ivl::tsc_time_point tp, auto& ctx) const { return f.format(tp.value, ctx); }
+};
+
+template<>
+struct std::formatter<ivl::tsc_duration, char> {
+  std::formatter<int64_t> f;
+  constexpr auto parse(auto& ctx) { return f.parse(ctx); }
+  constexpr auto format(ivl::tsc_duration d, auto& ctx) const { return f.format(d.value, ctx); }
+};
 
 int ivl_main() {
   LOG(noop());
@@ -199,7 +220,8 @@ int ivl_main() {
     // auto cyc4 = multi_run4(&lines[0], 1000);
     // LOG(i, cyc - last);
     // LOG(i, cyc2 - last2);
-    LOG(i, i + 1, cyc3 - last3, cyc3 / (i + 1));
+    std::println("cycle_length: {: >2}, rdtsc_delta_delta: {: >6}", i + 1, cyc3 - last3);
+    // LOG(i, i + 1, cyc3 - last3, cyc3 / (i + 1));
     // last = cyc;
     // last2 = cyc2;
     last3 = cyc3;
