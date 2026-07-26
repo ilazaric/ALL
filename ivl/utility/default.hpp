@@ -11,6 +11,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <ivl/utility/hex>
 
 #pragma IVL add_compiler_flags "-g"
 #pragma IVL add_compiler_flags_tail "-lstdc++exp"
@@ -73,16 +74,6 @@ struct lazy_construct_t : detail::lazy_construct_conversion<T, std::make_index_s
 template <typename T>
 auto lazy_construct(auto&&... args) {
   return lazy_construct_t<T, decltype(args)...>(FWD(args)...);
-}
-
-inline std::string hex(std::string_view sv) {
-  std::string ret(sv.size() * 2, '\0');
-  auto hexc = [](int x) -> char { return x < 10 ? '0' + x : 'a' + x - 10; };
-  for (size_t i = 0; i < sv.size(); ++i) {
-    ret[2 * i] = hexc(((unsigned char)sv[i]) / 16);
-    ret[2 * i + 1] = hexc(((unsigned char)sv[i]) % 16);
-  }
-  return ret;
 }
 
 inline std::filesystem::path repo_root() {
