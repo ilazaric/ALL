@@ -11,27 +11,31 @@ SRC_DIR="$SCRIPT_DIR/gcc"
 cd "$SRC_DIR"
 ./contrib/download_prerequisites
 
-mkdir -p "$OBJ_DIR"
-cd "$OBJ_DIR"
-
-"$SRC_DIR/configure"                 \
-    --disable-multilib               \
-    --prefix="/opt/GCC"              \
-    --enable-languages=c,c++         \
-    --enable-libstdcxx-debug         \
-    --enable-libstdcxx-backtrace     \
-    --disable-bootstrap              \
-    --disable-libvtv                 \
-    --disable-libssp                 \
-    --disable-libffi                 \
-    --with-system-zlib               \
-    --without-isl                    \
-    --enable-checking=release
+if ! [ -d "$OBJ_DIR" ]
+then
+    mkdir "$OBJ_DIR"
+    cd "$OBJ_DIR"
+    "$SRC_DIR/configure"                 \
+        --disable-multilib               \
+        --prefix="/opt/GCC"              \
+        --enable-languages=c,c++         \
+        --enable-libstdcxx-debug         \
+        --enable-libstdcxx-backtrace     \
+        --disable-bootstrap              \
+        --disable-libvtv                 \
+        --disable-libssp                 \
+        --disable-libffi                 \
+        --with-system-zlib               \
+        --without-isl                    \
+        --enable-checking=release
+else
+    cd "$OBJ_DIR"
+fi
 
 make -j $(nproc)
 
 if [ "$#" -ge 1 ] && [ "$1" == "--install" ]
 then
     echo "installing ..."
-    sudo make install
+    make install
 fi
