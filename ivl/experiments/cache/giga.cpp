@@ -3,6 +3,7 @@
 #include <linux/mman.h>
 #include <cstring>
 #include <immintrin.h>
+#include "cpuid_cache"
 
 // IVL add_compiler_flags("-static")
 
