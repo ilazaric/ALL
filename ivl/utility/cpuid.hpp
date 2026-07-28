@@ -13,6 +13,7 @@ struct cpuid_output {
   uint32_t a, b, c, d;
 };
 
+// TODO: take a look at asm of this, looks really weird
 cpuid_output raw_cpuid(uint32_t leaf, uint32_t subleaf = 0) {
   uint32_t a asm("eax") = leaf;
   uint32_t b asm("ebx");
