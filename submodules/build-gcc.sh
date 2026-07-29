@@ -78,7 +78,7 @@ cd "$SRC_DIR"
 
 if ! [ -d "$OBJ_DIR" ]
 then
-    mkdir "$OBJ_DIR"
+    mkdir -p "$OBJ_DIR"
     cd "$OBJ_DIR"
     "$SRC_DIR/configure"                 \
         --disable-multilib               \
