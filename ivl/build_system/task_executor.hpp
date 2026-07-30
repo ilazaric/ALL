@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ivl/build_system/task_config>
+#include <ivl/build_system/task_limits>
 #include <ivl/build_system/task_outcome>
 #include <ivl/linux/clone3>
 #include <ivl/linux/epoll>
@@ -15,14 +16,17 @@ namespace ivl::build_system {
 struct task_executor {
   linux::epoll_file_descriptor efd;
   std::filesystem::path root_cgroup_dir;
-  std::size_t default_cpu_max_percentage = 100;
-  std::size_t default_memory_limit = 1'000'000'000;
-  std::chrono::nanoseconds default_time_limit = std::chrono::seconds(10);
+  std::size_t default_cpu_max_percentage;
+  std::size_t default_memory_limit;
+  std::chrono::nanoseconds default_time_limit;
 
-  explicit task_executor(const std::filesystem::path& root_cgroup_dir)
+  explicit task_executor(const std::filesystem::path& root_cgroup_dir, const task_limits& limits = {})
       : efd(linux::throwing_syscalls::semantic, linux::epoll_create_enum::EPOLL_CLOEXEC),
-        root_cgroup_dir(root_cgroup_dir) {
+        root_cgroup_dir(root_cgroup_dir), default_cpu_max_percentage(limits.cpu_max_percentage.value_or(100)),
+        default_memory_limit(limits.memory_limit.value_or(1'000'000'000)),
+        default_time_limit(limits.time_limit.value_or(std::chrono::seconds(10))) {
     namespace sys = linux::throwing_syscalls;
+    contract_assert(linux::read_file_slow(root_cgroup_dir / "cgroup.subtree_control") == "cpu memory pids\n");
     auto parent_dir = root_cgroup_dir / "parent.slice";
     if (!exists(parent_dir)) sys::mkdir(parent_dir.c_str(), 0755);
     contract_assert(linux::read_file_slow(parent_dir / "pids.current") == "0\n");
@@ -153,13 +157,15 @@ struct task_executor {
     }
   }
 
-  void launch_task(const task_config& task) {
+  void launch_task(const task_config& task, const task_limits& limits = {}) {
     namespace sys = linux::throwing_syscalls;
 
-    auto cpu_max_percentage = task.cpu_max_percentage.value_or(default_cpu_max_percentage);
-    auto memory_limit = task.memory_limit.value_or(default_memory_limit);
-    auto time_limit = task.time_limit.value_or(default_time_limit);
+    auto cpu_max_percentage = limits.cpu_max_percentage.value_or(default_cpu_max_percentage);
+    auto memory_limit = limits.memory_limit.value_or(default_memory_limit);
+    auto time_limit = limits.time_limit.value_or(default_time_limit);
 
+    contract_assert(cpu_max_percentage > 0);
+    contract_assert(memory_limit > 0);
     contract_assert(time_limit > std::chrono::nanoseconds(0));
 
     auto argv_envp_helper = [](const std::vector<std::string>& seq) {

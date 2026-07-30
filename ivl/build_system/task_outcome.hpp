@@ -10,6 +10,7 @@ struct task_outcome {
   std::string identifier;
 
   // whatever waitid() fills in the infop ptr, exit status etc
+  // TODO: this contain a union, which is not json-ifiable.
   siginfo_t info;
 
   std::string stdout;

@@ -79,15 +79,13 @@ int ivl_main() {
         std::to_string(i), "/home/ilazaric/repos/ALL/ivl/build_system/test_program.cpp",
         "/home/ilazaric/repos/ALL/ivl/build_system/outputs/test_program." + std::to_string(i)
       ));
-      tasks.back().cpu_max_percentage = 50;
-      tasks.back().time_limit = 20s;
       outcomes.emplace_back();
     }
 
     int j = 0;
     for (int i = 0; i < 20; ++i) {
       while (executor.active_task_count >= 4) outcomes[j++] = executor.wait_for_death();
-      executor.launch_task(tasks[i]);
+      executor.launch_task(tasks[i], {.cpu_max_percentage = 50, .time_limit = 20s});
     }
     while (executor.active_task_count) outcomes[j++] = executor.wait_for_death();
     contract_assert(j == 20);
