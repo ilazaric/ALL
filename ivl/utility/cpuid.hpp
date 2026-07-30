@@ -14,6 +14,7 @@ struct cpuid_output {
 };
 
 // TODO: take a look at asm of this, looks really weird
+// UPDT: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=120588
 cpuid_output raw_cpuid(uint32_t leaf, uint32_t subleaf = 0) {
   uint32_t a asm("eax") = leaf;
   uint32_t b asm("ebx");
