@@ -1,7 +1,9 @@
 #pragma once
 
 #include <ivl/meta>
+#include <ivl/reflection/json_annotations>
 #include <ivl/reflection/utility>
+#include <ivl/utility/hex>
 #include <nlohmann/json.hpp>
 #include <cassert>
 #include <map>
@@ -11,10 +13,6 @@
 #include <vector>
 
 namespace ivl {
-struct json_serialize_as_array_t {};
-
-constexpr json_serialize_as_array_t json_serialize_as_array;
-
 enum class from_to_json_impl_direction { FROM, TO };
 
 // template<typename>
@@ -49,7 +47,17 @@ RetT from_to_json_impl(const InputT& arg) {
 
   using enum from_to_json_impl_direction;
 
-  if constexpr (reflection::is_instantiation_of(^^T, ^^std::variant)) {
+  if constexpr (!annotations_of_with_type(^^T, ^^json_serialize_as_bytes_hex_t).empty()) {
+    if constexpr (Direction == TO) {
+      return nlohmann::json(util::hex(std::string_view((const char*)&arg, (const char*)(&arg + 1))));
+    } else {
+      T ret;
+      auto str = util::unhex(arg.template get<std::string>());
+      contract_assert(sizeof(ret) == str.size());
+      memcpy(&ret, str.c_str(), sizeof(ret));
+      return ret;
+    }
+  } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::variant)) {
     // TODO: technically we could do non-unique as well
     static_assert(extract<bool>(substitute(^^meta::is_unique, template_arguments_of(^^T))));
     template for (constexpr auto VI : define_static_array(template_arguments_of(^^T))) {
@@ -170,5 +178,15 @@ T from_json(const nlohmann::json& j) {
 template<typename T>
 nlohmann::json to_json(const T& t) {
   return from_to_json_impl<T, from_to_json_impl_direction::TO>(t);
+}
+
+template<typename T>
+T from_json_string(std::string_view sv) {
+  return from_json<T>(nlohmann::json::parse(sv));
+}
+
+template<typename T>
+std::string to_json_string(const T& t) {
+  return to_json<T>(t).dump(2);
 }
 } // namespace ivl
