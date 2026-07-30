@@ -1,8 +1,6 @@
 #include "cpuid_foo"
 #include <print>
 
-// IVL add_compiler_flags("-Wno-subobject-linkage")
-
 constexpr auto ctx = std::meta::access_context::unchecked();
 
 int main() {

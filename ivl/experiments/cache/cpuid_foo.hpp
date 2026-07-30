@@ -1,9 +1,7 @@
 #pragma once
 
+#include <ivl/reflection/define_aggregate_with_member_functions>
 #include <ivl/utility/cpuid>
-
-#include "define2"
-
 #include <format>
 #include <utility>
 
@@ -56,7 +54,7 @@ define_cpuid_interpretation(std::meta::info class_type, const std::vector<bitran
   size_t first_unused_bit = 0;
   bool seen_errors = false;
   auto diag_tag = "cpuid_interp";
-  std::vector<member_function_description> fns;
+  std::vector<ivl::reflection::member_function_description> fns;
   for (size_t i = 0; i < members.size(); ++i) {
     auto member = members[i];
     if (member.identifier.starts_with('_')) {
@@ -175,18 +173,20 @@ define_cpuid_interpretation(std::meta::info class_type, const std::vector<bitran
       std::string id(member.identifier);
       for (auto& c : id)
         if (c >= 'A' && c <= 'Z') c = c - 'A' + 'a';
-      fns.push_back(member_function_description(
-        id, //
-        substitute(
-          (^^extract_bits), //
-          {
-            std::meta::reflect_constant(member.r),
-            std::meta::reflect_constant(member.high),
-            std::meta::reflect_constant(member.low),
-            std::meta::reflect_constant(member.plus_one),
-          }
+      fns.push_back(
+        ivl::reflection::member_function_description(
+          id, //
+          substitute(
+            (^^extract_bits), //
+            {
+              std::meta::reflect_constant(member.r),
+              std::meta::reflect_constant(member.high),
+              std::meta::reflect_constant(member.low),
+              std::meta::reflect_constant(member.plus_one),
+            }
+          )
         )
-      ));
+      );
     }
     first_unused_bit = member.high + 1;
   }
@@ -194,7 +194,7 @@ define_cpuid_interpretation(std::meta::info class_type, const std::vector<bitran
     __builtin_constexpr_diag(34, diag_tag, "seen errors during validation, bailing out");
     return class_type;
   }
-  return define_aggregate_with_member_functions(
+  return ivl::reflection::define_aggregate_with_member_functions(
     class_type,
     {
       data_member_spec((^^ivl::cpuid_output), {.name = "raw_cpuid_data"}),

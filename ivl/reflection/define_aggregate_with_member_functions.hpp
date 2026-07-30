@@ -1,7 +1,12 @@
+#pragma once
+
 #include <meta>
 
-template<typename Lambda, typename Parent, typename Unique = decltype([] {})>
+namespace ivl::reflection {
+template<typename Lambda, typename Parent, size_t /* Unique */>
 struct callable {
+  // TODO: when P3377 lands, use std::enclosing_cast
+  // ....: should also move the memfns to end, so aggregate init is not stupid
   template<typename Self, typename... Args>
   /* constexpr -- can't be atm */ decltype(auto) operator()(this Self&& self, Args&&... args) {
     auto self_ptr = const_cast<callable*>(&self);
@@ -13,9 +18,10 @@ struct callable {
 consteval std::meta::info member_function_spec(
   std::string_view name,       //
   std::meta::info lambda_type, //
-  std::meta::info parent_type
+  std::meta::info parent_type, //
+  std::size_t index
 ) {
-  auto callable_type = substitute((^^callable), {lambda_type, parent_type});
+  auto callable_type = substitute((^^callable), {lambda_type, parent_type, std::meta::reflect_constant(index)});
   return data_member_spec(callable_type, {.name = name, .no_unique_address = true});
 }
 
@@ -41,7 +47,12 @@ consteval std::meta::info define_aggregate_with_member_functions(
   Fn&& fn
 ) {
   std::vector<std::meta::info> specs;
-  for (auto [name, lambda_type] : fn) specs.push_back(member_function_spec(name, lambda_type, class_type));
+  size_t index = 0;
+  for (auto [name, lambda_type] : fn) {
+    specs.push_back(member_function_spec(name, lambda_type, class_type, index));
+    ++index;
+  }
   specs.insert_range(specs.end(), std::forward<Data>(data));
   return define_aggregate(class_type, specs);
 }
+} // namespace ivl::reflection
