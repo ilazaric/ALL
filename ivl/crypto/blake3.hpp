@@ -2,6 +2,7 @@
 
 // https://github.com/BLAKE3-team/BLAKE3-specs/blob/master/blake3.pdf
 
+#include <ivl/reflection/json_annotations>
 #include <array>
 #include <bit>
 #include <climits>
@@ -19,7 +20,7 @@ inline constexpr size_t chunk_size = 1024;
 inline constexpr size_t block_size = 64;
 static_assert(chunk_size % block_size == 0);
 
-struct input_chain_value : std::array<uint32_t, 8> {
+struct [[=json_serialize_as_bytes_hex]] input_chain_value : std::array<uint32_t, 8> {
   std::string_view as_view() const { return std::string_view((const char*)this, (const char*)(this + 1)); }
 };
 static_assert(sizeof(input_chain_value) * CHAR_BIT == 256);
