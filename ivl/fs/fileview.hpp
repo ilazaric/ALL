@@ -12,10 +12,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <ivl/fs/filedescriptor>
-#include <ivl/str/nullstringview>
+#include <ivl/linux/file_descriptor>
+#include <ivl/null_terminated_string_view>
+#include <ivl/linux/throwing_syscalls>
 
 namespace ivl::fs {
+
+  inline linux::owned_file_descriptor open_read_only(null_terminated_string_view path) {
+    return linux::owned_file_descriptor(linux::throwing_syscalls::open(path.data(), O_RDONLY, 0));
+  }
 
   struct FileView {
     const std::byte* mapped_region;
@@ -25,18 +30,18 @@ namespace ivl::fs {
 
     static constexpr std::size_t page_size = 4096;
 
-    FileView(ivl::str::NullStringView path) : FileView(OwnedFD::open(path, O_RDONLY)) {}
+    FileView(null_terminated_string_view path) : FileView(open_read_only(path)) {}
 
-    FileView(ivl::str::NullStringView path, std::size_t offset) : FileView(OwnedFD::open(path, O_RDONLY), offset) {}
+    FileView(null_terminated_string_view path, std::size_t offset) : FileView(open_read_only(path), offset) {}
 
-    FileView(ivl::str::NullStringView path, std::size_t offset, std::size_t length)
-        : FileView(OwnedFD::open(path, O_RDONLY), offset, length) {}
+    FileView(null_terminated_string_view path, std::size_t offset, std::size_t length)
+        : FileView(open_read_only(path), offset, length) {}
 
-    FileView(FD fd) : FileView(fd, 0) {}
+    FileView(linux::file_descriptor fd) : FileView(fd, 0) {}
 
-    FileView(FD fd, std::size_t offset) : FileView(fd, offset, fstat(fd).st_size) {}
+    FileView(linux::file_descriptor fd, std::size_t offset) : FileView(fd, offset, fstat(fd).st_size) {}
 
-    FileView(FD fd, std::size_t offset, std::size_t length) {
+    FileView(linux::file_descriptor fd, std::size_t offset, std::size_t length) {
       void* mapped_region = length ? mmap(0, length, PROT_READ, MAP_PRIVATE, fd.get(), offset) : nullptr;
       if (mapped_region == MAP_FAILED) {
         perror("mmap");
