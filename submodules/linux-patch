@@ -1,0 +1,54 @@
+diff --git a/arch/x86/include/asm/syscall_wrapper.h b/arch/x86/include/asm/syscall_wrapper.h
+index 7e88705e907f..6b8d6a6675e1 100644
+--- a/arch/x86/include/asm/syscall_wrapper.h
++++ b/arch/x86/include/asm/syscall_wrapper.h
+@@ -241,12 +241,14 @@ extern long __ia32_sys_ni_syscall(const struct pt_regs *regs);
+  * SYSCALL_DEFINEx() -- which is essential for the COND_SYSCALL() macro
+  * to work correctly.
+  */
++#ifndef SYSCALL_DEFINE0
+ #define SYSCALL_DEFINE0(sname)						\
+ 	SYSCALL_METADATA(_##sname, 0);					\
+ 	static long __do_sys_##sname(const struct pt_regs *__unused);	\
+ 	__X64_SYS_STUB0(sname)						\
+ 	__IA32_SYS_STUB0(sname)						\
+ 	static long __do_sys_##sname(const struct pt_regs *__unused)
++#endif
+ 
+ #define COND_SYSCALL(name)						\
+ 	__X64_COND_SYSCALL(name)					\
+diff --git a/include/linux/syscalls.h b/include/linux/syscalls.h
+index c6333204d451..ec2fb499094c 100644
+--- a/include/linux/syscalls.h
++++ b/include/linux/syscalls.h
+@@ -221,12 +221,30 @@ static inline int is_syscall_trace_event(struct trace_event_call *tp_event)
+ 	asmlinkage long sys_##sname(void)
+ #endif /* SYSCALL_DEFINE0 */
+ 
++#ifndef SYSCALL_DEFINE1
+ #define SYSCALL_DEFINE1(name, ...) SYSCALL_DEFINEx(1, _##name, __VA_ARGS__)
++#endif
++
++#ifndef SYSCALL_DEFINE2
+ #define SYSCALL_DEFINE2(name, ...) SYSCALL_DEFINEx(2, _##name, __VA_ARGS__)
++#endif
++
++#ifndef SYSCALL_DEFINE3
+ #define SYSCALL_DEFINE3(name, ...) SYSCALL_DEFINEx(3, _##name, __VA_ARGS__)
++#endif
++
++#ifndef SYSCALL_DEFINE4
+ #define SYSCALL_DEFINE4(name, ...) SYSCALL_DEFINEx(4, _##name, __VA_ARGS__)
++#endif
++
++#ifndef SYSCALL_DEFINE5
+ #define SYSCALL_DEFINE5(name, ...) SYSCALL_DEFINEx(5, _##name, __VA_ARGS__)
++#endif
++
++#ifndef SYSCALL_DEFINE6
+ #define SYSCALL_DEFINE6(name, ...) SYSCALL_DEFINEx(6, _##name, __VA_ARGS__)
++#endif
++
+ 
+ #define SYSCALL_DEFINE_MAXARGS	6
+ 
