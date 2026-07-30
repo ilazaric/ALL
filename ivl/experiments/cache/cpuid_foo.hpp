@@ -190,6 +190,13 @@ define_cpuid_interpretation(std::meta::info class_type, const std::vector<bitran
     }
     first_unused_bit = member.high + 1;
   }
+  if (current_register != EDX || first_unused_bit != 32) {
+    __builtin_constexpr_diag(
+      34, diag_tag, "failed to drain all bits, ended at register: {}, first unused bit: {}", describe(current_register),
+      first_unused_bit
+    );
+    seen_errors = true;
+  }
   if (seen_errors) {
     __builtin_constexpr_diag(34, diag_tag, "seen errors during validation, bailing out");
     return class_type;
