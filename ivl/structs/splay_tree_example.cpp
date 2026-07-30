@@ -1,4 +1,4 @@
-#include "splay_tree.hpp"
+#include "splay_tree"
 
 struct S {
   int64_t x;

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <ranges>
 
-#include "binary_tree.hpp"
+#include "binary_tree"
 
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
