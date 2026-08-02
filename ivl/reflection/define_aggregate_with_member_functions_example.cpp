@@ -60,6 +60,8 @@ consteval {
   );
 }
 
+static_assert(sizeof(foo) == 24 * 2 + 8 * 2);
+
 consteval {
   foo f{};
   f.bump(10);
