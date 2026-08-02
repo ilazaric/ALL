@@ -47,7 +47,6 @@ bool check_fingerprint(
   }
   return changed;
 }
-#endif
 
 std::optional<ivl::build_system::task_fingerprint> load_fingerprint(const ivl::build_system::task_config& task) {
   if (!exists(path)) return std::nullopt;
@@ -147,3 +146,7 @@ int ivl_main() {
 
   return 0;
 }
+// TODO
+#endif
+
+int main() {}
