@@ -44,6 +44,35 @@ jobs:
         submodules/build-gcc.sh --install
       if: steps.cache-gcc.outputs.cache-hit != 'true'
 
+
+  test-gcc-ivl:
+    needs: build-gcc
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: install apt packages
+      run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential python3 python3-pytest tcl dejagnu expect
+
+    - name: restore gcc install
+      uses: actions/cache/restore@v5
+      id: cache-gcc
+      with:
+        path: /opt/GCC
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        fail-on-cache-miss: true
+
+    - name: fetch gcc submodule
+      run: git submodule update --init --depth=1 -- submodules/gcc
+
+    - name: run tests
+      run: |
+        TMPDIR="$(mktemp -d)"
+        SRCDIR="$(realpath submodules/gcc)"
+        cd "$TMPDIR"
+        "$SRCDIR/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- dg.exp='ivl/*'
+
+
   build:
     needs: build-gcc
     runs-on: ubuntu-latest
@@ -88,6 +117,7 @@ jobs:
 
     - name: test
       run: ./run_built_tests.py
+
 
   build2:
     needs: build-gcc
