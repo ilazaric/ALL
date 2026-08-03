@@ -105,7 +105,7 @@ jobs:
         SRCDIR="$(realpath submodules/gcc)"
         cd "$TMPDIR"
         "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --without-gcc --without-g++ --with-auto-host-h="$(find /opt/GCC -name auto-host.h)"
-        runtest --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
+        PATH="/opt/GCC/bin:$PATH" runtest --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
 
 
   build:
