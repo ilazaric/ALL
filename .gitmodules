@@ -55,3 +55,6 @@
 [submodule "submodules/pugixml"]
 	path = submodules/pugixml
 	url = git@github.com:zeux/pugixml.git
+[submodule "submodules/compiler-explorer"]
+	path = submodules/compiler-explorer
+	url = git@github.com:compiler-explorer/compiler-explorer.git
