@@ -70,10 +70,15 @@ jobs:
 
     - name: run tests
       run: |
-        TMPDIR="$(mktemp -d)"
+        mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
-        cd "$TMPDIR"
-        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- dg.exp='ivl/*'
+        cd /tmp/gcc-scratch
+        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all dg.exp='ivl/*'
+    - name: dump log on failure
+      if: ${{ failure() }}
+      run: cat /tmp/gcc-scratch/g++.log && exit 1
+    - name: dump log on success
+      run: cat /tmp/gcc-scratch/g++.log
 
 
   test-libstdcxx-ivl:
@@ -101,11 +106,16 @@ jobs:
 
     - name: run tests
       run: |
-        TMPDIR="$(mktemp -d)"
+        mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
-        cd "$TMPDIR"
+        cd /tmp/gcc-scratch
         "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --without-gcc --without-g++ --with-auto-host-h="$(find /opt/GCC -name auto-host.h)"
-        PATH="/opt/GCC/bin:$PATH" runtest --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
+        PATH="/opt/GCC/bin:$PATH" runtest --all --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
+    - name: dump log on failure
+      if: ${{ failure() }}
+      run: cat /tmp/gcc-scratch/libstdc++.log && exit 1
+    - name: dump log on success
+      run: cat /tmp/gcc-scratch/libstdc++.log
 
 
   build:
