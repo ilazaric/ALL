@@ -73,7 +73,7 @@ jobs:
         TMPDIR="$(mktemp -d)"
         SRCDIR="$(realpath submodules/gcc)"
         cd "$TMPDIR"
-        "$SRCDIR/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- dg.exp='ivl/*'
+        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- dg.exp='ivl/*'
 
 
   build:
