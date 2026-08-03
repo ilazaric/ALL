@@ -48,7 +48,6 @@ jobs:
   test-gcc-ivl:
     needs: build-gcc
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
@@ -56,7 +55,6 @@ jobs:
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: restore gcc install
       uses: actions/cache/restore@v5
       id: cache-gcc
@@ -64,16 +62,47 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-
     - name: fetch gcc submodule
       run: git submodule update --init --depth=1 -- submodules/gcc
-
     - name: run tests
       run: |
         mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
         cd /tmp/gcc-scratch
-        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all dg.exp='ivl/*'
+        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all dg.exp='ivl/*'
+    - name: dump log on failure
+      if: ${{ failure() }}
+      run: cat /tmp/gcc-scratch/g++.log && exit 1
+    - name: dump log on success
+      run: cat /tmp/gcc-scratch/g++.log
+
+
+  test-gcc-full:
+    needs: build-gcc
+    runs-on: ubuntu-latest
+    environment: manual
+    steps:
+    - uses: actions/checkout@v6
+    - name: install apt packages
+      run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential python3 python3-pytest tcl dejagnu expect
+    - uses: webfactory/ssh-agent@v0.10.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: restore gcc install
+      uses: actions/cache/restore@v5
+      id: cache-gcc
+      with:
+        path: /opt/GCC
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        fail-on-cache-miss: true
+    - name: fetch gcc submodule
+      run: git submodule update --init --depth=1 -- submodules/gcc
+    - name: run tests
+      run: |
+        mkdir -p /tmp/gcc-scratch
+        SRCDIR="$(realpath submodules/gcc)"
+        cd /tmp/gcc-scratch
+        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all
     - name: dump log on failure
       if: ${{ failure() }}
       run: cat /tmp/gcc-scratch/g++.log && exit 1
@@ -84,7 +113,6 @@ jobs:
   test-libstdcxx-ivl:
     needs: build-gcc
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
@@ -92,7 +120,6 @@ jobs:
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: restore gcc install
       uses: actions/cache/restore@v5
       id: cache-gcc
@@ -100,16 +127,14 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-
     - name: fetch gcc submodule
       run: git submodule update --init --depth=1 -- submodules/gcc
-
     - name: run tests
       run: |
         mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
         cd /tmp/gcc-scratch
-        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-gfortran --without-objc --without-gcc --without-g++ --with-auto-host-h="$(find /opt/GCC -name auto-host.h)"
+        "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc,g++} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)"
         PATH="/opt/GCC/bin:$PATH" runtest --all --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
     - name: dump log on failure
       if: ${{ failure() }}
