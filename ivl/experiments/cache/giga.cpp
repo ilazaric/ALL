@@ -4,6 +4,9 @@
 #include <cstring>
 #include <immintrin.h>
 #include "cpuid_cache"
+#include "proc_pid_maps"
+#include <ivl/reflection/json>
+#include <ivl/linux/pagemap>
 
 // IVL add_compiler_flags("-static")
 
@@ -200,6 +203,26 @@ int ivl_main() {
   LOG(addr);
   contract_assert(reinterpret_cast<uintptr_t>(addr) % 64 == 0);
   memset(addr, 0, page_size);
+
+  {
+    auto pq = query(addr);
+    LOG(ivl::to_json(pq));
+    auto pm = ivl::linux::pagemap(addr);
+    contract_assert(pm.is_in_ram());
+    uint64_t a = pm.page_frame_number();
+    uint64_t b = a;
+    for (uint64_t i = 0; i < (1ull<<30); i += 4096) {
+      uint64_t x = ivl::linux::pagemap((char*)addr + i).page_frame_number();
+      x -= i / 4096;
+      a = std::min(a, x);
+      b = std::max(b, x);
+    }
+    LOG(a);
+    LOG(b);
+    LOG(ivl::linux::pagemap(addr).value);
+    LOG(ivl::linux::pagemap((char*)addr + 4096).value);
+    LOG(ivl::linux::pagemap((char*)addr + 8192).value);
+  }
 
   std::span<cache_line> lines((cache_line*)addr, page_size / sizeof(cache_line));
 
