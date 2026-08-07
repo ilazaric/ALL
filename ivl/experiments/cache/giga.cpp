@@ -1,12 +1,14 @@
+#include <ivl/linux/pagemap>
 #include <ivl/linux/throwing_syscalls>
 #include <ivl/logger>
-#include <linux/mman.h>
-#include <cstring>
-#include <immintrin.h>
+#include <ivl/reflection/json>
+#include <ivl/utility/tsc>
 #include "cpuid_cache"
 #include "proc_pid_maps"
-#include <ivl/reflection/json>
-#include <ivl/linux/pagemap>
+#include <linux/mman.h>
+#include <sys/mman.h>
+#include <cstring>
+#include <immintrin.h>
 
 // IVL add_compiler_flags("-static")
 
@@ -63,8 +65,6 @@ template<class Tp>
 [[gnu::always_inline]] inline void DoNotOptimize(Tp const& value) {
   asm volatile("" : : "r,m"(value) : "memory");
 }
-
-#include <ivl/utility/tsc>
 
 // dont use, go through multi_run
 [[gnu::always_inline]]
@@ -194,8 +194,9 @@ struct std::formatter<ivl::tsc_duration, char> {
 };
 
 int ivl_main() {
-  LOG(noop());
   namespace sys = ivl::linux::throwing_syscalls;
+  sys::mlockall(MCL_CURRENT | MCL_FUTURE);
+  LOG(noop());
   auto fd = sys::open("/dev/hugepages/giga", O_RDWR, 0);
   auto addr = reinterpret_cast<void*>(
     sys::mmap(0, 1 << 30, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_HUGETLB | MAP_HUGE_1GB, fd, 0)
@@ -211,7 +212,7 @@ int ivl_main() {
     contract_assert(pm.is_in_ram());
     uint64_t a = pm.page_frame_number();
     uint64_t b = a;
-    for (uint64_t i = 0; i < (1ull<<30); i += 4096) {
+    for (uint64_t i = 0; i < (1ull << 30); i += 4096) {
       uint64_t x = ivl::linux::pagemap((char*)addr + i).page_frame_number();
       x -= i / 4096;
       a = std::min(a, x);

@@ -6,6 +6,7 @@
 
 #include <compare>
 #include <cstdint>
+#include <immintrin.h>
 
 namespace ivl {
 struct tsc_time_point {
