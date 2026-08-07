@@ -27,11 +27,11 @@ struct file_descriptor {
 struct owned_file_descriptor {
   int value;
 
-  basic_owned_file_descriptor() : value(file_descriptor::EMPTY_SENTINEL) {}
+  owned_file_descriptor() : value(file_descriptor::EMPTY_SENTINEL) {}
 
   // Make sure you know what you're doing.
   // Takes ownership of the file descriptor.
-  explicit basic_owned_file_descriptor(int value) : value(value) {}
+  explicit owned_file_descriptor(int value) : value(value) {}
 
   owned_file_descriptor(const owned_file_descriptor&) = delete;
 
