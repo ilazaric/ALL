@@ -1,6 +1,6 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/raw_syscalls>
-#include <ivl/linux/rich_syscalls>
+// #include <ivl/linux/rich_syscalls>
 #include <ivl/linux/throwing_syscalls>
 #include <ivl/linux/typed_syscalls>
 #include <ivl/process>
@@ -12,11 +12,11 @@
 // IVL add_compiler_flags("-static -flto")
 
 ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
-  auto in_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
-  auto out_fd = ivl::linux::rich::open("/dev/shm", O_TMPFILE | O_RDWR, 0777).unwrap_or_throw();
+  ivl::linux::owned_file_descriptor in_fd{ivl::linux::throwing_syscalls::open("/dev/shm", O_TMPFILE | O_RDWR, 0777)};
+  ivl::linux::owned_file_descriptor out_fd{ivl::linux::throwing_syscalls::open("/dev/shm", O_TMPFILE | O_RDWR, 0777)};
 
   while (!code.empty())
-    code.remove_prefix(ivl::linux::rich::write(in_fd.get(), code.data(), code.size()).unwrap_or_throw());
+    code.remove_prefix(ivl::linux::throwing_syscalls::write(in_fd.get(), code.data(), code.size()));
 
   ivl::process_config cfg;
   cfg.pathname = "/usr/bin/g++";
@@ -38,7 +38,7 @@ ivl::linux::owned_file_descriptor compile_cxx(std::string_view code) {
 
   char link[64];
   snprintf(link, sizeof(link), "/proc/self/fd/%d", out_fd.get());
-  out_fd = ivl::linux::rich::open(link, O_RDONLY, 0).unwrap_or_throw();
+  out_fd = ivl::linux::owned_file_descriptor{ivl::linux::throwing_syscalls::open(link, O_RDONLY, 0)};
 
   return out_fd;
 }

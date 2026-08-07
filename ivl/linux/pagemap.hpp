@@ -9,7 +9,7 @@ namespace ivl::linux {
 struct pagemap_value {
   uint64_t value;
 
-  uint64_t bit(uint64_t pos) { return (value >> pos) & 1; }
+  uint64_t bit(uint64_t pos) const { return (value >> pos) & 1; }
 
   bool is_in_ram() const { return bit(63); }
   bool is_in_swap() const { return bit(62); }
