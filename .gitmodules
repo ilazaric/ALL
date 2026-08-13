@@ -58,3 +58,6 @@
 [submodule "submodules/compiler-explorer"]
 	path = submodules/compiler-explorer
 	url = git@github.com:compiler-explorer/compiler-explorer.git
+[submodule "submodules/boost"]
+	path = submodules/boost
+	url = git@github.com:boostorg/boost.git
