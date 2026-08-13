@@ -13,7 +13,7 @@ template <typename>
 struct Entity;
 
 #define ENTITY(name, ...) struct name
-#include "generated.hpp"
+#include "generated_X.hpp"
 #undef ENTITY
 
 #define FLAT_WRAP(name, ...)                                                                                           \
@@ -55,7 +55,7 @@ struct entity_new_line {
   struct name {                                                                                                        \
     using type = __VA_ARGS__;                                                                                          \
   }
-#include "generated.hpp"
+#include "generated_X.hpp"
 #undef ENTITY
 
 // #define ENTITY(name, ...)                                                                          \
@@ -63,7 +63,7 @@ struct entity_new_line {
 //     std::unique_ptr<__VA_ARGS__> data;                                                             \
 //     static Result<name>          try_parse(std::string_view);                                      \
 //   }
-// #include "generated.hpp"
+// #include "generated_X.hpp"
 // #undef ENTITY
 
 // #define ENTITY(name, ...)                                                                          \
@@ -74,7 +74,7 @@ struct entity_new_line {
 //     return Consumed {name {std::make_unique<__VA_ARGS__>(std::move(x.value().data))},              \
 //                      x.value().consumed};                                                          \
 //   }
-// #include "generated.hpp"
+// #include "generated_X.hpp"
 // #undef ENTITY
 
 template <typename E>

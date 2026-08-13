@@ -231,3 +231,13 @@ jobs:
     - name: build2
       run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/utility /ivl/stl /ivl/reflection /ivl/parsing /ivl/frankl /ivl/context /ivl/isolated_execution
 
+
+  check_ivl_headers_for_pragma_once:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: install apt packages
+      run: sudo apt update && sudo apt install python3-more-itertools
+    - name: test
+      run: ./check_headers_for_pragma_once.py

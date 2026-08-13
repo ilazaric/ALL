@@ -1,3 +1,5 @@
+#pragma once
+
 // -*- C++ -*- operator<=> three-way comparison support.
 
 // Copyright (C) 2019-2023 Free Software Foundation, Inc.

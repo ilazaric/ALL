@@ -1,3 +1,5 @@
+#pragma once
+
 #include "incrementer.hpp"
 
 namespace ivl::refl {

@@ -1,3 +1,5 @@
+#pragma once
+
 // this file shouldn't be included, it is used by build system
 
 #include <ivl/reflection/argument_parsing>
