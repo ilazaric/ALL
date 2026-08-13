@@ -5,6 +5,7 @@
 #include <ranges>
 
 // IVL add_compiler_flags("-Wno-subobject-linkage")
+#pragma IVL add_compiler_flags -Wno-subobject-linkage
 
 struct foo;
 
