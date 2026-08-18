@@ -6,3 +6,7 @@ hash-collision-dso1.c
 hash-collision-dso2.c
 hash-collision-dso3.c
 hash-collision-main.c
+both-hash-collision-dso1.c
+both-hash-collision-dso2.c
+both-hash-collision-dso3.c
+both-hash-collision-main.c

@@ -177,3 +177,46 @@ $ eu-readelf -I hash-collision-dso1.so | tail
 			  unsuccessful lookup: 1.218939
 ```
 
+## breaking both
+
+searching for 18-long collisions over `0Pp` alphabet, for new hash, we find 29
+```
+  "ppp0Pp0pP0PPPp000P", "pp0PPPPPPP000p0pPp", "pp00p0PpP0P0PPpP0p", "pPp0P00pPpP00PPPpP", "pPPPp00P0PpPPPP0Pp",
+  "pP00PPpPPPp0pp000p", "p0pPP0p00Pp0pPPPp0", "p00Ppp0p0Pp0P0ppP0", "Pp0pP00pp0Pp0p00Pp", "Pp00p0ppPP0PP0ppP0",
+  "PPppP0ppPp0p00PP00", "PPp0PpP00PPPpPpp00", "PPPpPP0p0p00pP0pPP", "PPPp00pPp0PPPp0Pp0", "PPPPp0PP0pPpP0PPp0",
+  "PPPP000PpPP00pppPp", "P0p0ppPPP0p00pPp0P", "P0p000p0pP0PppP0pp", "P00PPpppp00ppP00p0", "P000Pp0ppP0PPPpPPp",
+  "0ppPPpP0p000P0PppP", "0pp00PpppP000PpPp0", "0pPp0pp0PP0P0p0PpP", "0pPPPPpPP0PPPPp0PP", "0pPP0pPPp00pPpPp00",
+  "0p00Pp00P0PpppPpp0", "0P0pP0P0PPPpPPppPP", "0P00P00pppppPPp00p", "00P000pPpppPpPpPP0",
+```
+
+duplicating each to make them noops for old hash
+
+$29^3 > 20k$
+
+symbol length: 109 :'(
+
+`generate-dso-both-hash-collisions.cpp` generates:
+```
+both-hash-collision-dso1.c
+both-hash-collision-dso2.c
+both-hash-collision-dso3.c
+both-hash-collision-main.c
+```
+
+`compile-both.sh` builds both kinds, `both-{sysv,gnu}-hash-collision-main.exe`
+
+```
+$ time ./both-sysv-hash-collision-main.exe 
+
+real	0m6.780s
+user	0m6.771s
+sys	0m0.006s
+```
+
+```
+$ time ./both-sysv-hash-collision-main.exe 
+
+real	0m6.780s
+user	0m6.771s
+sys	0m0.006s
+```
