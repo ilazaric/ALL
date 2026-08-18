@@ -128,7 +128,7 @@ and apply it twice, then we dont change the state
 this is $3^6 == 729$ combos over a 12-long string  
 doing this twice gives us enough collisions  
 
-`generate-gnu-hash-collisions.cpp` generates
+`generate-hash-collisions.cpp` generates
 ```
 hash-collision-main.c
 hash-collision-dso1.c
