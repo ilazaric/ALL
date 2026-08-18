@@ -66,6 +66,20 @@ sys	0m0.000s
 7
 ```
 
+```
+$ eu-readelf -I gnu-hash-collision-dso1.so | tail
+   9993       0        0.0%      0.0%
+   9994       0        0.0%      0.0%
+   9995       0        0.0%      0.0%
+   9996       0        0.0%      0.0%
+   9997       0        0.0%      0.0%
+   9998       0        0.0%      0.0%
+   9999       0        0.0%      0.0%
+  10000       1        0.0%    100.0%
+ Average number of tests:   successful lookup: 5000.500000
+			  unsuccessful lookup: 1.218175
+```
+
 ## breaking old hash
 
 ```cpp
@@ -148,3 +162,18 @@ user	0m7.565s
 sys	0m0.000s
 7
 ```
+
+```
+$ eu-readelf -I hash-collision-dso1.so | tail
+  19993       0        0.0%      0.0%
+  19994       0        0.0%      0.0%
+  19995       0        0.0%      0.0%
+  19996       0        0.0%      0.0%
+  19997       0        0.0%      0.0%
+  19998       0        0.0%      0.0%
+  19999       0        0.0%      0.0%
+  20000       1        0.0%    100.0%
+ Average number of tests:   successful lookup: 9998.500500
+			  unsuccessful lookup: 1.218939
+```
+
