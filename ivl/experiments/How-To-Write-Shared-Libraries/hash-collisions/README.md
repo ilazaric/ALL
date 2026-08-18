@@ -136,6 +136,8 @@ hash-collision-dso2.c
 hash-collision-dso3.c
 ```
 
+symbol length: 25
+
 `compile-sysv.sh` compiles all
 
 ```
