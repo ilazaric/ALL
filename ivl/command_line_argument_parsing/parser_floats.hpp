@@ -1,6 +1,7 @@
 #pragma once
 
 #include "parser_declaration"
+#include "parser_one"
 #include "raw_arguments"
 #include <charconv>
 #include <concepts>
