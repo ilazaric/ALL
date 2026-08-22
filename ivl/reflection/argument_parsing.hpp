@@ -18,6 +18,7 @@
 #include <ivl/command_line_argument_parsing/parser_one>
 #include <ivl/command_line_argument_parsing/parser_floats>
 #include <ivl/command_line_argument_parsing/parser_ints>
+#include <ivl/command_line_argument_parsing/parser_strings>
 
 // https://nullprogram.com/blog/2020/08/01/
 
@@ -35,22 +36,6 @@
 // --foo= x // nope
 
 namespace ivl::cmdline_parsing {
-template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
-struct parser<Str> : parser_one {
-  inline bool parse_one(Str& arg, std::string_view sv) const {
-    arg = sv;
-    return true;
-  }
-};
-
-template<>
-struct parser<const char*> : parser_one {
-  inline bool parse_one(const char*& arg, std::string_view sv) const {
-    arg = sv.data();
-    return true;
-  }
-};
-
 struct description {
   std::string_view contents;
 };
