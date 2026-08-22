@@ -13,6 +13,7 @@
 #include <span>
 #include <string_view>
 #include <ivl/command_line_argument_parsing/raw_arguments>
+#include <ivl/command_line_argument_parsing/parser_declaration>
 
 // https://nullprogram.com/blog/2020/08/01/
 
@@ -30,8 +31,6 @@
 // --foo= x // nope
 
 namespace ivl::cmdline_parsing {
-template<typename>
-struct parser;
 
 /* TODO:
    from gdb manual:
