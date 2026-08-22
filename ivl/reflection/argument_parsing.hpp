@@ -12,9 +12,11 @@
 #include <ranges>
 #include <span>
 #include <string_view>
+#include <ivl/command_line_argument_parsing/raw_arguments>
 
 // https://nullprogram.com/blog/2020/08/01/
 
+// TODO:
 // --long_option argument
 // --long_option=argument
 // --boolean_option // as-if =1 or =true
@@ -28,8 +30,6 @@
 // --foo= x // nope
 
 namespace ivl::cmdline_parsing {
-using command_line_arguments = std::span<const char*>;
-
 template<typename>
 struct parser;
 
@@ -57,7 +57,7 @@ struct parser<bool> {
     return false;
   }
 
-  inline bool parse(bool& arg, std::optional<std::string_view> eq, command_line_arguments& rest) const {
+  inline bool parse(bool& arg, std::optional<std::string_view> eq, raw_arguments& rest) const {
     if (eq) return parse_one(arg, *eq);
 
     if (!rest.empty()) {
@@ -74,7 +74,7 @@ struct parser<bool> {
 };
 
 struct parser_one {
-  inline bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, command_line_arguments& rest) {
+  inline bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, raw_arguments& rest) {
     if (eq) return self.parse_one(arg, *eq);
     if (rest.empty()) {
       std::println("missing argument");
@@ -132,7 +132,7 @@ struct description {
 
 template<typename T>
 concept parseable =
-  requires(T& a, std::optional<std::string_view> b, command_line_arguments c) { parser<T>{}.parse(a, b, c); };
+  requires(T& a, std::optional<std::string_view> b, raw_arguments c) { parser<T>{}.parse(a, b, c); };
 
 // clang-format off
 consteval bool is_parseable_type(std::meta::info type) {
@@ -238,7 +238,7 @@ inline void print_help(std::string_view program_name, bool passthrough) {
 }
 
 template<typename T>
-inline bool parse(T& state, command_line_arguments& args) {
+inline bool parse(T& state, raw_arguments& args) {
   if constexpr (parseable<T>) {
     if (!args.empty() && args[0] == std::string_view("--help")) return false;
     return parser<T>{}.parse(state, std::nullopt, args);
