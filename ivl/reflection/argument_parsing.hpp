@@ -15,6 +15,7 @@
 #include <ivl/command_line_argument_parsing/raw_arguments>
 #include <ivl/command_line_argument_parsing/parser_declaration>
 #include <ivl/command_line_argument_parsing/parser_bool>
+#include <ivl/command_line_argument_parsing/parser_one>
 
 // https://nullprogram.com/blog/2020/08/01/
 
@@ -32,20 +33,6 @@
 // --foo= x // nope
 
 namespace ivl::cmdline_parsing {
-
-struct parser_one {
-  inline bool parse(this auto&& self, auto& arg, std::optional<std::string_view> eq, raw_arguments& rest) {
-    if (eq) return self.parse_one(arg, *eq);
-    if (rest.empty()) {
-      std::println("missing argument");
-      return false;
-    }
-    auto x = rest[0];
-    rest = rest.subspan(1);
-    return self.parse_one(arg, x);
-  }
-};
-
 template<std::floating_point Fp>
 struct parser<Fp> : parser_one {
   inline bool parse_one(Fp& arg, std::string_view sv) const {
