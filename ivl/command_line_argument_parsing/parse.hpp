@@ -4,6 +4,13 @@
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
 #include <ivl/utility/colors>
+#include "parser_bool"
+#include "parser_declaration"
+#include "parser_floats"
+#include "parser_ints"
+#include "parser_one"
+#include "parser_strings"
+#include "raw_arguments"
 #include <format>
 #include <functional>
 #include <meta>
@@ -12,13 +19,6 @@
 #include <ranges>
 #include <span>
 #include <string_view>
-#include <ivl/command_line_argument_parsing/raw_arguments>
-#include <ivl/command_line_argument_parsing/parser_declaration>
-#include <ivl/command_line_argument_parsing/parser_bool>
-#include <ivl/command_line_argument_parsing/parser_one>
-#include <ivl/command_line_argument_parsing/parser_floats>
-#include <ivl/command_line_argument_parsing/parser_ints>
-#include <ivl/command_line_argument_parsing/parser_strings>
 
 // https://nullprogram.com/blog/2020/08/01/
 
@@ -41,8 +41,7 @@ struct description {
 };
 
 template<typename T>
-concept parseable =
-  requires(T& a, std::optional<std::string_view> b, raw_arguments c) { parser<T>{}.parse(a, b, c); };
+concept parseable = requires(T& a, std::optional<std::string_view> b, raw_arguments c) { parser<T>{}.parse(a, b, c); };
 
 // clang-format off
 consteval bool is_parseable_type(std::meta::info type) {

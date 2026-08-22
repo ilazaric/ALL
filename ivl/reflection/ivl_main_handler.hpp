@@ -2,7 +2,7 @@
 
 // this file shouldn't be included, it is used by build system
 
-#include <ivl/reflection/argument_parsing>
+#include <ivl/command_line_argument_parsing/parse>
 #include <meta>
 #include <print>
 #include <string>
