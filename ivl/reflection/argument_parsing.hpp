@@ -17,6 +17,7 @@
 #include <ivl/command_line_argument_parsing/parser_bool>
 #include <ivl/command_line_argument_parsing/parser_one>
 #include <ivl/command_line_argument_parsing/parser_floats>
+#include <ivl/command_line_argument_parsing/parser_ints>
 
 // https://nullprogram.com/blog/2020/08/01/
 
@@ -34,18 +35,6 @@
 // --foo= x // nope
 
 namespace ivl::cmdline_parsing {
-template<std::integral Ip>
-struct parser<Ip> : parser_one {
-  inline bool parse_one(Ip& arg, std::string_view sv) const {
-    auto ret = std::from_chars(sv.data(), sv.data() + sv.size(), arg);
-    if (ret && ret.ptr == sv.data() + sv.size()) return true;
-    else {
-      println("failed to parse integer, argument: {:?}", sv);
-      return false;
-    }
-  }
-};
-
 template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
 struct parser<Str> : parser_one {
   inline bool parse_one(Str& arg, std::string_view sv) const {
