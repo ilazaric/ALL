@@ -159,7 +159,7 @@ inline bool parse(T& state, raw_arguments& args) {
       if (!current.starts_with('-')) break;
       if (current == "--") break;
       if (current == "--help") return false;
-      args = args.subspan(1);
+      args.remove_prefix(1);
       if (!current.starts_with("--")) {
         std::println("option should start with '--', got: {:?}", current);
         return false;

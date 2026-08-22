@@ -14,7 +14,7 @@ struct cc_bundle {
   // const char* z; // json doesnt like this
 };
 
-int ivl_main(cc_bundle& args, std::span<const char*> pass) {
+int ivl_main(cc_bundle& args, ivl::cmdline_parsing::raw_arguments pass) {
   std::println("{}", ivl::to_json(args).dump(2));
   return 0;
 }

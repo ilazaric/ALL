@@ -40,7 +40,7 @@ struct parser<bool> {
     if (!rest.empty()) {
       std::string_view nxt = rest[0];
       if (!nxt.starts_with("--")) {
-        rest = rest.subspan(1);
+        rest.remove_prefix(1);
         return parse_one(arg, nxt);
       }
     }

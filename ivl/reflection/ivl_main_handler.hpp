@@ -105,7 +105,7 @@ int wrap_ivl_main(int argc, char** argv) {
     } else {
       arg_t arg{};
 
-      std::span<const char*> args((const char**)argv + 1, (const char**)argv + argc);
+      cmdline_parsing::raw_arguments args((const char**)argv + 1, (const char**)argv + argc);
 
       std::string_view program_name = argc ? argv[0] : "<program-name>";
 

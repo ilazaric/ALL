@@ -22,7 +22,7 @@ struct parser_one {
       return false;
     }
     auto x = rest[0];
-    rest = rest.subspan(1);
+    rest.remove_prefix(1);
     return self.parse_one(arg, x);
   }
 };
