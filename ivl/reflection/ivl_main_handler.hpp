@@ -4,6 +4,7 @@
 // TODO: might want to move it somewhere to reflect ^ then
 
 #include <ivl/command_line_argument_parsing/parse>
+#include <ivl/command_line_argument_parsing/passthrough>
 #include <meta>
 #include <print>
 #include <string>
@@ -93,7 +94,7 @@ int wrap_ivl_main(int argc, char** argv)
         return 1;
       }
       if constexpr (passthrough) {
-        return ivl_main(arg, args);
+        return ivl_main(arg, ivl::cmdline_parsing::passthrough{args.rest});
       } else {
         if (args.empty()) return ivl_main(arg);
         std::println("program does not handle passthrough arguments");
