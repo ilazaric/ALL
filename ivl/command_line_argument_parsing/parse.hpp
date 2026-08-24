@@ -40,9 +40,6 @@ struct description {
   std::string_view contents;
 };
 
-template<typename T>
-concept parseable = requires(T& a, std::optional<std::string_view> b, raw_arguments c) { parser<T>{}.parse(a, b, c); };
-
 // clang-format off
 consteval bool is_parseable_type(std::meta::info type) {
   return extract<bool>(substitute(^^parseable, {type}));
