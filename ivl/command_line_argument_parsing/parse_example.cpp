@@ -1,8 +1,9 @@
-#include "parse"
 #include <ivl/reflection/json>
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
 #include <ivl/utility>
+#include "parse"
+#include "passthrough"
 #include <format>
 #include <print>
 
@@ -14,7 +15,7 @@ struct cc_bundle {
   // const char* z; // json doesnt like this
 };
 
-int ivl_main(cc_bundle& args, ivl::cmdline_parsing::raw_arguments pass) {
+int ivl_main(cc_bundle& args, ivl::cmdline_parsing::passthrough pass) {
   std::println("{}", ivl::to_json(args).dump(2));
   return 0;
 }
