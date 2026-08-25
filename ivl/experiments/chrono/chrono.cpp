@@ -220,89 +220,91 @@ std::uint64_t compute_tsc() {
 
 const std::uint64_t tsc_freq = compute_tsc();
 
-struct runtime_ratio_tag {};
+// struct runtime_ratio_tag {};
 
-template<typename Period>
-std::intmax_t generic_num() {
-  if constexpr (std::derived_from<Period, runtime_ratio_tag>) {
-    return Period::num();
-  } else {
-    return Period::num;
-  }
-}
+// template<typename Period>
+// std::intmax_t generic_num() {
+//   if constexpr (std::derived_from<Period, runtime_ratio_tag>) {
+//     return Period::num();
+//   } else {
+//     return Period::num;
+//   }
+// }
 
-template<typename Period>
-std::intmax_t generic_den() {
-  if constexpr (std::derived_from<Period, runtime_ratio_tag>) {
-    return Period::den();
-  } else {
-    return Period::den;
-  }
-}
+// template<typename Period>
+// std::intmax_t generic_den() {
+//   if constexpr (std::derived_from<Period, runtime_ratio_tag>) {
+//     return Period::den();
+//   } else {
+//     return Period::den;
+//   }
+// }
 
-std::pair<std::intmax_t, std::intmax_t> reduce_fraction(std::intmax_t num1, std::intmax_t den1, std::intmax_t num2, std::intmax_t den2) {
-  auto reduce = [](std::intmax_t& num, std::intmax_t& den) {
-    auto g = std::gcd(num, den);
-    num /= g;
-    den /= g;
-  };
-  template for (auto& num : {num1, num2}) {
-    template for (auto& den : {den1, den2}) {
-      reduce(num, den);
-    }
-  }
-  std::intmax_t num;
-  std::intmax_t den;
-  bool overflow_num = __builtin_mul_overflow(num1, num2, &num);
-  bool overflow_den = __builtin_mul_overflow(den1, den2, &den);
-  contract_assert(!overflow_num && !overflow_den);
-  return {num, den};
-}
+// std::pair<std::intmax_t, std::intmax_t> reduce_fraction(std::intmax_t num1, std::intmax_t den1, std::intmax_t num2, std::intmax_t den2) {
+//   auto reduce = [](std::intmax_t& num, std::intmax_t& den) {
+//     auto g = std::gcd(num, den);
+//     num /= g;
+//     den /= g;
+//   };
+//   template for (auto& num : {num1, num2}) {
+//     template for (auto& den : {den1, den2}) {
+//       reduce(num, den);
+//     }
+//   }
+//   std::intmax_t num;
+//   std::intmax_t den;
+//   bool overflow_num = __builtin_mul_overflow(num1, num2, &num);
+//   bool overflow_den = __builtin_mul_overflow(den1, den2, &den);
+//   contract_assert(!overflow_num && !overflow_den);
+//   return {num, den};
+// }
 
-template<typename Rep1, typename Period1,
-         typename Rep2, typename Period2>
-requires (std::derived_from<Period1, runtime_ratio_tag> || std::derived_from<Period2, runtime_ratio_tag>)
-struct std::common_type<std::chrono::duration<Rep1, Period1>, std::chrono::duration<Rep2, Period2>> {
-  struct period : runtime_ratio_tag {
-    using type = period;
-    inline static std::pair<std::intmax_t, std::intmax_t> num_den() {
-      static std::pair<std::intmax_t, std::intmax_t> cached = reduce_fraction(generic_num<Period1>(), generic_den<Period1>(), generic_num<Period2>(), generic_den<Period2>());
-      return cached;
-    }
-    inline static std::intmax_t num() { return num_den().first; }
-    inline static std::intmax_t den() { return num_den().second; }
-  };
-  using type = std::chrono::duration<std::common_type<Rep1, Rep2>, period>;
-};
+// template<typename Rep1, typename Period1,
+//          typename Rep2, typename Period2>
+// requires (std::derived_from<Period1, runtime_ratio_tag> || std::derived_from<Period2, runtime_ratio_tag>)
+// struct std::common_type<std::chrono::duration<Rep1, Period1>, std::chrono::duration<Rep2, Period2>> {
+//   struct period : runtime_ratio_tag {
+//     using type = period;
+//     inline static std::pair<std::intmax_t, std::intmax_t> num_den() {
+//       static std::pair<std::intmax_t, std::intmax_t> cached = reduce_fraction(generic_num<Period1>(), generic_den<Period1>(), generic_num<Period2>(), generic_den<Period2>());
+//       return cached;
+//     }
+//     inline static std::intmax_t num() { return num_den().first; }
+//     inline static std::intmax_t den() { return num_den().second; }
+//   };
+//   using type = std::chrono::duration<std::common_type<Rep1, Rep2>, period>;
+// };
 
-template<typename Rep, std::derived_from<runtime_ratio_tag> Period>
-struct std::chrono::duration<Rep, Period> {
-  using rep = Rep;
-  using period = Period;
+// template<typename Rep, std::derived_from<runtime_ratio_tag> Period>
+// struct std::chrono::duration<Rep, Period> {
+//   using rep = Rep;
+//   using period = Period;
 
-  rep r;
+//   rep r;
 
-  duration() = default;
-  duration(const duration&) = default;
-  ~duration() = default;
+//   duration() = default;
+//   duration(const duration&) = default;
+//   ~duration() = default;
 
-  template<typename Dur>
-  requires std::__is_duration<Dur>::value
-  duration(const Dur& d) : r(std::duration_cast<duration>(d).count()) {}
-};
+//   template<typename Dur>
+//   requires std::__is_duration<Dur>::value
+//   duration(const Dur& d) : r(std::duration_cast<duration>(d).count()) {}
+// };
 
-struct rdtsc_clock2 {
-  using rep = decltype(_rdtsc());
-  struct period : runtime_ratio_tag {
-    using type = period;
-    inline static std::intmax_t num() { return 1; }
-    inline static std::intmax_t den() { return tsc_freq; }
-  };
-  using duration = std::chrono::duration<rep, period>;
-  using time_point = std::chrono::time_point<rdtsc_clock2>;
-  inline static constexpr bool is_steady = true;
-  static time_point now() noexcept { return time_point(duration(_rdtsc())); }
-};
+// TODO: fix this
+
+// struct rdtsc_clock2 {
+//   using rep = decltype(_rdtsc());
+//   struct period : runtime_ratio_tag {
+//     using type = period;
+//     inline static std::intmax_t num() { return 1; }
+//     inline static std::intmax_t den() { return tsc_freq; }
+//   };
+//   using duration = std::chrono::duration<rep, period>;
+//   using time_point = std::chrono::time_point<rdtsc_clock2>;
+//   inline static constexpr bool is_steady = true;
+//   static time_point now() noexcept { return time_point(duration(_rdtsc())); }
+// };
 
 #include <ivl/logger>
 
@@ -418,5 +420,5 @@ int main() {
   template for (constexpr auto clock : define_static_array(find_all_clocks())) { experiment_cxx<typename[:clock:]>(); }
 
   experiment_cxx<rdtsc_clock>();
-  experiment_cxx<rdtsc_clock2>();
+  // experiment_cxx<rdtsc_clock2>();
 }

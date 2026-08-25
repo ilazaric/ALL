@@ -1,7 +1,9 @@
 #include <string>
 #include <print>
+#include <ivl/command_line_argument_parsing/annotations>
 
-struct args {
+struct [[=ivl::cmdline_parsing::class_basic]]
+args {
   std::string foo;
   std::string bar;
 };

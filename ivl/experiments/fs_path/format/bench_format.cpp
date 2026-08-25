@@ -1,3 +1,5 @@
+#error "broken since gcc has path formatting, TODO"
+
 #include <benchmark/benchmark.h>
 #include FORMAT_VERSION
 

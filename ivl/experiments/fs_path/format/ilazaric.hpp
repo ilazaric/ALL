@@ -1,5 +1,7 @@
 #pragma once
 
+#error "broken since gcc has path formatting, TODO"
+
 #include <filesystem>
 #include <format>
 

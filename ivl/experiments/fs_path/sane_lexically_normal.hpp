@@ -3,6 +3,10 @@
 #include <filesystem>
 #include <iostream>
 #include <ranges>
+#include <vector>
+#include <string_view>
+
+using namespace std::literals::string_view_literals;
 
 namespace impl_sane {
 std::filesystem::path lexically_normal(const std::filesystem::path& self) {
@@ -11,7 +15,7 @@ std::filesystem::path lexically_normal(const std::filesystem::path& self) {
   if (self.empty()) return ret;
 
   std::vector<const std::filesystem::path*> pieces;
-  auto my_append = [&](const path& p) { pieces.push_back(&p); };
+  auto my_append = [&](const std::filesystem::path& p) { pieces.push_back(&p); };
   auto my_has_filename = [&] {
     if (pieces.empty()) return false;
     return true;

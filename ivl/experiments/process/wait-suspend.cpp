@@ -7,7 +7,7 @@ int main() {
   auto pid = sys::fork();
   if (pid == 0) {
     struct timespec ts{.tv_sec = 1};
-    while (true) sys::nanosleep(&ts, nullptr);
+    while (true) sys::nanosleep((__kernel_timespec*)&ts, nullptr);
   }
 
   
