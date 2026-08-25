@@ -1,9 +1,9 @@
 #include <ivl/fs/fileview>
 #include <ivl/logger>
-#include "eval.hpp"
-#include "parse.hpp"
-#include "strip-comments.hpp"
-#include "tokenize.hpp"
+#include "eval"
+#include "parse"
+#include "strip-comments"
+#include "tokenize"
 #include <iostream>
 
 int main() {

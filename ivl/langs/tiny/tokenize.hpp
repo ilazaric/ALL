@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/utility>
-#include "meta.hpp"
+#include "meta"
 #include <algorithm>
 #include <cassert>
 #include <cctype>

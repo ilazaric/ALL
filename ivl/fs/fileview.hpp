@@ -22,6 +22,12 @@ namespace ivl::fs {
     return linux::owned_file_descriptor(linux::throwing_syscalls::open(path.data(), O_RDONLY, 0));
   }
 
+  inline struct stat fstat(linux::file_descriptor fd) {
+    struct stat statbuf;
+    linux::throwing_syscalls::fstat(fd.get(), &statbuf);
+    return statbuf;
+  }
+
   struct FileView {
     const std::byte* mapped_region;
     std::size_t      offset;

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/utility>
-#include "tokenize.hpp"
+#include "tokenize"
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
@@ -149,7 +149,7 @@ namespace ivl::langs::tiny {
   template <>
   ParenExpression ParserState::parse() {
     assert(consume_if<op_paren_open>());
-    util::AtScopeEnd _{[&] { assert(consume_if<op_paren_close>()); }};
+    util::scope_exit _{[&] { assert(consume_if<op_paren_close>()); }};
     return ParenExpression{std::make_unique<Expression>(parse<Expression>())};
   }
 
