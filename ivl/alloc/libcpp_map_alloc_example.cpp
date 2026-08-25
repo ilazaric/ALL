@@ -1,3 +1,5 @@
+#error "only works with clang, TODO"
+
 #include <iostream>
 #include <map>
 #include <memory>

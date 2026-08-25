@@ -1,3 +1,5 @@
+#error "broken, missing SmallPtrEnv, TODO"
+
 #include <vector>
 
 #include "small_ptr_allocator"

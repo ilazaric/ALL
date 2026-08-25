@@ -4,7 +4,7 @@
 #include <cassert>
 #include <cstddef>
 
-#include "segment_tree2.hpp"
+#include "segment_tree2"
 
 #include <ivl/debug>
 
