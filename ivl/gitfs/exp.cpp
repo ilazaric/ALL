@@ -1,7 +1,7 @@
-#include <git2.h>
-
 #include <ivl/logger>
-#include <ivl/str/nullstringview>
+#include <ivl/null_terminated_string_view>
+#include <git2.h>
+#include <utility>
 
 #define check_lg2(...)                                                                                                 \
   do {                                                                                                                 \
@@ -21,7 +21,7 @@ struct Init {
 
 struct Repo {
   Repo() noexcept : ptr(nullptr) {}
-  Repo(ivl::str::NullStringView sv) noexcept(false) { check_lg2(git_repository_open(&ptr, sv.data())); }
+  Repo(ivl::null_terminated_string_view sv) noexcept(false) { check_lg2(git_repository_open(&ptr, sv.data())); }
 
   Repo(const Repo&) = delete;
   Repo(Repo&& o) noexcept : ptr(std::exchange(o.ptr, nullptr)) {}
@@ -58,7 +58,7 @@ int main() {
   check_lg2(git_revparse_single(&obj, repo, "HEAD^{tree}"));
   git_tree* tree = (git_tree*)obj;
 
-  git_tree_entry** ent;
+  git_tree_entry* ent;
   check_lg2(git_tree_entry_bypath(&ent, tree, "ivl/gitfs"));
 
   git_tree_entry_free(ent);

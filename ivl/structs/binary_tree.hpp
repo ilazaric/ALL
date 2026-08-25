@@ -1,5 +1,7 @@
 #pragma once
 
+#error "broken header, TODO"
+
 #include <cassert>
 #include <memory>
 #include <utility>

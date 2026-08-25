@@ -7,6 +7,8 @@
 
 #include <ivl/logger>
 
+#include <unistd.h>
+
 #define EXPECT(cond, err)                                                                                              \
   if (!(cond)) return -(err)
 
@@ -113,4 +115,4 @@ namespace gitfs {
 
 } // namespace gitfs
 
-int main(int argc, char* argv[]) { return fuse_main(argc, argv, &gitfs::ops, static_cast<void*>(new State())); }
+int main(int argc, char* argv[]) { return fuse_main(argc, argv, &gitfs::ops, static_cast<void*>(new gitfs::State())); }

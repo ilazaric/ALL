@@ -3,15 +3,12 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/terminate_syscalls>
 #include <ivl/linux/throwing_syscalls>
+#include "page_size"
 #include <filesystem>
 #include <format>
 #include <string>
 
 namespace ivl::linux {
-
-// TODO: this should be validated on startup via sysconf(_SC_PAGE_SIZE)
-inline constexpr size_t page_size = 4096;
-
 // TODO: change ret to mmap_region probably
 inline std::string read_file(file_descriptor fd) {
   struct stat statbuf;

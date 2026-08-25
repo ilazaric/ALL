@@ -1,7 +1,9 @@
 #pragma once
 
-#include <ivl/linux/terminate_syscalls>
+#include "terminate_syscalls"
+#include "page_size"
 #include <ivl/logger>
+#include <cstdint>
 
 namespace ivl::linux {
 
@@ -18,24 +20,24 @@ struct owned_mmap_region {
   owned_mmap_region() : data(nullptr), length(0) {}
 
   owned_mmap_region(void* addr, size_t length, int prot, int flags, int fd, off_t offset)
-      : data(ivl::linux::terminate_syscalls::mmap(addr, length, prot, flags, fd, offset)), length(length) {}
+    : data(reinterpret_cast<void*>(ivl::linux::terminate_syscalls::mmap(reinterpret_cast<long unsigned int>(addr), length, prot, flags, fd, offset))), length(length) {}
 
-  owned_mmap_region(const mmap_region&) = delete;
+  owned_mmap_region(const owned_mmap_region&) = delete;
 
-  owned_mmap_region(mmap_region&& o) : data(o.data), length(o.length) {
+  owned_mmap_region(owned_mmap_region&& o) : data(o.data), length(o.length) {
     o.data = nullptr;
     o.length = 0;
   }
 
-  owned_mmap_region& operator=(const mmap_region&) = delete;
+  owned_mmap_region& operator=(const owned_mmap_region&) = delete;
 
-  owned_mmap_region& operator=(mmap_region&& o) {
+  owned_mmap_region& operator=(owned_mmap_region&& o) {
     std::swap(data, o.data);
     std::swap(length, o.length);
     return *this;
   }
 
-  bool empty() const { return data = nullptr; }
+  bool empty() const { return data == nullptr; }
 
   // TODO: clear() -> syscall error
   // ....: to_view() const -> std::string_view
@@ -45,11 +47,11 @@ struct owned_mmap_region {
   size_t size() const { return length; }
 
   ~owned_mmap_region() {
-    if (data) ivl::linux::terminate_syscalls::munmap(data, length);
+    if (data) ivl::linux::terminate_syscalls::munmap(reinterpret_cast<long unsigned int>(data), length);
   }
 };
 
-template <size_T N>
+template <size_t N>
   requires(N % page_size == 0)
 struct alignas(page_size) page_aligned_data {
   char data[N];

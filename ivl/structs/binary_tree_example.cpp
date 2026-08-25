@@ -1,3 +1,5 @@
+#error "broken header, mainly due to binary_tree.hpp, TODO"
+
 #include <algorithm>
 #include <ranges>
 
