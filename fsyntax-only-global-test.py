@@ -97,12 +97,13 @@ for dirpath, _, filenames in src.walk():
 
 targets = all_targets.keys()
 targets = [target for target in targets if not str(target).startswith("/edg-reflection")]
+targets = [target for target in targets if not str(target).endswith("_X@raw")]
 # targets = [target for target in targets if str(target).startswith("/command_line_argument_parsing")]
 # targets = [target for target in targets if False
-#            or str(target).startswith("/logger")
-#            or str(target).startswith("/reflection")
-#            or str(target).startswith("/command_line_argument_parsing")
+#            or str(target).startswith("/cf/")
 #            ]
+# targets = """
+# """.split()
 # targets = [
 #     # "/command_line_argument_parsing/parse_example",
 #     # "/command_line_argument_parsing/parse_example@raw",
