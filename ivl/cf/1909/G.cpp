@@ -14,7 +14,7 @@ using ivl::io::conversion::cin;
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/nt/multimint>
+#include <ivl/number_theory/multimint>
 
 /*
 

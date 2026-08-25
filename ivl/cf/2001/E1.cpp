@@ -1,7 +1,7 @@
 #include <ivl/io/conversion>
 #include <ivl/io/stlutils>
 #include <ivl/logger>
-#include <ivl/nt/rtmint>
+#include <ivl/number_theory/rtmint>
 #include <cassert>
 #include <deque>
 #include <map>

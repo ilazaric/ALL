@@ -12,7 +12,7 @@ using ivl::io::conversion::cin;
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/nt/util>
+#include <ivl/number_theory/util>
 
 int main() {
   for (auto ti : std::views::iota(0, (int)cin)) {

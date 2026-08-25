@@ -129,8 +129,8 @@ using namespace ivl::logger::default_logger;
 using namespace ivl::literals::ints_exact;
 
 #include <ivl/algos/fft>
-#include <ivl/nt/multimint>
-#include <ivl/nt/util>
+#include <ivl/number_theory/multimint>
+#include <ivl/number_theory/util>
 
 constexpr std::array<std::uint32_t, 3> Primes{
   1000112129, 1000210433, 1000308737,
