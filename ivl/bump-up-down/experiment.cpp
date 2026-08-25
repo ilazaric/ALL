@@ -1,4 +1,4 @@
-#include "bump_up.hpp"
+#include "bump_up"
 
 #include <iostream>
 #include <map>
