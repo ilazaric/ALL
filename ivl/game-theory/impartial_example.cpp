@@ -1,11 +1,10 @@
 #include <iomanip>
 
-#include "impartial.hpp"
+#include "impartial"
 
 #include <ivl/logger>
 
-#include <range/v3/view/concat.hpp>
-// #include "/home/ilazaric/repos/range-v3/include/range/v3/view/concat.hpp"
+#include <ranges>
 
 struct Nim {
   std::size_t x;
@@ -62,12 +61,10 @@ struct Falling {
 
 template <int dx, int dy>
 inline constexpr bool std::ranges::enable_borrowed_range<Falling<dx, dy>> = true;
-template <int dx, int dy>
-inline constexpr bool ranges::enable_borrowed_range<Falling<dx, dy>> = true;
 
 struct Queens {
   std::size_t x, y;
-  auto moves() const { return ranges::views::concat(Falling<1, 0>{x, y}, Falling<0, 1>{x, y}, Falling<1, 1>{x, y}); }
+  auto moves() const { return std::views::concat(Falling<1, 0>{x, y}, Falling<0, 1>{x, y}, Falling<1, 1>{x, y}); }
 
   auto operator<=>(const Queens&) const = default;
   bool operator==(const Queens&) const  = default;
@@ -75,9 +72,9 @@ struct Queens {
 
 static_assert(std::ranges::borrowed_range<Falling<1, 1>>);
 
-static_assert(ranges::input_or_output_iterator<Falling<1, 1>>);
-static_assert(ranges::viewable_range<Falling<1, 1>>);
-static_assert(ranges::input_range<Falling<1, 1>>);
+static_assert(std::input_or_output_iterator<Falling<1, 1>>);
+static_assert(std::ranges::viewable_range<Falling<1, 1>>);
+static_assert(std::ranges::input_range<Falling<1, 1>>);
 
 static_assert(std::weakly_incrementable<Falling<1, 1>>);
 
