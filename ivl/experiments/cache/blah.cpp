@@ -1,14 +1,14 @@
 #include <meta>
 #include <print>
 
-#include "define2"
+#include <ivl/reflection/define_aggregate_with_member_functions>
 
 // IVL add_compiler_flags("-Wno-subobject-linkage")
 
 struct my_string_view;
 
 consteval {
-  define_aggregate_with_member_functions(
+  ivl::reflection::define_aggregate_with_member_functions(
     (^^my_string_view),
     {
       data_member_spec((^^const char*), {.name = "ptr"}),

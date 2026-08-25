@@ -34,6 +34,7 @@ struct cache_level_description {
 static_assert(sizeof(cache_level_description) == sizeof(ivl::cpuid_output));
 
 #include <meta>
+#include <format>
 
 consteval {
   auto type = ^^cache_level_description;
