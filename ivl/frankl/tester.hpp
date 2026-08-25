@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cassert>
 #include <cmath>
 #include <cstddef>
 #include <functional>
@@ -7,15 +8,15 @@
 #include <string>
 #include <vector>
 
-template <typename T>
+template<typename T>
 struct Tester {
   using Fn = std::function<bool(const T&)>;
-  std::vector<Fn>               tests;
-  std::vector<std::string>      names;
-  std::vector<std::size_t>      fail_counts;
+  std::vector<Fn> tests;
+  std::vector<std::string> names;
+  std::vector<std::size_t> fail_counts;
   std::vector<std::array<T, 5>> fail_examples;
-  bool                          started_testing = false;
-  std::size_t                   count           = 0;
+  bool started_testing = false;
+  std::size_t count = 0;
 
   void attach(Fn test, std::string name) {
     assert(!started_testing);

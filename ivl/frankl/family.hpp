@@ -3,7 +3,7 @@
 #include <array>
 #include <bitset>
 #include <cstddef>
-#include <iosfwd>
+#include <iostream>
 #include <vector>
 
 template <std::size_t N>
