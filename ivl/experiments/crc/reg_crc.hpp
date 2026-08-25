@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace reg {
 constexpr uint16_t CRC16 = 0x8005;
 

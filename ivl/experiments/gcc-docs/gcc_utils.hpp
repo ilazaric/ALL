@@ -1,6 +1,7 @@
 #pragma once
 
 #include "xml_utils"
+#include <ivl/logger>
 
 namespace gcc {
 void purge_duds(pugi::xml_node node) {

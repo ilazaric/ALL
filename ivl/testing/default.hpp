@@ -3,6 +3,7 @@
 #include <ivl/reflection/json>
 #include <source_location>
 #include <string_view>
+#include <print>
 
 namespace ivl::testing {
 inline void contract_assert_json(

@@ -12,8 +12,10 @@
 #include <ranges>
 #include <set>
 #include <source_location>
+#include <ivl/command_line_argument_parsing/annotations>
 
-struct args {
+struct [[=ivl::cmdline_parsing::class_basic]]
+args {
   std::filesystem::path file;
   // std::size_t depth;
   std::filesystem::path output;

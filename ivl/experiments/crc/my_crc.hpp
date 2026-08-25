@@ -1,5 +1,8 @@
 #pragma once
 
+#include <array>
+#include <cstdint>
+
 namespace ivl {
 template<typename T>
 constexpr std::array<T, 256> crc_table_no_leading(T poly) {

@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace html {
 std::vector<std::ofstream*> pages;
