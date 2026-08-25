@@ -96,6 +96,8 @@ for dirpath, _, filenames in src.walk():
             deduce_file_targets(filepath)
 
 targets = all_targets.keys()
+targets = [target for target in targets if not str(target).startswith("/edg-reflection")]
+targets = [target for target in targets if str(target).startswith("/logger")]
 print(targets)
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
@@ -140,7 +142,7 @@ for target in targets:
              "-freflection",
              "-fcontracts",
              "-include",
-             incpath,
+             relpath, # incpath,
              "-xc++",
              "/dev/null",
              "-o",
