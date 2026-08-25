@@ -1,4 +1,4 @@
-#include "24bit.hpp"
+#include "24bit"
 
 #include <iostream>
 
