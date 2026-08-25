@@ -1,12 +1,10 @@
+#include <ivl/command_line_argument_parsing/passthrough>
 #include <ivl/linux/terminate_syscalls>
 #include <span>
-#include <ivl/command_line_argument_parsing/passthrough>
 
 // IVL add_compiler_flags("-static")
 
-struct args {};
-
-int ivl_main(args, ivl::cmdline_parsing::passthrough cmd) {
+int ivl_main(ivl::cmdline_parsing::passthrough cmd) {
   namespace sys = ivl::linux::terminate_syscalls;
   contract_assert(cmd.data.size() >= 3);
   auto ctl = cmd.data[0];

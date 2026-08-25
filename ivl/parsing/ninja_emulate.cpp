@@ -1,3 +1,4 @@
+#include <ivl/command_line_argument_parsing/annotations>
 #include <ivl/command_line_argument_parsing/passthrough>
 #include <ivl/parsing/ninja>
 #include <ivl/reflection/json>
@@ -5,7 +6,7 @@
 #include <print>
 #include <string>
 
-struct args {
+struct[[= ivl::cmdline_parsing::class_basic]] args {
   std::filesystem::path C;
   std::filesystem::path f = "build.ninja";
   std::string t;

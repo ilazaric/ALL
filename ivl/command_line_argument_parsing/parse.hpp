@@ -54,64 +54,6 @@ consteval void err(std::format_string<Args...> fmt, Args&&... args) {
   __builtin_constexpr_diag(2, "command_line_argument_parsing", std::string_view(msg));
 }
 
-consteval bool validate_sanity(std::meta::info type) {
-  if (is_type(type) && is_parseable_type(type)) return true;
-
-  bool ret = true;
-
-  if (!is_type(type)) {
-    err("ICE: expected type, got: {:?}", type);
-    return false;
-  }
-
-  type = dealias(type);
-
-  if (is_const_type(type) || is_volatile(type)) {
-    err("type {:?} shouldn't be const or volatile", type);
-    type = remove_cv(type);
-    ret = false;
-  }
-
-  if (is_reference_type(type)) {
-    err("type {:?} shouldn't be reference", type);
-    type = remove_reference(type);
-    ret = false;
-  }
-
-  if (!is_class_type(type)) {
-    err("type {:?} is not a class", type);
-    return false;
-  }
-
-  if (reflection::is_child_of(type, ^^std)) {
-    err("type {:?} is a stdlib type", type);
-    return false;
-  }
-
-  auto ctx = std::meta::access_context::unchecked();
-
-  {
-    auto bases = bases_of(type, ctx);
-    if (!bases.empty()) {
-      err("type {:?} has bases: {::?}", type, bases);
-      ret = false;
-    }
-  }
-
-  {
-    auto nsdms = nonstatic_data_members_of(type, ctx);
-    std::vector<std::meta::info> nonpublic(
-      std::from_range, std::views::filter(nsdms, std::not_fn(std::meta::is_public))
-    );
-    if (!nonpublic.empty()) {
-      err("type {:?} has non-public non-static data members: {::?}", type, nonpublic);
-      ret = false;
-    }
-  }
-
-  return ret;
-}
-
 template<typename T>
 inline bool parse(T& state, raw_arguments& args) {
   if constexpr (parseable<T>) {

@@ -2,12 +2,13 @@
 #include <ivl/reflection/prettier_types>
 #include <ivl/reflection/utility>
 #include <ivl/utility>
+#include "annotations"
 #include "parse"
 #include "passthrough"
 #include <format>
 #include <print>
 
-struct cc_bundle {
+struct[[= ivl::cmdline_parsing::class_basic]] cc_bundle {
   bool bla;
   std::string truc;
   int x;

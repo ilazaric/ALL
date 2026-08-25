@@ -1,3 +1,4 @@
+#include <ivl/command_line_argument_parsing/annotations>
 #include <ivl/linux/utility>
 #include <ivl/stl/string>
 #include <filesystem>
@@ -7,7 +8,7 @@ std::vector<std::string> controllers(const std::filesystem::path& cgroup_dir) {
   return ivl::split_py(ivl::linux::read_file_slow(cgroup_dir / "cgroup.controllers"));
 }
 
-struct args {
+struct[[= ivl::cmdline_parsing::class_basic]] args {
   std::filesystem::path root = "/sys/fs/cgroup";
 };
 
