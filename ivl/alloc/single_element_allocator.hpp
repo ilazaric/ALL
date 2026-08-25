@@ -1,6 +1,6 @@
 #pragma once
 
-#include "mmap_fixed_storage.hpp"
+#include "mmap_fixed_storage"
 
 namespace ivl::alloc {
 

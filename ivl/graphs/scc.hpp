@@ -8,7 +8,7 @@
 #include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include "graph.hpp"
+#include "graph"
 
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;

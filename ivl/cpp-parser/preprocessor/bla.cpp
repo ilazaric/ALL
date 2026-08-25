@@ -1,4 +1,4 @@
-#include "Grammar.hpp"
+#include "Grammar"
 
 #include <iostream>
 

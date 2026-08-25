@@ -1,4 +1,4 @@
-#include "parse_latex.hpp"
+#include "parse_latex"
 
 #include <ivl/io/stlutils>
 #include <boost/algorithm/string/split.hpp>

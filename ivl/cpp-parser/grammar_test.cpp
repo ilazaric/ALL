@@ -1,6 +1,6 @@
 #include <ivl/logger>
 #include <ivl/utility>
-#include "grammar_utils.hpp"
+#include "grammar_utils"
 
 using namespace ivl;
 using namespace cppp;

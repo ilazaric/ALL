@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 
-#include "grammar_utils.hpp"
+#include "grammar_utils"
 using namespace ivl;
 using namespace cppp;
 using namespace grammar;
@@ -13,7 +13,7 @@ template <typename>
 struct Entity;
 
 #define ENTITY(name, ...) struct name
-#include "generated_X.hpp"
+#include "generated_X"
 #undef ENTITY
 
 #define FLAT_WRAP(name, ...)                                                                                           \
@@ -55,7 +55,7 @@ struct entity_new_line {
   struct name {                                                                                                        \
     using type = __VA_ARGS__;                                                                                          \
   }
-#include "generated_X.hpp"
+#include "generated_X"
 #undef ENTITY
 
 // #define ENTITY(name, ...)                                                                          \

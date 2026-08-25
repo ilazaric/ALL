@@ -1,8 +1,8 @@
 
 #include <ivl/logger>
 
-#include "segment_tree.hpp"
-#include "segment_tree2.hpp"
+#include "segment_tree"
+#include "segment_tree2"
 
 #include <ivl/io/stlutils>
 

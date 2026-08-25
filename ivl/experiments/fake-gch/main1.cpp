@@ -1,4 +1,4 @@
-#include "heavy-header.hpp"
+#include "heavy-header"
 
 int main() { func(); }
 

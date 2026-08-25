@@ -2,7 +2,7 @@
 #include <random>
 #include <ranges>
 
-#include "scc.hpp"
+#include "scc"
 
 #include <ivl/io/stlutils>
 

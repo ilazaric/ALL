@@ -1,6 +1,6 @@
 #include <ivl/logger>
-#include "phase1.hpp"
-#include "phase2.hpp"
+#include "phase1"
+#include "phase2"
 
 int main() {
   auto src = ivl::cppp::phase2(ivl::cppp::phase1("input"));

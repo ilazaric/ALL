@@ -2,7 +2,7 @@
 #include <memory>
 #include <vector>
 
-#include "small_ptr_allocator.hpp"
+#include "small_ptr_allocator"
 
 #include <ivl/logger>
 

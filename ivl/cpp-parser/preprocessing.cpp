@@ -1,4 +1,4 @@
-#include "grammar_utils.hpp"
+#include "grammar_utils"
 
 using namespace ivl::cppp::grammar;
 

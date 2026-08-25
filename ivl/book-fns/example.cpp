@@ -1,6 +1,6 @@
 #include <ivl/logger>
 #include <ivl/utility>
-#include "book.hpp"
+#include "book"
 #include <algorithm>
 #include <cassert>
 #include <cmath>

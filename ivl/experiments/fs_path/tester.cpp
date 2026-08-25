@@ -1,5 +1,5 @@
-#include "evil_lexically_normal.hpp"
-#include "sane_lexically_normal.hpp"
+#include "evil_lexically_normal"
+#include "sane_lexically_normal"
 #include <iostream>
 
 void check_equal(const std::filesystem::path& p) {

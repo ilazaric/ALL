@@ -1,7 +1,7 @@
 #include <cassert>
 #include <memory>
 
-#include "to_free_function_pointer.hpp"
+#include "to_free_function_pointer"
 
 struct S {
   int fn(int) const&& { return 42; }
