@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 namespace ivl::nt {
 
   // the slow stupid form

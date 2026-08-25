@@ -2,8 +2,8 @@
 #include <random>
 #include <vector>
 
-#include <ivl/nt/multimint>
-#include <ivl/nt/util>
+#include "multimint"
+#include "util"
 
 #include <ivl/io/stlutils>
 using namespace ivl::io;

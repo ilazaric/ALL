@@ -5,7 +5,7 @@
 #include <cstdint>
 
 #include <ivl/io/stlutils>
-#include "util.hpp"
+#include "util"
 
 namespace ivl::nt {
 
