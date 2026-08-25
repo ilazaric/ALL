@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ivl/timer/timer>
+#include <ivl/literals/ints>
+#include <ranges>
 
 namespace ivl::algos {
 
@@ -8,6 +10,7 @@ namespace ivl::algos {
   // `len` should be a power of 2
   template <typename T>
   void fft(const T* in, T* out, std::size_t len, T e) {
+    using namespace ::ivl::literals::ints_exact;
     SCOPE_TIMER;
 
     {
