@@ -3,8 +3,12 @@
 // this file shouldn't be included, it is used by build system
 // TODO: might want to move it somewhere to reflect ^ then
 
-#include <ivl/command_line_argument_parsing/parse>
+#include <ivl/command_line_argument_parsing/parser_ints>
+#include <ivl/command_line_argument_parsing/parser_bool>
+#include <ivl/command_line_argument_parsing/parser_floats>
+#include <ivl/command_line_argument_parsing/parser_strings>
 #include <ivl/command_line_argument_parsing/parse_class>
+#include <ivl/command_line_argument_parsing/print_help>
 #include <ivl/command_line_argument_parsing/passthrough>
 #include <meta>
 #include <print>
