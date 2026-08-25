@@ -97,6 +97,7 @@ for dirpath, _, filenames in src.walk():
 
 targets = all_targets.keys()
 targets = [target for target in targets if not str(target).startswith("/edg-reflection")]
+targets = [target for target in targets if not str(target).startswith("/cpp-parser")]
 targets = [target for target in targets if not str(target).endswith("_X@raw")]
 # targets = [target for target in targets if str(target).startswith("/command_line_argument_parsing")]
 # targets = [target for target in targets if False
