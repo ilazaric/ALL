@@ -2,6 +2,7 @@
 #include <cassert>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 int main(int argc, char** argv) {
   assert(argc == 3);
