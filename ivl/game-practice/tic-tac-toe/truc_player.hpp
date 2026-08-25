@@ -1,6 +1,7 @@
 #pragma once
 
-#include <ivl/game-practice/tic-tac-toe/player>
+#include "player"
+#include <cstddef>
 
 namespace ivl::game_practice::tic_tac_toe {
 struct truc_player : player {
