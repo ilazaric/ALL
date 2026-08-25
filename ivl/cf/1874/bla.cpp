@@ -4,7 +4,7 @@ using namespace ivl::logger::default_logger;
 #include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include <ivl/nt/primes>
+#include <ivl/number_theory/primes>
 
 int main() {
   constexpr auto A     = 1_u64 << 15;

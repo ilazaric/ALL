@@ -27,9 +27,6 @@
 // template<typename T>
 // struct ivl::alloc::GlobalAlloc : ivl::alloc::SmallPtrAllocator<T, AllocTraits> {};
 
-template <typename T>
-struct ivl::alloc::GlobalAlloc : std::allocator<T> {};
-
 int main() {
   // LOG(sizeof(ivl::alloc::spa_detail::Allocator<AllocTraits>::segment_tree_type));
   // exit(1);
