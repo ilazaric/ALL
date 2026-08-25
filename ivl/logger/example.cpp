@@ -1,4 +1,4 @@
-#include "logger.hpp"
+#include "logger"
 
 using namespace ivl::logger::default_logger;
 

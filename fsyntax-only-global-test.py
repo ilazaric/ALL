@@ -97,6 +97,20 @@ for dirpath, _, filenames in src.walk():
 
 targets = all_targets.keys()
 targets = [target for target in targets if not str(target).startswith("/edg-reflection")]
+# targets = [target for target in targets if str(target).startswith("/command_line_argument_parsing")]
+# targets = [target for target in targets if False
+#            or str(target).startswith("/logger")
+#            or str(target).startswith("/reflection")
+#            or str(target).startswith("/command_line_argument_parsing")
+#            ]
+# targets = [
+#     # "/command_line_argument_parsing/parse_example",
+#     # "/command_line_argument_parsing/parse_example@raw",
+#     "/command_line_argument_parsing/parse_class@raw",
+#     # "/command_line_argument_parsing/passthrough_example",
+#     # "/command_line_argument_parsing/passthrough_example@raw",
+# ]
+# targets = [Path(t) for t in targets]
 print(targets)
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
@@ -118,11 +132,13 @@ for target in targets:
     elif relpath.suffix == ".hpp":
         incpath = relpath.parent / relpath.stem
     elif relpath.suffix == ".cpp":
-        incpath = relpath
+        # otherwise it finds repo_root / relpath
+        # TODO: this sucks, should we mess with cwd?
+        incpath = regsrc / relpath
     else:
         assert False, relpath
     assert incpath, relpath
-    incpath = regsrc / incpath
+    # incpath = regsrc / incpath
 
     cxxadded = all_targets[target].added_compiler_flags
     cxxaddedpost = all_targets[target].added_compiler_flags_tail
@@ -141,7 +157,7 @@ for target in targets:
              "-freflection",
              "-fcontracts",
              "-include",
-             relpath, # incpath,
+             incpath,
              "-xc++",
              "/dev/null",
              "-o",

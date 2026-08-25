@@ -5,6 +5,7 @@
 #include "parser_declaration"
 #include "raw_arguments"
 #include <meta>
+#include <print>
 
 namespace ivl::cmdline_parsing {
 template<typename T>
