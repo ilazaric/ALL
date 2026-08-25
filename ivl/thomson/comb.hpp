@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <vector>
+#include <span>
 
 #include "choose"
 

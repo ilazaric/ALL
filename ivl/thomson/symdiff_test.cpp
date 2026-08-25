@@ -1,4 +1,5 @@
 #include "autodiff"
+#include "symdiff"
 #include "eval"
 #include "point"
 #include <iostream>
