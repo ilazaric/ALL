@@ -7,6 +7,7 @@
 #include <ivl/utility>
 #include <cstdint>
 #include <utility>
+#include <cstring>
 
 namespace ivl::linux::rich {
 
@@ -20,19 +21,19 @@ namespace ivl::linux::rich {
 template<typename T, typename... Errors>
   requires(std::is_standard_layout_v<T> && meta::is_unique<T, std::monostate, Errors...> && sizeof...(Errors) <= 64)
 struct or_rich_error {
-  using raw_type = kernel_result_detail::try_align<long, T>::left_wrapper;
-  using wrapped_type = kernel_result_detail::try_align<long, T>::right_wrapper;
-
   // All non-negative values are T.
   // Errors are heap allocated, and the pointers are encoded into negative space.
   // Encoded nullptr represents empty state.
   union {
-    raw_type raw;
-    wrapped_type wrapped;
+    long raw;
+    T success;
   };
 
-  // Due to standard-layout shenanigans this is always okay.
-  long get_raw() const { return raw.get(); }
+  long get_raw() const {
+    long ret;
+    memcpy(&ret, this, sizeof(long));
+    return ret;
+  }
 
   inline static constexpr uint64_t POINTER_BITS = 57;
   inline static constexpr uint64_t POINTER_MASK = (1ULL << POINTER_BITS) - 1;
@@ -64,7 +65,7 @@ struct or_rich_error {
 
   // TODO: probably shouldn't go through generic tag, just have a specific rich::tag
   explicit or_rich_error(meta::tag<std::monostate>, auto&&...) : raw(encode(nullptr, 0)) {}
-  explicit or_rich_error(meta::tag<T>, auto&&... args) : wrapped(FWD(args)...) {}
+  explicit or_rich_error(meta::tag<T>, auto&&... args) : success(FWD(args)...) {}
   template<meta::same_as_one_of<Errors...> E>
   explicit or_rich_error(meta::tag<E>, auto&&... args) {
     auto ptr = new E(FWD(args)...);
@@ -85,7 +86,7 @@ struct or_rich_error {
   {
     using E = typename meta::tag<Errors...>::type;
     if (value >= 0) [[likely]] {
-      std::construct_at(&wrapped, value);
+      std::construct_at(&success, value);
     } else {
       std::construct_at(&raw, encode(new E(value, FWD(args)...), 0));
     }
@@ -96,34 +97,34 @@ struct or_rich_error {
 
   or_rich_error(or_rich_error&& o) {
     if (o.is_success()) {
-      std::construct_at(&wrapped, std::move(o).wrapped.get());
+      std::construct_at(&success, std::move(o).success);
       // TODO: this leaves o in T moved-from state, should it move into empty?
       // changed to empty
       // but still TODO, think about all this
-      std::destroy_at(&o.wrapped);
+      std::destroy_at(&o.success);
       std::construct_at(&o.raw, encode(nullptr, 0));
     } else {
       std::construct_at(&raw, o.get_raw());
-      o.raw.get() = encode(nullptr, 0);
+      o.raw = encode(nullptr, 0);
     }
   }
 
   or_rich_error& operator=(or_rich_error&& o) {
     if (this == &o) return *this;
     if (is_success() && o.is_success()) {
-      std::swap(wrapped, o.wrapped);
+      std::swap(success, o.success);
     } else if (!is_success() && !o.is_success()) {
       std::swap(raw, o.raw);
     } else if (is_success() && !o.is_success()) {
-      auto tmp = o.raw.get();
-      std::construct_at(&o.wrapped, std::move(wrapped));
-      std::destroy_at(&wrapped);
+      auto tmp = o.raw;
+      std::construct_at(&o.success, std::move(success));
+      std::destroy_at(&success);
       std::construct_at(&raw, tmp);
     } else /* !is_success() && o.is_success() */ {
-      auto tmp = raw.get();
-      std::construct_at(&wrapped, std::move(o.wrapped));
+      auto tmp = raw;
+      std::construct_at(&success, std::move(o.success));
       // TODO: destruction might be unnecessary
-      std::destroy_at(&o.wrapped);
+      std::destroy_at(&o.success);
       std::construct_at(&o.raw, tmp);
     }
     return *this;
@@ -132,7 +133,7 @@ struct or_rich_error {
   ~or_rich_error() {
     if (is_empty()) return;
     if (is_success()) {
-      std::destroy_at(&wrapped);
+      std::destroy_at(&success);
       return;
     }
 
@@ -153,7 +154,7 @@ struct or_rich_error {
 
   decltype(auto) visit(this auto&& self, auto&& callable) {
     if (self.is_success()) {
-      return FWD(callable)(FWD(self).wrapped.get());
+      return FWD(callable)(FWD(self).success);
     }
     if (self.is_empty()) {
       // TODO: not same value category, do I care?
@@ -176,7 +177,7 @@ struct or_rich_error {
 
   decltype(auto) unwrap_or_throw(this auto&& self) {
     if (self.is_success()) [[likely]]
-      return FWD(self).wrapped.get();
+      return FWD(self).success;
 
     if (self.is_empty()) throw std::monostate{};
 
@@ -205,8 +206,8 @@ struct open_error {
   mode_t mode;
 };
 
-or_rich_error<wide_owned_file_descriptor, open_error> open(const char* filename, int flags, mode_t mode) {
-  return or_rich_error<wide_owned_file_descriptor, open_error>(
+or_rich_error<owned_file_descriptor, open_error> open(const char* filename, int flags, mode_t mode) {
+  return or_rich_error<owned_file_descriptor, open_error>(
     raw_syscalls::open(filename, flags, mode), filename, flags, mode
   );
 }
