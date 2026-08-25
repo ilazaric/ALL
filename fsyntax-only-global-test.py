@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+
+# TODO: merge with build.py
+
+from pathlib import Path
+import shutil
+import sys
+import subprocess
+import os
+from dataclasses import dataclass
+
+repo_root = Path(__file__).parent.resolve()
+build_dir = repo_root / "build"
+src = build_dir / "source_copy"
+regsrc = build_dir / "include_dirs" / "regular"
+
+build_prep = repo_root / "ivl/build_system/generate_build_sources"
+assert build_prep.with_suffix(".cpp").exists(), build_prep
+if not build_prep.exists():
+    print(f"Build prep binary {build_prep} not found, building it ...")
+    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
+    print(f"Build prep binary {build_prep} older than sources, rebuilding it ...")
+    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+subprocess.run([build_prep], check=True)
+
+all_targets = dict()
+
+@dataclass
+class TargetState:
+    path: Path
+    added_compiler_flags: list
+    added_compiler_flags_tail: list
+    # building this requires these to also be built,
+    # but not strictly before
+    unordered_dependencies: set
+
+# TODO: revert when build is caching
+common_test_dependencies = set() # {Path("/build_system/run_test")}
+    
+def deduce_file_targets(path):
+    added_compiler_flags = []
+    added_compiler_flags_tail = []
+    unordered_dependencies = set()
+    unordered_test_dependencies = set()
+    file_has_reg_variant = path.suffix == ".cpp"
+    file_has_test_variant = False
+    ivl_main_handler = True
+    def add_compiler_flags(arg):
+        nonlocal added_compiler_flags
+        added_compiler_flags += arg.split()
+    def add_compiler_flags_tail(arg):
+        nonlocal added_compiler_flags_tail
+        added_compiler_flags_tail += arg.split()
+    def add_dependencies(arg):
+        nonlocal unordered_dependencies
+        unordered_dependencies |= set(arg.split())
+    def add_test_dependencies(arg):
+        nonlocal unordered_test_dependencies
+        unordered_test_dependencies |= set(arg.split())
+    def test_only():
+        nonlocal file_has_reg_variant
+        nonlocal file_has_test_variant
+        assert path.suffix == ".cpp", path
+        file_has_reg_variant = False
+        file_has_test_variant = True
+    def has_test_variant():
+        nonlocal file_has_test_variant
+        file_has_test_variant = True
+    def disable_ivl_main_handler():
+        nonlocal ivl_main_handler
+        ivl_main_handler = False
+
+    with path.open() as f:
+        x = "// IVL "
+        ivl_directives = [l.removeprefix(x)[:-1] for l in f.readlines() if l.startswith(x)]
+    for d in ivl_directives:
+        eval(d)
+
+    # TODO: mayhaps don't strip out the ivl , when you add submodules
+    if path.name == "default.hpp":
+        name = "/" / path.parent.relative_to(src / "ivl")
+    else:
+        name = "/" / path.relative_to(src / "ivl").with_suffix('')
+
+    if file_has_test_variant:
+        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
+    if file_has_reg_variant:
+        all_targets[name] = TargetState(path, added_compiler_flags, added_compiler_flags_tail + (["-include", "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
+    all_targets[name.parent / f"{name.name}@raw"] = TargetState(path, added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
+
+for dirpath, _, filenames in src.walk():
+    for filename in filenames:
+        filepath = dirpath / filename
+        if filepath.suffix == ".cpp" or filepath.suffix == ".hpp":
+            deduce_file_targets(filepath)
+
+targets = all_targets.keys()
+print(targets)
+
+cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
+cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
+
+cxx = os.getenv("CXX", "g++")
+cxxpre = os.getenv("CXXPRE", "")
+cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(shutil.which(cxx)).parent.parent / "lib64"}"])
+cxxver = os.getenv("CXXVER", "26")
+cxxpost = os.getenv("CXXPOST", "")
+
+failed = []
+for target in targets:
+    path = all_targets[target].path
+    relpath = path.relative_to(src)
+    incpath = None
+    if relpath.name == "default.hpp":
+        incpath = relpath.parent
+    elif relpath.suffix == ".hpp":
+        incpath = relpath.parent / relpath.stem
+    elif relpath.suffix == ".cpp":
+        incpath = relpath
+    else:
+        assert False, relpath
+    assert incpath, relpath
+    incpath = regsrc / incpath
+
+    cxxadded = all_targets[target].added_compiler_flags
+    cxxaddedpost = all_targets[target].added_compiler_flags_tail
+    args = ([cxx] +
+            cxxpre.split() +
+            cxxrpath +
+            cxxadded +
+            cxxinc +
+            cxxfmap +
+            ["-DIVL_LOCAL",
+             f"-DIVL_FILE=\"{relpath}\"",
+             "-DPUGIXML_HEADER_ONLY",
+             "-fsyntax-only", # NB
+             "-O3",
+             f"-std=c++{cxxver}",
+             "-freflection",
+             "-fcontracts",
+             "-include",
+             incpath,
+             "-xc++",
+             "/dev/null",
+             "-o",
+             repo_root / "ivl" / target.relative_to('/')] +
+            cxxpost.split() + cxxaddedpost)
+    print(" ".join([str(x) for x in args]))
+    p = subprocess.run(args, check=False)
+    if p.returncode != 0:
+        failed.append(target)
+
+if not failed:
+    print("all targets passed")
+    exit(0)
+
+print("seen failures:", len(failed))
+for target in failed:
+    print(" ", target)
+exit(1)

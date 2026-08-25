@@ -77,39 +77,6 @@ jobs:
       run: cat /tmp/gcc-scratch/g++.log
 
 
-  # test-gcc-full:
-  #   needs: build-gcc
-  #   runs-on: ubuntu-latest
-  #   environment: manual
-  #   steps:
-  #   - uses: actions/checkout@v6
-  #   - name: install apt packages
-  #     run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential python3 python3-pytest tcl dejagnu expect
-  #   - uses: webfactory/ssh-agent@v0.10.0
-  #     with:
-  #       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-  #   - name: restore gcc install
-  #     uses: actions/cache/restore@v5
-  #     id: cache-gcc
-  #     with:
-  #       path: /opt/GCC
-  #       key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
-  #       fail-on-cache-miss: true
-  #   - name: fetch gcc submodule
-  #     run: git submodule update --init --depth=1 -- submodules/gcc
-  #   - name: run tests
-  #     run: |
-  #       mkdir -p /tmp/gcc-scratch
-  #       SRCDIR="$(realpath submodules/gcc)"
-  #       cd /tmp/gcc-scratch
-  #       "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all
-  #   - name: dump log on failure
-  #     if: ${{ failure() }}
-  #     run: cat /tmp/gcc-scratch/g++.log && exit 1
-  #   - name: dump log on success
-  #     run: cat /tmp/gcc-scratch/g++.log
-
-
   test-libstdcxx-ivl:
     needs: build-gcc
     runs-on: ubuntu-latest
@@ -241,3 +208,46 @@ jobs:
       run: sudo apt update && sudo apt install python3-more-itertools
     - name: test
       run: ./check_headers_for_pragma_once.py
+
+
+  fsyntax_only_global_test:
+    needs: build-gcc
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v6
+    - name: install apt packages
+      run: sudo apt update && sudo apt install libboost-all-dev
+
+    - uses: webfactory/ssh-agent@v0.10.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+    - name: fetch nlohmann json
+      run: |
+        git submodule update --init --depth=1 -- submodules/nlohmann-json
+
+    - name: get gcc commit
+      id: get-gcc-commit
+      run: |
+        echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: restore gcc install
+      uses: actions/cache/restore@v5
+      id: cache-gcc
+      with:
+        path: /opt/GCC
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        fail-on-cache-miss: true
+
+    - name: activate gcc
+      run: |
+        echo "/opt/GCC/bin" >> $GITHUB_PATH
+        echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
+          
+    - name: validate gcc
+      run: echo | g++ -xc++ -E --verbose -
+      
+    - name: fsyntax-only-global-test
+      run: ./fsyntax-only-global-test.py
