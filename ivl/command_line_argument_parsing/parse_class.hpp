@@ -11,11 +11,7 @@ namespace ivl::cmdline_parsing {
 template<typename T>
   requires(!annotations_of_with_type(^^T, ^^class_basic_t).empty())
 struct parser<T> {
-  bool parse(T& state, std::optional<std::string_view> eq_, raw_arguments& rest) const {
-    if (eq_) {
-      std::println("class parsing does not support `=` style");
-      return false;
-    }
+  bool parse(T& state, raw_arguments& rest) const {
     while (!rest.empty()) {
       auto curr = rest[0];
       if (curr == "--") break;
@@ -27,16 +23,17 @@ struct parser<T> {
         return false;
       }
       auto name = curr.substr(2);
-      std::optional<std::string_view> eq;
+      const char* eq = nullptr;
       if (auto loc = name.find('='); loc != std::string_view::npos) {
-        eq = name.substr(loc + 1);
+        eq = name.substr(loc + 1).data();
         name = name.substr(0, loc);
       }
+      raw_arguments resteq(&eq, &eq + !!eq);
       bool found = false;
       template for (constexpr auto member : reflection::nsdms(^^T)) {
         if (identifier_of(member) == name) {
           parser<typename[:decay(type_of(member)):]> p;
-          if (!p.parse(state.[:member:], eq, rest)) {
+          if (!p.parse(state.[:member:], eq ? resteq : rest)) {
             std::println("during parsing option: {:?}", curr);
             return false;
           }
@@ -46,6 +43,10 @@ struct parser<T> {
       }
       if (!found) {
         std::println("unrecognized option: {:?}", curr);
+        return false;
+      }
+      if (eq && !resteq.empty()) {
+        std::println("cannot parse payload after `=`: {:?}", curr);
         return false;
       }
     }

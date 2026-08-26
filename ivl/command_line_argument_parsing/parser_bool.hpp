@@ -2,7 +2,6 @@
 
 #include "parser_declaration"
 #include "raw_arguments"
-#include <optional>
 #include <print>
 #include <string_view>
 
@@ -32,11 +31,10 @@ struct parser<bool> {
     return false;
   }
 
-  inline bool parse(bool& arg, std::optional<std::string_view> eq, raw_arguments& rest) const {
-    if (eq) return parse_one(arg, *eq);
-
+  inline bool parse(bool& arg, raw_arguments& rest) const {
     // TODO: pretty sure this is stupid, change/remove, i think just --boolean[=value] is enough
     // ....: does that imply all optional args should only support `=value` parsing?
+    // UPDT: this todo is kinda broken since i killed opt<sv> argument
     if (!rest.empty()) {
       std::string_view nxt = rest[0];
       if (!nxt.starts_with("--")) {

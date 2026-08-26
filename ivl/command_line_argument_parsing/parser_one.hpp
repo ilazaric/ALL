@@ -1,7 +1,6 @@
 #pragma once
 
 #include "raw_arguments"
-#include <optional>
 #include <print>
 #include <string_view>
 
@@ -15,8 +14,7 @@ namespace ivl::cmdline_parsing {
 //   }
 // };
 struct parser_one {
-  bool parse(this const auto& self, auto& arg, std::optional<std::string_view> eq, raw_arguments& rest) {
-    if (eq) return self.parse_one(arg, *eq);
+  bool parse(this const auto& self, auto& arg, raw_arguments& rest) {
     if (rest.empty()) {
       std::println("missing argument");
       return false;
