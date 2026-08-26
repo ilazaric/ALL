@@ -1,9 +1,9 @@
 #pragma once
 
 #include <ivl/reflection/utility>
-#include "annotations"
-#include "parser_declaration"
-#include "raw_arguments"
+#include "../annotations"
+#include "../parser_declaration"
+#include "../raw_arguments"
 #include <meta>
 #include <print>
 

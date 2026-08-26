@@ -3,13 +3,8 @@
 // this file shouldn't be included, it is used by build system
 // TODO: might want to move it somewhere to reflect ^ then
 
-#include <ivl/command_line_argument_parsing/parser_ints>
-#include <ivl/command_line_argument_parsing/parser_bool>
-#include <ivl/command_line_argument_parsing/parser_floats>
-#include <ivl/command_line_argument_parsing/parser_strings>
-#include <ivl/command_line_argument_parsing/parse_class>
+#include <ivl/command_line_argument_parsing/parsers>
 #include <ivl/command_line_argument_parsing/print_help>
-#include <ivl/command_line_argument_parsing/passthrough>
 #include <meta>
 #include <print>
 #include <string>
@@ -94,7 +89,7 @@ int wrap_ivl_main(int argc, char** argv)
 {
   auto [... main_args] = ::ivl::main_synthesis::default_initialized<std::decay_t<Args>...>();
   cmdline_parsing::raw_arguments raw_args((const char**)argv + !!argc, (const char**)argv + argc);
-  bool parse_check = ((::ivl::cmdline_parsing::parser<std::decay_t<Args>>{}.parse(main_args, {}, raw_args)) && ...);
+  bool parse_check = ((::ivl::cmdline_parsing::parser<std::decay_t<Args>>{}.parse(main_args, raw_args)) && ...);
   if (parse_check && raw_args.empty()) {
     return [:sizeof...(Args)?^^:::^^:::]::ivl_main(static_cast<Args&&>(main_args)...);
   } else {
