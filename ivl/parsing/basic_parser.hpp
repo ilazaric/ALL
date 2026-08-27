@@ -3,6 +3,7 @@
 #include <ivl/utility>
 #include <format>
 #include <string_view>
+#include <algorithm>
 
 namespace ivl::parsing {
 struct basic_parser {
@@ -29,7 +30,66 @@ struct basic_parser {
     diag_col = c.diag_col;
   }
 
-  std::string debug_context() const { return std::format("row: {}, column: {}", diag_row, diag_col); }
+  std::string_view slice(size_t lo, size_t hi) const {
+    contract_assert(lo <= hi);
+    contract_assert(lo <= contents.size());
+    contract_assert(hi <= contents.size());
+    return contents.substr(0, hi).substr(lo);
+  }
+
+  std::string debug_context() const {
+    if (finished()) {
+      return std::format("row: {}, column: {}, at EOF", diag_row, diag_col);
+    } else {
+      return std::format("row: {}, column: {}, character {:?}", diag_row, diag_col, current_c());
+    }
+  }
+
+  std::string debug_context_file(size_t count) const {
+    std::vector<std::string_view> prev;
+    std::vector<std::string_view> next;
+    std::string_view line;
+    // bool at_eof = finished();
+    // bool at_newline = !finished() && current_c() == '\n';
+    // bool file_ends_with_newline = contents.ends_with('\n');
+
+    auto containing_line = [&](size_t idx) -> std::string_view {
+      if (idx == contents.size()) {
+        if (contents.empty() || contents.ends_with('\n')) return contents.substr(contents.size());
+        --idx;
+      }
+      contract_assert(idx < contents.size());
+      auto lo = idx, hi = idx + 1;
+      while (lo && contents[lo - 1] != '\n') --lo;
+      while (hi < contents.size() && contents[hi - 1] != '\n') ++hi;
+      return contents.substr(0, hi).substr(lo);
+    };
+
+    line = containing_line(cursor);
+
+    {
+      auto curr = line.data();
+      for (size_t i = 0; curr != contents.data() && i < count; ++i) {
+        prev.push_back(containing_line(curr - contents.data() - 1));
+        curr = prev.back().data();
+      }
+      std::ranges::reverse(prev);
+    }
+
+    {
+      auto curr = line.data() + line.size();
+      for (size_t i = 0; curr != contents.data() + contents.size() && i < count; ++i) {
+        next.push_back(containing_line(curr - contents.data()));
+        curr = next.back().data() + next.back().size();
+      }
+    }
+
+    std::string ret;
+    for (auto&& s : prev) ret += std::format(".  | {:?}\n", s);
+    ret += std::format(">>>| {:?}\n", line);
+    for (auto&& s : next) ret += std::format(".  | {:?}\n", s);
+    return ret;
+  }
 
   bool finished() const { return cursor == contents.size(); }
 
