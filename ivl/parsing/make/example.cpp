@@ -1,4 +1,4 @@
-#include "make"
+#include "default"
 
 int ivl_main(std::filesystem::path file) {
   auto state = ivl::parsing::make::parse(file);
