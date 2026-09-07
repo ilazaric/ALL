@@ -15,7 +15,12 @@ struct file_descriptor {
   static constexpr int EMPTY_SENTINEL = std::numeric_limits<int>::max();
 
   file_descriptor() : value(EMPTY_SENTINEL) {}
-  explicit file_descriptor(int value) : value(value) {}
+  explicit file_descriptor(int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
+  explicit file_descriptor(unsigned int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
+  explicit file_descriptor(long int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
+  explicit file_descriptor(unsigned long int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
+  explicit file_descriptor(long long int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
+  explicit file_descriptor(unsigned long long int value) pre(0 <= value && value < EMPTY_SENTINEL) : value((int)value) {}
 
   bool empty() const noexcept { return value == EMPTY_SENTINEL; }
   void clear() noexcept { value = EMPTY_SENTINEL; }
