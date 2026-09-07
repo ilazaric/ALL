@@ -3,10 +3,10 @@
 #include <ivl/utility/scope_exit>
 #include <exception>
 #include <format>
+#include <memory>
 #include <print>
 #include <source_location>
 #include <vector>
-#include <memory>
 
 // TODO: this doesn't work if the std::exception_ptr is used,
 // ....: basically can't use constructor to check if such exception is in flight
@@ -88,8 +88,9 @@ struct base_exception : std::exception {
 #define EXCEPTION_CONTEXT(...)                                                                                         \
   ::ivl::util::scope_exit _ {                                                                                          \
     [&, EXCEPTION_CONTEXT_exception_count = std::uncaught_exceptions()] {                                              \
-      if (std::uncaught_exceptions() == EXCEPTION_CONTEXT_exception_count + 1 &&                                       \
-          ::ivl::base_exception::is_in_flight())                                                                       \
+      if (                                                                                                             \
+        std::uncaught_exceptions() == EXCEPTION_CONTEXT_exception_count + 1 && ::ivl::base_exception::is_in_flight()   \
+      )                                                                                                                \
         ::ivl::base_exception::inflight_exceptions.back().ptr->added_context.emplace_back(                             \
           std::source_location::current(), std::format(__VA_ARGS__)                                                    \
         );                                                                                                             \
