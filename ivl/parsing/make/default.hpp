@@ -2,12 +2,15 @@
 
 #include <ivl/linux/utility>
 #include "logical_parser"
+#include "variable_definition"
 #include <map>
+#include <set>
 #include <string>
 #include <string_view>
 
-namespace ivl::parsing::make {
 // https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
+
+namespace ivl::parsing::make {
 struct explicit_rule;
 struct implicit_rule;
 struct variable_definition;
@@ -19,21 +22,6 @@ struct comment;
 //   std::vector<std::string> prerequisites;
 //   std::string recipe;
 // };
-
-struct variable_definition {
-  std::string name;
-  std::string contents;
-  bool recursively_expanded;
-  bool overriden; // either passed via cmdline (make A=1), or override A=1
-};
-
-struct variable_name_compare {
-  using is_transparent = void;
-  static std::string_view name(const variable_name_compare& v) { return a.name; }
-  static std::string_view name(const std::string& s) { return s; }
-  static std::string_view name(std::string_view sv) { return sv; }
-  static bool operator()(const auto& a, const auto& b) { return name(a) < name(b); }
-};
 
 struct state {
   std::set<variable_definition, variable_name_compare> variables;

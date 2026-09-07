@@ -7,8 +7,8 @@
 namespace ivl::parsing::make {
 struct logical_parser {
   std::string logical_contents;
-  basic_parser logical_parser;
-  basic_parser physical_parser;
+  basic_parser logical;
+  basic_parser physical;
   bool escaped = false;
 
   struct checkpoint {
@@ -16,14 +16,14 @@ struct logical_parser {
     basic_parser::checkpoint physical;
   };
 
-  checkpoint get_checkpoint() const { return {logical_parser.get_checkpoint(), physical_parser.get_checkpoint()}; }
+  checkpoint get_checkpoint() const { return {logical.get_checkpoint(), physical.get_checkpoint()}; }
 
   void restore_from_checkpoint(checkpoint c) {
-    logical_parser.restore_from_checkpoint(c.logical);
-    physical_parser.restore_from_checkpoint(c.physical);
+    logical.restore_from_checkpoint(c.logical);
+    physical.restore_from_checkpoint(c.physical);
   }
 
-  logical_parser(std::string_view contents) : logical_parser(contents), physical_parser(contents) {
+  logical_parser(std::string_view contents) : logical(contents), physical(contents) {
     while (!contents.empty()) {
       if (contents.starts_with("\\\n")) {
         contents.remove_prefix(2);
@@ -37,35 +37,35 @@ struct logical_parser {
       logical_contents += contents[0];
       contents.remove_prefix(1);
     }
-    logical_parser = basic_parser(logical_contents);
+    logical = basic_parser(logical_contents);
   }
 
-  bool finished() const { return logical_parser.finished(); }
+  bool finished() const { return logical.finished(); }
 
-  decltype(auto) current_sv() const { return logical_parser.current_sv(); }
-  decltype(auto) current_c() const { return logical_parser.current_c(); }
-  decltype(auto) slice(size_t lo, size_t hi) const { return logical_parser.slice(lo, hi); }
+  decltype(auto) current_sv() const { return logical.current_sv(); }
+  decltype(auto) current_c() const { return logical.current_c(); }
+  decltype(auto) slice(size_t lo, size_t hi) const { return logical.slice(lo, hi); }
 
-  decltype(auto) debug_context() const { return physical_parser.debug_context(); }
-  decltype(auto) debug_context_file(size_t count) const { return physical_parser.debug_context_file(count); }
+  decltype(auto) debug_context() const { return physical.debug_context(); }
+  decltype(auto) debug_context_file(size_t count) const { return physical.debug_context_file(count); }
 
   void consume_c_nocheck() {
     if (escaped) {
-      physical_parser.consume_c_nocheck();
-      logical_parser.consume_c_nocheck();
-      while (physical_parser.consume_if("\\\n"));
+      physical.consume_c_nocheck();
+      logical.consume_c_nocheck();
+      while (physical.consume_if("\\\n"));
       escaped = false;
       return;
     }
     if (current_sv().starts_with("\\\\")) {
-      physical_parser.consume_c_nocheck();
-      logical_parser.consume_c_nocheck();
+      physical.consume_c_nocheck();
+      logical.consume_c_nocheck();
       escaped = true;
       return;
     }
-    physical_parser.consume_c_nocheck();
-    logical_parser.consume_c_nocheck();
-    while (physical_parser.consume_if("\\\n"));
+    physical.consume_c_nocheck();
+    logical.consume_c_nocheck();
+    while (physical.consume_if("\\\n"));
   }
 
   void consume_c(char c) {
@@ -90,6 +90,6 @@ struct logical_parser {
     return true;
   }
 
-  size_t get_cursor() const { return logical_parser.cursor; }
+  size_t get_cursor() const { return logical.cursor; }
 };
 } // namespace ivl::parsing::make
