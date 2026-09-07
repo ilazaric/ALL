@@ -36,7 +36,12 @@ struct owned_file_descriptor {
 
   // Make sure you know what you're doing.
   // Takes ownership of the file descriptor.
-  explicit owned_file_descriptor(int value) : value(value) {}
+  explicit owned_file_descriptor(int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
+  explicit owned_file_descriptor(unsigned int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
+  explicit owned_file_descriptor(long int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
+  explicit owned_file_descriptor(unsigned long int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
+  explicit owned_file_descriptor(long long int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
+  explicit owned_file_descriptor(unsigned long long int value) pre(0 <= value && value < file_descriptor::EMPTY_SENTINEL) : value((int)value) {}
 
   owned_file_descriptor(const owned_file_descriptor&) = delete;
 
