@@ -9,6 +9,9 @@
 a=1
 b=2 # comment
 # c=3
+d=x\
+  y\
+ #z
 )make");
   ivl::testing::contract_assert_json(state.variables, R"json(
     [{
@@ -20,6 +23,12 @@ b=2 # comment
      {
        "contents": "2",
        "name": "b",
+       "overriden": false,
+       "recursively_expanded": true
+     },
+     {
+       "contents": "x  y",
+       "name": "d",
        "overriden": false,
        "recursively_expanded": true
      }]
