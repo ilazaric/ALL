@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ivl/exception>
+#include <ivl/utility>
 #include "variable_definition"
 #include <set>
 #include <string>

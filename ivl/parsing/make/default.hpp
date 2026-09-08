@@ -186,42 +186,41 @@ struct parser : logical_parser {
     if (current_c() == '#') return (restore_from_checkpoint(cp), false);
     if (current_c() == ':') return (restore_from_checkpoint(cp), false);
     auto name_begin = get_cursor();
+    auto name_end = get_cursor();
     std::string_view op;
     auto try_parse_op = [&] {
       auto begin = get_cursor();
       if (
         consume_if("=") || consume_if("+=") || consume_if(":=") || consume_if("::=") || consume_if("?=") ||
         consume_if("!=")
-      )
+      ) {
+        op = slice(begin, get_cursor());
+        return true;
+      } else {
         return false;
-      op = slice(begin, get_cursor());
-      return true;
+      }
     };
     while (true) {
       if (finished()) return (restore_from_checkpoint(cp), false);
       if (::isspace(current_c())) break;
-      if (try_parse_op()) {
+      if (auto e = get_cursor(); try_parse_op()) {
+        name_end = e;
+        break;
       }
-      if (current_c() == '=') break;
-      if (current_sv().starts_with("+=")) break;
-      if (current_sv().starts_with(":=")) break;
-      if (current_sv().starts_with("::=")) break;
       if (current_c() == '#') return (restore_from_checkpoint(cp), false);
       if (current_c() == '\n') return (restore_from_checkpoint(cp), false);
       if (current_c() == ':') return (restore_from_checkpoint(cp), false);
       consume_c_nocheck();
     }
-    auto name_end = get_cursor();
+    if (name_end == name_begin) name_end = get_cursor();
     auto name = slice(name_begin, name_end);
-    consume_while_ws();
-    bool plus_eq = consume_if("+=");
-    if (!plus_eq && !consume_c_if('=') && !consume_if(":=") && !consume_if("::="))
-      return (restore_from_checkpoint(cp), false);
     name.empty() && panic("empty variable name");
+    consume_while_ws();
+    if (op.empty() && !try_parse_op()) return (restore_from_checkpoint(cp), false);
+    consume_while_ws();
     std::string text;
     while (!finished()) {
       if (consume_c_if('\n')) break;
-      // if (consume_if("\\\n")) continue;
       if (consume_if("\\\\")) {
         text += "\\";
         continue;
@@ -240,10 +239,11 @@ struct parser : logical_parser {
       text += current_c();
       consume_c_nocheck();
     }
-    if (plus_eq) {
-      global_state.set_variable_recursively_expanded(name, global_state.get_variable(name) + text);
-    } else {
+    while (!text.empty() && ::isspace(text.back())) text.pop_back();
+    if (op == "=") {
       global_state.set_variable_recursively_expanded(name, text);
+    } else {
+      todo();
     }
     return true;
   }
@@ -268,14 +268,19 @@ struct parser : logical_parser {
   }
 };
 
-inline state parse(const std::filesystem::path& file) {
+inline state parse_text(std::string_view contents) {
   state global_state;
-  auto contents = linux::read_file(file);
   parser parser(contents);
   // TODO: this should be in destructor of basic_parser probably
   EXCEPTION_CONTEXT("file snippet:\n{}", parser.debug_context_file(5));
   EXCEPTION_CONTEXT("parser state -- {}", parser.debug_context());
   while (!parser.finished()) parser.parse_something(global_state);
   return global_state;
+}
+
+inline state parse(const std::filesystem::path& file) {
+  EXCEPTION_CONTEXT("file: {}", file);
+  auto contents = linux::read_file(file);
+  return parse_text(contents);
 }
 } // namespace ivl::parsing::make
