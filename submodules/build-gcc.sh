@@ -92,7 +92,8 @@ then
         --disable-libffi                 \
         --with-system-zlib               \
         --without-isl                    \
-        --enable-checking=release
+        --enable-checking=yes
+#        --enable-checking=release
 else
     cd "$OBJ_DIR"
 fi
