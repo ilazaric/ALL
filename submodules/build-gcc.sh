@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env -S -i PATH=/bin:/usr/bin LC_ALL=C bash --noprofile --norc
 
 set -euo pipefail
 
