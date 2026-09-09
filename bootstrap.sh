@@ -21,7 +21,7 @@ if ! [ -f "$DIR/generate_build_sources" ]
 then
     g++ -Wl,-rpath=/opt/GCC/lib64 \
         "$ROOT/ivl/build_system/generate_build_sources.cpp" \
-        -O3 -std=c++26 -o "$DIR/generate_build_sources"
+        -O3 -std=c++29 -o "$DIR/generate_build_sources"
 fi
 
 if ! [ -f "$DIR/builder" ]
@@ -31,7 +31,7 @@ then
         -DIVL_LOCAL \
         @"$ROOT/build/include_dirs/args.rsp" -freflection \
         "$ROOT/ivl/build_system/builder.cpp" \
-        -O3 -std=c++26 -o "$DIR/builder" -lstdc++exp
+        -O3 -std=c++29 -o "$DIR/builder" -lstdc++exp
 fi
 
 exec "$DIR/builder" "$@"

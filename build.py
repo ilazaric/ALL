@@ -130,7 +130,7 @@ cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 cxx = os.getenv("CXX", "g++")
 cxxpre = os.getenv("CXXPRE", "")
 cxxrpath = os.getenv("CXXRPATH", [f"-Wl,-rpath={Path(shutil.which(cxx)).parent.parent / "lib64"}"])
-cxxver = os.getenv("CXXVER", "26")
+cxxver = os.getenv("CXXVER", "29")
 cxxpost = os.getenv("CXXPOST", "")
 
 for target in targets:
