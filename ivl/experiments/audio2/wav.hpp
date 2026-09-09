@@ -1,6 +1,8 @@
 #pragma once
 
 #include <ivl/linux/utility>
+#include <ivl/meta>
+#include <ivl/utility>
 #include <cstring>
 
 // https://docs.fileformat.com/audio/wav/
@@ -8,15 +10,24 @@
 // https://web.archive.org/web/19991115123323/https://www.borg.com/~jglatt/tech/wave.htm
 
 namespace ivl::wav {
-struct S {};
+struct payload {
+  // fmt
+  uint16_t format_type;
+  uint16_t channel_count;
+  uint32_t sample_rate;
+  uint32_t bytes_per_sec;
+  uint16_t bytes_per_block;
+  uint16_t bits_per_sample;
+  // data
+  std::string data;
 
-// constexpr size_t header_size = 44;
+  bool operator==(const payload&) const = default;
+};
 
-void load(const std::filesystem::path& file) {
+payload load(const std::filesystem::path& file, bool silent = false) {
   auto raw = linux::read_file(file);
-
-  contract_assert(raw.size() >= header_size);
-  std::string_view rem(raw.data(), header_size);
+  if (!silent) LOG(file, raw.size());
+  std::string_view rem = raw;
 
   auto consume = [&](size_t n) {
     contract_assert(n <= rem.size());
@@ -27,7 +38,7 @@ void load(const std::filesystem::path& file) {
 
   auto check_eq = [&](std::string_view expected) {
     auto actual = consume(expected.size());
-    LOG(actual, expected);
+    if (!silent) LOG(actual, expected);
     contract_assert(actual == expected);
   };
 
@@ -37,52 +48,114 @@ void load(const std::filesystem::path& file) {
     return ret;
   };
 
-  LOG(file, raw.size());
+  bool fmt_seen = false;
+  bool data_seen = false;
+  payload ret;
 
   check_eq("RIFF");
   auto file_size = 8 + consume_as(uint32_t{});
-  LOG(file_size);
+  if (!silent) LOG(file_size);
   contract_assert(file_size == raw.size());
   check_eq("WAVE");
 
-  check_eq("fmt ");
-  auto data_length = 8 + consume_as(uint32_t{});
-  LOG(data_length);
-  auto format_type = consume_as(uint16_t{});
-  LOG(format_type);
-  auto channel_count = consume_as(uint16_t{});
-  LOG(channel_count);
-  auto sample_rate = consume_as(uint32_t{});
-  LOG(sample_rate);
-  auto bytes_per_sec = consume_as(uint32_t{});
-  LOG(bytes_per_sec);
-  auto bytes_per_block = consume_as(uint16_t{});
-  LOG(bytes_per_block);
-  auto bits_per_sample = consume_as(uint16_t{});
-  LOG(bits_per_sample);
+  while (!rem.empty()) {
+    contract_assert(rem.size() >= 8);
+    auto id = rem.substr(0, 4);
+    uint32_t len;
+    memcpy(&len, rem.data() + 4, 4);
+    if (!silent) LOG(std::format("{:?}", id), len);
+    rem.remove_prefix(8);
+    contract_assert(rem.size() >= len);
+    auto curr = rem.substr(0, len);
+    rem.remove_prefix(len);
+    std::swap(curr, rem);
+    ivl::util::scope_exit _{[&] {
+      contract_assert(rem.empty());
+      std::swap(curr, rem);
+    }};
+    contract_assert(rem.size() == len);
 
-  //
-
-  {
-    std::string_view rem(header.data(), raw.data() + raw.size());
-    while (!rem.empty()) {
-      contract_assert(rem.size() >= 8);
-      auto id = rem.substr(0, 4);
-      uint32_t len;
-      memcpy(&len, rem.data() + 4, 4);
-      len += 8;
-      LOG(std::format("{:?}", id), len);
-      contract_assert(rem.size() >= len);
-      rem.remove_prefix(len);
+    if (id == "LIST") {
+      consume(len);
+      continue;
     }
+    if (id == "fmt ") {
+      contract_assert(!fmt_seen);
+      fmt_seen = true;
+      ret.format_type = consume_as(uint16_t{});
+      if (!silent) LOG(ret.format_type);
+      ret.channel_count = consume_as(uint16_t{});
+      if (!silent) LOG(ret.channel_count);
+      ret.sample_rate = consume_as(uint32_t{});
+      if (!silent) LOG(ret.sample_rate);
+      ret.bytes_per_sec = consume_as(uint32_t{});
+      if (!silent) LOG(ret.bytes_per_sec);
+      ret.bytes_per_block = consume_as(uint16_t{});
+      if (!silent) LOG(ret.bytes_per_block);
+      ret.bits_per_sample = consume_as(uint16_t{});
+      if (!silent) LOG(ret.bits_per_sample);
+      continue;
+    }
+    if (id == "data") {
+      contract_assert(!data_seen);
+      data_seen = true;
+      ret.data = std::string(consume(len));
+      continue;
+    }
+    panic("unknown chunk id: {:?}", id);
   }
-  
-  // auto chunk_header = consume(4);
-  // LOG(std::format("{:?}", chunk_header));
-  // auto data_size = consume_as(uint32_t{});
-  // LOG(data_size);
-  contract_assert(header.empty());
+
+  contract_assert(fmt_seen);
+  contract_assert(data_seen);
+
+  return ret;
 }
 
-void save();
+void save(const payload& p, const std::filesystem::path& file) {
+  std::string raw;
+
+  auto write = [&](auto x) {
+    std::string_view y;
+    if constexpr (ivl::meta::same_as_one_of<decltype(x), const char*, std::string, std::string_view>) {
+      y = std::string_view(x);
+    } else {
+      y = std::string_view((const char*)&x, (const char*)(&x + 1));
+    }
+    raw += y;
+  };
+
+  uint32_t len = 0;
+  uint32_t pos = 0;
+
+  write("RIFF");
+  write(len);
+  write("WAVE");
+
+  write("fmt ");
+  pos = raw.size();
+  write(len);
+  write(p.format_type);
+  write(p.channel_count);
+  write(p.sample_rate);
+  write(p.bytes_per_sec);
+  write(p.bytes_per_block);
+  write(p.bits_per_sample);
+  len = raw.size() - pos - sizeof(len);
+  memcpy(raw.data() + pos, &len, sizeof(len));
+
+  write("data");
+  pos = raw.size();
+  write(len);
+  write(p.data);
+  len = raw.size() - pos - sizeof(len);
+  memcpy(raw.data() + pos, &len, sizeof(len));
+
+  len = raw.size() - 8;
+  memcpy(raw.data() + 4, &len, sizeof(len));
+
+  LOG(file, raw.size());
+  linux::write_file_slow(file, raw);
+
+  contract_assert(load(file, true) == p);
+}
 } // namespace ivl::wav
