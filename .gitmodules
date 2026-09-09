@@ -61,3 +61,6 @@
 [submodule "submodules/boost"]
 	path = submodules/boost
 	url = git@github.com:boostorg/boost.git
+[submodule "submodules/pipewire"]
+	path = submodules/pipewire
+	url = https://gitlab.freedesktop.org/pipewire/pipewire.git
