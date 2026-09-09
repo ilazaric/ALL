@@ -6,6 +6,7 @@
 #include <set>
 #include <string>
 #include <string_view>
+#include <optional>
 
 namespace ivl::parsing::make {
 struct state {
@@ -74,9 +75,13 @@ struct state {
     if (name == ".VARIABLES") return dot_variable();
     auto it = variables.find(name);
     if (it == variables.end()) return "";
-    // auto& var = *it;
     return it->contents;
-    // return var.recursively_expanded ? expand(var.contents) : var.contents;
+  }
+
+  std::optional<const variable_definition&> get_variable_2(std::string_view name) const {
+    auto it = variables.find(name);
+    if (it == variables.end()) return std::nullopt;
+    return std::optional<const variable_definition&>{*it};
   }
 
   void set_variable_recursively_expanded(std::string_view name, std::string_view text) {
@@ -92,7 +97,19 @@ struct state {
         .overriden = false,
       }
     );
-    // variables[name] = text;
+  }
+
+  void set_variable(const variable_definition& v) {
+    v.name.starts_with(".") && todo("special variable name: {:?}", name);
+    auto it = variables.find(v);
+    if (it == variables.end()) {
+      variables.insert(v);
+      return;
+    }
+    if (it->overriden && !v.overriden) return;
+    // TODO: maybe just mutate existing one
+    variables.erase(it);
+    variables.insert(v);
   }
 };
 } // namespace ivl::parsing::make

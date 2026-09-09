@@ -8,7 +8,8 @@
   auto state = ivl::parsing::make::parse_text(R"make(
 a=1
 b=2 # comment
-# c=3
+# c=3\
+e=4
 d=x\
   y\
  #z

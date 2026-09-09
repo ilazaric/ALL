@@ -10,6 +10,7 @@
 #include <string_view>
 
 // https://www.gnu.org/software/make/manual/html_node/Makefile-Contents.html
+// https://www.gnu.org/software/make/manual/make.html
 
 namespace ivl::parsing::make {
 struct explicit_rule;
