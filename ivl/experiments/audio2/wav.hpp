@@ -158,4 +158,57 @@ void save(const payload& p, const std::filesystem::path& file) {
 
   contract_assert(load(file, true) == p);
 }
+
+std::vector<payload> channel_split(const payload& p) {
+  contract_assert(p.bytes_per_sec % p.channel_count == 0);
+  contract_assert(p.bytes_per_block % p.channel_count == 0);
+  contract_assert(p.data.size() % p.bytes_per_block == 0);
+  std::vector<payload> v(p.channel_count);
+  for (size_t i = 0; i < p.channel_count; ++i) {
+    auto& c = v[i];
+    c.format_type = p.format_type;
+    c.channel_count = 1;
+    c.sample_rate = p.sample_rate;
+    c.bytes_per_sec = p.bytes_per_sec / p.channel_count;
+    c.bytes_per_block = p.bytes_per_block / p.channel_count;
+    c.bits_per_sample = p.bits_per_sample;
+  }
+  for (size_t i = 0; i < p.data.size(); i += p.bytes_per_block) {
+    for (size_t j = 0; j < p.channel_count; ++j) {
+      auto& c = v[j];
+      c.data += std::string_view(p.data).substr(i + j * c.bytes_per_block, c.bytes_per_block);
+    }
+  }
+  return v;
+}
+
+payload channel_merge(const std::vector<payload>& v) {
+  contract_assert(!v.empty());
+  contract_assert(v.size() < 65536);
+  uint16_t channel_count = v.size();
+  payload p;
+  p.format_type = v[0].format_type;
+  p.channel_count = channel_count;
+  p.sample_rate = v[0].sample_rate;
+  p.bytes_per_sec = v[0].bytes_per_sec * channel_count;
+  p.bytes_per_block = v[0].bytes_per_block * channel_count;
+  p.bits_per_sample = v[0].bits_per_sample;
+  for (auto&& c : v) {
+    contract_assert(p.format_type == c.format_type);
+    contract_assert(1 == c.channel_count);
+    contract_assert(p.sample_rate == c.sample_rate);
+    contract_assert(p.bytes_per_sec == c.bytes_per_sec * channel_count);
+    contract_assert(p.bytes_per_block == c.bytes_per_block * channel_count);
+    contract_assert(p.bits_per_sample == c.bits_per_sample);
+    contract_assert(c.data.size() == v[0].data.size());
+  }
+  p.data.resize(v[0].data.size() * channel_count);
+  for (size_t i = 0; i < p.data.size(); i += p.bytes_per_block) {
+    for (size_t j = 0; j < p.channel_count; ++j) {
+      auto& c = v[j];
+      memcpy(p.data.data() + i + j * c.bytes_per_block, c.data.data() + i / channel_count, c.bytes_per_block);
+    }
+  }
+  return p;
+}
 } // namespace ivl::wav
