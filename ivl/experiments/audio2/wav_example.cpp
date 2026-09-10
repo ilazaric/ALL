@@ -74,18 +74,17 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
     const int screenWidth = 1000;
     const int screenHeight = 1000;
     std::vector<Vector2> points;
-    auto my = (double)std::ranges::max(input);
-    auto freq2db = [](double freq) { return 20 * std::log10(freq / 1'000); };
-    auto min_freq = 20.0;
-    auto max_freq = 20'000.0;
-    auto min_db = freq2db(min_freq);
-    auto max_db = freq2db(max_freq);
+    double my = std::ranges::max(input);
+    double min_freq = 20.0;
+    double max_freq = 20'000.0;
+    double min_log_freq = std::log(min_freq);
+    double max_log_freq = std::log(max_freq);
     for (size_t i = 0; i < input.size() / 2; ++i) {
-      auto freq = sample_rate * (double)i / (double)input.size();
+      double freq = sample_rate * (double)i / (double)input.size();
       if (freq < min_freq) continue;
       if (freq > max_freq) break;
-      auto db = freq2db(freq);
-      auto x = (double)screenWidth * (db - min_db) / max_db;
+      double log_freq = std::log(freq);
+      auto x = (double)screenWidth * (log_freq - min_log_freq) / max_log_freq;
       auto y = (double)screenHeight * double(input[i]) / my;
       points.emplace_back(x, y);
     }
