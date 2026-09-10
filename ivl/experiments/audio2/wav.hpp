@@ -211,4 +211,38 @@ payload channel_merge(const std::vector<payload>& v) {
   }
   return p;
 }
+
+std::vector<double> extract(const payload& p, size_t channel) {
+  contract_assert(p.channel_count > channel);
+  contract_assert(p.format_type == 1);
+  contract_assert(p.bytes_per_block % p.channel_count == 0);
+  contract_assert(p.bytes_per_block / p.channel_count == 2);
+  std::vector<double> ret;
+  for (size_t i = p.bytes_per_block / p.channel_count * channel; i < p.data.size(); i += p.bytes_per_block) {
+    int16_t x;
+    memcpy(&x, p.data.data() + i, sizeof(x));
+    double y = x;
+    y /= (1ull << 15);
+    ret.push_back(y);
+  }
+  return ret;
+}
+
+payload synthesize(const std::vector<double>& data, const payload& like) {
+  payload p;
+  p.format_type = like.format_type;
+  p.channel_count = 1;
+  p.sample_rate = like.sample_rate;
+  p.bytes_per_sec = like.bytes_per_sec / like.channel_count;
+  p.bytes_per_block = like.bytes_per_block / like.channel_count;
+  p.bits_per_sample = like.bits_per_sample;
+  contract_assert(p.format_type == 1);
+  contract_assert(p.bytes_per_block == 2);
+  for (auto y : data) {
+    y *= (1ull << 15);
+    int16_t x = y;
+    p.data += std::string_view((const char*)&x, sizeof(x));
+  }
+  return p;
+}
 } // namespace ivl::wav
