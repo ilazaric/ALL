@@ -63,6 +63,54 @@ std::vector<double> stft_amps(std::span<const double> in, size_t window_size, si
   return acc;
 }
 
+void stft_visualise(std::span<const double> input, double sample_rate) {
+  contract_assert(!input.empty());
+  std::vector<size_t> indices(std::from_range, std::views::iota(0ull, input.size()));
+  std::ranges::sort(indices, std::ranges::greater{}, [&](size_t i) { return input[i]; });
+  for (size_t i = 0; i < indices.size() && i < 200; ++i) {
+    LOG(i, indices[i], input[indices[i]]);
+  }
+  {
+    const int screenWidth = 1000;
+    const int screenHeight = 1000;
+    std::vector<Vector2> points;
+    auto my = (double)std::ranges::max(input);
+    auto freq2db = [](double freq) { return 20 * std::log10(freq / 1'000); };
+    auto min_freq = 20.0;
+    auto max_freq = 20'000.0;
+    auto min_db = freq2db(min_freq);
+    auto max_db = freq2db(max_freq);
+    for (size_t i = 0; i < input.size() / 2; ++i) {
+      auto freq = sample_rate * (double)i / (double)input.size();
+      if (freq < min_freq) continue;
+      if (freq > max_freq) break;
+      auto db = freq2db(freq);
+      auto x = (double)screenWidth * (db - min_db) / max_db;
+      auto y = (double)screenHeight * double(input[i]) / my;
+      points.emplace_back(x, y);
+    }
+    InitWindow(screenWidth, screenHeight, "visualiser");
+    SetTargetFPS(30);
+    RenderTexture2D RT = LoadRenderTexture(screenWidth, screenHeight);
+    {
+      BeginTextureMode(RT);
+      ClearBackground(WHITE);
+      DrawLineStrip(points.data(), (int)points.size(), BLUE);
+      DrawLine(0, 0, screenWidth, screenHeight, GRAY);
+      EndTextureMode();
+    }
+    contract_assert(points.size() < (1ull << 31));
+    while (!WindowShouldClose()) {
+      BeginDrawing();
+      ClearBackground(PINK); // to see mistakes
+      DrawTexture(RT.texture, 0, 0, WHITE);
+      EndDrawing();
+    }
+    CloseWindow();
+    UnloadRenderTexture(RT);
+  }
+}
+
 int ivl_main(const std::filesystem::path& file) {
   auto p = ivl::wav::load(file);
   contract_assert(p.format_type == 1);
@@ -115,50 +163,7 @@ int ivl_main(const std::filesystem::path& file) {
   {
     auto a = extract(p, 0);
     auto b = stft_amps(a, 1ull << 16, 1ull << 14);
-    std::vector<size_t> indices(std::from_range, std::views::iota(0ull, b.size()));
-    std::ranges::sort(indices, std::ranges::greater{}, [&](size_t i) { return b[i]; });
-    for (size_t i = 0; i < indices.size() && i < 200; ++i) {
-      LOG(i, indices[i], b[indices[i]]);
-    }
-    {
-      const int screenWidth = 1000;
-      const int screenHeight = 1000;
-      std::vector<Vector2> points;
-      auto my = (double)std::ranges::max(b);
-      auto freq2db = [](double freq) { return 20 * std::log10(freq / 1'000); };
-      auto min_freq = 20.0;
-      auto max_freq = 20'000.0;
-      auto min_db = freq2db(min_freq);
-      auto max_db = freq2db(max_freq);
-      for (size_t i = 0; i < b.size() / 2; ++i) {
-        auto freq = (double)p.sample_rate * (double)i / (double)b.size();
-        if (freq < min_freq) continue;
-        if (freq > max_freq) break;
-        auto db = freq2db(freq);
-        auto x = (double)screenWidth * (db - min_db) / max_db;
-        auto y = (double)screenHeight * double(b[i]) / my;
-        points.emplace_back(x, y);
-      }
-      InitWindow(screenWidth, screenHeight, "visualizer");
-      SetTargetFPS(30);
-      RenderTexture2D RT = LoadRenderTexture(screenWidth, screenHeight);
-      {
-        BeginTextureMode(RT);
-        ClearBackground(WHITE);
-        DrawLineStrip(points.data(), (int)points.size(), BLUE);
-        DrawLine(0, 0, screenWidth, screenHeight, GRAY);
-        EndTextureMode();
-      }
-      contract_assert(points.size() < (1ull << 31));
-      while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(PINK); // to see mistakes
-        DrawTexture(RT.texture, 0, 0, WHITE);
-        EndDrawing();
-      }
-      CloseWindow();
-      UnloadRenderTexture(RT);
-    }
+    stft_visualise(b, (double)p.sample_rate);
   }
 
   return 0;
