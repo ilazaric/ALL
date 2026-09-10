@@ -125,13 +125,19 @@ int ivl_main(const std::filesystem::path& file) {
       const int screenHeight = 1000;
       std::vector<Vector2> points;
       auto my = (double)std::ranges::max(b);
+      auto freq2db = [](double freq) { return 20 * std::log10(freq / 1'000); };
+      auto min_freq = 20.0;
+      auto max_freq = 20'000.0;
+      auto min_db = freq2db(min_freq);
+      auto max_db = freq2db(max_freq);
       for (size_t i = 0; i < b.size() / 2; ++i) {
         auto freq = (double)p.sample_rate * (double)i / (double)b.size();
-        if (freq < 20.0) continue;
-        if (freq > 20'000.0) break;
-        points.emplace_back(
-          (double)screenWidth / (double)(b.size() / 2 - 1) * (double)i, (double)screenHeight * double(b[i]) / my
-        );
+        if (freq < min_freq) continue;
+        if (freq > max_freq) break;
+        auto db = freq2db(freq);
+        auto x = (double)screenWidth * (db - min_db) / max_db;
+        auto y = (double)screenHeight * double(b[i]) / my;
+        points.emplace_back(x, y);
       }
       InitWindow(screenWidth, screenHeight, "visualizer");
       SetTargetFPS(30);
