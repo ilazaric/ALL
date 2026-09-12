@@ -10,138 +10,156 @@
 #include <string_view>
 
 namespace ivl::cmdline_parsing {
-struct implicit {
-  inline static bool parsed = false;
-};
-
-template<size_t>
-struct implicit_registry;
-
-  template<size_t registry_index>
-  struct implicit_find {
-    friend consteval auto implicit_injected(implicit_registry<registry_index>&);
-    static consteval std::meta::info get() {
-      try {
-        return return_type_of(^^implicit_injected);
-      } catch (...) {
-        return {};
-      }
-    }
+namespace implicit_detail {
+  template<typename>
+  struct injection_declaration {
+    friend consteval auto injection_function(injection_declaration);
   };
 
-template<typename T, const char* /* name_start */, size_t /* name_length */, size_t registry_index>
-struct implicit_storage {
-  inline static std::optional<T> value = std::nullopt;
-  friend consteval implicit_storage implicit_injected(implicit_registry<registry_index>&);
-};
+  template<typename T, std::meta::info V>
+    requires(V != std::meta::info{}) // null reflection represents "unset"
+  struct injection_definition {
+    friend consteval auto injection_function(injection_declaration<T>) { return V; }
+  };
 
-template<typename T>
-struct implicit_name {
-  std::optional<T>* value;
-
-  inline static consteval std::optional<T>* find_value(std::meta::info storage) {
-    for (auto member : members_of(storage, std::meta::access_context::unchecked())) {
-      if (!has_identifier(member)) continue;
-      if (identifier_of(member) != "value") continue;
-      return &extract<std::optional<T>&>(member);
+  template<typename T, typename = decltype([] {})>
+  consteval std::meta::info injection_fetch() {
+    if constexpr (requires { injection_function(injection_declaration<T>{}); }) {
+      return injection_function(injection_declaration<T>{});
+    } else {
+      return {};
     }
-    contract_assert(false);
   }
 
-  consteval implicit_name(std::string_view name) {
+  template<size_t>
+  struct index {};
+
+  struct node {
+    const char* name_begin;
+    size_t name_length;
+    std::meta::info type;
+
+    consteval std::string_view name() const { return std::string_view(name_begin, name_length); }
+  };
+
+  consteval std::meta::info fetch_raw(size_t i) {
+    auto key = substitute((^^index), {std::meta::reflect_constant(i)});
+    auto fetch = substitute((^^injection_fetch), {key});
+    auto value = extract<std::meta::info (*)()>(fetch)();
+    return value;
+  }
+
+  consteval size_t size() {
     for (size_t i = 0; true; ++i) {
-      __builtin_constexpr_diag(32, "", "first");
-      auto curr = substitute((^^implicit_registry), {std::meta::reflect_constant(i)});
-      if (!is_complete_type(curr)) {
-        __builtin_constexpr_diag(32, "", "second");
-        auto x = std::meta::reflect_constant(name.data());
-        __builtin_constexpr_diag(32, "", "second 2");
-        auto y = std::meta::reflect_constant(name.size());
-        __builtin_constexpr_diag(32, "", "second 3");
-        auto storage = substitute(
-          (^^implicit_storage), //
-          {
-            (^^T),
-            x,
-            y,
-            std::meta::reflect_constant(i),
-          }
-        );
-        __builtin_constexpr_diag(32, "", "third");
-        define_aggregate(curr, {data_member_spec(storage, {.name = "storage"})});
-        value = find_value(storage);
-        break;
-      }
-      auto storage = nonstatic_data_members_of(curr, std::meta::access_context::unchecked())[0];
-      auto storage_args = template_arguments_of(storage);
-      std::string_view storage_name(extract<const char*>(storage_args[1]), extract<size_t>(storage_args[2]));
-      if (name != storage_name) continue;
-      if (is_same_type((^^T), storage_args[0])) {
-        value = find_value(storage);
-        break;
-      }
-      throw std::meta::exception(
-        std::format(
-          "cmdline_parsing::implicit: registered name {:?} with different types: {:?} != {:?}", name,
-          display_string_of(storage_args[0]), display_string_of(^^T)
-        ),
-        ^^implicit_name
-      );
+      auto stored = fetch_raw(i);
+      if (stored == std::meta::info{}) return i;
     }
-    __builtin_constexpr_diag(32, "", "end");
   }
 
-  consteval implicit_name(const char* name)
-      : implicit_name(std::string_view(std::define_static_string(std::string_view(name)))) {}
-};
+  // precondition: i < implicit_size()
+  // not added bc it would do a lot of work
+  consteval node fetch(size_t i) { return extract<node>(fetch_raw(i)); }
 
-template<typename T>
-T& implicit_get(implicit_name<T> id) {
-  contract_assert(implicit::parsed);
-  contract_assert(*id.value);
-  return **id.value;
-}
+  // if we could do this with `define_aggregate()` we would not need friend injection
+  consteval void store(size_t i, node node) {
+    auto key = substitute((^^index), {std::meta::reflect_constant(i)});
+    auto value = std::meta::reflect_constant(std::meta::reflect_constant(node));
+    auto definer = substitute((^^injection_definition), {key, value});
+    size_of(definer); // instantiate it
+  }
 
-template<typename T>
-std::optional<T&> implicit_get_opt(implicit_name<T> id) {
-  contract_assert(implicit::parsed);
-  if (!*id.value) return std::nullopt;
-  return std::optional<T&>(**id.value);
-}
+  consteval size_t register_name(std::string_view name, std::meta::info type, std::source_location loc) {
+    auto throw_error = [=]<typename... Ts>(std::format_string<Ts...> fmt, Ts&&... args) {
+      auto base = std::format("[implicit] register_name({:?}, {:?})", name, display_string_of(type));
+      auto message = std::format(fmt, static_cast<Ts&&>(args)...);
+      auto full = std::format("{}: {}", base, message);
+      throw std::meta::exception(full, (^^register_name), loc);
+    };
+    type = dealias(type);
+    if (is_reference_type(type)) throw_error("type must not be a reference");
+    if (is_const(type)) throw_error("type must not be const qualified");
+    if (is_volatile(type)) throw_error("type must not be volatile qualified");
+    size_t sz = size();
+    for (size_t i = 0; i < sz; ++i) {
+      auto node = fetch(i);
+      if (node.name() != name) continue;
+      if (is_same_type(node.type, type)) return i; // already set to correct value
+      throw_error("name already associated with a different type: {:?}", display_string_of(node.type));
+    }
+    // name doesn't already exist in "container", adding it
+    store(
+      sz, //
+      node{
+        .name_begin = name.data(),
+        .name_length = name.size(),
+        .type = type,
+      }
+    );
+    return sz;
+  }
 
-bool implicit_flag(implicit_name<bool> id) {
-  contract_assert(implicit::parsed);
-  contract_assert(*id.value);
-  return **id.value;
-}
+  template<typename T, size_t /* index */>
+  struct parsed_storage {
+    static inline std::optional<T> value = std::nullopt;
+  };
+
+  template<typename T, typename U>
+  inline static consteval std::optional<T>* find_value_impl() {
+    return &U::value;
+  }
+
+  template<typename T>
+  struct fixed_name {
+    std::optional<T>* value_ptr;
+
+    inline static consteval std::optional<T>* find_value(std::meta::info storage) {
+      auto ret = extract<std::optional<T>*(*)()>(substitute(^^find_value_impl, {^^T, storage}))();
+      return ret;
+    }
+
+    consteval fixed_name(std::string_view name, std::source_location loc = std::source_location::current()) {
+      // if `name` is associated with a string literal, we cannot use it
+      // as template argument, so laundering it first
+      name = std::string_view(std::define_static_string(name));
+      size_t index = register_name(name, ^^T, loc);
+      auto storage = substitute((^^parsed_storage), {^^T, std::meta::reflect_constant(index)});
+      value_ptr = find_value(storage);
+    }
+
+    consteval fixed_name(const char* name) : fixed_name(std::string_view(name)) {}
+  };
+
+  inline bool parsed = false;
+} // namespace implicit_detail
+
+// this is parseable, and should be added to ivl_main() parameter list
+struct implicit {};
+
+// so i can do `using namespace ivl::cmdline_parsing::implicit_functions;`
+inline namespace implicit_functions {
+  template<typename T>
+  const std::optional<T>& implicit_optional(implicit_detail::fixed_name<T> id) {
+    contract_assert(implicit_detail::parsed);
+    return *id.value_ptr;
+  }
+
+  template<typename T>
+  T implicit_value(implicit_detail::fixed_name<std::remove_cvref_t<T>> name, T&& default_value) {
+    contract_assert(implicit_detail::parsed);
+    return *name.value_ptr ? **name.value_ptr : static_cast<T&&>(default_value);
+  }
+
+  bool implicit_flag(implicit_detail::fixed_name<bool> name, bool default_value = false) {
+    return implicit_value(name, default_value);
+  }
+} // namespace implicit_functions
 
 template<>
 struct parser<implicit> {
-  inline static consteval size_t icount() {
-    for (size_t i = 0; true; ++i) {
-      auto curr = substitute((^^implicit_registry), {std::meta::reflect_constant(i)});
-      if (!is_complete_type(curr)) return i;
-    }
-  }
-
-  inline static consteval std::string_view iname(size_t i) {
-    auto registry = substitute((^^implicit_registry), {std::meta::reflect_constant(i)});
-    auto storage = nonstatic_data_members_of(registry, std::meta::access_context::unchecked())[0];
-    auto storage_args = template_arguments_of(registry);
-    std::string_view storage_name(extract<const char*>(storage_args[1]), extract<size_t>(storage_args[2]));
-    return storage_name;
-  }
-
-  inline static consteval std::meta::info itype(size_t i) {
-    auto registry = substitute((^^implicit_registry), {std::meta::reflect_constant(i)});
-    auto storage = nonstatic_data_members_of(registry, std::meta::access_context::unchecked())[0];
-    auto storage_args = template_arguments_of(registry);
-    return storage_args[0];
-  }
-
+  template<typename = void>
   inline bool parse(implicit&, raw_arguments& rest) const {
-    contract_assert(!implicit::parsed);
-    implicit::parsed = true;
+    contract_assert(!implicit_detail::parsed);
+    implicit_detail::parsed = true;
     while (!rest.empty()) {
       auto curr = rest[0];
       if (!curr.starts_with("--")) break;
@@ -153,13 +171,14 @@ struct parser<implicit> {
         name = name.substr(0, loc);
       }
       bool found = false;
-      template for (constexpr size_t i : std::views::iota(0ull, icount())) {
-        if (iname(i) != name) continue;
+      template for (constexpr size_t i : std::views::iota(0ull, implicit_detail::size())) {
+        constexpr auto node = implicit_detail::fetch(i);
+        if (node.name() != name) continue;
         found = true;
         rest.remove_prefix(1);
         raw_arguments resteq(&eq, &eq + !!eq);
-        parser<typename[:itype(i):]> p;
-        typename[:itype(i):] v;
+        parser<typename[:node.type:]> p;
+        typename[:node.type:] v;
         if (!p.parse(v, eq ? resteq : rest)) {
           std::println("during parsing option: {:?}", curr);
           return false;
@@ -168,6 +187,7 @@ struct parser<implicit> {
           std::println("cannot parse payload after `=`: {:?}", curr);
           return false;
         }
+        implicit_detail::parsed_storage<typename[:node.type:], i>::value = v;
         break;
       }
       if (!found) break;

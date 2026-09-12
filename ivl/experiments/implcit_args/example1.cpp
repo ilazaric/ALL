@@ -1,4 +1,4 @@
-#include "implicit.hpp"
+#include "implicit"
 
 #include <print>
 
