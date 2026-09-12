@@ -1,0 +1,9 @@
+<html>
+  
+<span id="foo">default</span>
+<script>
+  document.getElementById("foo").textContent= "cookies=[" + document.cookie + "]";
+  document.cookie = "FOO=BAR; max-age=3600";
+</script>
+
+</html>

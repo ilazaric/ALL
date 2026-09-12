@@ -1,0 +1,4 @@
+downloaded_files/
+foo/
+*.log
+open_cookies.gdb.output
