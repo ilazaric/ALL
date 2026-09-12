@@ -104,7 +104,7 @@ struct implicit_parsed_storage {
 };
 
 template<typename T, typename U>
-inline static consteval std::optional<T>* find_value_impl() {
+inline static consteval std::optional<T>* implicit_find_value_impl() {
   return &U::value;
 }
 
@@ -113,10 +113,7 @@ struct implicit_name {
   std::optional<T>* value_ptr;
 
   inline static consteval std::optional<T>* find_value(std::meta::info storage) {
-    __builtin_constexpr_diag(32, "", "before fn");
-    using OT = std::optional<T>;
-    auto ret = extract<OT*(*)()>(substitute(^^find_value_impl, {^^T, storage}))();
-    __builtin_constexpr_diag(32, "", "after fn");
+    auto ret = extract<std::optional<T>*(*)()>(substitute(^^implicit_find_value_impl, {^^T, storage}))();
     return ret;
   }
 
@@ -159,6 +156,7 @@ void implicit_parse_into(std::span<const char* const>& args, std::optional<int>&
   else throw std::runtime_error(std::format("failed to parse int, argument: {:?}", sv));
 }
 
+template<size_t Start = 0> // delay instantiation
 bool implicit_parse1(std::span<const char* const>& args) {
   if (args.empty()) return false;
   std::string_view curr(args[0]);
@@ -170,7 +168,7 @@ bool implicit_parse1(std::span<const char* const>& args) {
     name = name.substr(0, loc);
   }
   std::span<const char* const> eqargs(&eq, &eq + !!eq);
-  template for (constexpr auto index : std::views::iota(0ULL, implicit_size())) {
+  template for (constexpr auto index : std::views::iota(Start, implicit_size())) {
     constexpr auto node = implicit_fetch(index);
     if (node.name() != name) continue;
     args = args.subspan(1);
@@ -183,14 +181,21 @@ bool implicit_parse1(std::span<const char* const>& args) {
 }
 // ~ internal library impl
 
-void implicit_parse(std::span<const char* const> args) {
+template<auto Parse1 = &implicit_parse1> // delay instantiation
+void implicit_parse(std::span<const char* const>& args) {
   contract_assert(!implicit_parsed);
   implicit_parsed = true;
-  while (implicit_parse1(args));
+  while (Parse1(args));
 }
 
 bool implicit_flag(implicit_name<bool> name) {
   contract_assert(implicit_parsed);
   return *name.value_ptr ? **name.value_ptr : false;
+}
+
+template<typename T>
+T implicit_value(implicit_name<std::type_identity_t<T>> name, T&& default_value) {
+  contract_assert(implicit_parsed);
+  return *name.value_ptr ? **name.value_ptr : static_cast<T&&>(default_value);
 }
 // ~ "implicit command line arguments" library
