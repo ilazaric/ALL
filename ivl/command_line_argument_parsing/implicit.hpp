@@ -154,6 +154,10 @@ inline namespace implicit_functions {
   }
 } // namespace implicit_functions
 
+// TODO: this is near identical with class_basic parsing, figure out how to join
+// ....: i think we would need to add optional<T> parsing, synthesize a class of
+// ....: references to our optionals, and parse that as a class.
+// ....: maybe could get away with no references.
 template<>
 struct parser<implicit> {
   template<typename = void>
@@ -177,6 +181,11 @@ struct parser<implicit> {
         found = true;
         rest.remove_prefix(1);
         raw_arguments resteq(&eq, &eq + !!eq);
+        // for booleans only allow `--foo=bar` and `--foo` , not `--foo bar`
+        if (is_same_type(node.type, ^^bool) && !eq) {
+          implicit_detail::parsed_storage<typename[:node.type:], i>::value = true;
+          break;
+        }
         parser<typename[:node.type:]> p;
         typename[:node.type:] v;
         if (!p.parse(v, eq ? resteq : rest)) {
@@ -201,7 +210,7 @@ struct parser<implicit> {
     template for (constexpr size_t i : std::views::iota(0ull, implicit_detail::size())) {
       constexpr auto node = implicit_detail::fetch(i);
       constexpr auto type = display_string_of(node.type);
-      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
+      constexpr auto msg = define_static_string(std::format(" --{}:`{:?}`", node.name(), type));
       std::print("{}", msg);
     }
     std::print(" ]");

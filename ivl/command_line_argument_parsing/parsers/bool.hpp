@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../parser_declaration"
+#include "../parser_one"
 #include "../raw_arguments"
 #include <print>
 #include <string_view>
@@ -15,22 +16,18 @@ namespace ivl::cmdline_parsing {
 
    added on,yes,enable as well */
 template<>
-struct parser<bool> {
-  // TODO: maybe booleans should only be settable with `--foo=bar` syntax, think more
-  inline bool parse(bool& arg, raw_arguments& rest) const {
-    if (rest.empty()) return arg = true;
-    std::string_view sv = rest[0];
+struct parser<bool> : parser_one {
+  bool parse_one(bool& arg, std::string_view sv) const {
     if (sv == "1" || sv == "true" || sv == "on" || sv == "yes" || sv == "enable") {
-      rest.remove_prefix(1);
       arg = true;
       return true;
     }
     if (sv == "0" || sv == "false" || sv == "off" || sv == "no" || sv == "disable") {
-      rest.remove_prefix(1);
       arg = false;
       return true;
     }
-    return arg = true;
+    std::println("failed to parse boolean, argument: {:?}", sv);
+    return false;
   }
 };
 } // namespace ivl::cmdline_parsing

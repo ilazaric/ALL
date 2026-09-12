@@ -31,15 +31,19 @@ struct parser<T> {
       raw_arguments resteq(&eq, &eq + !!eq);
       bool found = false;
       template for (constexpr auto member : reflection::nsdms(^^T)) {
-        if (identifier_of(member) == name) {
-          parser<typename[:decay(type_of(member)):]> p;
-          if (!p.parse(state.[:member:], eq ? resteq : rest)) {
-            std::println("during parsing option: {:?}", curr);
-            return false;
-          }
-          found = true;
+        if (identifier_of(member) != name) continue;
+        found = true;
+        // for booleans only allow `--foo=bar` and `--foo` , not `--foo bar`
+        if (is_same_type(type_of(member), ^^bool) && !eq) {
+          state = true;
           break;
         }
+        parser<typename[:decay(type_of(member)):]> p;
+        if (!p.parse(state.[:member:], eq ? resteq : rest)) {
+          std::println("during parsing option: {:?}", curr);
+          return false;
+        }
+        break;
       }
       if (!found) {
         std::println("unrecognized option: {:?}", curr);
