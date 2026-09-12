@@ -93,7 +93,8 @@ int wrap_ivl_main(int argc, char** argv)
   auto check_for_help = [&] { return !raw_args.empty() && raw_args[0] == "--help"; };
   bool parse_check =
     ((!check_for_help() && ::ivl::cmdline_parsing::parser<std::decay_t<Args>>{}.parse(main_args, raw_args)) && ...);
-  if (parse_check && raw_args.empty()) {
+  check_for_help();
+  if (!seen_help && parse_check && raw_args.empty()) {
     return [:sizeof...(Args) ? ^^:: : ^^:::] ::ivl_main(static_cast<Args&&>(main_args)...);
   } else {
     if (parse_check && !seen_help) std::println(stderr, "too many arguments, unparsed: {::?}", raw_args.rest);
