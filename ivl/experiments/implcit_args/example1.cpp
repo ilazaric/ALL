@@ -13,10 +13,18 @@ int main2(std::span<const char* const> args) {
 }
 
 int main(int argc, const char* const* argv) try {
+  auto help = [] { return implicit_flag("help"); };
   std::span<const char* const> args(argv + !!argc, argv + argc);
   implicit_parse(args);
-  return main2(args);
+  if (!help()) return main2(args);
+  std::println("Options:");
+  template for (constexpr size_t index : std::views::iota(0ULL, implicit_size())) {
+    static constexpr auto node = implicit_fetch(index);
+    auto msg = define_static_string(std::format("  --{}: {}", node.name(), display_string_of(node.type)));
+    std::println("{}", msg);
+  }
+  return 1;
 } catch (const std::exception& e) {
   std::println("exception bubbled up to main:\n{}", e.what());
-  return 1;
+  return 2;
 }

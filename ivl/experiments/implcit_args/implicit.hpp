@@ -188,14 +188,13 @@ void implicit_parse(std::span<const char* const>& args) {
   while (Parse1(args));
 }
 
-bool implicit_flag(implicit_name<bool> name) {
-  contract_assert(implicit_parsed);
-  return *name.value_ptr ? **name.value_ptr : false;
-}
-
 template<typename T>
-T implicit_value(implicit_name<std::type_identity_t<T>> name, T&& default_value) {
+T implicit_value(implicit_name<std::remove_cvref_t<T>> name, T&& default_value) {
   contract_assert(implicit_parsed);
   return *name.value_ptr ? **name.value_ptr : static_cast<T&&>(default_value);
+}
+
+bool implicit_flag(implicit_name<bool> name, bool default_value = false) {
+  return implicit_value(name, default_value);
 }
 // ~ "implicit command line arguments" library
