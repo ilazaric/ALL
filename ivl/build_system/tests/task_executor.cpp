@@ -1,4 +1,4 @@
-#error "TODO"
+#warning "TODO"
 
 #include <ivl/build_system/task_executor>
 #include <ivl/linux/file_descriptor>
@@ -6,6 +6,8 @@
 #include <ivl/linux/utility>
 #include <ivl/reflection/test_attribute>
 #include <sys/mman.h>
+
+// IVL test_only()
 
 namespace ivl::build_system {
 task_config bash(std::string id, std::string arg) {}
