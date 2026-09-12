@@ -8,6 +8,7 @@
 #include <sys/mman.h>
 
 // IVL test_only()
+#pragma IVL test_only
 
 namespace ivl::build_system {
 task_config bash(std::string id, std::string arg) {}
