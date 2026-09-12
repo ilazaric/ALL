@@ -210,7 +210,7 @@ struct parser<implicit> {
     template for (constexpr size_t i : std::views::iota(0ull, implicit_detail::size())) {
       constexpr auto node = implicit_detail::fetch(i);
       constexpr auto type = display_string_of(node.type);
-      constexpr auto msg = define_static_string(std::format(" --{}:`{:?}`", node.name(), type));
+      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
       std::print("{}", msg);
     }
     std::print(" ]");
