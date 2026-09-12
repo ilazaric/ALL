@@ -12,7 +12,9 @@ int main2(std::span<const char* const> args) {
   return 0;
 }
 
+// "implicit command line arguments" library -- suffix
 int main(int argc, const char* const* argv) try {
+  // must {instantiate before,run after} implicit_parse
   auto help = [] { return implicit_flag("help"); };
   std::span<const char* const> args(argv + !!argc, argv + argc);
   implicit_parse(args);
@@ -28,3 +30,4 @@ int main(int argc, const char* const* argv) try {
   std::println("exception bubbled up to main:\n{}", e.what());
   return 2;
 }
+// ~ "implicit command line arguments" library -- suffix

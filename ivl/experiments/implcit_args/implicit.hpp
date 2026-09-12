@@ -30,7 +30,6 @@ consteval std::meta::info injection_fetch() {
 // ~ basic friend injection
 
 // "implicit command line arguments" library
-// internal library impl 
 template<size_t>
 struct implicit_index {};
 
@@ -179,7 +178,6 @@ bool implicit_parse1(std::span<const char* const>& args) {
   }
   return false;
 }
-// ~ internal library impl
 
 template<auto Parse1 = &implicit_parse1> // delay instantiation
 void implicit_parse(std::span<const char* const>& args) {
