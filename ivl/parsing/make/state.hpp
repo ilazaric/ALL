@@ -99,17 +99,17 @@ struct state {
     );
   }
 
-  void set_variable(const variable_definition& v) {
-    v.name.starts_with(".") && todo("special variable name: {:?}", name);
-    auto it = variables.find(v);
-    if (it == variables.end()) {
-      variables.insert(v);
-      return;
-    }
-    if (it->overriden && !v.overriden) return;
-    // TODO: maybe just mutate existing one
-    variables.erase(it);
-    variables.insert(v);
-  }
+  // void set_variable(const variable_definition& v) {
+  //   v.name.starts_with(".") && todo("special variable name: {:?}", name);
+  //   auto it = variables.find(v);
+  //   if (it == variables.end()) {
+  //     variables.insert(v);
+  //     return;
+  //   }
+  //   if (it->overriden && !v.overriden) return;
+  //   // TODO: maybe just mutate existing one
+  //   variables.erase(it);
+  //   variables.insert(v);
+  // }
 };
 } // namespace ivl::parsing::make
