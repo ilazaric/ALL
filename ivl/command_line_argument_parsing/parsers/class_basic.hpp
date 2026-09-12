@@ -34,9 +34,11 @@ struct parser<T> {
         if (identifier_of(member) != name) continue;
         found = true;
         // for booleans only allow `--foo=bar` and `--foo` , not `--foo bar`
-        if (is_same_type(type_of(member), ^^bool) && !eq) {
-          state = true;
-          break;
+        if constexpr (is_same_type(type_of(member), ^^bool)) {
+          if (!eq) {
+            state.[:member:] = true;
+            break;
+          }
         }
         parser<typename[:decay(type_of(member)):]> p;
         if (!p.parse(state.[:member:], eq ? resteq : rest)) {
