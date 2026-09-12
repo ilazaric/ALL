@@ -60,6 +60,7 @@ consteval implicit_node implicit_fetch(size_t i) {
     return extract<implicit_node>(implicit_fetch_raw(i));
 }
 
+// if we could do this with `define_aggregate()` we would not need friend injection
 consteval void implicit_store(size_t i, implicit_node node) {
     auto key = substitute(^^implicit_index, {std::meta::reflect_constant(i)});
     auto value = std::meta::reflect_constant(std::meta::reflect_constant(node));
