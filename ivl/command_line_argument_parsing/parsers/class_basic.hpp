@@ -62,9 +62,9 @@ struct parser<T> {
   void print_help() const {
     std::print("[");
     template for (constexpr auto member : reflection::nsdms(^^T)) {
-      constexpr auto node = identifier_of(member);
+      constexpr auto name = identifier_of(member);
       constexpr auto type = display_string_of(type_of(member));
-      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
+      constexpr auto msg = std::define_static_string(std::format(" --{}:`{}`", name, type));
       std::print("{}", msg);
     }
     std::print(" ]");
