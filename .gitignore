@@ -46,3 +46,4 @@
 build/
 build2/
 /**/strace.log
+**/.ipynb_checkpoints/
