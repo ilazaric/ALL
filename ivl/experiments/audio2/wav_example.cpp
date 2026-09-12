@@ -1,8 +1,8 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
+#include "stft"
 #include "wav"
 #include <algorithm>
 #include <cmath>
-#include "stft"
 #include <numbers>
 #include <ranges>
 
@@ -15,6 +15,9 @@
 // IVL add_compiler_flags_tail("-lm  -lpthread -lOpenGL  -lGLX  -lGLU  -lm  -lrt  -lm  -ldl")
 
 // "The standard audible frequency range for humans spans from 20 Hz to 20,000 Hz"
+
+constexpr double min_freq = 20.0;
+constexpr double max_freq = 20'000.0;
 
 void stft_visualise(std::span<const double> input, double sample_rate) {
   contract_assert(!input.empty());
@@ -40,8 +43,6 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
     const int plot_y = padding_height + axis_font_size + value_font_size;
     std::vector<Vector2> points;
     double my = std::ranges::max(input);
-    double min_freq = 20.0;
-    double max_freq = 20'000.0;
     double min_log_freq = std::log(min_freq);
     double max_log_freq = std::log(max_freq);
     for (size_t i = 0; i < input.size() / 2; ++i) {
