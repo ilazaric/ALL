@@ -58,5 +58,16 @@ struct parser<T> {
     }
     return true;
   }
+
+  void print_help() const {
+    std::print("[");
+    template for (constexpr auto member : reflection::nsdms(^^T)) {
+      constexpr auto node = identifier_of(member);
+      constexpr auto type = display_string_of(type_of(member));
+      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
+      std::print("{}", msg);
+    }
+    std::print(" ]");
+  }
 };
 } // namespace ivl::cmdline_parsing
