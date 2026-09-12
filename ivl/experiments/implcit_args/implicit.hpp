@@ -5,6 +5,7 @@
 #include <charconv>
 #include <stdexcept>
 #include <exception>
+#include <optional>
 
 // basic friend injection
 template<typename>
@@ -102,17 +103,21 @@ struct implicit_parsed_storage {
   static inline std::optional<T> value = std::nullopt;
 };
 
+template<typename T, typename U>
+inline static consteval std::optional<T>* find_value_impl() {
+  return &U::value;
+}
+
 template<typename T>
 struct implicit_name {
-    std::optional<T>* value_ptr;
+  std::optional<T>* value_ptr;
 
   inline static consteval std::optional<T>* find_value(std::meta::info storage) {
-    for (auto member : members_of(storage, std::meta::access_context::unchecked())) {
-      if (!has_identifier(member)) continue;
-      if (identifier_of(member) != "value") continue;
-      return &extract<std::optional<T>&>(member);
-    }
-    contract_assert(false);
+    __builtin_constexpr_diag(32, "", "before fn");
+    using OT = std::optional<T>;
+    auto ret = extract<OT*(*)()>(substitute(^^find_value_impl, {^^T, storage}))();
+    __builtin_constexpr_diag(32, "", "after fn");
+    return ret;
   }
 
   consteval implicit_name(std::string_view name, std::source_location loc = std::source_location::current()) {
