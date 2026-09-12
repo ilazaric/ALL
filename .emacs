@@ -19,8 +19,8 @@
    '(auctex auctex-latexmk clang-format cmake-font-lock cmake-mode
             default-text-scale dockerfile-mode ejson-mode
             exec-path-from-shell go-mode impatient-mode
-            latex-preview-pane magit markdown-mode org-modern
-            pdf-tools rust-mode yaml-mode)))
+            latex-preview-pane magit markdown-mode meson-mode
+            org-modern pdf-tools rust-mode yaml-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
