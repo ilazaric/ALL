@@ -194,5 +194,17 @@ struct parser<implicit> {
     }
     return true;
   }
+
+  template<typename = void>
+  void print_help() const {
+    std::print("[");
+    template for (constexpr size_t i : std::views::iota(0ull, implicit_detail::size())) {
+      constexpr auto node = implicit_detail::fetch(i);
+      constexpr auto type = display_string_of(node.type);
+      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
+      std::print("{}", msg);
+    }
+    std::print(" ]");
+  }
 };
 } // namespace ivl::cmdline_parsing

@@ -81,7 +81,7 @@ consteval search_result_t find_main_declarations() {
 
 constexpr search_result_t search_result = find_main_declarations();
 
-  template<typename... Args>
+template<typename... Args>
 int wrap_ivl_main(int argc, char** argv)
 #ifdef __cpp_exceptions
   try
@@ -89,11 +89,14 @@ int wrap_ivl_main(int argc, char** argv)
 {
   auto [... main_args] = ::ivl::main_synthesis::default_initialized<std::decay_t<Args>...>();
   cmdline_parsing::raw_arguments raw_args((const char**)argv + !!argc, (const char**)argv + argc);
-  bool parse_check = ((::ivl::cmdline_parsing::parser<std::decay_t<Args>>{}.parse(main_args, raw_args)) && ...);
+  bool seen_help = false;
+  auto check_for_help = [&] { return !raw_args.empty() && raw_args[0] == "--help"; };
+  bool parse_check =
+    ((!check_for_help() && ::ivl::cmdline_parsing::parser<std::decay_t<Args>>{}.parse(main_args, raw_args)) && ...);
   if (parse_check && raw_args.empty()) {
-    return [:sizeof...(Args)?^^:::^^:::]::ivl_main(static_cast<Args&&>(main_args)...);
+    return [:sizeof...(Args) ? ^^:: : ^^:::] ::ivl_main(static_cast<Args&&>(main_args)...);
   } else {
-    if (parse_check) std::println(stderr, "too many arguments, unparsed: {::?}", raw_args.rest);
+    if (parse_check && !seen_help) std::println(stderr, "too many arguments, unparsed: {::?}", raw_args.rest);
     std::string_view program_name = argc ? argv[0] : "<program-name>";
     ::ivl::cmdline_parsing::print_help<std::decay_t<Args>...>(program_name);
     return 1;

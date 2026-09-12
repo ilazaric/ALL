@@ -1,10 +1,9 @@
+#include <ivl/command_line_argument_parsing/implicit_exposed>
 #include "wav"
+#include <algorithm>
 #include <cmath>
-// #include <complex.h>
 #include <complex>
 #include <fftw3.h>
-// #include <raylib/raylib.h>
-#include <algorithm>
 #include <numbers>
 #include <ranges>
 
@@ -111,7 +110,7 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
         auto len = MeasureText(text, font_size);
         DrawText(text, x - len / 2, textRT.texture.height - y - font_size / 2, font_size, BLACK);
       };
-      for (double freq : {20.0, 200.0, 2'000.0, 20'000.0}) {
+      for (double freq : {20.0, 50.0, 100.0, 200.0, 500.0, 1'000.0, 2'000.0, 5'000.0, 10'000.0, 20'000.0}) {
         double log_freq = std::log(freq);
         auto x = plot_x + (double)plot_width * (log_freq - min_log_freq) / (max_log_freq - min_log_freq);
         auto text = std::format("{}Hz", freq);
@@ -124,10 +123,10 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
       BeginTextureMode(RT);
       ClearBackground(WHITE);
       DrawTexture(textRT.texture, 0, 0, WHITE);
-      for (double freq : {20.0, 200.0, 2'000.0, 20'000.0}) {
+      for (double freq : {20.0, 50.0, 100.0, 200.0, 500.0, 1'000.0, 2'000.0, 5'000.0, 10'000.0, 20'000.0}) {
         double log_freq = std::log(freq);
         auto x = plot_x + (double)plot_width * (log_freq - min_log_freq) / (max_log_freq - min_log_freq);
-        DrawLineDashed({x, plot_y}, {x, plot_y + plot_height}, 10, 10, GRAY);
+        DrawLineDashed({(float)x, (float)plot_y}, {(float)x, (float)(plot_y + plot_height)}, 10, 10, GRAY);
       }
       DrawLine(plot_x, plot_y, plot_x + plot_width, plot_y, BLACK);
       DrawLine(plot_x, plot_y + plot_height, plot_x, plot_y, BLACK);
@@ -148,21 +147,26 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
   }
 }
 
-int ivl_main(const std::filesystem::path& file) {
+// IVL add_compiler_flags("-Wno-non-template-friend -Wsfinae-incomplete=0")
+
+int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) {
   auto p = ivl::wav::load(file);
   contract_assert(p.format_type == 1);
   contract_assert(p.bytes_per_block % p.channel_count == 0);
   contract_assert(p.bytes_per_block / p.channel_count == 2);
-  save(p, "copy.wav");
 
-  {
+  if (implicit_flag("save_test")) {
+    save(p, "copy.wav");
+  }
+
+  if (implicit_flag("split_merge_test")) {
     auto v = channel_split(p);
     auto q = ivl::wav::channel_merge(v);
     contract_assert(q == p);
     for (size_t i = 0; i < v.size(); ++i) save(v[i], std::format("channel_{}.wav", i));
   }
 
-  {
+  if (implicit_flag("synthesize_sine")) {
     contract_assert(p.channel_count == 2);
     auto a = extract(p, 0);
     auto b = extract(p, 1);
@@ -180,7 +184,7 @@ int ivl_main(const std::filesystem::path& file) {
     save(q, "mix.wav");
   }
 
-  if (0) {
+  if (implicit_flag("stft_test_1")) {
     auto a = extract(p, 0);
     size_t window_size = 1024;
     fft_executor ex(window_size);
@@ -197,13 +201,13 @@ int ivl_main(const std::filesystem::path& file) {
     std::println();
   }
 
-  if (1) {
+  if (implicit_flag("stft_visualise")) {
     auto a = extract(p, 0);
     auto b = stft_amps(a, 1ull << 16, 1ull << 14);
     stft_visualise(b, (double)p.sample_rate);
   }
 
-  if (0) {
+  if (implicit_flag("stft_visualise_sine")) {
     std::vector<double> a;
     double freq = 200.0;
     double sample_rate = (double)p.sample_rate;

@@ -13,7 +13,15 @@ inline void print_help(std::string_view program_name) {
   auto option = term::colors::FG_CYAN;
   std::print("{}Usage: {} {}[--help]", section, program_name, option);
   // TODO: gutted this while refactoring, need to improve
-  template for (constexpr auto Ti : {^^Ts...}) { std::print(" `{}`", reflection::display_string_of(Ti)); }
+  template for (constexpr auto Ti : {^^Ts...}) {
+    using P = parser<typename[:Ti:]>;
+    if constexpr (requires { P{}.print_help(); }) {
+      std::print(" ");
+      P{}.print_help();
+    } else {
+      std::print(" `{}`", reflection::display_string_of(Ti));
+    }
+  }
   std::println("{}", term::foreground_reset{});
   // TODO: descriptions
 }
