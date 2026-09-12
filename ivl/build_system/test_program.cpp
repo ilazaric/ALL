@@ -1,4 +1,4 @@
-#error "TODO, think this was just test input"
+#warning "TODO, think this was just test input"
 
 #include <print>
 #include <vector>
