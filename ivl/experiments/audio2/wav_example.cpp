@@ -73,7 +73,9 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
 
   if (implicit_flag("stft_visualise")) {
     auto a = extract(p, 0);
-    auto b = stft_amps(a, 1ull << 16, 1ull << 14);
+    LOG(a.size());
+    while (!std::has_single_bit(a.size())) a.push_back(0);
+    auto b = stft_amps(a, a.size(), a.size());
     stft_visualise(b, (double)p.sample_rate);
   }
 
@@ -176,6 +178,48 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     };
     auto q = ivl::wav::channel_merge({lambda(extract(p, 0)), lambda(extract(p, 1))});
     save(q, "equalized.wav");
+  }
+
+  // doesnt seem to work, TODO
+  if (implicit_flag("octave_test_failed")) {
+    auto lambda = [&](auto&& a) {
+      auto sample_rate = (double)p.sample_rate;
+      LOG(sample_rate);
+      LOG(a.size());
+      size_t window = 1 << 17;
+      size_t hop = window / 2;
+      contract_assert(hop * 2 == window);
+      fft_executor f(window);
+      fft_executor fh(hop);
+      auto front_padding = window;
+      auto back_padding = window + (window - a.size() % window) % window;
+      a.insert_range(a.begin(), std::views::repeat(0, front_padding));
+      a.insert_range(a.end(), std::views::repeat(0, back_padding));
+      contract_assert(a.size() % window == 0);
+      std::vector<double> out(a.size(), 0.0);
+      // std::vector<double> hann(window, 0.0);
+      // for (size_t n = 0; n < window; ++n)
+      //   hann[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)window)) / 2.0;
+      std::vector<double> hannh(hop, 0.0);
+      for (size_t n = 0; n < hop; ++n)
+        hannh[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)hop)) / 2.0;
+      // LOG(hann[window / 2]);
+      for (size_t i = 0; i + window <= a.size(); i += hop / 2) {
+        auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
+        std::vector<std::complex<double>> stfth;
+        stfth.insert_range(stfth.end(), std::span(stft).subspan(0, hop / 2));
+        stfth.insert_range(stfth.end(), std::span(stft).subspan(hop + hop / 2));
+        auto back = fh.backward(stfth);
+        for (size_t j = 0; j < hop; ++j) out[i + j] += back[j].real() * hannh[j];
+      }
+      out.erase(out.begin(), out.begin() + front_padding);
+      out.erase(out.end() - back_padding, out.end());
+      for (auto&& el : out) el /= (double)window * 1.5;
+      auto q = synthesize(out, p);
+      return q;
+    };
+    auto q = ivl::wav::channel_merge({lambda(extract(p, 0)), lambda(extract(p, 1))});
+    save(q, "octave.wav");
   }
 
   return 0;
