@@ -89,6 +89,7 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
 
   if (implicit_flag("stft_visualise_multi")) {
     auto a = extract(p, 0);
+    LOG(a.size());
     auto sample_rate = (double)(p.sample_rate);
     window w(1000, 1000, "visualiser");
     w.set_target_fps(30);
@@ -98,12 +99,14 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     size_t len = 1 << 16;
     size_t base = (size_t)sample_rate * 30;
     fft_executor f(len);
-    size_t mv = 1 << 18;
-    for (size_t i = 0; i * mv + base + len <= a.size() && i < 20; ++i) {
+    size_t mv = 1 << 17;
+    auto bin_count = implicit_value("bin_count", 20);
+    for (size_t i = 0; i * mv + base + len <= a.size() && i < bin_count; ++i) {
+      LOG(i);
       auto input = f.amps(std::span(a).subspan(base + i * mv).subspan(0, len));
       // input = binned(input, 1 << 6);
       p.sequences.emplace_back();
-      p.sequences.back().color = Fade(ColorLerp(RED, GREEN, (double)i / 19.0), 0.5f);
+      p.sequences.back().color = Fade(ColorLerp(RED, GREEN, (double)i / (double)(bin_count - 1)), 1.0f);
       auto& points = p.sequences.back().points;
       for (size_t i = 0; i < input.size() / 2; ++i) {
         double freq = sample_rate * (double)i / (double)input.size();
