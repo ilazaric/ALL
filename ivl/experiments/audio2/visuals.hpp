@@ -140,12 +140,12 @@ struct plot {
         // now within box, need to translate to texture coords
         DrawLineV(
           {
-            (start.x - x_range.first) / (x_range.second - x_range.first) * plot_width + plot_x,
-            (start.y - y_range.first) / (y_range.second - y_range.first) * plot_width + plot_y,
+            (float)((start.x - x_range.first) / (x_range.second - x_range.first) * plot_width + plot_x),
+            (float)((start.y - y_range.first) / (y_range.second - y_range.first) * plot_width + plot_y),
           },
           {
-            (end.x - x_range.first) / (x_range.second - x_range.first) * plot_width + plot_x,
-            (end.y - y_range.first) / (y_range.second - y_range.first) * plot_width + plot_y,
+            (float)((end.x - x_range.first) / (x_range.second - x_range.first) * plot_width + plot_x),
+            (float)((end.y - y_range.first) / (y_range.second - y_range.first) * plot_width + plot_y),
           },
           color
         );
@@ -153,6 +153,19 @@ struct plot {
     }
     EndTextureMode();
   }
+};
+
+struct window {
+  int width, height;
+  window(int width, int height, std::string_view name) : width(width), height(height) {
+    InitWindow(width, height, std::format("{}", name).c_str());
+  }
+
+  void set_target_fps(int fps) { SetTargetFPS(fps); }
+
+  bool should_close() { return WindowShouldClose(); }
+
+  ~window() { CloseWindow(); }
 };
 
 void stft_visualise(std::span<const double> input, double sample_rate) {
@@ -163,12 +176,10 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
     LOG(i, indices[i], input[indices[i]]);
   }
   {
-    const int screen_width = 1000;
-    const int screen_height = 1000;
-    InitWindow(screen_width, screen_height, "visualiser");
-    SetTargetFPS(30);
+    window w(1000, 1000, "visualiser");
+    w.set_target_fps(30);
 
-    plot p(screen_width, screen_height);
+    plot p(w.width, w.height);
     p.axis_font_size = 20;
     p.value_font_size = 20;
     p.set_all_padding(5);
@@ -197,12 +208,11 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
     }
     p.internal_render();
 
-    while (!WindowShouldClose()) {
+    while (!w.should_close()) {
       BeginDrawing();
       ClearBackground(GREEN); // to see mistakes
       DrawTexture(p.RT.texture, 0, 0, WHITE);
       EndDrawing();
     }
-    CloseWindow();
   }
 }
