@@ -12,29 +12,45 @@ static_assert(sizeof(std::complex<double>) == sizeof(fftw_complex));
 struct fft_executor {
   size_t n;
   std::complex<double>*in, *out;
-  fftw_plan p;
+  fftw_plan fp, bp;
 
   explicit fft_executor(size_t n) : n(n) {
     in = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * n);
     out = (std::complex<double>*)fftw_malloc(sizeof(fftw_complex) * n);
-    p = fftw_plan_dft_1d(
+    fp = fftw_plan_dft_1d(
       n, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out), FFTW_FORWARD, FFTW_ESTIMATE
+    );
+    bp = fftw_plan_dft_1d(
+      n, reinterpret_cast<fftw_complex*>(in), reinterpret_cast<fftw_complex*>(out), FFTW_BACKWARD, FFTW_ESTIMATE
     );
   }
 
-  void execute() { fftw_execute(p); }
+  std::vector<std::complex<double>> forward(auto&& input) {
+    contract_assert(input.size() == n);
+    std::ranges::copy(input, in);
+    fftw_execute(fp);
+    return std::vector(out, out + n);
+  }
+
+  std::vector<std::complex<double>> backward(auto&& input) {
+    contract_assert(input.size() == n);
+    std::ranges::copy(input, in);
+    fftw_execute(bp);
+    return std::vector(out, out + n);
+  }
 
   std::vector<double> amps(std::span<const double> input) {
     contract_assert(input.size() == n);
     for (size_t i = 0; i < n; ++i) in[i] = input[i];
-    execute();
+    fftw_execute(fp);
     std::vector<double> ret(n);
     for (size_t i = 0; i < n; ++i) ret[i] = std::abs(out[i]);
     return ret;
   }
 
   ~fft_executor() {
-    fftw_destroy_plan(p);
+    fftw_destroy_plan(fp);
+    fftw_destroy_plan(bp);
     fftw_free(in);
     fftw_free(out);
   }

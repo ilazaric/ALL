@@ -128,5 +128,46 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     }
   }
 
+  if (implicit_flag("equalizer_test")) {
+    auto db = [](double x) { return std::pow(10.0, x / 10.0); };
+    auto a = extract(p, 0);
+    auto sample_rate = (double)p.sample_rate;
+    LOG(sample_rate);
+    LOG(a.size());
+    size_t window = 1 << 11;
+    size_t hop = window / 2;
+    contract_assert(hop * 2 == window);
+    fft_executor f(window);
+    auto front_padding = window;
+    auto back_padding = window + (window - a.size() % window) % window;
+    a.insert_range(a.begin(), std::views::repeat(0, front_padding));
+    a.insert_range(a.end(), std::views::repeat(0, back_padding));
+    contract_assert(a.size() % window == 0);
+    std::vector<double> out(a.size(), 0.0);
+    std::vector<double> hann(window, 0.0);
+    for (size_t n = 0; n < window; ++n)
+      hann[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)window)) / 2.0;
+    LOG(hann[window / 2]);
+    for (size_t i = 0; i + window <= a.size(); i += hop) {
+      auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
+      // TODO: modify stft
+      for (size_t j = 0; j < window; ++j) {
+        auto& curr = stft[j];
+        double freq = sample_rate * (double)(j < window / 2 ? j : window - j) / (double)window;
+        if (freq < 90.0) curr *= db(6.0);
+        else if (freq < 150.0) curr *= db(4.5);
+        else if (freq < 250.0) curr *= db(1.5);
+        else curr *= db(0.0);
+      }
+      auto back = f.backward(stft);
+      for (size_t j = 0; j < window; ++j) out[i + j] += back[j].real() * hann[j];
+    }
+    out.erase(out.begin(), out.begin() + front_padding);
+    out.erase(out.end() - back_padding, out.end());
+    for (auto&& el : out) el /= (double)window;
+    auto q = synthesize(out, p);
+    save(q, "equalized.wav");
+  }
+
   return 0;
 }
