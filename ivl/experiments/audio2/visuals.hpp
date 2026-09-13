@@ -117,11 +117,7 @@ struct plot {
       auto color = sequence.color;
       auto&& points = sequence.points;
       if (points.empty()) continue;
-      for (auto&& window : points | std::views::slide(2)) {
-        auto it = window.begin();
-        auto start = *it;
-        ++it;
-        auto end = *it;
+      for (auto [start, end] : points | std::views::pairwise) {
         // clamping a line segment to a rectangle, skipping if no intersection
         if (start.x <= x_range.first && end.x <= x_range.first) continue;
         if (start.x >= x_range.second && end.x >= x_range.second) continue;
