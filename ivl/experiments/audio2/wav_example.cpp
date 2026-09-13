@@ -130,45 +130,51 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     }
   }
 
+  // ./wav_example --equalizer_test --amp_reduce_db=0 --equalizer_config '+1db < 100hz < +0db < 250hz < -10db'
+  // --limiter_limit=0.95 --limiter_decay=1.0001 never-fade-away.wav
   if (implicit_flag("equalizer_test")) {
-    auto eqcfg = implicit_value<equalizer_config>("equalizer_config");
-    auto db = [](double x) { return std::pow(10.0, x / 10.0); };
-    auto a = extract(p, 0);
-    auto sample_rate = (double)p.sample_rate;
-    LOG(sample_rate);
-    LOG(a.size());
-    size_t window = 1 << 12;
-    size_t hop = window / 2;
-    contract_assert(hop * 2 == window);
-    fft_executor f(window);
-    auto front_padding = window;
-    auto back_padding = window + (window - a.size() % window) % window;
-    a.insert_range(a.begin(), std::views::repeat(0, front_padding));
-    a.insert_range(a.end(), std::views::repeat(0, back_padding));
-    contract_assert(a.size() % window == 0);
-    std::vector<double> out(a.size(), 0.0);
-    std::vector<double> hann(window, 0.0);
-    for (size_t n = 0; n < window; ++n)
-      hann[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)window)) / 2.0;
-    LOG(hann[window / 2]);
-    const double coef_freq = implicit_value("coef_freq", 0.5);
-    for (size_t i = 0; i + window <= a.size(); i += hop) {
-      double t = (double)i / sample_rate;
-      double coef = (1.0 - std::cos(t * coef_freq * 2 * std::numbers::pi)) / 2.0;
-      auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
-      for (size_t j = 0; j < window; ++j) {
-        auto& curr = stft[j];
-        double freq = sample_rate * (double)(j < window / 2 ? j : window - j) / (double)window;
-        curr *= db(eqcfg.get_db(freq) * coef);
+    auto lambda = [&](auto&& a) {
+      auto eqcfg = implicit_value<equalizer_config>("equalizer_config");
+      auto db = [](double x) { return std::pow(10.0, x / 10.0); };
+      // auto a = extract(p, 0);
+      auto sample_rate = (double)p.sample_rate;
+      LOG(sample_rate);
+      LOG(a.size());
+      size_t window = 1 << 12;
+      size_t hop = window / 2;
+      contract_assert(hop * 2 == window);
+      fft_executor f(window);
+      auto front_padding = window;
+      auto back_padding = window + (window - a.size() % window) % window;
+      a.insert_range(a.begin(), std::views::repeat(0, front_padding));
+      a.insert_range(a.end(), std::views::repeat(0, back_padding));
+      contract_assert(a.size() % window == 0);
+      std::vector<double> out(a.size(), 0.0);
+      std::vector<double> hann(window, 0.0);
+      for (size_t n = 0; n < window; ++n)
+        hann[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)window)) / 2.0;
+      LOG(hann[window / 2]);
+      // const double coef_freq = implicit_value("coef_freq", 0.5);
+      for (size_t i = 0; i + window <= a.size(); i += hop) {
+        double t = (double)i / sample_rate;
+        // double coef = (1.0 - std::cos(t * coef_freq * 2 * std::numbers::pi)) / 2.0;
+        auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
+        for (size_t j = 0; j < window; ++j) {
+          auto& curr = stft[j];
+          double freq = sample_rate * (double)(j < window / 2 ? j : window - j) / (double)window;
+          curr *= db(eqcfg.get_db(freq) /* * coef */);
+        }
+        auto back = f.backward(stft);
+        for (size_t j = 0; j < window; ++j) out[i + j] += back[j].real() * hann[j];
       }
-      auto back = f.backward(stft);
-      for (size_t j = 0; j < window; ++j) out[i + j] += back[j].real() * hann[j];
-    }
-    out.erase(out.begin(), out.begin() + front_padding);
-    out.erase(out.end() - back_padding, out.end());
-    for (auto&& el : out) el /= (double)window * db(implicit_value("amp_reduce_db", 2.5));
-    out = limiter(out);
-    auto q = synthesize(out, p);
+      out.erase(out.begin(), out.begin() + front_padding);
+      out.erase(out.end() - back_padding, out.end());
+      for (auto&& el : out) el /= (double)window * db(implicit_value("amp_reduce_db", 2.5));
+      out = limiter(out);
+      auto q = synthesize(out, p);
+      return q;
+    };
+    auto q = ivl::wav::channel_merge({lambda(extract(p, 0)), lambda(extract(p, 1))});
     save(q, "equalized.wav");
   }
 
