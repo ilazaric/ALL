@@ -151,20 +151,15 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     for (size_t n = 0; n < window; ++n)
       hann[n] = (1.0 - std::cos(2 * std::numbers::pi * (double)n / (double)window)) / 2.0;
     LOG(hann[window / 2]);
+    const double coef_freq = implicit_value("coef_freq", 0.5);
     for (size_t i = 0; i + window <= a.size(); i += hop) {
+      double t = (double)i / sample_rate;
+      double coef = (1.0 - std::cos(t * coef_freq * 2 * std::numbers::pi)) / 2.0;
       auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
       for (size_t j = 0; j < window; ++j) {
         auto& curr = stft[j];
         double freq = sample_rate * (double)(j < window / 2 ? j : window - j) / (double)window;
-        curr *= db(eqcfg.get_db(freq));
-        // if (freq < 90.0) curr *= db(6.0);
-        // else if (freq < 150.0) curr *= db(4.5);
-        // else if (freq < 250.0) curr *= db(1.0);
-        // else curr *= db(-1.0);
-        // if (freq < 90.0) curr *= db(6.0);
-        // else if (freq < 150.0) curr *= db(4.5);
-        // else if (freq < 250.0) curr *= db(1.5);
-        // else curr *= db(0.0);
+        curr *= db(eqcfg.get_db(freq) * coef);
       }
       auto back = f.backward(stft);
       for (size_t j = 0; j < window; ++j) out[i + j] += back[j].real() * hann[j];
