@@ -51,16 +51,15 @@ inline void write_file_slow(file_descriptor fd, std::string_view payload) {
   }
 }
 // TODO: change arg into null-terminated-string-view
-// if you were too lazy to open yourself, you get what you get (mode)
-inline void write_file_slow(const char* path, std::string_view payload) {
-  owned_file_descriptor fd{throwing_syscalls::open(path, O_WRONLY | O_CREAT | O_TRUNC, 0777)};
+inline void write_file_slow(const char* path, std::string_view payload, mode_t mode = 0644) {
+  owned_file_descriptor fd{throwing_syscalls::open(path, O_WRONLY | O_CREAT | O_TRUNC, mode)};
   return write_file_slow(fd, payload);
 }
-inline void write_file_slow(const std::string& path, std::string_view payload) {
-  return write_file_slow(path.c_str(), payload);
+inline void write_file_slow(const std::string& path, std::string_view payload, mode_t mode = 0644) {
+  return write_file_slow(path.c_str(), payload, mode);
 }
-inline void write_file_slow(const std::filesystem::path& path, std::string_view payload) {
-  return write_file_slow(path.native(), payload);
+inline void write_file_slow(const std::filesystem::path& path, std::string_view payload, mode_t mode = 0644) {
+  return write_file_slow(path.native(), payload, mode);
 }
 
 inline owned_file_descriptor create_tmpfs() {
