@@ -86,9 +86,23 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     stft_visualise(b, sample_rate);
   }
 
-  // if (implicit_flag("stft_visualise_multi")) {
-    
-  // }
+  if (implicit_flag("stft_visualise_multi")) {
+    window w(1000, 1000, "visualiser");
+    w.set_target_fps(30);
+
+    plot p(w.width, w.height);
+    p.axis_font_size = 20;
+    p.value_font_size = 20;
+    p.set_all_padding(5);
+    p.render_x_axis_label = true;
+    p.x_axis_label = "frequency";
+    p.render_x_axis_values = true;
+    for (double freq : {20.0, 50.0, 100.0, 200.0, 500.0, 1'000.0, 2'000.0, 5'000.0, 10'000.0, 20'000.0}) {
+      p.x_axis_values.emplace_back(std::log(freq), std::format("{}Hz", freq));
+    }
+
+ 
+  }
 
   return 0;
 }

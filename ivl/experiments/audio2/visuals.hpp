@@ -189,8 +189,6 @@ void stft_visualise(std::span<const double> input, double sample_rate) {
     for (double freq : {20.0, 50.0, 100.0, 200.0, 500.0, 1'000.0, 2'000.0, 5'000.0, 10'000.0, 20'000.0}) {
       p.x_axis_values.emplace_back(std::log(freq), std::format("{}Hz", freq));
     }
-    const double min_log_freq = std::log(min_freq);
-    const double max_log_freq = std::log(max_freq);
     const double my = std::ranges::max(input);
     p.x_range = {min_log_freq, max_log_freq};
     p.y_range = {0, my};
