@@ -238,11 +238,31 @@ payload synthesize(const std::vector<double>& data, const payload& like) {
   p.bits_per_sample = like.bits_per_sample;
   contract_assert(p.format_type == 1);
   contract_assert(p.bytes_per_block == 2);
+  size_t clipped_max = 0;
+  size_t clipped_min = 0;
   for (auto y : data) {
     y *= (1ull << 15);
-    int16_t x = y;
-    p.data += std::string_view((const char*)&x, sizeof(x));
+    int64_t x = y;
+    if (x >= (1ll << 15)) {
+      ++clipped_max;
+      x = (1ll << 15) - 1;
+    }
+    if (x < -(1ll << 15)) {
+      ++clipped_min;
+      x = -(1ll << 15);
+    }
+    int16_t z = (int16_t)x;
+    p.data += std::string_view((const char*)&z, sizeof(z));
   }
+  if (clipped_max || clipped_min)
+    ivl::panic(
+      "synthesis clipped\n"
+      "  max: {}\n"
+      "  min: {}\n"
+      "  max count: {}\n"
+      "  min count: {}\n",
+      std::ranges::max(data), std::ranges::min(data), clipped_max, clipped_min
+    );
   return p;
 }
 } // namespace ivl::wav

@@ -1,6 +1,8 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include "bin"
 #include "common"
+#include "equalizer_config"
+#include "limiter"
 #include "stft"
 #include "visuals"
 #include "wav"
@@ -129,12 +131,13 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
   }
 
   if (implicit_flag("equalizer_test")) {
+    auto eqcfg = implicit_value<equalizer_config>("equalizer_config");
     auto db = [](double x) { return std::pow(10.0, x / 10.0); };
     auto a = extract(p, 0);
     auto sample_rate = (double)p.sample_rate;
     LOG(sample_rate);
     LOG(a.size());
-    size_t window = 1 << 11;
+    size_t window = 1 << 12;
     size_t hop = window / 2;
     contract_assert(hop * 2 == window);
     fft_executor f(window);
@@ -150,21 +153,26 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     LOG(hann[window / 2]);
     for (size_t i = 0; i + window <= a.size(); i += hop) {
       auto stft = f.forward(std::span(a).subspan(i).subspan(0, window));
-      // TODO: modify stft
       for (size_t j = 0; j < window; ++j) {
         auto& curr = stft[j];
         double freq = sample_rate * (double)(j < window / 2 ? j : window - j) / (double)window;
-        if (freq < 90.0) curr *= db(6.0);
-        else if (freq < 150.0) curr *= db(4.5);
-        else if (freq < 250.0) curr *= db(1.5);
-        else curr *= db(0.0);
+        curr *= db(eqcfg.get_db(freq));
+        // if (freq < 90.0) curr *= db(6.0);
+        // else if (freq < 150.0) curr *= db(4.5);
+        // else if (freq < 250.0) curr *= db(1.0);
+        // else curr *= db(-1.0);
+        // if (freq < 90.0) curr *= db(6.0);
+        // else if (freq < 150.0) curr *= db(4.5);
+        // else if (freq < 250.0) curr *= db(1.5);
+        // else curr *= db(0.0);
       }
       auto back = f.backward(stft);
       for (size_t j = 0; j < window; ++j) out[i + j] += back[j].real() * hann[j];
     }
     out.erase(out.begin(), out.begin() + front_padding);
     out.erase(out.end() - back_padding, out.end());
-    for (auto&& el : out) el /= (double)window;
+    for (auto&& el : out) el /= (double)window * db(implicit_value("amp_reduce_db", 2.5));
+    out = limiter(out);
     auto q = synthesize(out, p);
     save(q, "equalized.wav");
   }

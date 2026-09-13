@@ -144,6 +144,13 @@ inline namespace implicit_functions {
   }
 
   template<typename T>
+  const T& implicit_value(implicit_detail::fixed_name<std::remove_cvref_t<T>> name) {
+    contract_assert(implicit_detail::parsed);
+    contract_assert(*name.value_ptr);
+    return **name.value_ptr;
+  }
+
+  template<typename T>
   T implicit_value(implicit_detail::fixed_name<std::remove_cvref_t<T>> name, T&& default_value) {
     contract_assert(implicit_detail::parsed);
     return *name.value_ptr ? **name.value_ptr : static_cast<T&&>(default_value);
@@ -182,9 +189,11 @@ struct parser<implicit> {
         rest.remove_prefix(1);
         raw_arguments resteq(&eq, &eq + !!eq);
         // for booleans only allow `--foo=bar` and `--foo` , not `--foo bar`
-        if (is_same_type(node.type, ^^bool) && !eq) {
-          implicit_detail::parsed_storage<typename[:node.type:], i>::value = true;
-          break;
+        if constexpr (is_same_type(node.type, ^^bool)) {
+          if (!eq) {
+            implicit_detail::parsed_storage<typename[:node.type:], i>::value = true;
+            break;
+          }
         }
         parser<typename[:node.type:]> p;
         typename[:node.type:] v;
