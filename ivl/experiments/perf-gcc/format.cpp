@@ -2458,11 +2458,6 @@ namespace __format
       __format::__formatter_int<_CharT> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<__format::__char _CharT>
-    constexpr bool enable_nonlocking_formatter_optimization<_CharT> = true;
-#endif
-
   /** Format a string.
    * @{
    */
@@ -2491,11 +2486,6 @@ namespace __format
       __format::__formatter_str<_CharT> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<__format::__char _CharT>
-    constexpr bool enable_nonlocking_formatter_optimization<_CharT*> = true;
-#endif
-
   template<__format::__char _CharT>
     struct formatter<const _CharT*, _CharT>
     {
@@ -2522,12 +2512,6 @@ namespace __format
       __format::__formatter_str<_CharT> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<__format::__char _CharT>
-    constexpr bool
-    enable_nonlocking_formatter_optimization<const _CharT*> = true;
-#endif
-
   template<__format::__char _CharT, size_t _Nm>
     struct formatter<_CharT[_Nm], _CharT>
     {
@@ -2552,11 +2536,6 @@ namespace __format
     private:
       __format::__formatter_str<_CharT> _M_f;
     };
-
-#if __glibcxx_print >= 202403L
-  template<__format::__char _CharT, size_t _Nm>
-    constexpr bool enable_nonlocking_formatter_optimization<_CharT[_Nm]> = true;
-#endif
 
   template<typename _Traits, typename _Alloc>
     struct formatter<basic_string<char, _Traits, _Alloc>, char>
@@ -2583,13 +2562,6 @@ namespace __format
       __format::__formatter_str<char> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<typename _Tr, typename _Alloc>
-    constexpr bool
-    enable_nonlocking_formatter_optimization<basic_string<char, _Tr, _Alloc>>
-      = true;
-#endif
-
   template<typename _Traits>
     struct formatter<basic_string_view<char, _Traits>, char>
     {
@@ -2615,12 +2587,6 @@ namespace __format
       __format::__formatter_str<char> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<typename _Tr>
-    constexpr bool
-    enable_nonlocking_formatter_optimization<basic_string_view<char, _Tr>>
-      = true;
-#endif
   /// @}
 
 /// @cond undocumented
@@ -2667,12 +2633,6 @@ namespace __format
       __format::__formatter_int<_CharT> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<__format::__formattable_integer _Tp>
-    constexpr bool
-    enable_nonlocking_formatter_optimization<_Tp> = true;
-#endif
-
 #if defined __glibcxx_to_chars
   /// Format a floating-point value.
   template<__format::__formattable_float _Tp, __format::__char _CharT>
@@ -2693,12 +2653,6 @@ namespace __format
     private:
       __format::__formatter_fp<_CharT> _M_f;
     };
-
-#if __glibcxx_print >= 202403L
-  template<__format::__formattable_float _Tp>
-    constexpr bool
-    enable_nonlocking_formatter_optimization<_Tp> = true;
-#endif
 
 #if __LDBL_MANT_DIG__ == __DBL_MANT_DIG__
   // Reuse __formatter_fp<C>::format<double, Out> for long double.
@@ -2746,12 +2700,6 @@ namespace __format
       __format::__formatter_ptr<_CharT> _M_f;
     };
 
-#if __glibcxx_print >= 202403L
-  template<>
-    inline constexpr bool
-    enable_nonlocking_formatter_optimization<const void*> = true;
-#endif
-
   template<__format::__char _CharT>
     struct formatter<void*, _CharT>
     {
@@ -2771,12 +2719,6 @@ namespace __format
     private:
       __format::__formatter_ptr<_CharT> _M_f;
     };
-
-#if __glibcxx_print >= 202403l
-  template<>
-    inline constexpr bool
-    enable_nonlocking_formatter_optimization<void*> = true;
-#endif
 
   /// An iterator after the last character written, and the number of
   /// characters that would have been written.
@@ -5453,12 +5395,6 @@ namespace __format
 			  range_formatter<_Vt, _CharT>>;
       _Formatter_under _M_under;
     };
-
-#if __glibcxx_print >= 202406L
-  template<ranges::input_range _Rg>
-    requires (format_kind<_Rg> != range_format::disabled)
-    constexpr bool enable_nonlocking_formatter_optimization<_Rg> = false;
-#endif
 
 #endif // C++23 formatting ranges
 #undef _GLIBCXX_WIDEN
