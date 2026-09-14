@@ -1836,10 +1836,6 @@ namespace __format
       _Spec<_CharT> _M_spec{};
     };
 
-#ifdef __BFLT16_DIG__
-   using __bflt16_t = decltype(0.0bf16);
-#endif
-
   // Decide how 128-bit floating-point types should be formatted (or not).
   // When supported, the typedef __format::__flt128_t is the type that format
   // arguments should be converted to before passing them to __formatter_fp.
@@ -2682,12 +2678,6 @@ namespace __format
   // char, wchar_t, char8_t, char16_t, or char32_t
   template<typename _Tp>
     constexpr bool __is_formattable_integer = __is_integer<_Tp>::__value;
-
-#if defined __SIZEOF_INT128__
-  template<> inline constexpr bool __is_formattable_integer<__int128>  = true;
-  template<> inline constexpr bool __is_formattable_integer<unsigned __int128>
-      = true;
-#endif
 
   template<> inline constexpr bool __is_formattable_integer<char> = false;
   template<> inline constexpr bool __is_formattable_integer<wchar_t> = false;
@@ -3899,22 +3889,6 @@ namespace __format
 	basic_string_view<_CharT> _M_sv;
 	const void* _M_ptr;
 	handle _M_handle;
-#ifdef __SIZEOF_INT128__
-	__int128 _M_i128;
-	unsigned __int128 _M_u128;
-#endif
-#ifdef __BFLT16_DIG__
-	__bflt16_t _M_bf16;
-#endif
-#ifdef __FLT16_DIG__
-	_Float16 _M_f16;
-#endif
-#ifdef __FLT32_DIG__
-	_Float32 _M_f32;
-#endif
-#ifdef __FLT64_DIG__
-	_Float64 _M_f64;
-#endif
       };
 
       [[__gnu__::__always_inline__]]
@@ -3967,28 +3941,6 @@ namespace __format
 	    return (__u._M_sv = ... = __value);
 	  else if constexpr (is_same_v<_Tp, const void*>)
 	    return (__u._M_ptr = ... = __value);
-#ifdef __SIZEOF_INT128__
-	  else if constexpr (is_same_v<_Tp, __int128>)
-	    return (__u._M_i128 = ... = __value);
-	  else if constexpr (is_same_v<_Tp, unsigned __int128>)
-	    return (__u._M_u128 = ... = __value);
-#endif
-#ifdef __BFLT16_DIG__
-	  else if constexpr (is_same_v<_Tp, __bflt16_t>)
-	    return (__u._M_bf16 = ... = __value);
-#endif
-#ifdef __FLT16_DIG__
-	  else if constexpr (is_same_v<_Tp, _Float16>)
-	    return (__u._M_f16 = ... = __value);
-#endif
-#ifdef __FLT32_DIG__
-	  else if constexpr (is_same_v<_Tp, _Float32>)
-	    return (__u._M_f32 = ... = __value);
-#endif
-#ifdef __FLT64_DIG__
-	  else if constexpr (is_same_v<_Tp, _Float64>)
-	    return (__u._M_f64 = ... = __value);
-#endif
 	  else if constexpr (is_same_v<_Tp, handle>)
 	    return __u._M_handle;
 	  // Otherwise, ill-formed.
@@ -4092,12 +4044,6 @@ namespace __format
 	    return type_identity<_CharT>();
 	  else if constexpr (is_same_v<_Td, char> && is_same_v<_CharT, wchar_t>)
 	    return type_identity<_CharT>();
-#ifdef __SIZEOF_INT128__ // Check before signed/unsigned integer
-	  else if constexpr (is_same_v<_Td, __int128>)
-	    return type_identity<__int128>();
-	  else if constexpr (is_same_v<_Td, unsigned __int128>)
-	    return type_identity<unsigned __int128>();
-#endif
 	  else if constexpr (__is_signed_integer<_Td>::value)
 	    {
 	      if constexpr (sizeof(_Td) <= sizeof(int))
@@ -4124,22 +4070,6 @@ namespace __format
 	    return type_identity<__ibm128>();
 	  else if constexpr (is_same_v<_Td, __ieee128>)
 	    return type_identity<__ieee128>();
-#endif
-#if defined(__STDCPP_BFLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Td, __format::__bflt16_t>)
-	    return type_identity<__format::__bflt16_t>();
-#endif
-#if defined(__STDCPP_FLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Td, _Float16>)
-	    return type_identity<_Float16>();
-#endif
-#if defined(__FLT32_DIG__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Td, _Float32>)
-	    return type_identity<_Float32>();
-#endif
-#if defined(__FLT64_DIG__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
-	  else if constexpr (is_same_v<_Td, _Float64>)
-	    return type_identity<_Float64>();
 #endif
 	  else if constexpr (__is_specialization_of<_Td, basic_string_view>
 			    || __is_specialization_of<_Td, basic_string>)
@@ -4197,34 +4127,12 @@ namespace __format
 	  else if constexpr (is_same_v<_Tp, __ieee128>)
 	    return _Arg_ieee128;
 #endif
-#if defined(__STDCPP_BFLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Tp, __format::__bflt16_t>)
-	    return _Arg_bf16;
-#endif
-#if defined(__STDCPP_FLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Tp, _Float16>)
-	    return _Arg_f16;
-#endif
-#if defined(__FLT32_DIG__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	  else if constexpr (is_same_v<_Tp, _Float32>)
-	    return _Arg_f32;
-#endif
-#if defined(__FLT64_DIG__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
-	  else if constexpr (is_same_v<_Tp, _Float64>)
-	    return _Arg_f64;
-#endif
 	  else if constexpr (is_same_v<_Tp, const _CharT*>)
 	    return _Arg_str;
 	  else if constexpr (is_same_v<_Tp, basic_string_view<_CharT>>)
 	    return _Arg_sv;
 	  else if constexpr (is_same_v<_Tp, const void*>)
 	    return _Arg_ptr;
-#ifdef __SIZEOF_INT128__
-	  else if constexpr (is_same_v<_Tp, __int128>)
-	    return _Arg_i128;
-	  else if constexpr (is_same_v<_Tp, unsigned __int128>)
-	    return _Arg_u128;
-#endif
 	  else if constexpr (is_same_v<_Tp, handle>)
 	    return _Arg_handle;
 	}
@@ -4307,22 +4215,6 @@ namespace __format
 	    case _Arg_ieee128:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_ieee128);
 #endif
-#if defined(__STDCPP_BFLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	    case _Arg_bf16:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_bf16);
-#endif
-#if defined(__STDCPP_FLOAT16_T__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	    case _Arg_f16:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_f16);
-#endif
-#if defined(__FLT32_DIG__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-	    case _Arg_f32:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_f32);
-#endif
-#if defined(__FLT64_DIG__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
-	    case _Arg_f64:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_f64);
-#endif
 #endif // __glibcxx_to_chars
 	    case _Arg_str:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_str);
@@ -4332,12 +4224,6 @@ namespace __format
 	      return std::forward<_Visitor>(__vis)(_M_val._M_ptr);
 	    case _Arg_handle:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_handle);
-#ifdef __SIZEOF_INT128__
-	    case _Arg_i128:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_i128);
-	    case _Arg_u128:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_u128);
-#endif
 	    default:
 	      // Call exported definition of _M_handle_unrecognized from
 	      // libstdc++.so, that should recognize new _Arg_t values and
