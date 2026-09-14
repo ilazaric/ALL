@@ -2722,50 +2722,6 @@ namespace __format
     };
 #endif
 
-#if defined(__FLT32_DIG__) && defined(_GLIBCXX_FLOAT_IS_IEEE_BINARY32)
-  // Reuse __formatter_fp<C>::format<float, Out> for _Float32.
-  template<__format::__char _CharT>
-    struct formatter<_Float32, _CharT>
-    {
-      formatter() = default;
-
-      [[__gnu__::__always_inline__]]
-      constexpr typename basic_format_parse_context<_CharT>::iterator
-      parse(basic_format_parse_context<_CharT>& __pc)
-      { return _M_f.parse(__pc); }
-
-      template<typename _Out>
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(_Float32 __u, basic_format_context<_Out, _CharT>& __fc) const
-	{ return _M_f.format((float)__u, __fc); }
-
-    private:
-      __format::__formatter_fp<_CharT> _M_f;
-    };
-#endif
-
-#if defined(__FLT64_DIG__) && defined(_GLIBCXX_DOUBLE_IS_IEEE_BINARY64)
-  // Reuse __formatter_fp<C>::format<double, Out> for _Float64.
-  template<__format::__char _CharT>
-    struct formatter<_Float64, _CharT>
-    {
-      formatter() = default;
-
-      [[__gnu__::__always_inline__]]
-      constexpr typename basic_format_parse_context<_CharT>::iterator
-      parse(basic_format_parse_context<_CharT>& __pc)
-      { return _M_f.parse(__pc); }
-
-      template<typename _Out>
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(_Float64 __u, basic_format_context<_Out, _CharT>& __fc) const
-	{ return _M_f.format((double)__u, __fc); }
-
-    private:
-      __format::__formatter_fp<_CharT> _M_f;
-    };
-#endif
-
 #endif // __cpp_lib_to_chars
 
   /** Format a pointer.
