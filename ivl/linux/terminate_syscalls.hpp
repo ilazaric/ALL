@@ -1,8 +1,7 @@
 #pragma once
 
 #include <ivl/linux/raw_syscalls>
-// TODO: think about this dependency
-#include <ivl/logger>
+#include <iostream>
 
 // If an error occurs, log it and abort process.
 
@@ -24,11 +23,15 @@ namespace ivl::linux::terminate_syscalls {
 #define X_CARGS5(t1, a1, ...) a1, X_CARGS4(__VA_ARGS__)
 #define X_CARGS6(t1, a1, ...) a1, X_CARGS5(__VA_ARGS__)
 
+void log_error(long ret, const char* function_name) {
+  std::cerr << "[LOG] " << __FILE__ << ":" << function_name << "(" << __LINE__ << "): -ret" << -ret << "\n";
+};
+
 #define X(N, name, ...)                                                                                                \
   inline long name(X_PARAMS##N(__VA_ARGS__)) {                                                                         \
     auto ret = ::ivl::linux::raw_syscalls::name(X_CARGS##N(__VA_ARGS__));                                              \
     if (ret < 0) {                                                                                                     \
-      LOG(-ret);                                                                                                       \
+      log_error(ret, __func__);                                                                                        \
       ::ivl::linux::raw_syscalls::exit_group(1);                                                                       \
       asm volatile("ud2" ::: "memory");                                                                                \
     }                                                                                                                  \
