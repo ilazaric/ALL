@@ -101,10 +101,6 @@ using format_args = basic_format_args<format_context>;
 template<typename _Context>
 class basic_format_arg;
 
-/** A compile-time checked format string for the specified argument types.
- *
- * @since C++23 but available as an extension in C++20.
- */
 template<typename _CharT, typename... _Args>
 struct basic_format_string {
   template<typename _Tp>
@@ -1175,9 +1171,6 @@ struct formatter<_Tp, _CharT> {
 
 #endif
 
-/** Format a pointer.
- * @{
- */
 template<__format::__char _CharT>
 struct formatter<const void*, _CharT> {
   formatter() = default;
@@ -2323,19 +2316,6 @@ namespace __format {
 
 } // namespace __format
 
-/** Context for std::format and similar functions.
- *
- * A formatting context contains an output iterator and locale to use
- * for the formatting operations. Most programs will never need to use
- * this class template explicitly. For typical uses of `std::format` the
- * library will use the specializations `std::format_context` (for `char`)
- * and `std::wformat_context` (for `wchar_t`).
- *
- * You are not allowed to define partial or explicit specializations of
- * this class template.
- *
- * @since C++20
- */
 template<typename _Out, typename _CharT>
 
 class _GLIBCXX_NO_SPECIALIZATIONS basic_format_context {
