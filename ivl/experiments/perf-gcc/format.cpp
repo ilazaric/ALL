@@ -1895,34 +1895,6 @@ namespace __format
   // Format 128-bit floating-point types using _Float128.
   using __flt128_t = _Float128;
 # define _GLIBCXX_FORMAT_F128 3
-
-# if __cplusplus == 202002L
-  // These overloads exist in the library, but are not declared for C++20.
-  // Make them available as std::__format::to_chars.
-  to_chars_result
-  to_chars(char*, char*, _Float128) noexcept
-#  if _GLIBCXX_INLINE_VERSION
-    __asm("_ZNSt3__88to_charsEPcS0_DF128_");
-#  else
-    __asm("_ZSt8to_charsPcS_DF128_");
-#  endif
-
-  to_chars_result
-  to_chars(char*, char*, _Float128, chars_format) noexcept
-#  if _GLIBCXX_INLINE_VERSION
-    __asm("_ZNSt3__88to_charsEPcS0_DF128_NS_12chars_formatE");
-#  else
-    __asm("_ZSt8to_charsPcS_DF128_St12chars_format");
-#  endif
-
-  to_chars_result
-  to_chars(char*, char*, _Float128, chars_format, int) noexcept
-#  if _GLIBCXX_INLINE_VERSION
-    __asm("_ZNSt3__88to_charsEPcS0_DF128_NS_12chars_formatEi");
-#  else
-    __asm("_ZSt8to_charsPcS_DF128_St12chars_formati");
-#  endif
-# endif
 #endif
 
   using std::to_chars;
