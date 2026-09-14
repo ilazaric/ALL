@@ -1956,28 +1956,6 @@ private:
   __format::__formatter_fp<_CharT> _M_f;
 };
 
-#if __LDBL_MANT_DIG__ == __DBL_MANT_DIG__
-
-template<__format::__char _CharT>
-struct formatter<long double, _CharT> {
-  formatter() = default;
-
-  [[__gnu__::__always_inline__]]
-  constexpr typename basic_format_parse_context<_CharT>::iterator parse(basic_format_parse_context<_CharT>& __pc) {
-    return _M_f.parse(__pc);
-  }
-
-  template<typename _Out>
-  typename basic_format_context<_Out, _CharT>::iterator
-  format(long double __u, basic_format_context<_Out, _CharT>& __fc) const {
-    return _M_f.format((double)__u, __fc);
-  }
-
-private:
-  __format::__formatter_fp<_CharT> _M_f;
-};
-#endif
-
 #endif
 
 /** Format a pointer.
@@ -1994,25 +1972,6 @@ struct formatter<const void*, _CharT> {
   template<typename _Out>
   constexpr typename basic_format_context<_Out, _CharT>::iterator
   format(const void* __v, basic_format_context<_Out, _CharT>& __fc) const {
-    return _M_f.format(__v, __fc);
-  }
-
-private:
-  __format::__formatter_ptr<_CharT> _M_f;
-};
-
-template<__format::__char _CharT>
-struct formatter<void*, _CharT> {
-  formatter() = default;
-
-  [[__gnu__::__always_inline__]]
-  constexpr typename basic_format_parse_context<_CharT>::iterator parse(basic_format_parse_context<_CharT>& __pc) {
-    return _M_f.parse(__pc);
-  }
-
-  template<typename _Out>
-  constexpr typename basic_format_context<_Out, _CharT>::iterator
-  format(void* __v, basic_format_context<_Out, _CharT>& __fc) const {
     return _M_f.format(__v, __fc);
   }
 
