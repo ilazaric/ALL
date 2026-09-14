@@ -1128,82 +1128,6 @@ namespace __format {
     __format::to_chars(__p, __p, __t, chars_format::scientific, 6);
   };
 
-  template<__format::__char _CharT>
-  struct __formatter_ptr {
-    constexpr __formatter_ptr() noexcept : _M_spec() {
-      _M_spec._M_type = _Pres_x;
-      _M_spec._M_alt = true;
-    }
-
-    constexpr __formatter_ptr(_Spec<_CharT> __spec) noexcept : _M_spec(__spec) { _M_set_default(); }
-
-    constexpr typename basic_format_parse_context<_CharT>::iterator parse(basic_format_parse_context<_CharT>& __pc) {
-      __format::_Spec<_CharT> __spec{};
-      const auto __last = __pc.end();
-      auto __first = __pc.begin();
-
-      auto __finalize = [this, &__spec] {
-        _M_spec = __spec;
-        _M_set_default();
-      };
-
-      auto __finished = [&] {
-        if (__first == __last || *__first == '}') {
-          __finalize();
-          return true;
-        }
-        return false;
-      };
-
-      if (__finished()) return __first;
-
-      __first = __spec._M_parse_fill_and_align(__first, __last);
-      if (__finished()) return __first;
-
-#if __glibcxx_format >= 202304L
-      __first = __spec._M_parse_zero_fill(__first, __last);
-      if (__finished()) return __first;
-#endif
-
-      __first = __spec._M_parse_width(__first, __last, __pc);
-      if (__finished()) return __first;
-
-      if (*__first == 'p') {
-        __spec._M_type = _Pres_x;
-        __spec._M_alt = true;
-        ++__first;
-      }
-#if __glibcxx_format >= 202304L
-      else if (*__first == 'P') {
-        __spec._M_type = _Pres_X;
-        __spec._M_alt = true;
-        ++__first;
-      }
-#endif
-
-      if (__finished()) return __first;
-
-      __format::__failed_to_parse_format_spec();
-    }
-
-    template<typename _Out>
-    constexpr typename basic_format_context<_Out, _CharT>::iterator
-    format(const void* __v, basic_format_context<_Out, _CharT>& __fc) const {
-      throw;
-    }
-
-  private:
-    [[__gnu__::__always_inline__]]
-    constexpr void _M_set_default() {
-      if (_M_spec._M_type == _Pres_none) {
-        _M_spec._M_type = _Pres_x;
-        _M_spec._M_alt = true;
-      }
-    }
-
-    __format::_Spec<_CharT> _M_spec;
-  };
-
 } // namespace __format
 
 template<__format::__char _CharT>
@@ -1315,17 +1239,14 @@ struct formatter<const void*, _CharT> {
   formatter() = default;
 
   constexpr typename basic_format_parse_context<_CharT>::iterator parse(basic_format_parse_context<_CharT>& __pc) {
-    return _M_f.parse(__pc);
+    throw;
   }
 
   template<typename _Out>
   constexpr typename basic_format_context<_Out, _CharT>::iterator
   format(const void* __v, basic_format_context<_Out, _CharT>& __fc) const {
-    return _M_f.format(__v, __fc);
+    throw;
   }
-
-private:
-  __format::__formatter_ptr<_CharT> _M_f;
 };
 
 template<typename _Out>
