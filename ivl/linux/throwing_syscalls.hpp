@@ -1,7 +1,6 @@
 #pragma once
 
 #include <ivl/exception>
-#include <ivl/linux/file_descriptor>
 #include <ivl/linux/raw_syscalls>
 #include <string>
 #include <utility>
