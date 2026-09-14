@@ -3,7 +3,9 @@
 #include <ivl/linux/utility>
 #include <ivl/meta>
 #include <ivl/utility>
+#include <algorithm>
 #include <cstring>
+#include <ranges>
 
 // https://docs.fileformat.com/audio/wav/
 // https://en.wikipedia.org/wiki/WAV

@@ -1,11 +1,13 @@
 #pragma once
 
 #include <ivl/logger>
+#include "common"
 #include <raylib/raylib.h>
 #include <raylib/raymath.h>
 #include <algorithm>
 #include <cmath>
 #include <format>
+#include <ranges>
 #include <span>
 #include <vector>
 
