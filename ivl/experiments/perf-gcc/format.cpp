@@ -25,7 +25,6 @@
 #include <charconv>
 #include <concepts>
 #include <limits>
-#include <locale>
 #include <span>
 #include <string>
 #include <string_view>
@@ -921,61 +920,6 @@ namespace __format {
 
     return __format::__write(__out, _Escapes<_CharT>::_S_term(__term));
   }
-
-  struct _Optional_locale {
-    [[__gnu__::__always_inline__]]
-    constexpr _Optional_locale()
-        : _M_dummy(), _M_hasval(false) {}
-
-    _Optional_locale(const locale& __loc) noexcept : _M_loc(__loc), _M_hasval(true) {}
-
-    constexpr _Optional_locale(const _Optional_locale& __l) noexcept : _M_dummy(), _M_hasval(__l._M_hasval) {
-      if (_M_hasval) std::construct_at(&_M_loc, __l._M_loc);
-    }
-
-    constexpr _Optional_locale& operator=(const _Optional_locale& __l) noexcept {
-      if (_M_hasval) {
-        if (__l._M_hasval) _M_loc = __l._M_loc;
-        else {
-          _M_loc.~locale();
-          _M_hasval = false;
-        }
-      } else if (__l._M_hasval) {
-        std::construct_at(&_M_loc, __l._M_loc);
-        _M_hasval = true;
-      }
-      return *this;
-    }
-
-    constexpr ~_Optional_locale() {
-      if (_M_hasval) _M_loc.~locale();
-    }
-
-    _Optional_locale& operator=(locale&& __loc) noexcept {
-      if (_M_hasval) _M_loc = std::move(__loc);
-      else {
-        std::construct_at(&_M_loc, std::move(__loc));
-        _M_hasval = true;
-      }
-      return *this;
-    }
-
-    const locale& value() noexcept {
-      if (!_M_hasval) {
-        std::construct_at(&_M_loc);
-        _M_hasval = true;
-      }
-      return _M_loc;
-    }
-
-    constexpr bool has_value() const noexcept { return _M_hasval; }
-
-    union {
-      char _M_dummy = '\0';
-      std::locale _M_loc;
-    };
-    bool _M_hasval = false;
-  };
 
   template<__char _CharT>
   struct __formatter_str {
@@ -2399,13 +2343,9 @@ class _GLIBCXX_NO_SPECIALIZATIONS basic_format_context {
 
   basic_format_args<basic_format_context> _M_args;
   _Out _M_out;
-  __format::_Optional_locale _M_loc;
 
   constexpr basic_format_context(basic_format_args<basic_format_context> __args, _Out __out)
       : _M_args(__args), _M_out(std::move(__out)) {}
-
-  constexpr basic_format_context(basic_format_args<basic_format_context> __args, _Out __out, const std::locale& __loc)
-      : _M_args(__args), _M_out(std::move(__out)), _M_loc(__loc) {}
 
   basic_format_context(const basic_format_context&) = delete;
   basic_format_context& operator=(const basic_format_context&) = delete;
@@ -2427,11 +2367,6 @@ public:
   [[nodiscard]]
   constexpr basic_format_arg<basic_format_context> arg(size_t __id) const noexcept {
     return _M_args.get(__id);
-  }
-
-  [[nodiscard]]
-  std::locale locale() {
-    return _M_loc.value();
   }
 
   [[nodiscard]]
