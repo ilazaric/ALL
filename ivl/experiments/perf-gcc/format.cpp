@@ -2230,25 +2230,8 @@ basic_format_args(__format::_Arg_store<_Context, _Args...>) -> basic_format_args
 template<typename _Context, typename... _Args>
 constexpr auto make_format_args(_Args&... __fmt_args) noexcept;
 
-template<typename _Context, typename... _Args>
-class __format::_Arg_store {
-  friend std::basic_format_args<_Context>;
-
-  template<typename _Ctx, typename... _Argz>
-  friend constexpr auto std::
-#if _GLIBCXX_INLINE_VERSION
-    __8::
-#endif
-      make_format_args(_Argz&...) noexcept;
-
-  static constexpr bool _S_values_only = sizeof...(_Args) <= basic_format_args<_Context>::_S_max_packed_args;
-
-  using _Element_t = __conditional_t<_S_values_only, __format::_Arg_value<_Context>, basic_format_arg<_Context>>;
-
-  _Element_t _M_args[sizeof...(_Args)];
-
-  template<typename _Tp>
-  static constexpr _Element_t _S_make_elt(_Tp& __v) {
+ template<typename _Context, typename _Element_t, bool _S_values_only, typename _Tp>
+ constexpr _Element_t _S_make_elt(_Tp& __v) {
     using _Tq = remove_const_t<_Tp>;
     using _CharT = typename _Context::char_type;
     static_assert(
@@ -2269,9 +2252,26 @@ class __format::_Arg_store {
     else return __arg;
   }
 
+template<typename _Context, typename... _Args>
+class __format::_Arg_store {
+  friend std::basic_format_args<_Context>;
+
+  template<typename _Ctx, typename... _Argz>
+  friend constexpr auto std::
+#if _GLIBCXX_INLINE_VERSION
+    __8::
+#endif
+      make_format_args(_Argz&...) noexcept;
+
+  static constexpr bool _S_values_only = sizeof...(_Args) <= basic_format_args<_Context>::_S_max_packed_args;
+
+  using _Element_t = __conditional_t<_S_values_only, __format::_Arg_value<_Context>, basic_format_arg<_Context>>;
+
+  _Element_t _M_args[sizeof...(_Args)];
+
   template<typename... _Tp>
     requires(sizeof...(_Tp) == sizeof...(_Args))
-  [[__gnu__::__always_inline__]] constexpr _Arg_store(_Tp&... __a) noexcept : _M_args{_S_make_elt(__a)...} {}
+  [[__gnu__::__always_inline__]] constexpr _Arg_store(_Tp&... __a) noexcept : _M_args{_S_make_elt<_Context, _Element_t, _S_values_only>(__a)...} {}
 };
 
 template<typename _Context>
@@ -2653,26 +2653,6 @@ template<typename _Tp>
 consteval basic_format_string<_CharT, _Args...>::basic_format_string(const _Tp& __s) noexcept : _M_str(__s) {
   __format::_Checking_scanner<_CharT, remove_cvref_t<_Args>...> __scanner(_M_str);
   __scanner._M_scan();
-}
-
-template<typename _Out>
-  requires output_iterator<_Out, const char&>
-[[__gnu__::__always_inline__]]
-inline constexpr _Out vformat_to(_Out __out, string_view __fmt, format_args __args) {
-  return __format::__do_vformat_to(std::move(__out), __fmt, __args);
-}
-
-[[nodiscard]]
-inline constexpr string vformat(string_view __fmt, format_args __args) {
-  __format::_Str_sink<char> __buf;
-  std::vformat_to(__buf.out(), __fmt, __args);
-  return std::move(__buf).get();
-}
-
-template<typename... _Args>
-[[nodiscard]]
-inline constexpr string format(format_string<_Args...> __fmt, _Args&&... __args) {
-  return std::vformat(__fmt.get(), std::make_format_args(__args...));
 }
 
 #if __glibcxx_format_ranges
@@ -3098,7 +3078,35 @@ _GLIBCXX_END_NAMESPACE_VERSION
 #endif
 #pragma GCC diagnostic pop
 
+// namespace std {
+// template<typename _Out>
+//   requires output_iterator<_Out, const char&>
+// [[__gnu__::__always_inline__]]
+// inline constexpr _Out vformat_to(_Out __out, string_view __fmt, format_args __args) {
+//   return __format::__do_vformat_to(std::move(__out), __fmt, __args);
+// }
+
+// [[nodiscard]]
+// inline constexpr string vformat(string_view __fmt, format_args __args) {
+//   __format::_Str_sink<char> __buf;
+//   std::vformat_to(__buf.out(), __fmt, __args);
+//   return std::move(__buf).get();
+// }
+
+// template<typename... _Args>
+// [[nodiscard]]
+// inline constexpr string format(format_string<_Args...> __fmt, _Args&&... __args) {
+//   return std::vformat(__fmt.get(), std::make_format_args(__args...));
+// }
+// }
+
 int main(int argc, char** argv) {
   std::span<const char*> raw_args((const char**)argv + !!argc, (const char**)argv + argc);
-  return std::format("too many arguments, unparsed: {::?}", raw_args).size();
+  // return std::format("too many arguments, unparsed: {::?}", raw_args).size();
+  std::format_string<std::span<const char*>> __fmt1("too many arguments, unparsed: {::?}");
+  std::string_view __fmt = __fmt1.get();
+  std::format_args __args = std::make_format_args(raw_args);
+  std::__format::_Str_sink<char> __buf;
+  std::__format::__do_vformat_to(__buf.out(), __fmt, __args);
+  return std::move(__buf).get().size();
 }
