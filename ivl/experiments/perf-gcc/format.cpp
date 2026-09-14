@@ -16,7 +16,6 @@
 #include <concepts>
 #include <limits>
 #include <locale>
-#include <optional>
 #include <span>
 #include <string_view>
 #include <string>
@@ -5086,8 +5085,6 @@ namespace __format
 
 } // namespace __format
 /// @endcond
-
-  // [format.tuple] Tuple formatter
 
   // [format.range.formatter], class template range_formatter
   template<typename _Tp, __format::__char _CharT>
