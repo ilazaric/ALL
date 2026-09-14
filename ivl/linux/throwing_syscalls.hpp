@@ -58,7 +58,7 @@ namespace {
     X_FARGS##N(__VA_ARGS__);                                                                                           \
     auto ret = ::ivl::linux::raw_syscalls::name(X_CARGS##N(X_ID __VA_OPT__(, ) __VA_ARGS__));                          \
     if (ret < 0) {                                                                                                     \
-      throw ivl::base_exception{std::format("syscall `" #name "` failed with error code {}", ret)};                    \
+      throw ivl::base_exception{"syscall `" #name "` failed with error code " + std::to_string(ret)};                  \
     }                                                                                                                  \
     return ret;                                                                                                        \
   }
@@ -97,5 +97,5 @@ namespace {
 } // namespace ivl::linux::throwing_syscalls
 
 #define X_NAMESPACE ivl::linux::throwing_syscalls
-#include <ivl/linux/syscall_semantic_X>  
+#include <ivl/linux/syscall_semantic_X>
 #undef X_NAMESPACE
