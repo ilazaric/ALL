@@ -3,8 +3,8 @@
 #include <ivl/exception>
 #include <ivl/linux/raw_syscalls>
 #include <string>
-#include <utility>
 #include <type_traits>
+#include <utility>
 
 namespace ivl::linux::throwing_syscalls {
 
@@ -12,16 +12,16 @@ namespace ivl::linux::throwing_syscalls {
 // ....: it's even leaky
 
 namespace {
-  template <typename T>
+  template<typename T>
   auto convert(T arg) {
     if constexpr (std::is_enum_v<T>) {
-      return std::to_underlying<T>(arg);
+      return std::format("{}", std::to_underlying<T>(arg));
     } else if constexpr (!std::is_pointer_v<T>) {
-      return arg;
+      return std::format("{}", arg);
     } else if constexpr (std::is_same_v<T, char*> || std::is_same_v<T, const char*>) {
-      return arg;
+      return std::format("{}", arg);
     } else {
-      return reinterpret_cast<const void*>(arg);
+      return std::format("{}", reinterpret_cast<const void*>(arg));
     }
   }
 } // namespace
