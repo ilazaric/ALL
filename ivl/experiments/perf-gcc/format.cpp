@@ -1866,18 +1866,6 @@ namespace __format
   to_chars_result
   to_chars(char*, char*, __ibm128, chars_format, int) noexcept
     __asm("_ZSt8to_charsPcS_eSt12chars_formati");
-#elif __cplusplus == 202002L
-  to_chars_result
-  to_chars(char*, char*, __ieee128) noexcept
-    __asm("_ZSt8to_charsPcS_u9__ieee128");
-
-  to_chars_result
-  to_chars(char*, char*, __ieee128, chars_format) noexcept
-    __asm("_ZSt8to_charsPcS_u9__ieee128St12chars_format");
-
-  to_chars_result
-  to_chars(char*, char*, __ieee128, chars_format, int) noexcept
-    __asm("_ZSt8to_charsPcS_u9__ieee128St12chars_formati");
 #endif
 
 #elif defined _GLIBCXX_LDOUBLE_IS_IEEE_BINARY128
