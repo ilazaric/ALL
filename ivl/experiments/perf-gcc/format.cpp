@@ -33,7 +33,6 @@
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wpedantic" // __int128
-#pragma GCC diagnostic ignored "-Wc++23-extensions" // bf16
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
@@ -1845,41 +1844,6 @@ namespace __format
   // long double when _GLIBCXX_FORMAT_F128=2,
   // _Float128 when _GLIBCXX_FORMAT_F128=3.
 #undef _GLIBCXX_FORMAT_F128
-
-#ifdef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
-
-  // Format 128-bit floating-point types using __ieee128.
-  using __flt128_t = __ieee128;
-# define _GLIBCXX_FORMAT_F128 1
-
-#ifdef __LONG_DOUBLE_IEEE128__
-  // These overloads exist in the library, but are not declared.
-  // Make them available as std::__format::to_chars.
-  to_chars_result
-  to_chars(char*, char*, __ibm128) noexcept
-    __asm("_ZSt8to_charsPcS_e");
-
-  to_chars_result
-  to_chars(char*, char*, __ibm128, chars_format) noexcept
-    __asm("_ZSt8to_charsPcS_eSt12chars_format");
-
-  to_chars_result
-  to_chars(char*, char*, __ibm128, chars_format, int) noexcept
-    __asm("_ZSt8to_charsPcS_eSt12chars_formati");
-#endif
-
-#elif defined _GLIBCXX_LDOUBLE_IS_IEEE_BINARY128
-
-  // Format 128-bit floating-point types using long double.
-  using __flt128_t = long double;
-# define _GLIBCXX_FORMAT_F128 2
-
-#elif __FLT128_DIG__ && defined(_GLIBCXX_HAVE_FLOAT128_MATH)
-
-  // Format 128-bit floating-point types using _Float128.
-  using __flt128_t = _Float128;
-# define _GLIBCXX_FORMAT_F128 3
-#endif
 
   using std::to_chars;
 
@@ -3796,10 +3760,6 @@ namespace __format
     _Arg_bf16, _Arg_f16, _Arg_f32, _Arg_f64,
     _Arg_max_,
 
-#ifdef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
-    _Arg_ibm128 = _Arg_ldbl,
-    _Arg_ieee128 = _Arg_float128,
-#endif
   };
   using enum _Arg_t;
 
@@ -3867,12 +3827,7 @@ namespace __format
 	unsigned long long _M_ull;
 	float _M_flt;
 	double _M_dbl;
-#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT // No long double if it's ambiguous.
 	long double _M_ldbl;
-#else
-	__ibm128  _M_ibm128;
-	__ieee128 _M_ieee128;
-#endif
 	const _CharT* _M_str;
 	basic_string_view<_CharT> _M_sv;
 	const void* _M_ptr;
@@ -3914,15 +3869,8 @@ namespace __format
 	    return (__u._M_flt = ... = __value);
 	  else if constexpr (is_same_v<_Tp, double>)
 	    return (__u._M_dbl = ... = __value);
-#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	  else if constexpr (is_same_v<_Tp, long double>)
 	    return (__u._M_ldbl = ... = __value);
-#else
-	  else if constexpr (is_same_v<_Tp, __ibm128>)
-	    return (__u._M_ibm128 = ... = __value);
-	  else if constexpr (is_same_v<_Tp, __ieee128>)
-	    return (__u._M_ieee128 = ... = __value);
-#endif
 	  else if constexpr (is_same_v<_Tp, const _CharT*>)
 	    return (__u._M_str = ... = __value);
 	  else if constexpr (is_same_v<_Tp, basic_string_view<_CharT>>)
@@ -4050,15 +3998,8 @@ namespace __format
 	    return type_identity<float>();
 	  else if constexpr (is_same_v<_Td, double>)
 	    return type_identity<double>();
-#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	  else if constexpr (is_same_v<_Td, long double>)
 	    return type_identity<long double>();
-#else
-	  else if constexpr (is_same_v<_Td, __ibm128>)
-	    return type_identity<__ibm128>();
-	  else if constexpr (is_same_v<_Td, __ieee128>)
-	    return type_identity<__ieee128>();
-#endif
 	  else if constexpr (__is_specialization_of<_Td, basic_string_view>
 			    || __is_specialization_of<_Td, basic_string>)
 	    {
@@ -4105,16 +4046,8 @@ namespace __format
 	    return _Arg_flt;
 	  else if constexpr (is_same_v<_Tp, double>)
 	    return _Arg_dbl;
-#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	  else if constexpr (is_same_v<_Tp, long double>)
 	    return _Arg_ldbl;
-#else
-	  // Don't use _Arg_ldbl for this target, it's ambiguous.
-	  else if constexpr (is_same_v<_Tp, __ibm128>)
-	    return _Arg_ibm128;
-	  else if constexpr (is_same_v<_Tp, __ieee128>)
-	    return _Arg_ieee128;
-#endif
 	  else if constexpr (is_same_v<_Tp, const _CharT*>)
 	    return _Arg_str;
 	  else if constexpr (is_same_v<_Tp, basic_string_view<_CharT>>)
@@ -4194,15 +4127,8 @@ namespace __format
 	      return std::forward<_Visitor>(__vis)(_M_val._M_flt);
 	    case _Arg_dbl:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_dbl);
-#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 	    case _Arg_ldbl:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_ldbl);
-#else
-	    case _Arg_ibm128:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_ibm128);
-	    case _Arg_ieee128:
-	      return std::forward<_Visitor>(__vis)(_M_val._M_ieee128);
-#endif
 #endif // __glibcxx_to_chars
 	    case _Arg_str:
 	      return std::forward<_Visitor>(__vis)(_M_val._M_str);
