@@ -4718,8 +4718,7 @@ namespace __format
   template<typename _Out, typename _CharT, typename _Context>
     constexpr _Out
     __do_vformat_to(_Out, basic_string_view<_CharT>,
-		    const basic_format_args<_Context>&,
-		    const locale* = nullptr);
+		    const basic_format_args<_Context>&);
 
   template<typename _CharT> struct __formatter_chrono;
 
@@ -4771,8 +4770,7 @@ namespace __format
       template<typename _Out2, typename _CharT2, typename _Context2>
 	friend constexpr _Out2
 	__format::__do_vformat_to(_Out2, basic_string_view<_CharT2>,
-				  const basic_format_args<_Context2>&,
-				  const locale*);
+				  const basic_format_args<_Context2>&);
 
       friend __format::__formatter_chrono<_CharT>;
 
@@ -5145,26 +5143,23 @@ namespace __format
   template<typename _Out, typename _CharT, typename _Context>
     inline constexpr _Out
     __do_vformat_to(_Out __out, basic_string_view<_CharT> __fmt,
-		    const basic_format_args<_Context>& __args,
-		    const locale* __loc)
+		    const basic_format_args<_Context>& __args)
     {
       if constexpr (is_same_v<_Out, _Sink_iter<_CharT>>)
 	{
-	  auto __ctx = __loc == nullptr
-		     ? _Context(__args, __out)
-		     : _Context(__args, __out, *__loc);
+	  auto __ctx = _Context(__args, __out);
 	  return __format::__do_vformat_to(__out, __fmt, __ctx);
 	}
       else if constexpr (__contiguous_char_iter<_CharT, _Out>)
 	{
 	  _Ptr_sink<_CharT> __sink(__out);
-	  __format::__do_vformat_to(__sink.out(), __fmt, __args, __loc);
+	  __format::__do_vformat_to(__sink.out(), __fmt, __args);
 	  return std::move(__sink)._M_finish(__out).out;
 	}
       else
 	{
 	  _Iter_sink<_CharT, _Out> __sink(std::move(__out));
-	  __format::__do_vformat_to(__sink.out(), __fmt, __args, __loc);
+	  __format::__do_vformat_to(__sink.out(), __fmt, __args);
 	  return std::move(__sink)._M_finish().out;
 	}
     }
