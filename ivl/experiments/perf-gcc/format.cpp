@@ -2822,33 +2822,6 @@ namespace __format
     enable_nonlocking_formatter_optimization<void*> = true;
 #endif
 
-  template<__format::__char _CharT>
-    struct formatter<nullptr_t, _CharT>
-    {
-      formatter() = default;
-
-      [[__gnu__::__always_inline__]]
-      constexpr typename basic_format_parse_context<_CharT>::iterator
-      parse(basic_format_parse_context<_CharT>& __pc)
-      { return _M_f.parse(__pc); }
-
-      template<typename _Out>
-	constexpr
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(nullptr_t, basic_format_context<_Out, _CharT>& __fc) const
-	{ return _M_f.format(nullptr, __fc); }
-
-    private:
-      __format::__formatter_ptr<_CharT> _M_f;
-    };
-  /// @}
-
-#if __glibcxx_print >= 202403L
-  template<>
-    inline constexpr bool
-    enable_nonlocking_formatter_optimization<nullptr_t> = true;
-#endif
-
   /// An iterator after the last character written, and the number of
   /// characters that would have been written.
   template<typename _Out>
@@ -5217,63 +5190,6 @@ namespace __format
 /// @endcond
 
   // [format.tuple] Tuple formatter
-  template<__format::__char _CharT, formattable<_CharT> _Fp,
-	   formattable<_CharT> _Sp>
-    struct formatter<pair<_Fp, _Sp>, _CharT>
-      : __format::__tuple_formatter<_CharT, remove_cvref_t<_Fp>,
-				    remove_cvref_t<_Sp>>
-    {
-    private:
-      using __maybe_const_pair
-	= __conditional_t<formattable<const _Fp, _CharT>
-			  && formattable<const _Sp, _CharT>,
-			  const pair<_Fp, _Sp>, pair<_Fp, _Sp>>;
-    public:
-      // We deviate from standard, that declares this as template accepting
-      // unconstrained FormatContext type, which seems unimplementable.
-      template<typename _Out>
-	constexpr
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(__maybe_const_pair& __p,
-	       basic_format_context<_Out, _CharT>& __fc) const
-	{ return this->_M_format_elems(__p.first, __p.second, __fc); }
-    };
-
-#if __glibcxx_print >= 202406L
-  // _GLIBCXX_RESOLVE_LIB_DEFECTS
-  // 4399. enable_nonlocking_formatter_optimization for pair and tuple needs remove_cvref_t
-  template<typename _Fp, typename _Sp>
-    constexpr bool enable_nonlocking_formatter_optimization<pair<_Fp, _Sp>>
-      = enable_nonlocking_formatter_optimization<remove_cvref_t<_Fp>>
-	&& enable_nonlocking_formatter_optimization<remove_cvref_t<_Sp>>;
-#endif
-
-  template<__format::__char _CharT, formattable<_CharT>... _Tps>
-    struct formatter<tuple<_Tps...>, _CharT>
-      : __format::__tuple_formatter<_CharT, remove_cvref_t<_Tps>...>
-    {
-    private:
-      using __maybe_const_tuple
-	= __conditional_t<(formattable<const _Tps, _CharT> && ...),
-			  const tuple<_Tps...>, tuple<_Tps...>>;
-    public:
-      // We deviate from standard, that declares this as template accepting
-      // unconstrained FormatContext type, which seems unimplementable.
-      template<typename _Out>
-	constexpr
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(__maybe_const_tuple& __t,
-	       basic_format_context<_Out, _CharT>& __fc) const
-	{ return this->_M_format(__t, index_sequence_for<_Tps...>(), __fc); }
-    };
-
-#if __glibcxx_print >= 202406L
-  // _GLIBCXX_RESOLVE_LIB_DEFECTS
-  // 4399. enable_nonlocking_formatter_optimization for pair and tuple needs remove_cvref_t
-  template<typename... _Tps>
-    constexpr bool enable_nonlocking_formatter_optimization<tuple<_Tps...>>
-      = (enable_nonlocking_formatter_optimization<remove_cvref_t<_Tps>> && ...);
-#endif
 
   // [format.range.formatter], class template range_formatter
   template<typename _Tp, __format::__char _CharT>
