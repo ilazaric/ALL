@@ -1870,33 +1870,6 @@ private:
   __format::__formatter_int<_CharT> _M_f;
 };
 
-/** Format a string.
- * @{
- */
-template<__format::__char _CharT>
-struct formatter<_CharT*, _CharT> {
-  formatter() = default;
-
-  [[__gnu__::__always_inline__]]
-  constexpr typename basic_format_parse_context<_CharT>::iterator parse(basic_format_parse_context<_CharT>& __pc) {
-    return _M_f.parse(__pc);
-  }
-
-  template<typename _Out>
-  [[__gnu__::__nonnull__]]
-  constexpr typename basic_format_context<_Out, _CharT>::iterator
-  format(_CharT* __u, basic_format_context<_Out, _CharT>& __fc) const {
-    return _M_f.format(__u, __fc);
-  }
-
-#if __glibcxx_format_ranges
-  constexpr void set_debug_format() noexcept { _M_f.set_debug_format(); }
-#endif
-
-private:
-  __format::__formatter_str<_CharT> _M_f;
-};
-
 template<__format::__char _CharT>
 struct formatter<const _CharT*, _CharT> {
   formatter() = default;
