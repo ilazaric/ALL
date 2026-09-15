@@ -2053,7 +2053,7 @@ private:
   }
 
   template<typename _Ctx, typename... _Argz>
-  friend constexpr auto make_format_args(_Argz&...) noexcept;
+  friend constexpr basic_format_args<_Ctx> make_format_args(_Argz&...) noexcept;
 
   template<typename _Visitor, typename _Ctx>
   friend constexpr decltype(auto) visit_format_arg(_Visitor&& __vis, basic_format_arg<_Ctx>);
@@ -2202,7 +2202,7 @@ class basic_format_args {
   }
 
   template<typename _Ctx, typename... _Args>
-  friend constexpr auto make_format_args(_Args&...) noexcept;
+  friend constexpr basic_format_args<_Ctx> make_format_args(_Args&...) noexcept;
 
   template<typename... _Args>
   static consteval array<__format::_Arg_t, sizeof...(_Args)> _S_types_to_pack() {
@@ -2228,7 +2228,7 @@ template<typename _Context, typename... _Args>
 basic_format_args(__format::_Arg_store<_Context, _Args...>) -> basic_format_args<_Context>;
 
 template<typename _Context, typename... _Args>
-constexpr auto make_format_args(_Args&... __fmt_args) noexcept;
+constexpr basic_format_args<_Context> make_format_args(_Args&... __fmt_args) noexcept;
 
  template<typename _Context, typename _Element_t, bool _S_values_only, typename _Tp>
  constexpr _Element_t _S_make_elt(_Tp& __v) {
@@ -2257,7 +2257,7 @@ class __format::_Arg_store {
   friend std::basic_format_args<_Context>;
 
   template<typename _Ctx, typename... _Argz>
-  friend constexpr auto std::
+  friend constexpr basic_format_args<_Ctx> std::
 #if _GLIBCXX_INLINE_VERSION
     __8::
 #endif
@@ -2301,7 +2301,7 @@ inline constexpr basic_format_args<_Context>::basic_format_args(const _Store<_Ar
 
 template<typename _Context = format_context, typename... _Args>
 [[nodiscard, __gnu__::__always_inline__]]
-inline constexpr auto make_format_args(_Args&... __fmt_args) noexcept {
+inline constexpr basic_format_args<_Context> make_format_args(_Args&... __fmt_args) noexcept {
   using _Fmt_arg = basic_format_arg<_Context>;
   using _Store = __format::_Arg_store<_Context, typename _Fmt_arg::template _Normalize<_Args>...>;
   return _Store(__fmt_args...);
