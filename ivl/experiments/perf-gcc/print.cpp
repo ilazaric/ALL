@@ -13,11 +13,6 @@ namespace std::__format {
     {
       __my_formatter_str() = default;
 
-      constexpr
-      __my_formatter_str(_Spec<_CharT> __spec) noexcept
-       : _M_spec(__spec)
-      { }
-
       template<typename _Out>
 	constexpr _Out
 	format(basic_string_view<_CharT> __s,
