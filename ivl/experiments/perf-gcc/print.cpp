@@ -9,7 +9,18 @@ void consume(auto&&);
 
 namespace std::__format {
   using _CharT = char;
-    struct __my_formatter_str
+
+  template<typename _Out>
+    constexpr _Out
+    __my_write_escaped(_Out __out,  basic_string_view<_CharT> __str, _Term_char __term)
+    {
+      __out = __format::__write(__out, _Escapes<_CharT>::_S_term(__term));
+      static_assert(__unicode::__literal_encoding_is_unicode<_CharT>());
+      __out = __format::__write_escaped_unicode(__out, __str, __term);
+      return __format::__write(__out, _Escapes<_CharT>::_S_term(__term));
+    }
+
+  struct __my_formatter_str
     {
       __my_formatter_str() = default;
 
@@ -19,14 +30,14 @@ namespace std::__format {
 	       basic_format_context<_Out, _CharT>& __fc) const
 	{
           consume(_M_spec._M_get_width(__fc));
-          consume( __format::__write_escaped(__fc.out(), __s, _Term_quote));
+          consume( __format::__my_write_escaped(__fc.out(), __s, _Term_quote));
 	  _Padding_sink<_Out, _CharT> __sink(__fc.out(), 1337, 7331);
-	  __format::__write_escaped(__sink.out(), __s, _Term_quote);
-	  consume(__sink._M_finish(_M_spec._M_align, _M_spec._M_fill));
-          consume(__format::__write(__fc.out(), __s));
-	  consume(_M_spec._M_get_precision(__fc));
-	  consume(__format::__truncate(__s, 42));
-	  consume(__format::__write_padded_as_spec(__s, 67, __fc, _M_spec));
+	  consume(__format::__my_write_escaped(__sink.out(), __s, _Term_quote));
+	  // consume(__sink._M_finish(_M_spec._M_align, _M_spec._M_fill));
+          // consume(__format::__write(__fc.out(), __s));
+	  // consume(_M_spec._M_get_precision(__fc));
+	  // consume(__format::__truncate(__s, 42));
+	  // consume(__format::__write_padded_as_spec(__s, 67, __fc, _M_spec));
 	}
 
       _Spec<_CharT> _M_spec{};
