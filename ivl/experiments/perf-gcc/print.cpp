@@ -18,26 +18,18 @@ namespace std::__format {
 	format(basic_string_view<_CharT> __s,
 	       basic_format_context<_Out, _CharT>& __fc) const
 	{
-          _M_format_escaped(__s, __fc);
+          consume(_M_spec._M_get_width(__fc));
+          consume( __format::__write_escaped(__fc.out(), __s, _Term_quote));
+	  consume(_M_spec._M_get_precision(__fc));
+          consume(__truncate(__s, 420));
+          consume(__format::__write_escaped(__fc.out(), __s, _Term_quote));
+	  _Padding_sink<_Out, _CharT> __sink(__fc.out(), 1337, 7331);
+	  __format::__write_escaped(__sink.out(), __s, _Term_quote);
+	  consume(__sink._M_finish(_M_spec._M_align, _M_spec._M_fill));
           consume(__format::__write(__fc.out(), __s));
 	  consume(_M_spec._M_get_precision(__fc));
 	  consume(__format::__truncate(__s, 42));
 	  consume(__format::__write_padded_as_spec(__s, 67, __fc, _M_spec));
-	}
-
-      template<typename _Out>
-	constexpr void
-	_M_format_escaped(basic_string_view<_CharT> __s,
-			  basic_format_context<_Out, _CharT>& __fc) const
-	{
-	  const size_t __padwidth = _M_spec._M_get_width(__fc);
-          consume( __format::__write_escaped(__fc.out(), __s, _Term_quote));
-	  const size_t __maxwidth = _M_spec._M_get_precision(__fc);
-          consume(__truncate(__s, __maxwidth));
-          consume(__format::__write_escaped(__fc.out(), __s, _Term_quote));
-	  // _Padding_sink<_Out, _CharT> __sink(__fc.out(), __padwidth, __maxwidth);
-	  // __format::__write_escaped(__sink.out(), __s, _Term_quote);
-	  // consume(__sink._M_finish(_M_spec._M_align, _M_spec._M_fill));
 	}
 
       _Spec<_CharT> _M_spec{};
