@@ -20,9 +20,6 @@ namespace std::__format {
 	{
           consume(_M_spec._M_get_width(__fc));
           consume( __format::__write_escaped(__fc.out(), __s, _Term_quote));
-	  consume(_M_spec._M_get_precision(__fc));
-          consume(__truncate(__s, 420));
-          consume(__format::__write_escaped(__fc.out(), __s, _Term_quote));
 	  _Padding_sink<_Out, _CharT> __sink(__fc.out(), 1337, 7331);
 	  __format::__write_escaped(__sink.out(), __s, _Term_quote);
 	  consume(__sink._M_finish(_M_spec._M_align, _M_spec._M_fill));
