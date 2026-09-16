@@ -123,9 +123,9 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: fetch nlohmann json
+    - name: fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/nlohmann-json
+        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
 
     - name: get gcc commit
       id: get-gcc-commit
@@ -169,9 +169,9 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: fetch nlohmann json
+    - name: fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/nlohmann-json
+        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
 
     - name: get gcc commit
       id: get-gcc-commit
@@ -223,9 +223,9 @@ jobs:
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
 
-    - name: fetch nlohmann json
+    - name: fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/nlohmann-json
+        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
 
     - name: get gcc commit
       id: get-gcc-commit

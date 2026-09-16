@@ -26,6 +26,27 @@ if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
     build_build_prep()
 subprocess.run([build_prep], check=True)
 
+modsrc = build_dir / "submodule_source_copy"
+modobj = build_dir / "submodule_objdir"
+modobj.mkdir(exist_ok=True)
+def cmake_submodule(m, target):
+    S = modsrc / m
+    B = modobj / m
+    if not (B / "build.ninja").exists():
+        subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-S", S, "-B", B, "-G", "Ninja"], check=True)
+    subprocess.run(["cmake", "--build", B, "--target", target], check=True)
+cmake_submodule("fmt", "libfmt.a")
+cmake_submodule("pugixml", "libpugixml.a")
+# cmake_submodule("nlohmann-json") # no libraries
+cmake_submodule("raylib", "libraylib.a")
+
+libs = build_dir / "libraries"
+libs.mkdir(exist_ok=True)
+shutil.copy(modobj / "raylib/raylib/libraylib.a", libs / "libraylib.a")
+shutil.copy(modobj / "pugixml/libpugixml.a", libs / "libpugixml.a")
+shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
+libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread -lOpenGL  -lGLX  -lGLU  -lm  -lrt  -lm  -ldl".split()
+
 all_targets = dict()
 
 @dataclass
@@ -42,7 +63,7 @@ common_test_dependencies = set() # {Path("/build_system/run_test")}
     
 def deduce_file_targets(path):
     added_compiler_flags = []
-    added_compiler_flags_tail = []
+    added_compiler_flags_tail = libs_link
     unordered_dependencies = set()
     unordered_test_dependencies = set()
     file_has_reg_variant = path.suffix == ".cpp"
@@ -160,7 +181,6 @@ for target in targets:
             cxxfmap +
             ["-DIVL_LOCAL",
              f"-DIVL_FILE=\"{relpath}\"",
-             "-DPUGIXML_HEADER_ONLY",
              # "-static",
              "-O3",
              # "-g1",
