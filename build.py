@@ -45,7 +45,7 @@ libs.mkdir(exist_ok=True)
 shutil.copy(modobj / "raylib/raylib/libraylib.a", libs / "libraylib.a")
 shutil.copy(modobj / "pugixml/libpugixml.a", libs / "libpugixml.a")
 shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
-libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread -lOpenGL  -lGLX  -lGLU  -lm  -lrt  -lm  -ldl".split()
+libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
 
 all_targets = dict()
 
@@ -63,7 +63,7 @@ common_test_dependencies = set() # {Path("/build_system/run_test")}
     
 def deduce_file_targets(path):
     added_compiler_flags = []
-    added_compiler_flags_tail = libs_link
+    added_compiler_flags_tail = [x for x in libs_link]
     unordered_dependencies = set()
     unordered_test_dependencies = set()
     file_has_reg_variant = path.suffix == ".cpp"

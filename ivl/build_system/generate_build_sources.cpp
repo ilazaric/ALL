@@ -159,15 +159,24 @@ int main() {
   create_directory(include_meta_dir);
   std::ofstream rsp_file(include_meta_dir / "args.rsp");
 
-  auto sync_submodule = [&](std::string_view m, std::string_view inc) {
+  auto sync_submodule = [&](std::string_view m, std::string_view inc = {}) {
     sync_dir(root / "submodules" / m, build_dir / "submodule_source_copy" / m);
+    if (inc.empty()) return;
     auto p = build_dir / "submodule_source_copy" / m / inc;
     if (exists(p)) rsp_file << "-I " << p << std::endl;
   };
   sync_submodule("nlohmann-json", "include");
-  sync_submodule("raylib", "src");
-  sync_submodule("pugixml", "src");
+  sync_submodule("raylib");
+  sync_submodule("pugixml");
   sync_submodule("fmt", "include");
+  {
+    auto inc = build_dir / "submodule_include";
+    if (exists(inc)) remove_all(inc);
+    create_directory(inc);
+    create_directory_symlink("../submodule_source_copy/raylib/src", inc / "raylib");
+    create_directory_symlink("../submodule_source_copy/pugixml/src", inc / "pugixml");
+    rsp_file << "-I " << inc << std::endl;
+  }
 
   auto files = find_sources(copy_dir / "ivl");
 

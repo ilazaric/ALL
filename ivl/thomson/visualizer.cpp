@@ -7,7 +7,7 @@
 
 // IVL add_compiler_flags("-fno-strict-aliasing")
 // IVL add_compiler_flags_tail("-L/home/ilazaric/repos/ALL/submodules/objdir/raylib/raylib/ -lraylib")
-// IVL add_compiler_flags_tail("-lm  -lpthread -lOpenGL  -lGLX  -lGLU  -lm  -lrt  -lm  -ldl")
+// IVL add_compiler_flags_tail("-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
 
 Vector3 point2vec(point p) { return Vector3{(float)p.x, (float)p.y, (float)p.z}; }
 
