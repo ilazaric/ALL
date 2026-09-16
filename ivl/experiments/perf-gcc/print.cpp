@@ -8,7 +8,7 @@
 void consume(auto&&);
 
 namespace std::__format {
-  template<__char _CharT>
+  using _CharT = char;
     struct __my_formatter_str
     {
       __my_formatter_str() = default;
@@ -50,7 +50,7 @@ void foo_g(auto& __arg) {
   using _Context = format_context;
   using _Type = remove_reference_t<decltype(__arg)>;
   auto& _M_fc = _my_M_fc();
-  __format::__my_formatter_str<char> _M_f;
+  __format::__my_formatter_str _M_f;
   _M_f.format(__arg, _M_fc);
 }
 
