@@ -19,6 +19,20 @@
 // UPDT: should probably go through ivl_main shenanigans
 // UPDT: def shouldnt go through ivl_main , since that requires generated source copy
 
+std::vector<std::filesystem::path> find_files(const std::filesystem::path& dir) {
+  std::vector<std::filesystem::path> ret;
+  for (auto it = std::filesystem::recursive_directory_iterator(dir);
+       it != std::filesystem::recursive_directory_iterator(); ++it) {
+    if (it->path().filename() == ".git") {
+      it.disable_recursion_pending();
+      continue;
+    }
+    if (it->path().filename() == ".gitmodules") continue;
+    if (it->is_regular_file()) ret.push_back(it->path());
+  }
+  return ret;
+}
+
 inline bool is_cpp_file(const std::filesystem::path& p) {
   return p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h" ||
          p.extension() == ".cc";
@@ -26,81 +40,106 @@ inline bool is_cpp_file(const std::filesystem::path& p) {
 
 std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir) {
   std::vector<std::filesystem::path> ret;
-  for (auto&& entry : std::filesystem::recursive_directory_iterator(dir)) {
-    if (!entry.is_regular_file()) continue;
-    auto&& p = entry.path();
-    // TODO: this condition might not even be needed
-    // UPDT: erm, should be needed, currentl emitting build artifacts into ivl/
-    if (is_cpp_file(p)) ret.emplace_back(p);
+  for (auto&& p : find_files(dir)) {
+    if (is_cpp_file(p)) ret.push_back(p);
   }
   return ret;
 }
 
-void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
-  assert(exists(indir));
-  if (!exists(outdir)) create_directories(outdir);
-  std::vector<std::filesystem::path> files = find_sources(indir);
+void sync_file(
+  const std::filesystem::path& file, const std::filesystem::path& target, std::string_view added_prefix = {}
+) {
+  const auto lwt_start = last_write_time(file);
+  if (exists(target)) return;
+  create_directories(target.parent_path());
 
-  for (auto&& existing : find_sources(outdir)) {
+  auto prevfd = open(file.native().c_str(), O_RDONLY, 0);
+  assert(prevfd != -1);
+  struct stat statbuf;
+  assert(-1 != fstat(prevfd, &statbuf));
+  size_t new_size = statbuf.st_size + added_prefix.size();
+  auto prevmap = statbuf.st_size ? mmap(nullptr, statbuf.st_size, PROT_READ, MAP_PRIVATE, prevfd, 0) : nullptr;
+  if (prevmap == MAP_FAILED) {
+    auto e = errno;
+    std::cout << "file: " << file << std::endl;
+    std::cout << "target: " << target << std::endl;
+    std::cout << "statbuf.st_size: " << statbuf.st_size << std::endl;
+    std::cout << "err: " << e << std::endl;
+    assert(false);
+  }
+
+  auto fd = open(target.native().c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
+  assert(fd != -1);
+  assert(-1 != ftruncate(fd, new_size));
+  auto map = new_size ? mmap(nullptr, new_size, PROT_WRITE, MAP_SHARED, fd, 0) : nullptr;
+  if (map == MAP_FAILED) {
+    auto e = errno;
+    std::cout << "file: " << file << std::endl;
+    std::cout << "target: " << target << std::endl;
+    std::cout << "err: " << e << std::endl;
+    assert(false);
+  }
+  char* ptr = (char*)map;
+  auto wr = [&](std::string_view sv) {
+    if (sv.empty()) return;
+    memcpy(ptr, sv.data(), sv.size());
+    ptr += sv.size();
+  };
+  wr(added_prefix);
+  if (prevmap) wr(std::string_view((const char*)prevmap, statbuf.st_size));
+
+  if (map) assert(-1 != munmap(map, new_size));
+  if (prevmap) assert(-1 != munmap(prevmap, statbuf.st_size));
+  assert(-1 != close(fd));
+  assert(-1 != close(prevfd));
+  const auto lwt_end = last_write_time(file);
+  assert(lwt_start == lwt_end);
+  last_write_time(target, lwt_end);
+}
+
+void purge_outdated(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  if (!exists(outdir)) return;
+  for (auto&& existing : find_files(outdir)) {
     auto original = indir / existing.lexically_relative(outdir);
     if (!exists(original) || last_write_time(original) != last_write_time(existing)) remove(existing);
   }
+}
 
-  for (auto&& file : files) {
+void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  assert(exists(indir));
+  create_directories(outdir);
+  for (auto&& file : find_files(indir)) {
     auto target = outdir / file.lexically_relative(indir);
-    if (exists(target)) {
-      file = target;
-      continue;
-    }
-    create_directories(target.parent_path());
-
-    constexpr char added_prefix[] = "#line 1 \"";
-    constexpr char added_suffix[] = "\"\n";
-    size_t added_length = sizeof(added_prefix) - 1 + file.native().size() + sizeof(added_suffix) - 1;
-
-    auto prevfd = open(file.native().c_str(), O_RDONLY, 0);
-    assert(prevfd != -1);
-    struct stat statbuf;
-    assert(-1 != fstat(prevfd, &statbuf));
-    size_t new_size = statbuf.st_size + added_length;
-    auto prevmap = statbuf.st_size ? mmap(nullptr, statbuf.st_size, PROT_READ, MAP_PRIVATE, prevfd, 0) : nullptr;
-    if (prevmap == MAP_FAILED) {
-      auto e = errno;
-      std::cout << "file: " << file << std::endl;
-      std::cout << "target: " << target << std::endl;
-      std::cout << "statbuf.st_size: " << statbuf.st_size << std::endl;
-      std::cout << "err: " << e << std::endl;
-      assert(false);
-    }
-
-    auto fd = open(target.native().c_str(), O_CREAT | O_RDWR | O_TRUNC, 0644);
-    assert(fd != -1);
-    assert(-1 != ftruncate(fd, new_size));
-    auto map = mmap(nullptr, new_size, PROT_WRITE, MAP_SHARED, fd, 0);
-    if (map == MAP_FAILED) {
-      auto e = errno;
-      std::cout << "file: " << file << std::endl;
-      std::cout << "target: " << target << std::endl;
-      std::cout << "err: " << e << std::endl;
-      assert(false);
-    }
-    char* ptr = (char*)map;
-    auto wr = [&](std::string_view sv) {
-      memcpy(ptr, sv.data(), sv.size());
-      ptr += sv.size();
-    };
-    wr(added_prefix);
-    wr(file.native());
-    wr(added_suffix);
-    if (prevmap) wr(std::string_view((const char*)prevmap, statbuf.st_size));
-
-    assert(-1 != munmap(map, new_size));
-    if (prevmap) assert(-1 != munmap(prevmap, statbuf.st_size));
-    assert(-1 != close(fd));
-    assert(-1 != close(prevfd));
-    last_write_time(target, last_write_time(file));
-    file = target;
+    if (is_cpp_file(file)) sync_file(file, target, "#line 1 \"" + file.native() + "\"\n");
+    else sync_file(file, target);
   }
+}
+
+void sync_sources(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  assert(exists(indir));
+  create_directories(outdir);
+  for (auto&& file : find_sources(indir)) {
+    auto target = outdir / file.lexically_relative(indir);
+    sync_file(file, target, "#line 1 \"" + file.native() + "\"\n");
+  }
+}
+
+bool sync_file_if(const std::filesystem::path& in, const std::filesystem::path& out) {
+  if (!exists(in)) return false;
+  sync_file(in, out);
+  return true;
+}
+
+bool sync_dir_if(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  if (!exists(indir)) return false;
+  sync_dir(indir, outdir);
+  return true;
+}
+
+bool sync_sources_if(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+  if (!exists(indir)) return false;
+  sync_sources(indir, outdir);
+  return true;
 }
 
 int main() {
@@ -113,25 +152,24 @@ int main() {
 
   auto build_dir = root / "build";
   auto copy_dir = build_dir / "source_copy";
-  sync_dir(root / "ivl", copy_dir / "ivl");
-  sync_dir(
-    root / "submodules" / "nlohmann-json" / "include" / "nlohmann", build_dir / "submodule_source_copy" / "nlohmann"
-  );
-
-  // TODO: if is in case its not fetched, maybe drop in future?
-  if (exists(root / "submodules" / "raylib" / "src"))
-    sync_dir(root / "submodules" / "raylib" / "src", build_dir / "submodule_source_copy" / "raylib");
-  if (exists(root / "submodules" / "pugixml" / "src"))
-    sync_dir(root / "submodules" / "pugixml" / "src", build_dir / "submodule_source_copy" / "pugixml");
-
-  auto files = find_sources(copy_dir / "ivl");
+  sync_sources(root / "ivl", copy_dir / "ivl");
 
   auto include_meta_dir = build_dir / "include_dirs";
   if (exists(include_meta_dir)) remove_all(include_meta_dir);
   create_directory(include_meta_dir);
-
   std::ofstream rsp_file(include_meta_dir / "args.rsp");
-  rsp_file << "-I " << build_dir / "submodule_source_copy" << std::endl;
+
+  auto sync_submodule = [&](std::string_view m, std::string_view inc) {
+    sync_dir(root / "submodules" / m, build_dir / "submodule_source_copy" / m);
+    auto p = build_dir / "submodule_source_copy" / m / inc;
+    if (exists(p)) rsp_file << "-I " << p << std::endl;
+  };
+  sync_submodule("nlohmann-json", "include");
+  sync_submodule("raylib", "src");
+  sync_submodule("pugixml", "src");
+  sync_submodule("fmt", "include");
+
+  auto files = find_sources(copy_dir / "ivl");
 
   {
     auto dir = include_meta_dir / "regular";
