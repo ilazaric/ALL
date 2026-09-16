@@ -17,6 +17,12 @@
 // TODO: check symlinks (want to ignore them)
 // TODO: arg parsing, --help, --verbose-{x,y,z}
 // UPDT: should probably go through ivl_main shenanigans
+// UPDT: def shouldnt go through ivl_main , since that requires generated source copy
+
+inline bool is_cpp_file(const std::filesystem::path& p) {
+  return p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h" ||
+         p.extension() == ".cc";
+}
 
 std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir) {
   std::vector<std::filesystem::path> ret;
@@ -24,11 +30,8 @@ std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir
     if (!entry.is_regular_file()) continue;
     auto&& p = entry.path();
     // TODO: this condition might not even be needed
-    if (
-      p.extension() == ".cpp" || p.extension() == ".hpp" || p.extension() == ".c" || p.extension() == ".h" ||
-      p.extension() == ".cc"
-    )
-      ret.emplace_back(p);
+    // UPDT: erm, should be needed, currentl emitting build artifacts into ivl/
+    if (is_cpp_file(p)) ret.emplace_back(p);
   }
   return ret;
 }
