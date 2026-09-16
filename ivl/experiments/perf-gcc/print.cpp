@@ -53,11 +53,6 @@ namespace std::__format {
 	  return __sink._M_finish(_M_spec._M_align, _M_spec._M_fill);
 	}
 
-      constexpr void
-      set_debug_format() noexcept
-      { _M_spec._M_debug = true; }
-
-    private:
       _Spec<_CharT> _M_spec{};
     };
 }
