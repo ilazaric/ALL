@@ -9,14 +9,13 @@ void consume(auto&&);
 
 namespace std::__format {
   format_context& _my_M_fc();
-  format_parse_context& _my_M_pc();
   void foo_g(auto& __arg) {
     using _Context = format_context;
     using _Type = remove_reference_t<decltype(__arg)>;
     using _Formatter = typename _Context::template formatter_type<_Type>;
     _Formatter __f;
-    _my_M_pc().advance_to(__f.parse(_my_M_pc()));
-    _my_M_fc().advance_to(__f.format(__arg, _my_M_fc()));
+    auto& _M_fc = _my_M_fc();
+    _M_fc._M_out = __f.format(__arg, _M_fc);
   }
   
   template void foo_g<bool>(bool&);
