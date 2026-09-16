@@ -16,12 +16,14 @@ regsrc = build_dir / "include_dirs" / "regular"
 
 build_prep = repo_root / "ivl/build_system/generate_build_sources"
 assert build_prep.with_suffix(".cpp").exists(), build_prep
+def build_build_prep():
+    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-static", "-o", build_prep], check=True)
 if not build_prep.exists():
     print(f"Build prep binary {build_prep} not found, building it ...")
-    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+    build_build_prep()
 if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
     print(f"Build prep binary {build_prep} older than sources, rebuilding it ...")
-    subprocess.run(["g++", build_prep.with_suffix(".cpp"), "-O3", "-std=c++23", "-o", build_prep], check=True)
+    build_build_prep()
 subprocess.run([build_prep], check=True)
 
 all_targets = dict()
