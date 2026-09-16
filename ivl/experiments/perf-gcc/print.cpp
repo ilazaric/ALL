@@ -58,53 +58,9 @@ namespace std::__format {
 	  return __sink._M_finish(_M_spec._M_align, _M_spec._M_fill);
 	}
 
-#if __glibcxx_format_ranges // C++ >= 23 && HOSTED
-      template<ranges::input_range _Rg, typename _Out>
-	requires same_as<remove_cvref_t<ranges::range_reference_t<_Rg>>, _CharT>
-	constexpr _Out
-	_M_format_range(_Rg&& __rg, basic_format_context<_Out, _CharT>& __fc) const
-	{
-	  using _Range = remove_reference_t<_Rg>;
-	  using _String_view = basic_string_view<_CharT>;
-	  if constexpr (ranges::contiguous_range<_Rg>)
-	    {
-	      _String_view __str(ranges::data(__rg),
-				 size_t(ranges::distance(__rg)));
-	      return format(__str, __fc);
-	    }
-	  else if constexpr (!is_const_v<_Range>
-			        && __simply_formattable_range<_Range, _CharT>)
-	    return _M_format_range<const _Range&>(__rg, __fc);
-	  else if constexpr (!is_lvalue_reference_v<_Rg>)
-	    return _M_format_range<_Range&>(__rg, __fc);
-	  else
-	    {
-	      auto __handle_debug = [this, &__rg]<typename _NOut>(_NOut __nout)
-		{
-		  if (!_M_spec._M_debug)
-		    return ranges::copy(__rg, std::move(__nout)).out;
-
-		  _Escaping_sink<_NOut, _CharT>
-		    __sink(std::move(__nout), _Term_quote);
-		  ranges::copy(__rg, __sink.out());
-		  return __sink._M_finish();
-		};
-
-	      const size_t __padwidth = _M_spec._M_get_width(__fc);
-	      if (__padwidth == 0 && _M_spec._M_prec_kind == _WP_none)
-		return __handle_debug(__fc.out());
-
-	      _Padding_sink<_Out, _CharT>
-		__sink(__fc.out(), __padwidth, _M_spec._M_get_precision(__fc));
-	      __handle_debug(__sink.out());
-	      return __sink._M_finish(_M_spec._M_align, _M_spec._M_fill);
-	    }
-	}
-
       constexpr void
       set_debug_format() noexcept
       { _M_spec._M_debug = true; }
-#endif
 
     private:
       _Spec<_CharT> _M_spec{};
