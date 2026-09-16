@@ -18,12 +18,9 @@ namespace std::__format {
 	format(basic_string_view<_CharT> __s,
 	       basic_format_context<_Out, _CharT>& __fc) const
 	{
-	  if (_M_spec._M_debug)
-	    return _M_format_escaped(__s, __fc);
+          consume(_M_format_escaped(__s, __fc));
 
-	  if (_M_spec._M_width_kind == _WP_none
-		&& _M_spec._M_prec_kind == _WP_none)
-	    return __format::__write(__fc.out(), __s);
+          consume(__format::__write(__fc.out(), __s));
 
 	  const size_t __maxwidth = _M_spec._M_get_precision(__fc);
 	  const size_t __width = __format::__truncate(__s, __maxwidth);
