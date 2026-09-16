@@ -7,22 +7,6 @@
 
 void consume(auto&&);
 
-consteval void describe(std::meta::info type, bool base = false, size_t indent = 0) {
-  if (is_union_type(type)) throw;
-  __builtin_constexpr_diag(
-    32, "describe", std::string(indent, ' ') + std::string(base ? ": " : "") + display_string_of(type)
-  );
-  if (!is_class_type(type)) return;
-  if (is_same_type(type, ^^std::__format::__formatter_ptr<char>)) return;
-  if (is_same_type(type, ^^std::__format::__formatter_int<char>)) return;
-  if (is_same_type(type, ^^std::__format::__formatter_str<char>)) return;
-  if (is_same_type(type, ^^std::__format::__formatter_fp<char>)) return;
-  if (base) indent += 2;
-  auto ctx = std::meta::access_context::unchecked();
-  for (auto b : bases_of(type, ctx)) describe(type_of(b), true, indent);
-  for (auto b : nonstatic_data_members_of(type, ctx)) describe(type_of(b), false, indent + 2);
-}
-
 namespace std::__format {
   template<__char _CharT>
     struct __my_formatter_str
