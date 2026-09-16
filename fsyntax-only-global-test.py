@@ -152,7 +152,6 @@ for target in targets:
             cxxfmap +
             ["-DIVL_LOCAL",
              f"-DIVL_FILE=\"{relpath}\"",
-             "-DPUGIXML_HEADER_ONLY",
              "-fsyntax-only", # NB
              "-O3",
              f"-std=c++{cxxver}",
