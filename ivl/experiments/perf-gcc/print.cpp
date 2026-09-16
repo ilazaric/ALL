@@ -15,7 +15,7 @@ namespace std::__format {
     using _Formatter = typename _Context::template formatter_type<_Type>;
     _Formatter __f;
     auto& _M_fc = _my_M_fc();
-    _M_fc._M_out = __f.format(__arg, _M_fc);
+    __f.format(__arg, _M_fc);
   }
   
   template void foo_g<bool>(bool&);
