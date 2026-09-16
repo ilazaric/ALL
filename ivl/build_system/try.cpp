@@ -1,9 +1,9 @@
 #include <ivl/linux/terminate_syscalls>
+#include <ivl/logger>
 
 namespace sys = ivl::linux::terminate_syscalls;
 
 int main() {
-
   LOG(sys::fcntl(0, F_GETFD, 0));
   LOG(sys::fcntl(1, F_GETFD, 0));
   LOG(sys::fcntl(2, F_GETFD, 0));

@@ -107,6 +107,7 @@ void purge_outdated(const std::filesystem::path& indir, const std::filesystem::p
 
 void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
   assert(exists(indir));
+  purge_outdated(indir, outdir);
   create_directories(outdir);
   for (auto&& file : find_files(indir)) {
     auto target = outdir / file.lexically_relative(indir);
@@ -117,6 +118,7 @@ void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& o
 
 void sync_sources(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
   assert(exists(indir));
+  purge_outdated(indir, outdir);
   create_directories(outdir);
   for (auto&& file : find_sources(indir)) {
     auto target = outdir / file.lexically_relative(indir);
