@@ -181,102 +181,16 @@ namespace std::__format {
     };
 }
 
-namespace std {
-  template<typename, typename>
-  struct my_formatter;
-  template<__format::__char _CharT>
-    struct my_formatter<const _CharT*, _CharT>
-    {
-      my_formatter() = default;
-
-      [[__gnu__::__always_inline__]]
-      constexpr typename basic_format_parse_context<_CharT>::iterator
-      parse(basic_format_parse_context<_CharT>& __pc)
-      { return _M_f.parse(__pc); }
-
-      template<typename _Out>
-	[[__gnu__::__nonnull__]]
-	constexpr
-	typename basic_format_context<_Out, _CharT>::iterator
-	format(const _CharT* __u,
-	       basic_format_context<_Out, _CharT>& __fc) const
-	{ return _M_f.format(__u, __fc); }
-
-#if __glibcxx_format_ranges // C++ >= 23 && HOSTED
-      constexpr void set_debug_format() noexcept { _M_f.set_debug_format(); }
-#endif
-
-    private:
-      __format::__my_formatter_str<_CharT> _M_f;
-    };
-
-  template<typename _Traits>
-    struct my_formatter<basic_string_view<char, _Traits>, char>
-    {
-      my_formatter() = default;
-
-      [[__gnu__::__always_inline__]]
-      constexpr typename basic_format_parse_context<char>::iterator
-      parse(basic_format_parse_context<char>& __pc)
-      { return _M_f.parse(__pc); }
-
-      template<typename _Out>
-	constexpr
-	typename basic_format_context<_Out, char>::iterator
-	format(basic_string_view<char, _Traits> __u,
-	       basic_format_context<_Out, char>& __fc) const
-	{ return _M_f.format(__u, __fc); }
-
-#if __glibcxx_format_ranges // C++ >= 23 && HOSTED
-      constexpr void set_debug_format() noexcept { _M_f.set_debug_format(); }
-#endif
-
-    private:
-      __format::__my_formatter_str<char> _M_f;
-    };
-}
-
 namespace std::__format {
 format_context& _my_M_fc();
 void foo_g(auto& __arg) {
   using _Context = format_context;
   using _Type = remove_reference_t<decltype(__arg)>;
-  // using _Formatter = typename _Context::template formatter_type<_Type>;
-  using _Formatter = my_formatter<_Type, char>;
-  // _Formatter __f;
   auto& _M_fc = _my_M_fc();
-  // __f.format(__arg, _M_fc);
   __format::__my_formatter_str<char> _M_f;
   _M_f.format(__arg, _M_fc);
-
-  consteval {
-    auto type = dealias(^^_Formatter);
-    describe(type);
-    __builtin_constexpr_diag(32, "", "");
-  }
 }
-
-// template void foo_g<bool>(bool&);
-// template void foo_g<char>(char&);
-// template void foo_g<int>(int&);
-// template void foo_g<unsigned int>(unsigned int&);
-// template void foo_g<long long int>(long long int&);
-// template void foo_g<long long unsigned int>(long long unsigned int&);
-
-// template void foo_g<__int128>(__int128&);
-// template void foo_g<__int128 unsigned>(__int128 unsigned&);
-
-// template void foo_g<float>(float&);
-// template void foo_g<double>(double&);
-// template void foo_g<long double>(long double&);
-// template void foo_g<__float128>(__float128&);
-// template void foo_g<__bf16>(__bf16&);
-// template void foo_g<_Float16>(_Float16&);
-// template void foo_g<_Float32>(_Float32&);
-// template void foo_g<_Float64>(_Float64&);
 
 template void foo_g<const char*>(const char*&);
 template void foo_g<std::basic_string_view<char>>(std::basic_string_view<char>&);
-
-// template void foo_g<const void*>(const void*&);
 } // namespace std::__format
