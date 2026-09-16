@@ -4,6 +4,8 @@
 #include <span>
 #include <string>
 
+#include <meta>
+
 // void foo(std::format_args);
 
 void consume(auto&&);
@@ -34,8 +36,8 @@ private:
     using _Context = basic_format_context<_Out, _CharT>;
     using handle = typename basic_format_arg<_Context>::handle;
 
-    __format::__my_visit_format_arg(
-      [this](auto& __arg) {
+    auto lambda = [this](auto& __arg) {
+      consteval { __builtin_constexpr_diag(32, "lambda_type", display_string_of(^^decltype(__arg))); }
         using _Type = remove_reference_t<decltype(__arg)>;
         using _Formatter = typename _Context::template formatter_type<_Type>;
         if constexpr (is_same_v<_Type, monostate>) __format::__invalid_arg_id_in_format_string();
@@ -45,7 +47,10 @@ private:
           this->_M_pc.advance_to(__f.parse(this->_M_pc));
           this->_M_fc.advance_to(__f.format(__arg, this->_M_fc));
         } else static_assert(__format::__formattable_with<_Type, _Context>);
-      },
+    };
+
+    __format::__my_visit_format_arg(
+      lambda,
       _M_fc.arg(__id)
     );
   }
@@ -53,39 +58,49 @@ private:
 } // namespace std::__format
 
 namespace std::__format {
-template<typename _CharT>
-constexpr _Sink_iter<_CharT>
-__my_do_vformat_to(_Sink_iter<_CharT> __out, basic_string_view<_CharT> __fmt, __format_context<_CharT>& __ctx) {
-  _my_Formatting_scanner<_Sink_iter<_CharT>, _CharT> __scanner(__ctx, __fmt);
+_Sink_iter<char>
+__my2_do_vformat_to(_Sink_iter<char> __out, string_view __fmt, __format_context<char>& __ctx) {
+  _my_Formatting_scanner<_Sink_iter<char>, char> __scanner(__ctx, __fmt);
   consume(__scanner);
   // __scanner._M_scan();
   return __out;
 }
-} // namespace std::__format
-
-namespace std::__format {
-template<typename _Out, typename _CharT, typename _Context>
-[[gnu::noinline]]
-inline constexpr _Out
-__do_vformat_to_no_locale(_Out __out, basic_string_view<_CharT> __fmt, const basic_format_args<_Context>& __args) {
-  static_assert(is_same_v<_Out, _Sink_iter<_CharT>>);
-  auto __ctx = _Context(__args, __out);
-  // consume(__ctx);
-  // return std::move(__out);
-  return __format::__my_do_vformat_to(__out, __fmt, __ctx);
-}
-} // namespace std::__format
-
-template<typename _Out>
-_Out my_vformat_to(_Out __out, std::string_view __fmt, std::format_args __args) {
-  return std::__format::__do_vformat_to_no_locale(std::move(__out), __fmt, __args);
 }
 
-std::string my_vformat(std::string_view __fmt, std::format_args __args) {
-  std::__format::_Str_sink<char> __buf;
-  my_vformat_to(__buf.out(), __fmt, __args);
-  return std::move(__buf).get();
-}
+// namespace std::__format {
+// template<typename _CharT>
+// constexpr _Sink_iter<_CharT>
+// __my_do_vformat_to(_Sink_iter<_CharT> __out, basic_string_view<_CharT> __fmt, __format_context<_CharT>& __ctx) {
+//   _my_Formatting_scanner<_Sink_iter<_CharT>, _CharT> __scanner(__ctx, __fmt);
+//   consume(__scanner);
+//   // __scanner._M_scan();
+//   return __out;
+// }
+// } // namespace std::__format
+
+// namespace std::__format {
+// template<typename _Out, typename _CharT, typename _Context>
+// [[gnu::noinline]]
+// inline constexpr _Out
+// __do_vformat_to_no_locale(_Out __out, basic_string_view<_CharT> __fmt, const basic_format_args<_Context>& __args) {
+//   static_assert(is_same_v<_Out, _Sink_iter<_CharT>>);
+//   auto __ctx = _Context(__args, __out);
+//   // consume(__ctx);
+//   // return std::move(__out);
+//   return __format::__my_do_vformat_to(__out, __fmt, __ctx);
+// }
+// } // namespace std::__format
+
+// template<typename _Out>
+// _Out my_vformat_to(_Out __out, std::string_view __fmt, std::format_args __args) {
+//   return std::__format::__do_vformat_to_no_locale(std::move(__out), __fmt, __args);
+// }
+
+// std::string my_vformat(std::string_view __fmt, std::format_args __args) {
+//   std::__format::_Str_sink<char> __buf;
+//   my_vformat_to(__buf.out(), __fmt, __args);
+//   return std::move(__buf).get();
+// }
 
 // int main() {
 //   std::array<const char*, 4> a{};
