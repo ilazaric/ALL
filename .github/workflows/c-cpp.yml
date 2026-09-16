@@ -117,7 +117,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
-      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
 
     - uses: webfactory/ssh-agent@v0.10.0
       with:
@@ -163,7 +163,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
-      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev
 
     - uses: webfactory/ssh-agent@v0.10.0
       with:
