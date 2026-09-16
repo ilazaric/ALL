@@ -34,60 +34,6 @@ namespace std::__format {
        : _M_spec(__spec)
       { }
 
-      constexpr typename basic_format_parse_context<_CharT>::iterator
-      parse(basic_format_parse_context<_CharT>& __pc)
-      {
-	auto __first = __pc.begin();
-	const auto __last = __pc.end();
-	_Spec<_CharT> __spec{};
-
-	auto __finalize = [this, &__spec] {
-	  _M_spec = __spec;
-	};
-
-	auto __finished = [&] {
-	  if (__first == __last || *__first == '}')
-	    {
-	      __finalize();
-	      return true;
-	    }
-	  return false;
-	};
-
-	if (__finished())
-	  return __first;
-
-	__first = __spec._M_parse_fill_and_align(__first, __last);
-	if (__finished())
-	  return __first;
-
-	__first = __spec._M_parse_width(__first, __last, __pc);
-	if (__finished())
-	  return __first;
-
-	__first = __spec._M_parse_precision(__first, __last, __pc);
-	if (__finished())
-	  return __first;
-
-	if (*__first == 's')
-	  {
-	    __spec._M_type = _Pres_s;
-	    ++__first;
-	  }
-#if __glibcxx_format_ranges // C++ >= 23 && HOSTED
-	else if (*__first == '?')
-	  {
-	    __spec._M_debug = true;
-	    ++__first;
-	  }
-#endif
-
-	if (__finished())
-	  return __first;
-
-	__format::__failed_to_parse_format_spec();
-      }
-
       template<typename _Out>
 	constexpr _Out
 	format(basic_string_view<_CharT> __s,
