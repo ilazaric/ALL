@@ -1,4 +1,5 @@
 #include <ivl/linux/terminate_syscalls>
+#include <ivl/logger>
 
 namespace sys = ivl::linux::terminate_syscalls;
 
@@ -19,7 +20,7 @@ int vfork_exec_wait4() {
 }
 
 int clone3_exec_wait4(bool vfork) {
-  alignas(16) char stack[1<<12];
+  alignas(16) char stack[1 << 12];
   clone_args args{};
   args.flags = CLONE_CLEAR_SIGHAND | CLONE_FILES | CLONE_FS | CLONE_IO | CLONE_VM | (vfork ? CLONE_VFORK : 0);
   args.stack = reinterpret_cast<uintptr_t>(&stack[0]);

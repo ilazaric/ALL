@@ -1,9 +1,10 @@
 #include <ivl/build_system/unshare>
+#include <ivl/logger>
+#include <sys/personality.h>
+#include <sys/prctl.h>
 #include <cassert>
 #include <filesystem>
 #include <vector>
-#include <sys/prctl.h>
-#include <sys/personality.h>
 
 // IVL add_compiler_flags("-static -flto -Wno-write-strings")
 
