@@ -9,35 +9,29 @@ on:
 jobs:
   build-gcc:
     runs-on: ubuntu-latest
-
     # only one compiler build at same time, so no weird cache behaviour happens
     concurrency:
       group: build-gcc
       cancel-in-progress: false
-
     steps:
     - uses: actions/checkout@v6
     # TODO: skip if cache hit
     - name: install apt packages
       run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential
-
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: get gcc commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-
     - name: cache gcc install
       id: cache-gcc
       uses: actions/cache@v5
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-gcc-${{ steps.get-gcc-commit.outputs.commit }}
-
     - name: install gcc
       run: |
         git submodule update --init --depth=1 -- submodules/gcc
@@ -113,26 +107,21 @@ jobs:
   build:
     needs: build-gcc
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
       run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
-
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: fetch submodules
       run: |
         git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
-
     - name: get gcc commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-
     - name: restore gcc install
       uses: actions/cache/restore@v5
       id: cache-gcc
@@ -140,18 +129,14 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-
     - name: activate gcc
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-          
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
-      
     - name: build
       run: CXXVER=26 ./build.py /build_system /linux /process /algos /meta /utility /stl /reflection /parsing /frankl /context /isolated_execution /command_line_argument_parsing
-
     - name: test
       run: ./run_built_tests.py
 
@@ -159,26 +144,21 @@ jobs:
   build2:
     needs: build-gcc
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
       run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
-
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: fetch submodules
       run: |
         git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
-
     - name: get gcc commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-
     - name: restore gcc install
       uses: actions/cache/restore@v5
       id: cache-gcc
@@ -186,22 +166,18 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-
     - name: activate gcc
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
-
     - name: build2
       run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/utility /ivl/stl /ivl/reflection /ivl/parsing /ivl/frankl /ivl/context /ivl/isolated_execution  /ivl/command_line_argument_parsing
 
 
   check_ivl_headers_for_pragma_once:
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
@@ -209,30 +185,24 @@ jobs:
     - name: test
       run: ./check_headers_for_pragma_once.py
 
-
   fsyntax_only_global_test:
     needs: build-gcc
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
       run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev
-
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-
     - name: fetch submodules
       run: |
         git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
-
     - name: get gcc commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-
     - name: restore gcc install
       uses: actions/cache/restore@v5
       id: cache-gcc
@@ -240,14 +210,11 @@ jobs:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-
     - name: activate gcc
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-          
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
-      
     - name: fsyntax-only-global-test
       run: ./fsyntax-only-global-test.py
