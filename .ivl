@@ -6,6 +6,12 @@ function dbg-build(){
     ${CXX:-g++} ${CXXPRE:-} -DIVL_LOCAL -DIVL_DBG_MODE -O0 -g -ggdb -rdynamic -fsanitize=address,undefined -ldl -no-pie -fno-pie -std=c++${CXXVER:-20} -I"$LOC/build/include" -I"$LOC/build/default_include" $FILE.cpp -o $FILE ${CXXPOST:-}
 }
 
+function script(){
+    SCRIPT="$1"
+    shift
+    "$LOC/ivl/scripts/${SCRIPT}.sh" "$@"
+}
+
 function build(){
     $LOC/build.py "$@"
     # old impl
@@ -58,6 +64,8 @@ function cf-submit(){
 }
 
 ivl_add_command "dbg-build" "LOC=\"$IVL_DOT_LOCATION\" dbg-build"
+
+ivl_add_command "script" "LOC=\"$IVL_DOT_LOCATION\" script"
 
 ivl_add_command "build" "LOC=\"$IVL_DOT_LOCATION\" build"
 ivl_add_command "build2" "LOC=\"$IVL_DOT_LOCATION\" build2"
