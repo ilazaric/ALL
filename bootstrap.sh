@@ -12,10 +12,10 @@ set -x
 # export PATH="/opt/GCC/bin:$PATH"
 # export LC_ALL="C"
 
-ivl build # for libraries for now
-
 ROOT="$(git rev-parse --show-toplevel)"
 DIR="$ROOT/build/bootstrap_dir"
+
+$ROOT/build.py # for libraries for now
 
 mkdir -p "$DIR"
 
