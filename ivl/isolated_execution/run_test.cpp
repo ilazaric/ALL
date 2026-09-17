@@ -3,7 +3,7 @@
 #include <ivl/utility>
 #include <algorithm>
 #include <concepts>
-#include <print>
+#include <ivl/format>
 #include <ranges>
 #include <span>
 #include <string_view>
@@ -91,10 +91,10 @@ void print_context(std::string_view file, size_t loc) {
   }
 
   for (size_t i = row < row_context ? 0 : row - row_context; i <= row; ++i)
-    std::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
-  std::println(stderr, "{:>{}}", "^--- here", col + row_digit_count + 2 + 9);
+    ivl::fmt::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
+  ivl::fmt::println(stderr, "{:>{}}", "^--- here", col + row_digit_count + 2 + 9);
   for (size_t i = row + 1; i <= row + row_context && i < lines.size(); ++i)
-    std::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
+    ivl::fmt::println(stderr, "{:{}}: {}", i + 1, row_digit_count, lines[i]);
 }
 
 // std::vector<std::string> parse_args(std::string_view data) {
@@ -114,7 +114,7 @@ void print_context(std::string_view file, size_t loc) {
 //   if (sv[0] == '\'') {
 //     auto loc = sv.find('\'', 1);
 //     if (loc == std::string_view::npos) {
-//       std::print(
+//       ivl::fmt::print(
 //         stderr, "Malformed argument file\n"
 //                 "- character `'` is missing ending conterpart\n"
 //       );
@@ -128,7 +128,7 @@ void print_context(std::string_view file, size_t loc) {
 
 //   if (sv[0] == '\\') {
 //     if (sv.size() == 1) {
-//       std::print(
+//       ivl::fmt::print(
 //         stderr, "Malformed argument file\n"
 //                 "- character `\` with no character after it\n"
 //       );
@@ -221,14 +221,14 @@ int main(int argc, char* argv[]) {
 
   auto wstatus = s.p.wait().unwrap_or_terminate();
   if (wstatus == 0) {
-    std::println("TEST PASSED");
+    ivl::fmt::println("TEST PASSED");
     return 0;
   }
 
-  std::println("TEST FAILED WITH WSTATUS {}", wstatus);
+  ivl::fmt::println("TEST FAILED WITH WSTATUS {}", wstatus);
 
   if (verbose) {
-    std::println("STDOUT AND STDERR WERE ALREADY DUMPED BY `--verbose`");
+    ivl::fmt::println("STDOUT AND STDERR WERE ALREADY DUMPED BY `--verbose`");
   } else {
     auto dump = [](ivl::linux::file_descriptor fd) {
       assert(!fd.empty());
@@ -240,15 +240,15 @@ int main(int argc, char* argv[]) {
       while (true) {
         auto loc = data.find('\n');
         auto line = data.substr(0, loc);
-        std::println("+ {}", line);
+        ivl::fmt::println("+ {}", line);
         if (loc == std::string_view::npos) break;
         data.remove_prefix(loc + 1);
       }
       ivl::linux::terminate_syscalls::munmap(ptr, statbuf.st_size);
     };
-    std::println("STDOUT:");
+    ivl::fmt::println("STDOUT:");
     dump(s.stdout_fd);
-    std::println("STDERR:");
+    ivl::fmt::println("STDERR:");
     dump(s.stderr_fd);
   }
 

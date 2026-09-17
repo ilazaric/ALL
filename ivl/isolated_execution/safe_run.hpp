@@ -106,7 +106,7 @@ safe_process safe_start(
   detail::full_write_at(cgroup_fd, "memory.swap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.zswap.max", "0");
   detail::full_write_at(cgroup_fd, "memory.max", std::to_string(max_memory));
-  detail::full_write_at(cgroup_fd, "cpu.max", std::format("{}000 100000", max_cpu_percentage));
+  detail::full_write_at(cgroup_fd, "cpu.max", ivl::fmt::format("{}000 100000", max_cpu_percentage));
   pc.cgroup = cgroup_fd;
   std::filesystem::path root = "/dev/shm/mount-point";
 
