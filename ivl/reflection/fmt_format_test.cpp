@@ -1,6 +1,10 @@
 #include "utility"
 #include <vector>
 
+#ifndef IVL_FMT_VIA_FMT
+#error "expected formatting via fmtlib"
+#endif
+
 // IVL test_only()
 
 int foo();
