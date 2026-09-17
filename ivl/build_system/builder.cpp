@@ -109,11 +109,11 @@ struct pp_info_t {
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
 
-    LOG(std::format("{}", cxx_cfg.argv));
+    LOG(ivl::fmt::format("{}", cxx_cfg.argv));
 
     auto wstatus = cxx_cfg.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
     if (wstatus != 0) {
-      std::println(stderr, "ERROR: compilation of file `{}` failed with status {}", out, wstatus);
+      ivl::fmt::println(stderr, "ERROR: compilation of file `{}` failed with status {}", out, wstatus);
       return false;
     }
 
@@ -149,7 +149,7 @@ struct pp_info_t {
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags);
     cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back(incfile);
-    cxx_cfg.argv.push_back(std::format("-DIVL_FILE=\"{}\"", relfile));
+    cxx_cfg.argv.push_back(ivl::fmt::format("-DIVL_FILE=\"{}\"", relfile));
     cxx_cfg.argv.push_back("-include");
     cxx_cfg.argv.push_back("ivl/reflection/test_runner");
     cxx_cfg.argv.push_back("/dev/null");
@@ -157,11 +157,11 @@ struct pp_info_t {
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
 
-    LOG(std::format("{}", cxx_cfg.argv));
+    LOG(ivl::fmt::format("{}", cxx_cfg.argv));
 
     auto wstatus = cxx_cfg.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
     if (wstatus != 0) {
-      std::println(stderr, "ERROR: compilation of file `{}` failed with status {}", out, wstatus);
+      ivl::fmt::println(stderr, "ERROR: compilation of file `{}` failed with status {}", out, wstatus);
       return false;
     }
 
@@ -184,7 +184,7 @@ struct manifest_part_t {
   get_pp(const std::filesystem::path& file, const cxx_cfg_part_t& cfg, const std::filesystem::path& build_dir) {
     if (auto it = pp_targets.find(file); it != pp_targets.end()) {
       if (!it->second.is_stale()) return {it->second};
-      std::println("pp info for `{}` stale, purging and regenerating", file);
+      ivl::fmt::println("pp info for `{}` stale, purging and regenerating", file);
       pp_targets.erase(it);
     }
 
@@ -260,18 +260,18 @@ struct manifest_part_t {
           //   pp_info.test_dependencies.insert_range(pp_info.test_dependencies.end(), pieces);
         } else if (command == "disable_ivl_main_handler") {
           if (!pieces.empty()) {
-            std::println(stderr, "ERROR: IVL directive `disable_ivl_main_handler` expects no arguments");
-            std::println(stderr, "ERROR: in file: {}", file);
-            std::println(stderr, "ERROR: directive: {}", line);
-            std::println(stderr, "ERROR: from file: {}", current_file);
+            ivl::fmt::println(stderr, "ERROR: IVL directive `disable_ivl_main_handler` expects no arguments");
+            ivl::fmt::println(stderr, "ERROR: in file: {}", file);
+            ivl::fmt::println(stderr, "ERROR: directive: {}", line);
+            ivl::fmt::println(stderr, "ERROR: from file: {}", current_file);
             return std::nullopt;
           }
           pp_info.ivl_main_handler = false;
         } else {
-          std::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", file);
-          std::println(stderr, "ERROR: directive: {}", line);
-          std::println(stderr, "ERROR: command: {}", command);
-          std::println(stderr, "ERROR: from file: {}", current_file);
+          ivl::fmt::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", file);
+          ivl::fmt::println(stderr, "ERROR: directive: {}", line);
+          ivl::fmt::println(stderr, "ERROR: command: {}", command);
+          ivl::fmt::println(stderr, "ERROR: from file: {}", current_file);
           return std::nullopt;
         }
       }
@@ -330,12 +330,12 @@ int main(int argc, char* argv[], char* envp[]) {
     "-std=c++26",
     "-freflection",
     "-fcontracts",
-    std::format("-ffile-prefix-map={}/=", root),
-    std::format("@{}/include_dirs/args.rsp", build_dir),
+    ivl::fmt::format("-ffile-prefix-map={}/=", root),
+    ivl::fmt::format("@{}/include_dirs/args.rsp", build_dir),
   };
   cxx_cfg.envp = {
     {"LC_ALL", "C"},
-    {"PATH", std::format("{}:{}", cxx_cfg.pathname.parent_path(), "/usr/bin")},
+    {"PATH", ivl::fmt::format("{}:{}", cxx_cfg.pathname.parent_path(), "/usr/bin")},
   };
 
   {
@@ -362,7 +362,7 @@ int main(int argc, char* argv[], char* envp[]) {
       auto out2 = build_dir / "bootstrap_dir" / target.stem();
       if (exists(out2)) remove(out2);
       copy_file(out, out2);
-      std::println("Re-execing ...");
+      ivl::fmt::println("Re-execing ...");
       _.fn();
       auto exe = build_dir / "bootstrap_dir/builder";
       ivl::linux::throwing_syscalls::execve(exe.c_str(), argv, envp);
@@ -423,8 +423,8 @@ int main(int argc, char* argv[], char* envp[]) {
     }
   }
 
-  std::println("Targets:");
-  for (auto&& [file, kind] : targets) std::println("{}{}", file, kind == target_t::kind_t::REGULAR ? "" : ":test");
+  ivl::fmt::println("Targets:");
+  for (auto&& [file, kind] : targets) ivl::fmt::println("{}{}", file, kind == target_t::kind_t::REGULAR ? "" : ":test");
 
   {
     std::vector<target_t> vec_targets(std::from_range, targets);
@@ -447,7 +447,7 @@ int main(int argc, char* argv[], char* envp[]) {
           if (!pp.build_regular(cxx_cfg, out)) failures[idx].push_back(target);
         } else {
           auto out = artifacts_dir / target.file.lexically_relative(build_dir / "source_copy").parent_path() /
-                     std::format("{}:test", target.file.stem());
+                     ivl::fmt::format("{}:test", target.file.stem());
           if (!pp.build_test(cxx_cfg, out)) failures[idx].push_back(target);
         }
       }
@@ -462,9 +462,9 @@ int main(int argc, char* argv[], char* envp[]) {
     for (auto&& f : failures) all_failures.insert_range(all_failures.end(), f);
     if (!all_failures.empty()) {
       std::ranges::sort(all_failures);
-      std::println("Failed targets:");
+      ivl::fmt::println("Failed targets:");
       for (auto&& [file, kind] : all_failures)
-        std::println("{}{}", file, kind == target_t::kind_t::REGULAR ? "" : ":test");
+        ivl::fmt::println("{}{}", file, kind == target_t::kind_t::REGULAR ? "" : ":test");
       return 1;
     }
   }
@@ -477,7 +477,7 @@ int main(int argc, char* argv[], char* envp[]) {
   //     pp.build_regular(cxx_cfg, out) || ivl::panic("Failed to compile regular `{}`", target.file);
   //   } else {
   //     auto out = artifacts_dir / target.file.lexically_relative(build_dir / "source_copy").parent_path() /
-  //                std::format("{}:test", target.file.stem());
+  //                ivl::fmt::format("{}:test", target.file.stem());
   //     pp.build_test(cxx_cfg, out) || ivl::panic("Failed to compile test `{}`", target.file);
   //   }
   // }

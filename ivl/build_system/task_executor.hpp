@@ -147,7 +147,7 @@ struct task_executor {
   std::filesystem::path create_new_cgroup() {
     namespace sys = linux::throwing_syscalls;
     while (true) {
-      auto path = root_cgroup_dir / std::format("child.{:08X}.slice", rand());
+      auto path = root_cgroup_dir / ivl::fmt::format("child.{:08X}.slice", rand());
       if (exists(path)) {
         if (linux::read_file_slow(path / "memory.max") == "0\n") linux::raw_syscalls::rmdir(path.c_str());
         continue;
@@ -196,7 +196,7 @@ struct task_executor {
     contract_assert(stderrfd.get() != 2);
     auto cgroup_dir = create_new_cgroup();
     linux::write_file_slow(cgroup_dir / "memory.max", std::to_string(memory_limit));
-    linux::write_file_slow(cgroup_dir / "cpu.max", std::format("{}000 100000", cpu_max_percentage));
+    linux::write_file_slow(cgroup_dir / "cpu.max", ivl::fmt::format("{}000 100000", cpu_max_percentage));
     linux::write_file_slow(cgroup_dir / "memory.swap.max", "0");
     linux::write_file_slow(cgroup_dir / "memory.zswap.max", "0");
     linux::owned_file_descriptor pidfd;

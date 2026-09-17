@@ -8,7 +8,7 @@
 #include <cassert>
 #include <chrono>
 #include <filesystem>
-#include <format>
+#include <ivl/format>
 #include <string>
 #include <vector>
 
@@ -17,7 +17,7 @@ std::optional<std::string> preprocess(const std::filesystem::path& file, process
   linux::owned_file_descriptor outfd{linux::throwing_syscalls::memfd_create("pp-output", MFD_CLOEXEC)};
   cxx_cfg.argv.push_back("-E");
   cxx_cfg.argv.push_back("-o");
-  cxx_cfg.argv.push_back(std::format("/proc/{}/fd/{}", linux::throwing_syscalls::getpid(), outfd.get()));
+  cxx_cfg.argv.push_back(ivl::fmt::format("/proc/{}/fd/{}", linux::throwing_syscalls::getpid(), outfd.get()));
   cxx_cfg.argv.push_back(file);
   cxx_cfg.pre_exec([] {
     auto fd = linux::terminate_syscalls::open("/dev/null", O_WRONLY, 0);
@@ -29,7 +29,7 @@ std::optional<std::string> preprocess(const std::filesystem::path& file, process
   if (proc.wait().unwrap_or_terminate() == 0) {
     return read_file(outfd);
   } else {
-    std::println(stderr, "ERROR: file `{}` failed to preprocess", file.native());
+    ivl::fmt::println(stderr, "ERROR: file `{}` failed to preprocess", file.native());
     return std::nullopt;
   }
 }
@@ -160,10 +160,10 @@ std::vector<source_target> parse_ivl(const std::filesystem::path& src, const pro
         target.has_test_variant = true;
         target.has_reg_variant = false;
       } else {
-        std::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", source.native());
-        std::println(stderr, "ERROR: directive: {}", directive.pragma);
-        std::println(stderr, "ERROR: command: {}", command);
-        std::println(stderr, "ERROR: from file: {}", directive.file.native());
+        ivl::fmt::println(stderr, "ERROR: file `{}` has unrecognized IVL directive:", source.native());
+        ivl::fmt::println(stderr, "ERROR: directive: {}", directive.pragma);
+        ivl::fmt::println(stderr, "ERROR: command: {}", command);
+        ivl::fmt::println(stderr, "ERROR: from file: {}", directive.file.native());
         targets.pop_back();
         break;
       }

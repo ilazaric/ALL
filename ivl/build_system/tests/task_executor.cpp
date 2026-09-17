@@ -18,6 +18,6 @@ task_config bash(std::string id, std::string arg) {}
   linux::owned_file_descriptor in(sys::memfd_create("input", MFD_CLOEXEC));
   linux::owned_file_descriptor out(sys::memfd_create("output", MFD_CLOEXEC));
   pid_t pid = sys::getpid();
-  linux::write_file_slow(std::format("/proc/{}/fd/{}", pid, in.get()), "hello ");
+  linux::write_file_slow(ivl::fmt::format("/proc/{}/fd/{}", pid, in.get()), "hello ");
 }
 } // namespace ivl::build_system

@@ -17,8 +17,8 @@ int ivl_main(const args& args) {
   std::map<std::string, size_t> controller_indices;
   for (size_t i = 0; i < root_controllers.size(); ++i) controller_indices[root_controllers[i]] = i;
 
-  for (auto&& con : root_controllers) std::print("{} ", con);
-  std::println("{}", args.root);
+  for (auto&& con : root_controllers) ivl::fmt::print("{} ", con);
+  ivl::fmt::println("{}", args.root);
 
   for (auto&& entry : std::filesystem::recursive_directory_iterator(args.root)) {
     if (!entry.is_directory()) continue;
@@ -27,9 +27,9 @@ int ivl_main(const args& args) {
     std::vector<bool> enabled(root_controllers.size(), false);
     for (auto&& el : con) enabled[controller_indices.at(el)] = true;
     for (size_t i = 0; i < root_controllers.size(); ++i)
-      std::print("{: ^{}} ", enabled[i] ? '|' : ' ', root_controllers[i].size());
+      ivl::fmt::print("{: ^{}} ", enabled[i] ? '|' : ' ', root_controllers[i].size());
     auto rel = entry.path().lexically_relative(args.root);
-    std::println(
+    ivl::fmt::println(
       "{: <{}}{}", "", (std::ranges::distance(entry.path()) - std::ranges::distance(args.root)) * 2,
       entry.path().filename()
     );
