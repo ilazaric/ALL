@@ -33,7 +33,7 @@ def cmake_submodule(m, target):
     S = modsrc / m
     B = modobj / m
     if not (B / "build.ninja").exists():
-        subprocess.run(["cmake", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-S", S, "-B", B, "-G", "Ninja"], check=True)
+        subprocess.run(["cmake", "-DCMAKE_CXX_STANDARD=26", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-S", S, "-B", B, "-G", "Ninja"], check=True)
     subprocess.run(["cmake", "--build", B, "--target", target], check=True)
 cmake_submodule("fmt", "libfmt.a")
 cmake_submodule("pugixml", "libpugixml.a")
