@@ -1,16 +1,16 @@
 #include <ivl/utility/colors>
-#include <print>
+#include <ivl/format>
 
 int main() {
   namespace term = ivl::terminal_graphical_rendition;
   for (int i = 0; i < 256; i += 5) {
-    for (int j = 0; j < 256; j += 2) std::print("{} ", term::background_color{i, i, j});
-    std::println("{}", term::background_reset{});
+    for (int j = 0; j < 256; j += 2) ivl::fmt::print("{} ", term::background_color{i, i, j});
+    ivl::fmt::println("{}", term::background_reset{});
   }
   char foo[] = "hello\nworld";
-  std::println("foo {:?} bar", "hello\nworld");
-  std::println("foo {:?} bar", foo);
+  ivl::fmt::println("foo {:?} bar", "hello\nworld");
+  ivl::fmt::println("foo {:?} bar", foo);
   auto clr = term::foreground_color{255, 0, 0};
-  std::println("foo {} bar", clr("{:?}", "hello\nworld"));
-  std::println("foo {:?} bar", clr("hello\nworld"));
+  ivl::fmt::println("foo {} bar", clr("{:?}", "hello\nworld"));
+  ivl::fmt::println("foo {:?} bar", clr("hello\nworld"));
 }

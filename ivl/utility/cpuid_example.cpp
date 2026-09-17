@@ -1,6 +1,6 @@
 #include <ivl/logger>
 #include "cpuid"
-#include <print>
+#include <ivl/format>
 
 constexpr uint64_t MASK = (1ULL << 16) - 1;
 constexpr uint64_t EAX = 1ULL << 0;
@@ -13,28 +13,28 @@ constexpr uint64_t HEX = 1;
 constexpr uint64_t STR = 2;
 
 void print_reg(unsigned int reg, uint64_t ctl) {
-  if (ctl == DEC) std::print("{}", reg);
-  else if (ctl == HEX) std::print("{:#x}", reg);
-  else if (ctl == STR) std::print("{:?}", std::string_view((const char*)&reg, (const char*)(&reg + 1)));
+  if (ctl == DEC) ivl::fmt::print("{}", reg);
+  else if (ctl == HEX) ivl::fmt::print("{:#x}", reg);
+  else if (ctl == STR) ivl::fmt::print("{:?}", std::string_view((const char*)&reg, (const char*)(&reg + 1)));
   else {
-    std::println(stderr, "unrecognized ctl: {}", ctl);
+    ivl::fmt::println(stderr, "unrecognized ctl: {}", ctl);
     std::terminate();
   }
 }
 
 void cpuid_log(unsigned int op, int count = 0, uint64_t ctl = 0) {
   auto ret = ivl::raw_cpuid(op, count);
-  std::print("op={:#x}", op);
-  if (count) std::print(" count={:#x}", count);
-  std::print(" eax=");
+  ivl::fmt::print("op={:#x}", op);
+  if (count) ivl::fmt::print(" count={:#x}", count);
+  ivl::fmt::print(" eax=");
   print_reg(ret.a, (ctl / EAX) & MASK);
-  std::print(" ebx=");
+  ivl::fmt::print(" ebx=");
   print_reg(ret.b, (ctl / EBX) & MASK);
-  std::print(" ecx=");
+  ivl::fmt::print(" ecx=");
   print_reg(ret.c, (ctl / ECX) & MASK);
-  std::print(" edx=");
+  ivl::fmt::print(" edx=");
   print_reg(ret.d, (ctl / EDX) & MASK);
-  std::println();
+  ivl::fmt::println("");
 }
 
 auto carve(unsigned int num, auto... widths) -> std::array<unsigned int, sizeof...(widths)> {

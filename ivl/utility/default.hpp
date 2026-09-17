@@ -4,7 +4,7 @@
 #include <ivl/utility/scope_exit>
 #include <cassert>
 #include <filesystem>
-#include <format>
+#include <ivl/format>
 #include <source_location>
 #include <sstream>
 #include <stacktrace>
@@ -12,6 +12,7 @@
 #include <string_view>
 #include <utility>
 #include <ivl/utility/hex>
+#include <ivl/format/stacktrace>
 
 #pragma IVL add_compiler_flags "-g"
 #pragma IVL add_compiler_flags_tail "-lstdc++exp"
@@ -104,12 +105,12 @@ struct panic {
   ) {
     if consteval {
       throw panic_exception(
-        std::format("{}\n\n{}\n\nin {}:{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line()), loc
+        ivl::fmt::format("{}\n\n{}\n\nin {}:{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(), loc.line()), loc
       );
     } else {
       throw panic_exception(
-        std::format(
-          "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, std::format(FWD(args)...), loc.file_name(), loc.line(),
+        ivl::fmt::format(
+          "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(), loc.line(),
           std::stacktrace::current()
         ),
         loc
@@ -125,10 +126,10 @@ struct panic<> {
     std::string_view header = "!!! PANIC !!!", std::source_location loc = std::source_location::current()
   ) {
     if consteval {
-      throw panic_exception(std::format("{}\n\nin {}:{}\n", header, loc.file_name(), loc.line()), loc);
+      throw panic_exception(ivl::fmt::format("{}\n\nin {}:{}\n", header, loc.file_name(), loc.line()), loc);
     } else {
       throw panic_exception(
-        std::format(
+        ivl::fmt::format(
           "{}\n\nin {}:{}\nstacktrace:\n{}\n", header, loc.file_name(), loc.line(), std::stacktrace::current()
         ),
         loc
@@ -139,7 +140,7 @@ struct panic<> {
 };
 
 template <typename... Args>
-panic(auto&&, Args&&...) -> panic<std::format_string<Args...>, Args...>;
+panic(auto&&, Args&&...) -> panic<ivl::fmt::format_string<Args...>, Args...>;
 template <typename = void>
 panic() -> panic<>;
 
@@ -154,13 +155,13 @@ struct todo {
 template <>
 struct todo<> {
   [[noreturn]] constexpr explicit todo(std::source_location loc = std::source_location::current()) {
-    panic<std::format_string<>>("TODO not implemented", "!!! TODO PANIC !!!", loc);
+    panic<ivl::fmt::format_string<>>("TODO not implemented", "!!! TODO PANIC !!!", loc);
   }
   constexpr operator bool() const noexcept { return true; };
 };
 
 template <typename... Args>
-todo(auto&&, Args&&...) -> todo<std::format_string<Args...>, Args...>;
+todo(auto&&, Args&&...) -> todo<ivl::fmt::format_string<Args...>, Args...>;
 template <typename = void>
 todo() -> todo<>;
 } // namespace ivl

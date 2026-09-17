@@ -1,6 +1,6 @@
 #pragma once
 
-#include <format>
+#include <ivl/format>
 #include <string>
 #include <string_view>
 
@@ -20,8 +20,8 @@ namespace detail {
   struct fmt_wrapper_enabled {
     template <typename Self, typename... Args>
       requires(sizeof...(Args) > 0)
-    auto operator()(this Self&& self, std::format_string<Args&...> fmt, Args&&... args) {
-      return fmt_wrapper<std::remove_reference_t<Self>, std::format_string<Args&...>, Args&...>(
+    auto operator()(this Self&& self, ivl::fmt::format_string<Args&...> fmt, Args&&... args) {
+      return fmt_wrapper<std::remove_reference_t<Self>, ivl::fmt::format_string<Args&...>, Args&...>(
         self, fmt, std::tuple<Args&...>(args...)
       );
     }
@@ -63,61 +63,61 @@ namespace colors {
 } // namespace ivl::terminal_graphical_rendition
 
 template <>
-struct std::formatter<ivl::terminal_graphical_rendition::foreground_reset, char> {
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_reset, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::foreground_reset, auto& ctx) const {
-    return std::format_to(ctx.out(), "\x1B[39m");
+    return ivl::fmt::format_to(ctx.out(), "\x1B[39m");
   }
 };
 
 template <>
-struct std::formatter<ivl::terminal_graphical_rendition::background_reset, char> {
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_reset, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::background_reset, auto& ctx) const {
-    return std::format_to(ctx.out(), "\x1B[49m");
+    return ivl::fmt::format_to(ctx.out(), "\x1B[49m");
   }
 };
 
 template <>
-struct std::formatter<ivl::terminal_graphical_rendition::foreground_color, char> {
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_color, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::foreground_color clr, auto& ctx) const {
-    return std::format_to(ctx.out(), "\x1B[38;2;{};{};{}m", clr.r, clr.g, clr.b);
+    return ivl::fmt::format_to(ctx.out(), "\x1B[38;2;{};{};{}m", clr.r, clr.g, clr.b);
   }
   auto format_reset(auto& ctx) const {
-    return std::formatter<ivl::terminal_graphical_rendition::foreground_reset, char>{}.format({}, ctx);
+    return ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_reset, char>{}.format({}, ctx);
   }
 };
 
 template <>
-struct std::formatter<ivl::terminal_graphical_rendition::background_color, char> {
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_color, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::background_color clr, auto& ctx) const {
-    return std::format_to(ctx.out(), "\x1B[48;2;{};{};{}m", clr.r, clr.g, clr.b);
+    return ivl::fmt::format_to(ctx.out(), "\x1B[48;2;{};{};{}m", clr.r, clr.g, clr.b);
   }
   auto format_reset(auto& ctx) const {
-    return std::formatter<ivl::terminal_graphical_rendition::background_reset, char>{}.format({}, ctx);
+    return ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_reset, char>{}.format({}, ctx);
   }
 };
 
 template <typename Wrapped, typename Fmt, typename... Args>
-struct std::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
-    std::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ivl::fmt::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
     ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     auto&& [... args] = wrap.args;
-    ctx.advance_to(std::format_to(ctx.out(), wrap.fmt, args...));
+    ctx.advance_to(ivl::fmt::format_to(ctx.out(), wrap.fmt, args...));
     return fmt_wrap.format_reset(ctx);
   }
 };
 
 template <typename Wrapped, typename Arg>
-struct std::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg>, char> {
-  std::formatter<std::decay_t<Arg>> underlying;
+struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg>, char> {
+  ivl::fmt::formatter<std::decay_t<Arg>> underlying;
   constexpr auto parse(auto& ctx) { return underlying.parse(ctx); }
   auto format(ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg> wrap, auto& ctx) const {
-    std::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ivl::fmt::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
     ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     ctx.advance_to(underlying.format(wrap.arg, ctx));
     return fmt_wrap.format_reset(ctx);
