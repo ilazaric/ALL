@@ -1,12 +1,12 @@
 #include <ivl/exception>
-#include <print>
+#include <ivl/format>
 
 std::string_view strip_prefix_opt(std::string_view a, std::string_view b) {
   return a.starts_with(b) ? a.substr(b.size()) : a;
 }
 
 std::string foo(std::source_location l) {
-  return std::format(
+  return ivl::fmt::format(
     "{}:'{}':{}", strip_prefix_opt(l.file_name(), "/home/ilazaric/repos/ALL/ivl/"), l.function_name(), l.line()
   );
 }
@@ -20,10 +20,10 @@ void fn() {
   } catch (const ivl::base_exception& e) {
     throw;
     // for (auto&& el : e.added_context)
-    //   std::println("{} {}", el.location, el.text);
-    std::println("EXCEPTION FROM {}", foo(e.throw_location));
+    //   ivl::fmt::println("{} {}", el.location, el.text);
+    ivl::fmt::println("EXCEPTION FROM {}", foo(e.throw_location));
     for (auto&& el : e.added_context)
-      std::println("ADDED CONTEXT FROM {}\n + {}", foo(el.location), el.text);
+      ivl::fmt::println("ADDED CONTEXT FROM {}\n + {}", foo(el.location), el.text);
   }
 }
 

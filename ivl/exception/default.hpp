@@ -2,9 +2,9 @@
 
 #include <ivl/utility/scope_exit>
 #include <exception>
-#include <format>
+#include <ivl/format>
 #include <memory>
-#include <print>
+#include <ivl/format>
 #include <source_location>
 #include <vector>
 
@@ -49,17 +49,17 @@ struct base_exception : std::exception {
   }
 
   inline void dump(std::FILE* stream = stdout) const {
-    std::println(
+    ivl::fmt::println(
       stream, "ivl::base_exception thrown from {}:{}:`{}`", throw_location.file_name(), throw_location.line(),
       throw_location.function_name()
     );
-    if (!throw_text.empty()) std::println(stream, " | text: {}", throw_text);
+    if (!throw_text.empty()) ivl::fmt::println(stream, " | text: {}", throw_text);
     for (auto&& ctx : added_context) {
-      std::println(
+      ivl::fmt::println(
         stream, " | added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
         ctx.location.line()
       );
-      if (!ctx.text.empty()) std::println(stream, " | | text: {}", ctx.text);
+      if (!ctx.text.empty()) ivl::fmt::println(stream, " | | text: {}", ctx.text);
     }
   }
 
@@ -67,17 +67,17 @@ struct base_exception : std::exception {
     if (cached_what) return cached_what->c_str();
     std::string what;
     auto out = std::back_inserter(what);
-    out = std::format_to(
+    out = ivl::fmt::format_to(
       out, "ivl::base_exception thrown from {}:{}:`{}`\n", throw_location.file_name(), throw_location.line(),
       throw_location.function_name()
     );
-    if (!throw_text.empty()) out = std::format_to(out, " | text: {}\n", throw_text);
+    if (!throw_text.empty()) out = ivl::fmt::format_to(out, " | text: {}\n", throw_text);
     for (auto&& ctx : added_context) {
-      out = std::format_to(
+      out = ivl::fmt::format_to(
         out, " | added context from {}:'{}':{}\n", ctx.location.file_name(), ctx.location.function_name(),
         ctx.location.line()
       );
-      if (!ctx.text.empty()) out = std::format_to(out, " | | text: {}\n", ctx.text);
+      if (!ctx.text.empty()) out = ivl::fmt::format_to(out, " | | text: {}\n", ctx.text);
     }
     cached_what = std::make_unique<std::string>(std::move(what));
     return cached_what->c_str();
@@ -92,7 +92,7 @@ struct base_exception : std::exception {
         std::uncaught_exceptions() == EXCEPTION_CONTEXT_exception_count + 1 && ::ivl::base_exception::is_in_flight()   \
       )                                                                                                                \
         ::ivl::base_exception::inflight_exceptions.back().ptr->added_context.emplace_back(                             \
-          std::source_location::current(), std::format(__VA_ARGS__)                                                    \
+          std::source_location::current(), ivl::fmt::format(__VA_ARGS__)                                                    \
         );                                                                                                             \
     }                                                                                                                  \
   }

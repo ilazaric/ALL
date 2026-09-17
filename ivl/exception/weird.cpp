@@ -1,5 +1,5 @@
 #include <cstdint>
-#include <print>
+#include <ivl/format>
 #include <vector>
 #include <exception>
 #include <cstring>
@@ -54,11 +54,11 @@ void run_experiment(){
         }
     }
 
-    std::println("{} {} -> {:.2f}% {} {}", sizeof(E), alignof(E), (double)success_count / trial_count * 100, success_count, trial_count);
+    ivl::fmt::println("{} {} -> {:.2f}% {} {}", sizeof(E), alignof(E), (double)success_count / trial_count * 100, success_count, trial_count);
 }
 
 int main() {
-    std::println("max alignment: {}", alignof(std::max_align_t));
+    ivl::fmt::println("max alignment: {}", alignof(std::max_align_t));
     run_experiment<GenericException<16, 16>>();
     run_experiment<GenericException<32, 32>>();
     run_experiment<GenericException<64, 64>>();

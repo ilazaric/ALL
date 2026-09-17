@@ -53,5 +53,5 @@ void test_basic() {
 
 int main() {
   test_basic();
-  std::println("ALL PASSED");
+  ivl::fmt::println("ALL PASSED");
 }
