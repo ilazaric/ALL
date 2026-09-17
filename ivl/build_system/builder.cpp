@@ -313,6 +313,7 @@ int main(int argc, char* argv[], char* envp[]) {
   auto root = ivl::util::repo_root();
   auto relative_wd = working_dir.lexically_relative(root);
   auto build_dir = root / "build";
+  auto cpy = build_dir / "source_copy";
   auto manifest_file = build_dir / "manifest.json";
   std::vector<std::filesystem::path> unresolved_targets(argv + 1, argv + argc);
 
@@ -367,8 +368,8 @@ int main(int argc, char* argv[], char* envp[]) {
     auto& curr_manifest = manifest.parts[cxx_cfg];
     for (std::filesystem::path target :
          {"ivl/build_system/generate_build_sources.cpp", "ivl/build_system/builder.cpp"}) {
-      auto opp = curr_manifest.get_pp(build_dir / "source_copy" / target, cxx_cfg, build_dir);
-      opp || ivl::panic("Missing file `{}`", build_dir / "source_copy" / target);
+      auto opp = curr_manifest.get_pp(cpy / target, cxx_cfg, build_dir);
+      opp || ivl::panic("Missing file `{}`", cpy / target);
       auto&& pp = *opp;
       if (pp.built_regular) continue;
       auto out = artifacts_dir / target.parent_path() / target.stem();
@@ -389,10 +390,10 @@ int main(int argc, char* argv[], char* envp[]) {
   create_directories(artifacts_dir);
 
   auto& curr_manifest = manifest.parts[cxx_cfg];
-
+  
   std::map<std::filesystem::path, std::vector<std::filesystem::path>> nested_targets;
-  for (auto&& file : find_sources(build_dir / "source_copy")) {
-    auto target = "/" / file.lexically_relative(build_dir / "source_copy");
+  for (auto&& file : find_sources(cpy)) {
+    auto target = "/" / file.lexically_relative(cpy);
     if (target == "/ivl/reflection/test_runner.hpp") continue;
     target.replace_extension();
     const auto& self_target = nested_targets[target];
