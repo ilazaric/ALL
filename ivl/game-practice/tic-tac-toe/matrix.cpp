@@ -4,7 +4,7 @@
 #include <ivl/game-practice/tic-tac-toe/blah_player>
 #include <ivl/game-practice/tic-tac-toe/truc_player>
 #include <meta>
-#include <print>
+#include <ivl/format>
 
 struct biased_matrix_outcome {
   size_t total;
@@ -69,7 +69,7 @@ double sum_battle(size_t seednum) {
 template<typename... Ps>
 void table(size_t seednum) {
   std::array<std::array<std::string, sizeof...(Ps) + 1>, sizeof...(Ps) + 1> texts;
-  texts[0][0] = std::format("seednum={}", seednum);
+  texts[0][0] = ivl::fmt::format("seednum={}", seednum);
   template for (int i = 0; constexpr auto p : {^^Ps...}) {
     ++i;
     texts[0][i] = texts[i][0] = trimmed(std::string(display_string_of(p)));
@@ -79,7 +79,7 @@ void table(size_t seednum) {
     ++i;
     template for (int j = 0; constexpr auto p2 : {^^Ps...}) {
       ++j;
-      texts[i][j] = std::format("{:.5f}", sum_battle<typename[:p1:], typename[:p2:]>(seednum));
+      texts[i][j] = ivl::fmt::format("{:.5f}", sum_battle<typename[:p1:], typename[:p2:]>(seednum));
     }
   }
 
@@ -90,43 +90,43 @@ void table(size_t seednum) {
   for (size_t i = 0; i < texts.size(); ++i) {
     if (i) {
       for (size_t j = 0; j < texts[i].size(); ++j) {
-        if (j) std::print("+");
-        std::print("{:-<{}}", "", widths[j]);
+        if (j) ivl::fmt::print("+");
+        ivl::fmt::print("{:-<{}}", "", widths[j]);
       }
-      std::println();
+      ivl::fmt::println("");
     }
     for (size_t j = 0; j < texts[i].size(); ++j) {
-      if (j) std::print("|");
-      std::print("{: ^{}}", texts[i][j], widths[j]);
+      if (j) ivl::fmt::print("|");
+      ivl::fmt::print("{: ^{}}", texts[i][j], widths[j]);
     }
-    std::println();
+    ivl::fmt::println("");
   }
 }
 
 void describe(const unbiased_matrix_outcome& ret, std::string_view p1, std::string_view p2) {
-  std::println("{} first, {} second", p1, p2);
-  std::println(
+  ivl::fmt::println("{} first, {} second", p1, p2);
+  ivl::fmt::println(
     "first won: {}, draws: {}, second won: {}", ret.outcomes[0].outcomes[0], ret.outcomes[0].outcomes[1],
     ret.outcomes[0].outcomes[2]
   );
-  std::println();
-  std::println("{} first, {} second", p2, p1);
-  std::println(
+  ivl::fmt::println("");
+  ivl::fmt::println("{} first, {} second", p2, p1);
+  ivl::fmt::println(
     "first won: {}, draws: {}, second won: {}", ret.outcomes[1].outcomes[0], ret.outcomes[1].outcomes[1],
     ret.outcomes[1].outcomes[2]
   );
-  std::println();
-  std::println("cummulative");
-  std::println(
+  ivl::fmt::println("");
+  ivl::fmt::println("cummulative");
+  ivl::fmt::println(
     "{} won: {}, draws: {}, {} won: {}", p1, ret.outcomes[0].outcomes[0] + ret.outcomes[1].outcomes[2],
     ret.outcomes[0].outcomes[1] + ret.outcomes[1].outcomes[1], p2,
     ret.outcomes[0].outcomes[2] + ret.outcomes[1].outcomes[0]
   );
-  std::println();
+  ivl::fmt::println("");
   auto summary = (double)(ret.outcomes[0].outcomes[0] + ret.outcomes[1].outcomes[2]) -
                  (double)(ret.outcomes[0].outcomes[2] + ret.outcomes[1].outcomes[0]);
   summary /= ret.outcomes[0].total + ret.outcomes[1].total;
-  std::println("summary of {} vs {}: {:.2f}", p1, p2, summary * 100);
+  ivl::fmt::println("summary of {} vs {}: {:.2f}", p1, p2, summary * 100);
 }
 
 int main() {
@@ -134,7 +134,7 @@ int main() {
 
   // auto ret = matrix_battle<random_player, random_center_player>(100);
   // describe(ret, "random_player", "random_center_player");
-  // std::println();
+  // ivl::fmt::println("");
 
   table<random_player, random_center_player, blah_player, truc_player>(100);
 
