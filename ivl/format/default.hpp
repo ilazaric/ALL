@@ -1,6 +1,7 @@
 #pragma once
 
 #ifdef IVL_FMT_USE_STD
+#define IVL_FMT_VIA_STD
 #include <format>
 #include <print>
 
@@ -8,6 +9,7 @@ namespace ivl {
 namespace fmt = ::std;
 } // namespace ivl
 #else // !IVL_FMT_USE_STD
+#define IVL_FMT_VIA_FMT
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <fmt/compile.h>
