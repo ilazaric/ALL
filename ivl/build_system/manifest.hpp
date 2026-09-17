@@ -1,6 +1,6 @@
 #pragma once
 
-#error "TODO"
+#warning "TODO"
 
 #include <sys/resource.h>
 #include <dirent.h>

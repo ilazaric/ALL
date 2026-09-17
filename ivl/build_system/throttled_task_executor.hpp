@@ -1,6 +1,6 @@
 #pragma once
 
-#error "TODO"
+#warning "TODO"
 
 #include <ivl/build_system/task_executor>
 #include <queue>
