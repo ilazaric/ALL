@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/utility>
-#include <format>
+#include <ivl/format>
 #include <string_view>
 #include <algorithm>
 
@@ -39,9 +39,9 @@ struct basic_parser {
 
   std::string debug_context() const {
     if (finished()) {
-      return std::format("row: {}, column: {}, at EOF", diag_row, diag_col);
+      return ivl::fmt::format("row: {}, column: {}, at EOF", diag_row, diag_col);
     } else {
-      return std::format("row: {}, column: {}, character {:?}", diag_row, diag_col, current_c());
+      return ivl::fmt::format("row: {}, column: {}, character {:?}", diag_row, diag_col, current_c());
     }
   }
 
@@ -85,9 +85,9 @@ struct basic_parser {
     }
 
     std::string ret;
-    for (auto&& s : prev) ret += std::format(".  | {:?}\n", s);
-    ret += std::format(">>>| {:?}\n", line);
-    for (auto&& s : next) ret += std::format(".  | {:?}\n", s);
+    for (auto&& s : prev) ret += ivl::fmt::format(".  | {:?}\n", s);
+    ret += ivl::fmt::format(">>>| {:?}\n", line);
+    for (auto&& s : next) ret += ivl::fmt::format(".  | {:?}\n", s);
     return ret;
   }
 

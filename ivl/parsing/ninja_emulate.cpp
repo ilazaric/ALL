@@ -3,7 +3,7 @@
 #include <ivl/parsing/ninja>
 #include <ivl/reflection/json>
 #include <filesystem>
-#include <print>
+#include <ivl/format>
 #include <string>
 
 struct[[= ivl::cmdline_parsing::class_basic]] args {
@@ -23,7 +23,7 @@ int ivl_main(const args& args, ivl::cmdline_parsing::passthrough arg_targets) {
   } else if (args.t == "targets") {
     ivl::todo();
   } else {
-    std::println("unknown command: {:?}", args.t);
+    ivl::fmt::println("unknown command: {:?}", args.t);
     return 1;
   }
   return 0;

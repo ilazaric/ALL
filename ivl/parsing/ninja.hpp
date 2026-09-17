@@ -613,11 +613,11 @@ pool gpu
   linux::owned_file_descriptor root(sys::memfd_create("root", 0));
   linux::owned_file_descriptor mid(sys::memfd_create("mid", 0));
   linux::owned_file_descriptor leaf(sys::memfd_create("leaf", 0));
-  linux::write_file_slow(root, std::format("include /proc/self/fd/{}\n", mid.get()));
-  linux::write_file_slow(mid, std::format("include /proc/self/fd/{}\n", leaf.get()));
+  linux::write_file_slow(root, ivl::fmt::format("include /proc/self/fd/{}\n", mid.get()));
+  linux::write_file_slow(mid, ivl::fmt::format("include /proc/self/fd/{}\n", leaf.get()));
   linux::write_file_slow(leaf, "abc=def\n");
   state global_state;
-  parse_file_into(std::format("/proc/self/fd/{}", root.get()), global_state);
+  parse_file_into(ivl::fmt::format("/proc/self/fd/{}", root.get()), global_state);
   contract_assert(global_state.variables.at("abc").value == "def");
 }
 
