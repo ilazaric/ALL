@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <format>
+#include <ivl/format>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -40,7 +40,7 @@ std::string_view encoding_prefix_str(encoding_prefix e) {
   case L:
     return "L";
   }
-  throw std::runtime_error(std::format("Unknown encoding_prefix: {}", (int)std::to_underlying(e)));
+  throw std::runtime_error(ivl::fmt::format("Unknown encoding_prefix: {}", (int)std::to_underlying(e)));
 }
 
 struct raw_literal {
@@ -109,7 +109,7 @@ struct single_line_comment {
     auto end = state.remaining.find('\n');
     if (end == std::string_view::npos)
       throw std::runtime_error(
-        std::format("ICE? single line comment cannot find newline\n{}", state.debug_context(start_ptr))
+        ivl::fmt::format("ICE? single line comment cannot find newline\n{}", state.debug_context(start_ptr))
       );
     state.remove_prefix(end);
     return single_line_comment{std::string_view{start_ptr, end}};
@@ -127,7 +127,7 @@ struct multi_line_comment {
     state.consume("/*");
     auto end = state.remaining.find("*/");
     if (end == std::string_view::npos)
-      throw std::runtime_error(std::format("Incomplete multiline comment\n{}", state.debug_context(start_ptr)));
+      throw std::runtime_error(ivl::fmt::format("Incomplete multiline comment\n{}", state.debug_context(start_ptr)));
     auto end_ptr = state.begin() + end + 2;
     state.remove_prefix(end + 2);
     return multi_line_comment{std::string_view{start_ptr, end_ptr}};
@@ -391,7 +391,7 @@ std::optional<character_literal> character_literal::try_parse(spliced_cxx_file::
   std::vector<c_char> c_char_seq;
   while (!state.starts_with('\'')) {
     auto cc = c_char::try_parse(state);
-    if (!cc) throw std::runtime_error(std::format("Failed to parse c-char\n{}", state.debug_context()));
+    if (!cc) throw std::runtime_error(ivl::fmt::format("Failed to parse c-char\n{}", state.debug_context()));
     c_char_seq.push_back(*cc);
   }
 
@@ -430,7 +430,7 @@ std::optional<string_literal> string_literal::try_parse(spliced_cxx_file::parsin
   std::vector<s_char> s_char_seq;
   while (!state.starts_with('"')) {
     auto sc = s_char::try_parse(state);
-    if (!sc) throw std::runtime_error(std::format("Failed to parse s-char\n{}", state.debug_context()));
+    if (!sc) throw std::runtime_error(ivl::fmt::format("Failed to parse s-char\n{}", state.debug_context()));
     s_char_seq.push_back(*sc);
   }
 
@@ -471,7 +471,7 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
   auto delimiter_end_pos = file.original_contents.find('(', delimiter_start_pos);
   if (delimiter_end_pos == std::string_view::npos) {
     throw std::runtime_error(
-      std::format(
+      ivl::fmt::format(
         "Malformed raw string literal, cannot deduce delimiter because opening paren `(` is missing\n{}",
         state.debug_context()
       )
@@ -491,7 +491,7 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
     bad_char_pos != std::string_view::npos
   ) {
     throw std::runtime_error(
-      std::format(
+      ivl::fmt::format(
         "Malformed raw string literal, delimiter contains illegal character [{}]\n{}", (int)delimiter[bad_char_pos],
         state.debug_context()
       )
@@ -499,10 +499,10 @@ std::optional<raw_literal> raw_literal::try_parse(ivl::spliced_cxx_file::parsing
   }
 
   auto content_start_pos = delimiter_end_pos + 1;
-  auto content_end_pos = file.original_contents.find(std::format("){}\"", delimiter), content_start_pos);
+  auto content_end_pos = file.original_contents.find(ivl::fmt::format("){}\"", delimiter), content_start_pos);
   if (content_end_pos == std::string_view::npos) {
     throw std::runtime_error(
-      std::format(
+      ivl::fmt::format(
         "Malformed raw string literal, cannot deduce end because ending delimiter `){}\"` is  missing\n{}", delimiter,
         state.debug_context()
       )
@@ -648,7 +648,7 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
 
     if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc(state);
 
-    if (!parsed) { throw std::runtime_error(std::format("ICE: parsing failed\n{}", state.debug_context())); }
+    if (!parsed) { throw std::runtime_error(ivl::fmt::format("ICE: parsing failed\n{}", state.debug_context())); }
 
     // a big like this can blow up memory
     assert(copy_state.begin() != state.begin());
@@ -670,7 +670,7 @@ std::string reserialize(const pp_token& token) {
     } else if constexpr (std::same_as<T, identifier>) {
       return (std::string)unpacked.text;
     } else if constexpr (std::same_as<T, raw_literal>) {
-      return std::format(
+      return ivl::fmt::format(
         "{}R\"{}({}){}\"{}", encoding_prefix_str(unpacked.ep), unpacked.delimiter, unpacked.payload, unpacked.delimiter,
         unpacked.ud_suffix
       );

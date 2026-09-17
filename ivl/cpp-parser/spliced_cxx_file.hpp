@@ -62,7 +62,7 @@ struct spliced_cxx_file {
       throw std::runtime_error("ICE: tried to revert synthesized newline at end of file into original file contents");
 
     throw std::runtime_error(
-      std::format("ICE: failed to revert splice_ptr to origin_ptr, index={}", sp - splice_begin())
+      ivl::fmt::format("ICE: failed to revert splice_ptr to origin_ptr, index={}", sp - splice_begin())
     );
   }
 
@@ -80,7 +80,7 @@ struct spliced_cxx_file {
     }
 
     throw std::runtime_error(
-      std::format("ICE: failed to revert splice_ptr to origin_ptr, index={}", op - origin_begin())
+      ivl::fmt::format("ICE: failed to revert splice_ptr to origin_ptr, index={}", op - origin_begin())
     );
   }
 
@@ -103,7 +103,7 @@ struct spliced_cxx_file {
     // ....: here IMO it could be, just say EOF in output
     if (!(origin_begin() <= op && op < origin_end())) {
       throw std::runtime_error(
-        std::format(
+        ivl::fmt::format(
           "ICE: range check failed\nrange: {} .. {}\narg: {}\n", (const void*)origin_begin().ptr,
           (const void*)origin_end().ptr, (const void*)op.ptr
         )
@@ -115,7 +115,7 @@ struct spliced_cxx_file {
     auto col = op.ptr - containing_line.begin();
 
     std::string ret;
-    ret = std::format(
+    ret = ivl::fmt::format(
       "{}\n{: <{}}^ here{} (row:{}, col:{})\n", containing_line, "", col, *op == '\n' ? " (newline)" : "", row + 1,
       col + 1
     );
@@ -125,8 +125,8 @@ struct spliced_cxx_file {
   }
 
   std::string debug_context(splice_ptr sp) const {
-    // std::println("arg: {}", (const void*)sp.ptr);
-    // std::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
+    // ivl::fmt::println("arg: {}", (const void*)sp.ptr);
+    // ivl::fmt::println("splice range: {} .. {}", (const void*)splice_begin().ptr, (const void*)splice_end().ptr);
     return debug_context(convert(sp));
   }
 
@@ -196,7 +196,7 @@ struct spliced_cxx_file {
     void consume(std::string_view sv) {
       if (!starts_with(sv))
         throw std::runtime_error(
-          std::format(
+          ivl::fmt::format(
             "Failed to consume `{}`\n{}", sv, file->debug_context(spliced_cxx_file::splice_ptr{remaining.data()})
           )
         );
@@ -208,7 +208,7 @@ struct spliced_cxx_file {
     void remove_prefix(size_t length) {
       if (remaining.size() < length)
         throw std::runtime_error(
-          std::format(
+          ivl::fmt::format(
             "ICE: tried to remove more than exists\nremaining: {}, attempted: {}\n{}", remaining.size(), length,
             debug_context()
           )
