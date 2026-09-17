@@ -85,18 +85,13 @@ struct pp_info_t {
     cxx_cfg.argv = cfg.argv;
     cxx_cfg.envp = cfg.envp;
 
+    LOG(file);
     auto src = file;
-    while (src.filename() != "source_copy") src = src.parent_path();
+    while (src.filename() != "regular" || src.parent_path().filename() != "include_dirs") src = src.parent_path();
     auto relfile = file.lexically_relative(src);
-    std::filesystem::path incfile;
-    if (relfile.filename() == "default.hpp") {
-      incfile = relfile.parent_path();
-    } else if (relfile.extension() == ".hpp") {
-      incfile = relfile.parent_path() / relfile.stem();
-    } else if (relfile.extension() == ".cpp") {
-      incfile = relfile;
-    } else {
-      ivl::panic("unreachable");
+    std::filesystem::path incfile = file;
+    if (file.extension() != ".hpp") {
+      relfile.replace_extension(".hpp");
     }
     incfile.empty() && ivl::panic("unreachable");
 
@@ -139,18 +134,13 @@ struct pp_info_t {
     cxx_cfg.argv = cfg.argv;
     cxx_cfg.envp = cfg.envp;
 
+    LOG(file);
     auto src = file;
-    while (src.filename() != "source_copy") src = src.parent_path();
+    while (src.filename() != "regular" || src.parent_path().filename() != "include_dirs") src = src.parent_path();
     auto relfile = file.lexically_relative(src);
-    std::filesystem::path incfile;
-    if (relfile.filename() == "default.hpp") {
-      incfile = relfile.parent_path();
-    } else if (relfile.extension() == ".hpp") {
-      incfile = relfile.parent_path() / relfile.stem();
-    } else if (relfile.extension() == ".cpp") {
-      incfile = relfile;
-    } else {
-      ivl::panic("unreachable");
+    std::filesystem::path incfile = file;
+    if (file.extension() != ".hpp") {
+      relfile.replace_extension(".hpp");
     }
     incfile.empty() && ivl::panic("unreachable");
 
@@ -317,6 +307,11 @@ int main(int argc, char* argv[], char* envp[]) {
   auto manifest_file = build_dir / "manifest.json";
   std::vector<std::filesystem::path> unresolved_targets(argv + 1, argv + argc);
 
+  auto regify = [&](const std::filesystem::path& p) {
+    return build_dir / "include_dirs/regular" / p.lexically_relative(cpy).parent_path() /
+           (p.extension() == ".hpp" ? p.stem() : p.filename());
+  };
+
   libs = "-L" + absolute(build_dir / "libraries").native();
 
   manifest_t manifest;
@@ -368,7 +363,7 @@ int main(int argc, char* argv[], char* envp[]) {
     auto& curr_manifest = manifest.parts[cxx_cfg];
     for (std::filesystem::path target :
          {"ivl/build_system/generate_build_sources.cpp", "ivl/build_system/builder.cpp"}) {
-      auto opp = curr_manifest.get_pp(cpy / target, cxx_cfg, build_dir);
+      auto opp = curr_manifest.get_pp(regify(cpy / target), cxx_cfg, build_dir);
       opp || ivl::panic("Missing file `{}`", cpy / target);
       auto&& pp = *opp;
       if (pp.built_regular) continue;
@@ -390,7 +385,7 @@ int main(int argc, char* argv[], char* envp[]) {
   create_directories(artifacts_dir);
 
   auto& curr_manifest = manifest.parts[cxx_cfg];
-  
+
   std::map<std::filesystem::path, std::vector<std::filesystem::path>> nested_targets;
   for (auto&& file : find_sources(cpy)) {
     auto target = "/" / file.lexically_relative(cpy);
@@ -423,7 +418,7 @@ int main(int argc, char* argv[], char* envp[]) {
     ut.filename().native().contains(':') && ivl::panic("Broken selector on target `{}`", orig);
     nested_targets.contains(ut) || ivl::panic("No files correspond to `{}`", orig);
     for (auto&& file : nested_targets[ut]) {
-      auto opp = curr_manifest.get_pp(file, cxx_cfg, build_dir);
+      auto opp = curr_manifest.get_pp(regify(file), cxx_cfg, build_dir);
       if (!opp) continue;
       auto&& pp = *opp;
       if (kind == target_t::kind_t::REGULAR && file.extension() != ".cpp") continue;
@@ -455,13 +450,12 @@ int main(int argc, char* argv[], char* envp[]) {
         auto tail = target_tail.fetch_add(1);
         if (tail >= vec_targets.size()) break;
         auto&& target = vec_targets[tail];
-        auto&& pp = *curr_manifest.get_pp(target.file, cxx_cfg, build_dir);
+        auto&& pp = *curr_manifest.get_pp(regify(target.file), cxx_cfg, build_dir);
         if (target.kind == target_t::kind_t::REGULAR) {
-          auto out = artifacts_dir / target.file.lexically_relative(build_dir / "source_copy").parent_path() /
-                     target.file.stem();
+          auto out = artifacts_dir / target.file.lexically_relative(cpy).parent_path() / target.file.stem();
           if (!pp.build_regular(cxx_cfg, out)) failures[idx].push_back(target);
         } else {
-          auto out = artifacts_dir / target.file.lexically_relative(build_dir / "source_copy").parent_path() /
+          auto out = artifacts_dir / target.file.lexically_relative(cpy).parent_path() /
                      ivl::fmt::format("{}:test", target.file.stem());
           if (!pp.build_test(cxx_cfg, out)) failures[idx].push_back(target);
         }
