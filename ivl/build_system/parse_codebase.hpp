@@ -30,6 +30,7 @@ std::optional<std::string> preprocess(const std::filesystem::path& file, process
     return read_file(outfd);
   } else {
     ivl::fmt::println(stderr, "ERROR: file `{}` failed to preprocess", file.native());
+    ivl::fmt::println(stderr, "command: {:?} {::?} {}", cxx_cfg.pathname, cxx_cfg.argv, cxx_cfg.envp);
     return std::nullopt;
   }
 }

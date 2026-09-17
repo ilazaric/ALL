@@ -2,6 +2,7 @@
 #include <ivl/linux/utility>
 #include <ivl/process>
 #include <ivl/reflection/json>
+#include <ivl/stl/string>
 #include <ivl/utility>
 #include <filesystem>
 #include <fstream>
@@ -45,6 +46,8 @@ struct cxx_cfg_part_t {
   std::map<std::string, std::string> envp;
   auto operator<=>(const cxx_cfg_part_t&) const = default;
 };
+
+std::string libs;
 
 struct pp_info_t {
   std::filesystem::path file;
@@ -109,6 +112,11 @@ struct pp_info_t {
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
 
+    cxx_cfg.argv.push_back(libs);
+    cxx_cfg.argv.insert_range(
+      cxx_cfg.argv.end(), ivl::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
+    );
+
     LOG(ivl::fmt::format("{}", cxx_cfg.argv));
 
     auto wstatus = cxx_cfg.clone_and_exec().unwrap_or_terminate().wait().unwrap_or_terminate();
@@ -156,6 +164,11 @@ struct pp_info_t {
     cxx_cfg.argv.push_back("-o");
     cxx_cfg.argv.push_back(out);
     cxx_cfg.argv.insert_range(cxx_cfg.argv.end(), add_compiler_flags_tail);
+
+    cxx_cfg.argv.push_back(libs);
+    cxx_cfg.argv.insert_range(
+      cxx_cfg.argv.end(), ivl::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
+    );
 
     LOG(ivl::fmt::format("{}", cxx_cfg.argv));
 
@@ -303,6 +316,8 @@ int main(int argc, char* argv[], char* envp[]) {
   auto manifest_file = build_dir / "manifest.json";
   std::vector<std::filesystem::path> unresolved_targets(argv + 1, argv + argc);
 
+  libs = "-L" + absolute(build_dir / "libraries").native();
+
   manifest_t manifest;
   {
     if (!exists(manifest_file)) goto manifest_load_end;
@@ -325,7 +340,6 @@ int main(int argc, char* argv[], char* envp[]) {
     "-xc++",
     "-Wl,-rpath=/opt/GCC/lib64",
     "-DIVL_LOCAL",
-    "-DPUGIXML_HEADER_ONLY",
     "-O3",
     "-std=c++26",
     "-freflection",

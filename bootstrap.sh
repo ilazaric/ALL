@@ -12,6 +12,8 @@ set -x
 # export PATH="/opt/GCC/bin:$PATH"
 # export LC_ALL="C"
 
+ivl build # for libraries for now
+
 ROOT="$(git rev-parse --show-toplevel)"
 DIR="$ROOT/build/bootstrap_dir"
 
@@ -31,7 +33,9 @@ then
         -DIVL_LOCAL \
         @"$ROOT/build/include_dirs/args.rsp" -freflection \
         "$ROOT/ivl/build_system/builder.cpp" \
-        -O3 -std=c++29 -o "$DIR/builder" -lstdc++exp
+        -O3 -std=c++29 -o "$DIR/builder" -lstdc++exp \
+        -L"$ROOT/build/libraries" \
+        -lfmt
 fi
 
 exec "$DIR/builder" "$@"
