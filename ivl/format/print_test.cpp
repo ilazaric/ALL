@@ -1,4 +1,3 @@
-#define IVL_FMT_VIA_STD
 #include "default"
 #include <filesystem>
 #include <map>
