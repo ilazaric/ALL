@@ -4,8 +4,8 @@
 #include <ivl/utility>
 #include "annotations"
 #include "passthrough"
-#include <format>
-#include <print>
+#include <ivl/format>
+#include <ivl/format>
 
 struct[[= ivl::cmdline_parsing::class_basic]] cc_bundle {
   bool bla;
@@ -16,6 +16,6 @@ struct[[= ivl::cmdline_parsing::class_basic]] cc_bundle {
 };
 
 int ivl_main(cc_bundle& args, ivl::cmdline_parsing::passthrough pass) {
-  std::println("{}", ivl::to_json(args).dump(2));
+  ivl::fmt::println("{}", ivl::to_json(args).dump(2));
   return 0;
 }

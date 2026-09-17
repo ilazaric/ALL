@@ -5,7 +5,7 @@
 #include "../raw_arguments"
 #include <charconv>
 #include <concepts>
-#include <print>
+#include <ivl/format>
 #include <string_view>
 
 namespace ivl::cmdline_parsing {
@@ -14,7 +14,7 @@ struct parser<Ip> : parser_one {
   bool parse_one(Ip& arg, std::string_view sv) const {
     auto ret = std::from_chars(sv.data(), sv.data() + sv.size(), arg);
     if (ret && ret.ptr == sv.data() + sv.size()) return true;
-    std::println("failed to parse integer, argument: {:?}", sv);
+    ivl::fmt::println("failed to parse integer, argument: {:?}", sv);
     return false;
   }
 };

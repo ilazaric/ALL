@@ -2,10 +2,10 @@
 
 #include "parser_declaration"
 #include <algorithm>
-#include <format>
+#include <ivl/format>
 #include <meta>
 #include <optional>
-#include <print>
+#include <ivl/format>
 #include <ranges>
 #include <string_view>
 
@@ -69,10 +69,10 @@ namespace implicit_detail {
   }
 
   consteval size_t register_name(std::string_view name, std::meta::info type, std::source_location loc) {
-    auto throw_error = [=]<typename... Ts>(std::format_string<Ts...> fmt, Ts&&... args) {
-      auto base = std::format("[implicit] register_name({:?}, {:?})", name, display_string_of(type));
-      auto message = std::format(fmt, static_cast<Ts&&>(args)...);
-      auto full = std::format("{}: {}", base, message);
+    auto throw_error = [=]<typename... Ts>(ivl::fmt::format_string<Ts...> fmt, Ts&&... args) {
+      auto base = ivl::fmt::format("[implicit] register_name({:?}, {:?})", name, display_string_of(type));
+      auto message = ivl::fmt::format(fmt, static_cast<Ts&&>(args)...);
+      auto full = ivl::fmt::format("{}: {}", base, message);
       throw std::meta::exception(full, (^^register_name), loc);
     };
     type = dealias(type);
@@ -198,11 +198,11 @@ struct parser<implicit> {
         parser<typename[:node.type:]> p;
         typename[:node.type:] v;
         if (!p.parse(v, eq ? resteq : rest)) {
-          std::println("during parsing option: {:?}", curr);
+          ivl::fmt::println("during parsing option: {:?}", curr);
           return false;
         }
         if (eq && !resteq.empty()) {
-          std::println("cannot parse payload after `=`: {:?}", curr);
+          ivl::fmt::println("cannot parse payload after `=`: {:?}", curr);
           return false;
         }
         implicit_detail::parsed_storage<typename[:node.type:], i>::value = v;
@@ -215,14 +215,14 @@ struct parser<implicit> {
 
   template<typename = void>
   void print_help() const {
-    std::print("[");
+    ivl::fmt::print("[");
     template for (constexpr size_t i : std::views::iota(0ull, implicit_detail::size())) {
       constexpr auto node = implicit_detail::fetch(i);
       constexpr auto type = display_string_of(node.type);
-      constexpr auto msg = define_static_string(std::format(" --{}:`{}`", node.name(), type));
-      std::print("{}", msg);
+      constexpr auto msg = define_static_string(ivl::fmt::format(" --{}:`{}`", node.name(), type));
+      ivl::fmt::print("{}", msg);
     }
-    std::print(" ]");
+    ivl::fmt::print(" ]");
   }
 };
 } // namespace ivl::cmdline_parsing

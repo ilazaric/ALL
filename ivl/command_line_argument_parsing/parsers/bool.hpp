@@ -3,7 +3,7 @@
 #include "../parser_declaration"
 #include "../parser_one"
 #include "../raw_arguments"
-#include <print>
+#include <ivl/format>
 #include <string_view>
 
 namespace ivl::cmdline_parsing {
@@ -26,7 +26,7 @@ struct parser<bool> : parser_one {
       arg = false;
       return true;
     }
-    std::println("failed to parse boolean, argument: {:?}", sv);
+    ivl::fmt::println("failed to parse boolean, argument: {:?}", sv);
     return false;
   }
 };

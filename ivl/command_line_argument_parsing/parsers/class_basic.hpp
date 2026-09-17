@@ -5,7 +5,7 @@
 #include "../parser_declaration"
 #include "../raw_arguments"
 #include <meta>
-#include <print>
+#include <ivl/format>
 
 namespace ivl::cmdline_parsing {
 template<typename T>
@@ -19,7 +19,7 @@ struct parser<T> {
       if (curr == "--help") return false;
       rest.remove_prefix(1);
       if (!curr.starts_with("--")) {
-        std::println("option should start with \"--\", got: {:?}", curr);
+        ivl::fmt::println("option should start with \"--\", got: {:?}", curr);
         return false;
       }
       auto name = curr.substr(2);
@@ -42,17 +42,17 @@ struct parser<T> {
         }
         parser<typename[:decay(type_of(member)):]> p;
         if (!p.parse(state.[:member:], eq ? resteq : rest)) {
-          std::println("during parsing option: {:?}", curr);
+          ivl::fmt::println("during parsing option: {:?}", curr);
           return false;
         }
         break;
       }
       if (!found) {
-        std::println("unrecognized option: {:?}", curr);
+        ivl::fmt::println("unrecognized option: {:?}", curr);
         return false;
       }
       if (eq && !resteq.empty()) {
-        std::println("cannot parse payload after `=`: {:?}", curr);
+        ivl::fmt::println("cannot parse payload after `=`: {:?}", curr);
         return false;
       }
     }
@@ -60,14 +60,14 @@ struct parser<T> {
   }
 
   void print_help() const {
-    std::print("[");
+    ivl::fmt::print("[");
     template for (constexpr auto member : reflection::nsdms(^^T)) {
       constexpr auto name = identifier_of(member);
       constexpr auto type = display_string_of(type_of(member));
-      constexpr auto msg = std::define_static_string(std::format(" --{}:`{}`", name, type));
-      std::print("{}", msg);
+      constexpr auto msg = std::define_static_string(ivl::fmt::format(" --{}:`{}`", name, type));
+      ivl::fmt::print("{}", msg);
     }
-    std::print(" ]");
+    ivl::fmt::print(" ]");
   }
 };
 } // namespace ivl::cmdline_parsing
