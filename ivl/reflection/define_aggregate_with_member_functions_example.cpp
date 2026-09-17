@@ -1,11 +1,10 @@
+#include <ivl/format>
 #include <ivl/utility>
 #include "define_aggregate_with_member_functions"
-#include <format>
-#include <print>
 #include <ranges>
 
 // IVL add_compiler_flags("-Wno-subobject-linkage")
-#pragma IVL add_compiler_flags -Wno-subobject-linkage
+#pragma IVL add_compiler_flags "-Wno-subobject-linkage"
 
 struct foo;
 
@@ -42,11 +41,11 @@ consteval {
       {"dump", [](auto&& self) {
          auto hist = [&] {
            std::string ret;
-           for (auto&& el : self.history) ret += std::format("  {},\n", el);
+           for (auto&& el : self.history) ret += ivl::fmt::format("  {},\n", el);
            return ret;
          };
          auto strify = [&] {
-           return std::format(
+           return ivl::fmt::format(
              "\nbump_count: {}\nlength_sum: {}\ndata: {}\nhistory: [\n{}]", self.bump_count, self.length_sum, self.data,
              hist()
            );
@@ -54,7 +53,7 @@ consteval {
          if consteval {
            __builtin_constexpr_diag(32, "", strify());
          } else {
-           std::println("{}", strify());
+           ivl::fmt::println("{}", strify());
          }
        }},
     }

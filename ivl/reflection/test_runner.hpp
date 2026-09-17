@@ -5,7 +5,7 @@
 #include <cassert>
 #include <cstring>
 #include <meta>
-#include <print>
+#include <ivl/format>
 #include <vector>
 
 // This file is auto-included into tests, at end.
@@ -39,14 +39,14 @@ consteval std::vector<std::meta::info> wrap(std::vector<std::meta::info> v) {
 // `true` means that the test passed.
 template<std::meta::info I>
 bool invoke_function() noexcept {
-  std::println("RUNNING TEST {}", display_string_of(I));
+  ivl::fmt::println("RUNNING TEST {}", display_string_of(I));
   auto pid = ivl::linux::raw_syscalls::fork();
   assert(pid >= 0);
   if (pid == 0) {
     try {
       [:I:]();
     } catch (const std::exception& e) {
-      std::println("!!! EXCEPTION:\n{}", e.what());
+      ivl::fmt::println("!!! EXCEPTION:\n{}", e.what());
       ivl::linux::raw_syscalls::exit_group(1);
     }
     ivl::linux::raw_syscalls::exit_group(0);
@@ -54,11 +54,11 @@ bool invoke_function() noexcept {
   int wstatus;
   ivl::linux::raw_syscalls::wait4(pid, &wstatus, 0, nullptr);
   if (wstatus != 0) {
-    std::println("TEST FAILED {}", display_string_of(I));
-    std::println(" - with exit status {}", wstatus);
+    ivl::fmt::println("TEST FAILED {}", display_string_of(I));
+    ivl::fmt::println(" - with exit status {}", wstatus);
     return false;
   } else {
-    std::println("TEST PASSED {}", display_string_of(I));
+    ivl::fmt::println("TEST PASSED {}", display_string_of(I));
     return true;
   }
 }

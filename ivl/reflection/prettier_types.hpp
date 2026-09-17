@@ -44,14 +44,14 @@ consteval std::string_view display_string_of(std::meta::info r) {
 //   // , const notes_container& notes
 // ) {
 //   if (!is_class_type(type) && !is_union_type(type))
-//     throw std::meta::exception(std::format("argument must be a class type, got `{}`", display_string_of(type)));
+//     throw std::meta::exception(ivl::fmt::format("argument must be a class type, got `{}`", display_string_of(type)));
 
 //   std::string out;
-//   std::format_to(
+//   ivl::fmt::format_to(
 //     std::back_inserter(out), "// file: {}, line: {}\n", source_location(type).file_name(),
 //     source_location(type).line()
 //   );
-//   std::format_to(std::back_inserter(out), "{} {} {{\n", is_class_type(type) ? "struct" : "union",
+//   ivl::fmt::format_to(std::back_inserter(out), "{} {} {{\n", is_class_type(type) ? "struct" : "union",
 //   identifier_of(type));
 
 //   enum access { a_public, a_protected, a_private, a_broken };
@@ -76,13 +76,13 @@ consteval std::string_view display_string_of(std::meta::info r) {
 //   for (auto member : nonstatic_data_members_of(type, std::meta::access_context::unchecked())) {
 //     auto mem_access = access_of(member);
 //     if (current_access != mem_access) {
-//       std::format_to(std::back_inserter(out), "{}:\n", access_str(mem_access));
+//       ivl::fmt::format_to(std::back_inserter(out), "{}:\n", access_str(mem_access));
 //       current_access = mem_access;
 //     }
-//     std::format_to(std::back_inserter(out), "  {} {};\n", display_string_of(type_of(member)), identifier_of(member));
+//     ivl::fmt::format_to(std::back_inserter(out), "  {} {};\n", display_string_of(type_of(member)), identifier_of(member));
 //   }
 
-//   std::format_to(std::back_inserter(out), "};\n");
+//   ivl::fmt::format_to(std::back_inserter(out), "};\n");
 //   return out;
 // }
 // }

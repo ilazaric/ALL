@@ -1,6 +1,6 @@
 #include <ivl/command_line_argument_parsing/annotations>
 #include <optional>
-#include <print>
+#include <ivl/format>
 #include <string>
 
 struct[[= ivl::cmdline_parsing::class_basic]] args {
@@ -10,7 +10,7 @@ struct[[= ivl::cmdline_parsing::class_basic]] args {
 };
 
 int ivl_main(args& args) {
-  std::println("foo: {}", args.foo);
-  std::println("bar: {}", args.bar);
+  ivl::fmt::println("foo: {}", args.foo);
+  ivl::fmt::println("bar: {}", args.bar);
   return 0;
 }

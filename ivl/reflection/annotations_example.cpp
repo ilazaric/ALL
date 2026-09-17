@@ -3,7 +3,7 @@
 #include <cassert>
 #include <iostream>
 #include <meta>
-#include <print>
+#include <ivl/format>
 #include <vector>
 
 // IVL add_compiler_flags("-freflection -static")

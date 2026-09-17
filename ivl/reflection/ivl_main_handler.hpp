@@ -6,7 +6,7 @@
 #include <ivl/command_line_argument_parsing/parsers>
 #include <ivl/command_line_argument_parsing/print_help>
 #include <meta>
-#include <print>
+#include <ivl/format>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -97,7 +97,7 @@ int wrap_ivl_main(int argc, char** argv)
   if (!seen_help && parse_check && raw_args.empty()) {
     return [:sizeof...(Args) ? ^^:: : ^^:::] ::ivl_main(static_cast<Args&&>(main_args)...);
   } else {
-    if (parse_check && !seen_help) std::println(stderr, "too many arguments, unparsed: {::?}", raw_args.rest);
+    if (parse_check && !seen_help) ivl::fmt::println(stderr, "too many arguments, unparsed: {::?}", raw_args.rest);
     std::string_view program_name = argc ? argv[0] : "<program-name>";
     ::ivl::cmdline_parsing::print_help<std::decay_t<Args>...>(program_name);
     return 1;
@@ -105,7 +105,7 @@ int wrap_ivl_main(int argc, char** argv)
 }
 #ifdef __cpp_exceptions
 catch (const std::exception& e) {
-  std::println(stderr, "exception reached main\n{}", e.what());
+  ivl::fmt::println(stderr, "exception reached main\n{}", e.what());
   return 1;
 }
 #endif
