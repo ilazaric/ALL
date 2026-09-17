@@ -2,7 +2,7 @@
 #include "eval"
 #include "gradient"
 #include "point"
-#include <format>
+#include <ivl/format>
 #include <iomanip>
 #include <span>
 #include <vector>
@@ -148,7 +148,7 @@ double attempt(int n) {
   // for (int i = 0; i < n; ++i) {
   //   g[i] -= points[i] * dot(g[i], points[i]);
   // }
-  // LOG(std::format("{}", g));
+  // LOG(ivl::fmt::format("{}", g));
   return ev;
 }
 
@@ -196,7 +196,7 @@ double attempt_newton(int n) {
   // for (int i = 0; i < n; ++i) {
   //   g[i] -= points[i] * dot(g[i], points[i]);
   // }
-  // LOG(std::format("{}", g));
+  // LOG(ivl::fmt::format("{}", g));
   return ev;
 }
 

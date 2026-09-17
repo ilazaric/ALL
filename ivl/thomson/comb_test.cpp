@@ -2,7 +2,7 @@
 #include "comb"
 #include <map>
 #include <meta>
-#include <print>
+#include <ivl/format>
 
 void gen_combs_r(
   std::size_t n, std::size_t m, std::size_t idx, std::vector<std::size_t>& curr,
@@ -80,9 +80,9 @@ int ivl_main() {
       auto vec = combs[i];
       while (!vec.empty() && vec.front() == 0) vec.erase(vec.begin());
       // LOG(i);
-      // LOG(std::format("{}", combs[i]));
-      // LOG(std::format("{}", vec));
-      // LOG(std::format("{}", generic_decode_weird5(n, i)));
+      // LOG(ivl::fmt::format("{}", combs[i]));
+      // LOG(ivl::fmt::format("{}", vec));
+      // LOG(ivl::fmt::format("{}", generic_decode_weird5(n, i)));
       contract_assert(vec == generic_decode_weird5(n, i));
     }
     std::cerr << "validating count ...\n";
@@ -102,21 +102,21 @@ int ivl_main() {
     LOG(n, m2, comb_count_smart(n, m2));
     LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
     std::string sep;
-    std::print(" \\ ");
+    ivl::fmt::print(" \\ ");
     sep += "---";
     for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
-      std::print(" | {: ^3}", e1);
+      ivl::fmt::print(" | {: ^3}", e1);
       sep += "-+----";
     }
-    std::println();
+    ivl::fmt::println("");
     for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
-      std::println("{}", sep);
-      std::print("{: ^3}", e2);
+      ivl::fmt::println("{}", sep);
+      ivl::fmt::print("{: ^3}", e2);
       for (std::size_t e1 = 0; e1 < comb_count_smart(n, m1); ++e1) {
-        std::print(" | {: ^3}", concat(n, m1, e1, m2, e2));
+        ivl::fmt::print(" | {: ^3}", concat(n, m1, e1, m2, e2));
         contract_assert(concat(n, m1, e1, m2, e2) == generic_concat(n, e1, e2));
       }
-      std::println();
+      ivl::fmt::println("");
     }
   }
 
@@ -151,7 +151,7 @@ int ivl_main() {
         if (e1) {
           std::size_t delta = concat(n, m1, e1, m2, e2) - concat(n, m1, e1 - 1, m2, e2);
           if (delta == 9)
-            std::format_to(
+            ivl::fmt::format_to(
               std::back_inserter(nines), "{}+{}:{} -- {}+{}:{}\n", e1, e2, concat(n, m1, e1, m2, e2), e1 - 1, e2,
               concat(n, m1, e1 - 1, m2, e2)
             );
@@ -159,14 +159,14 @@ int ivl_main() {
         if (e2) {
           std::size_t delta = concat(n, m1, e1, m2, e2) - concat(n, m1, e1, m2, e2 - 1);
           if (delta == 9)
-            std::format_to(
+            ivl::fmt::format_to(
               std::back_inserter(nines), "{}+{}:{} -- {}+{}:{}\n", e1, e2, concat(n, m1, e1, m2, e2), e1, e2 - 1,
               concat(n, m1, e1, m2, e2 - 1)
             );
         }
       }
     }
-    std::println("nines:\n{}", nines);
+    ivl::fmt::println("nines:\n{}", nines);
   }
 
   if (0) {
@@ -178,12 +178,12 @@ int ivl_main() {
     LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
     std::size_t e1 = 1;
     LOG(e1);
-    std::println("e2  | mix | delta");
+    ivl::fmt::println("e2  | mix | delta");
     std::size_t last = e1;
     std::map<std::size_t, std::size_t> counts;
     for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
       std::size_t curr = concat(n, m1, e1, m2, e2);
-      std::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - last);
+      ivl::fmt::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - last);
       if (e2) ++counts[curr - last];
       last = curr;
     }
@@ -199,10 +199,10 @@ int ivl_main() {
     LOG(n, m1 + m2, comb_count_smart(n, m1 + m2));
     std::size_t e1 = 2;
     LOG(e1);
-    std::println("e2  | mix | delta");
+    ivl::fmt::println("e2  | mix | delta");
     for (std::size_t e2 = 0; e2 < comb_count_smart(n, m2); ++e2) {
       std::size_t curr = concat(n, m1, e1, m2, e2);
-      std::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - e2);
+      ivl::fmt::println("{: ^3} | {: ^3} | {: ^3}", e2, curr, curr - e2);
     }
   }
 

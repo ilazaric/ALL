@@ -4,14 +4,14 @@
 #include "point"
 #include <cmath>
 #include <iomanip>
-#include <print>
+#include <ivl/format>
 
 void show1(const autodiff_t& arg) {
   for (std::size_t r = 0; r < arg.diff_rank(); ++r) {
-    std::println("rank: {}", r);
-    for (std::size_t i = 0; i < arg.data[r].size(); ++i) std::println("data[r][{}] = {}", i, arg.data[r][i]);
+    ivl::fmt::println("rank: {}", r);
+    for (std::size_t i = 0; i < arg.data[r].size(); ++i) ivl::fmt::println("data[r][{}] = {}", i, arg.data[r][i]);
   }
-  std::println();
+  ivl::fmt::println("");
 }
 
 autodiff_t norm2(const autodiff_t& arg) { return dot(arg, arg); }
@@ -232,7 +232,7 @@ double attempt(int n) {
   // for (int i = 0; i < n; ++i) {
   //   g[i] -= points[i] * dot(g[i], points[i]);
   // }
-  // LOG(std::format("{}", g));
+  // LOG(ivl::fmt::format("{}", g));
   return ev;
 }
 

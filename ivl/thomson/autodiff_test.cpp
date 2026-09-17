@@ -1,6 +1,6 @@
 #include "autodiff"
 #include <cmath>
-#include <print>
+#include <ivl/format>
 
 autodiff_t polynomial(const std::vector<double>& coefs, const autodiff_t& arg) {
   contract_assert(arg.output_size() == 1);
@@ -130,10 +130,10 @@ autodiff_t evaluate(const autodiff_t& left, const autodiff_t& right) { return in
 
 void show1(const autodiff_t& arg) {
   for (std::size_t r = 0; r < arg.diff_rank(); ++r) {
-    std::println("rank: {}", r);
-    for (std::size_t i = 0; i < arg.data[r].size(); ++i) std::println("data[r][{}] = {}", i, arg.data[r][i]);
+    ivl::fmt::println("rank: {}", r);
+    for (std::size_t i = 0; i < arg.data[r].size(); ++i) ivl::fmt::println("data[r][{}] = {}", i, arg.data[r][i]);
   }
-  std::println();
+  ivl::fmt::println("");
 }
 
 bool close(double a, double b) { return abs(a - b) < 1e-5; }
@@ -148,7 +148,7 @@ bool close(const autodiff_t& a, const autodiff_t& b) {
 
 int main() {
   {
-    std::println("validating polynomial ...");
+    ivl::fmt::println("validating polynomial ...");
     autodiff_t arg(1, 1, 3);
     arg.data[0][0] = 5;
     arg.data[1][0] = 1;
@@ -164,39 +164,39 @@ int main() {
   autodiff_t arg2 = polynomial({0.1, 0.2, 0.1, -0.12, 0.1}, arg);
 
   {
-    std::println("validating exp_bad ...");
+    ivl::fmt::println("validating exp_bad ...");
     contract_assert(close(polynomial({0, 0, 1}, exp_bad(arg2)), exp_bad(arg2 * 2.0)));
   }
 
   {
-    std::println("validating exp_good ...");
+    ivl::fmt::println("validating exp_good ...");
     contract_assert(close(polynomial({0, 0, 1}, exp_good(arg2)), exp_good(arg2 * 2.0)));
   }
 
   {
-    std::println("validating exp_best ...");
+    ivl::fmt::println("validating exp_best ...");
     contract_assert(close(polynomial({0, 0, 1}, exp_best(arg2)), exp_best(arg2 * 2.0)));
   }
 
   {
-    std::println("comparing exp_bad and exp_good ...");
+    ivl::fmt::println("comparing exp_bad and exp_good ...");
     contract_assert(close(exp_bad(arg2), exp_good(arg2)));
   }
 
   {
-    std::println("comparing exp_bad and exp_best ...");
+    ivl::fmt::println("comparing exp_bad and exp_best ...");
     contract_assert(close(exp_bad(arg2), exp_best(arg2)));
   }
 
   {
-    std::println("validating inverse ...");
+    ivl::fmt::println("validating inverse ...");
     autodiff_t one(arg2.shape());
     one.data[0][0] = 1.0;
     contract_assert(close(one, dot(arg2, inverse(arg2))));
   }
 
   {
-    std::println("validating pow ...");
+    ivl::fmt::println("validating pow ...");
     contract_assert(close(pow(arg2, 3), polynomial({0, 0, 0, 1}, arg2)));
     contract_assert(close(polynomial({0, 0, 0, 1}, pow(arg2, 1.0 / 3.0)), arg2));
     contract_assert(close(dot(pow(arg2, 1.6), pow(arg2, 1.9)), pow(arg2, 3.5)));

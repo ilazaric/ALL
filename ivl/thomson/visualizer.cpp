@@ -299,10 +299,10 @@ struct plot_render {
     //   last = next;
     // }
     // should_log = false;
-    DrawText(std::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
-    DrawText(std::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
-    // DrawText(std::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
-    // DrawText(std::format("down: {}", down).c_str(), 10, 100, 30, GREEN);
+    DrawText(ivl::fmt::format("hi: {}", hi).c_str(), 10, 10, 30, GREEN);
+    DrawText(ivl::fmt::format("scale: {}", scale).c_str(), 10, 40, 30, GREEN);
+    // DrawText(ivl::fmt::format("newton: {}", newton_coef(points)).c_str(), 10, 70, 30, GREEN);
+    // DrawText(ivl::fmt::format("down: {}", down).c_str(), 10, 100, 30, GREEN);
     EndTextureMode();
   }
 
@@ -357,9 +357,9 @@ int ivl_main(std::size_t point_count) {
     // DrawTexture(sr.RT.texture, 0, 0, WHITE);
     // DrawTexture(pr.RT.texture, 500, 0, WHITE);
     DrawFPS(10, 10);
-    DrawText(std::format("rotation speed: {}", sr.rotation_speed).c_str(), 10, 30, 30, GREEN);
-    DrawText(std::format("iteration: {}", sr.iteration).c_str(), 10, 60, 30, GREEN);
-    DrawText(std::format("eval: {}", sr.ev).c_str(), 10, 90, 30, GREEN);
+    DrawText(ivl::fmt::format("rotation speed: {}", sr.rotation_speed).c_str(), 10, 30, 30, GREEN);
+    DrawText(ivl::fmt::format("iteration: {}", sr.iteration).c_str(), 10, 60, 30, GREEN);
+    DrawText(ivl::fmt::format("eval: {}", sr.ev).c_str(), 10, 90, 30, GREEN);
     EndDrawing();
   }
   CloseWindow();

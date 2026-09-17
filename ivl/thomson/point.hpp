@@ -1,7 +1,7 @@
 #pragma once
 
 #include <cmath>
-#include <format>
+#include <ivl/format>
 #include <random>
 #include <utility>
 
@@ -26,12 +26,12 @@ struct point {
 };
 
 template<>
-struct std::formatter<point, char> {
+struct ivl::fmt::formatter<point, char> {
   constexpr auto parse(auto& ctx) {
     if (ctx.begin() != ctx.end() && *ctx.begin() == '}') throw;
     return ctx.begin();
   }
-  auto format(point p, auto& ctx) const { return std::format_to(ctx.out(), "({:.5f},{:.5f},{:.5f})", p.x, p.y, p.z); }
+  auto format(point p, auto& ctx) const { return ivl::fmt::format_to(ctx.out(), "({:.5f},{:.5f},{:.5f})", p.x, p.y, p.z); }
 };
 
 template<typename = void>

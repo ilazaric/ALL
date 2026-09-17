@@ -330,8 +330,8 @@ struct mdarray {
 // b : Z -> W -> T (-> F)
 // compose(a,b) : X -> Y -> W -> T (-> F)
 mdarray compose(mdarray_cref a, mdarray_cref b) {
-  // LOG(std::format("{}", a.shape));
-  // LOG(std::format("{}", b.shape));
+  // LOG(ivl::fmt::format("{}", a.shape));
+  // LOG(ivl::fmt::format("{}", b.shape));
   // TODO: pre
   contract_assert(a.shape->is_linear_operator());
   contract_assert(b.shape->is_linear_operator());
@@ -356,8 +356,8 @@ mdarray compose(mdarray_cref a, mdarray_cref b) {
 }
 
 mdarray apply(mdarray_cref a, mdarray_cref b) {
-  // LOG(std::format("{}", a.shape));
-  // LOG(std::format("{}", b.shape));
+  // LOG(ivl::fmt::format("{}", a.shape));
+  // LOG(ivl::fmt::format("{}", b.shape));
   // TODO: pre
   // contract_assert(a.shape->is_linear_operator());
   contract_assert(b.shape->is_linear_operator());
@@ -380,8 +380,8 @@ mdarray apply(mdarray_cref a, mdarray_cref b) {
 }
 
 mdarray dot(mdarray_cref a, mdarray_cref b) {
-  // LOG(std::format("{}", a.shape));
-  // LOG(std::format("{}", b.shape));
+  // LOG(ivl::fmt::format("{}", a.shape));
+  // LOG(ivl::fmt::format("{}", b.shape));
   // TODO: pre
   // contract_assert(a.shape->is_linear_operator());
   contract_assert(b.shape->is_vector());
