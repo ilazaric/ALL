@@ -2,7 +2,7 @@
 #include <ivl/linux/raw_syscalls>
 #include <cassert>
 #include <iostream>
-#include <print>
+#include <ivl/format>
 
 int main() {
   std::string contents;
@@ -17,6 +17,6 @@ int main() {
   }
   auto hash = ivl::crypto::blake3::hash(contents);
   std::string_view bla((char*)&hash, (char*)(&hash + 1));
-  for (auto c : bla) std::print("{:02x}", c);
-  std::println("  -");
+  for (auto c : bla) ivl::fmt::print("{:02x}", c);
+  ivl::fmt::println("  -");
 }
