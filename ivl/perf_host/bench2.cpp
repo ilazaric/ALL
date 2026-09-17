@@ -1,7 +1,7 @@
 #include <ivl/linux/utility>
 #include <ivl/timer/timer>
 #include <memory>
-#include <print>
+#include <ivl/format>
 #include <vector>
 
 // IVL add_compiler_flags("-static")
@@ -39,7 +39,7 @@ namespace sys = ivl::linux::throwing_syscalls;
   constexpr std::size_t LEN = 32ULL << 12;
   char buf[LEN];
   while (auto len = sys::read(fd.get(), buf, sizeof(buf))) {
-    std::print("{}", std::string_view(buf, len));
+    ivl::fmt::print("{}", std::string_view(buf, len));
     // std::size_t off = 0;
     // while (off < len) {
     //   off += sys::write(1, buf + off, len - off);
@@ -58,8 +58,8 @@ int ivl_main() {
   auto start = ivl::timer::gettimestamp();
   for (auto el : queries) acc += index(root, el);
   auto end = ivl::timer::gettimestamp();
-  std::println("duration: {}", end - start);
-  std::println("evidence: {}", acc);
+  ivl::fmt::println("duration: {}", end - start);
+  ivl::fmt::println("evidence: {}", acc);
   dump_status();
   return 0;
 }

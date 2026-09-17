@@ -1,7 +1,7 @@
 #include <ivl/timer/timer>
 #include <memory>
 #include <vector>
-#include <print>
+#include <ivl/format>
 
 // IVL add_compiler_flags("-static")
 
@@ -42,7 +42,7 @@ int ivl_main() {
   auto start = ivl::timer::gettimestamp();
   for (auto el : queries) acc += index(root, el);
   auto end = ivl::timer::gettimestamp();
-  std::println("duration: {}", end - start);
-  std::println("evidence: {}", acc);
+  ivl::fmt::println("duration: {}", end - start);
+  ivl::fmt::println("evidence: {}", acc);
   return 0;
 }
