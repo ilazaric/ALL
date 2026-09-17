@@ -8,7 +8,7 @@
 
 #include <filesystem>
 #include <cassert>
-#include <print>
+#include <ivl/format>
 #include <cstdio>
 
 namespace ivl::linux::cgroups {

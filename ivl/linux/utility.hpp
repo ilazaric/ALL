@@ -5,7 +5,7 @@
 #include <ivl/linux/throwing_syscalls>
 #include "page_size"
 #include <filesystem>
-#include <format>
+#include <ivl/format>
 #include <string>
 
 namespace ivl::linux {
@@ -184,22 +184,22 @@ inline owned_file_descriptor create_tmpfs() {
   );
 
   if (clone3_ret < 0) {
-    throw std::runtime_error(std::format("clone3 failed with error: {}", clone3_ret));
+    throw std::runtime_error(ivl::fmt::format("clone3 failed with error: {}", clone3_ret));
   }
 
   int wstatus = -1;
   auto wait4_ret = raw_syscalls::wait4(clone3_ret, &wstatus, 0, nullptr);
   if (wait4_ret < 0) {
-    throw std::runtime_error(std::format("wait4 failed with error: {}", wait4_ret));
+    throw std::runtime_error(ivl::fmt::format("wait4 failed with error: {}", wait4_ret));
   }
 
   if (wstatus != 0) {
-    throw std::runtime_error(std::format("unexpected exit code: {}", wstatus));
+    throw std::runtime_error(ivl::fmt::format("unexpected exit code: {}", wstatus));
   }
 
   if (outcome.syscall_return < 0) {
     throw std::runtime_error(
-      std::format(
+      ivl::fmt::format(
         "unexpected syscall error {} in occurred child process in line {}", outcome.syscall_return, outcome.file_line
       )
     );

@@ -38,7 +38,7 @@ int main() {
       .stack_size = sizeof(stack),
     };
 
-    std::string ex = std::format("echo 'running process {0}'; sleep 1; exit {0}", arg);
+    std::string ex = ivl::fmt::format("echo 'running process {0}'; sleep 1; exit {0}", arg);
     std::vector<const char*> argv;
     argv.push_back("/usr/bin/bash");
     argv.push_back("-c");

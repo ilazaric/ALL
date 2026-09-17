@@ -1,7 +1,7 @@
 #include <ivl/linux/cgroups>
 #include <ivl/process>
 #include <ivl/stl/string>
-#include <print>
+#include <ivl/format>
 #include <cstdio>
 #include <cstring>
 #include <atomic>
@@ -21,13 +21,13 @@ int main() {
     auto ff = cgroup_dir(cg) / file;
     auto f = std::fopen(ff.native().c_str(), "w");
     assert(f);
-    std::println(f, "{}", txt);
+    ivl::fmt::println(f, "{}", txt);
     auto r = std::fclose(f);
     if (r != 0) {
       auto e = errno;
-      std::println("{} {} {}", cg.native(), file, txt);
-      std::println("err: {}", std::strerror(e));
-      std::println("ff: {}", ff.native());
+      ivl::fmt::println("{} {} {}", cg.native(), file, txt);
+      ivl::fmt::println("err: {}", std::strerror(e));
+      ivl::fmt::println("ff: {}", ff.native());
       assert(false);
     }
   };
@@ -53,7 +53,7 @@ int main() {
 
   std::atomic<size_t> global_job_index;
 
-  std::println("{:.>30} {:.>10} {:.>10} {:.>10}", "cgroup", "job_index", "memory", "exit_code");
+  ivl::fmt::println("{:.>30} {:.>10} {:.>10} {:.>10}", "cgroup", "job_index", "memory", "exit_code");
   
   auto thread_lambda = [&] (std::filesystem::path cg) {
     ivl::process_config cfg;
@@ -68,7 +68,7 @@ int main() {
       cfg.argv[1] = std::to_string(mem);
       auto proc = cfg.clone_and_exec().unwrap_or_terminate();
       auto w = proc.wait().unwrap_or_terminate();
-      std::println("{:.>30} {:.>10} {:.>10} {:.>10}", cg.native(), job_index, mem, w*100);
+      ivl::fmt::println("{:.>30} {:.>10} {:.>10} {:.>10}", cg.native(), job_index, mem, w*100);
     }
   };
   std::thread t1{thread_lambda, workercg1};

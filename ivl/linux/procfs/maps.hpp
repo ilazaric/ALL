@@ -3,7 +3,7 @@
 #include <sys/sysmacros.h>
 #include <sys/types.h>
 
-#include <format>
+#include <ivl/format>
 #include <fstream>
 #include <optional>
 #include <ranges>
@@ -32,7 +32,7 @@ struct Maps : std::vector<MapsEntry> {};
 
 std::optional<Maps> parse_maps(pid_t pid) {
   auto str = [&] {
-    std::ifstream inf(std::format("/proc/{}/maps", pid));
+    std::ifstream inf(ivl::fmt::format("/proc/{}/maps", pid));
     std::stringstream buffer;
     buffer << inf.rdbuf();
     return std::move(buffer.str());

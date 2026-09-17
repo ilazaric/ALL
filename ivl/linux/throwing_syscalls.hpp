@@ -15,13 +15,13 @@ namespace {
   template<typename T>
   auto convert(T arg) {
     if constexpr (std::is_enum_v<T>) {
-      return std::format("{}", std::to_underlying<T>(arg));
+      return ivl::fmt::format("{}", std::to_underlying<T>(arg));
     } else if constexpr (!std::is_pointer_v<T>) {
-      return std::format("{}", arg);
+      return ivl::fmt::format("{}", arg);
     } else if constexpr (std::is_same_v<T, char*> || std::is_same_v<T, const char*>) {
-      return std::format("{}", arg);
+      return ivl::fmt::format("{}", arg);
     } else {
-      return std::format("{}", reinterpret_cast<const void*>(arg));
+      return ivl::fmt::format("{}", reinterpret_cast<const void*>(arg));
     }
   }
 } // namespace
