@@ -168,7 +168,7 @@ struct process_function {
 
   std::string operator()(auto&&... args) const {
     namespace sys = linux::throwing_syscalls;
-    auto str_args = std::array{std::format("{}", args)...};
+    auto str_args = std::array{ivl::fmt::format("{}", args)...};
     std::vector<const char*> pass_args(argv.size() + str_args.size() + 2, nullptr);
     pass_args[0] = pathname.c_str();
     for (size_t i = 0; i < argv.size(); ++i) pass_args[i + 1] = argv[i].c_str();
@@ -223,7 +223,7 @@ struct process_function {
 
     int wstatus;
     auto ret = sys::wait4(pid, &wstatus, 0, nullptr);
-    if (wstatus != 0) throw ivl::base_exception(std::format("process exited with status {}", ret));
+    if (wstatus != 0) throw ivl::base_exception(ivl::fmt::format("process exited with status {}", ret));
     return linux::read_file(stdoutfd);
   }
 };
