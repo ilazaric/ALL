@@ -8,6 +8,7 @@ import sys
 import subprocess
 import os
 from dataclasses import dataclass
+import time
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
@@ -99,21 +100,10 @@ targets = all_targets.keys()
 targets = [target for target in targets if not str(target).startswith("/edg-reflection")]
 targets = [target for target in targets if not str(target).startswith("/cpp-parser")]
 targets = [target for target in targets if not str(target).endswith("_X@raw")]
-# targets = [target for target in targets if str(target).startswith("/command_line_argument_parsing")]
-# targets = [target for target in targets if False
-#            or str(target).startswith("/cf/")
-#            ]
-# targets = """
-# """.split()
-# targets = [
-#     # "/command_line_argument_parsing/parse_example",
-#     # "/command_line_argument_parsing/parse_example@raw",
-#     "/command_line_argument_parsing/parse_class@raw",
-#     # "/command_line_argument_parsing/passthrough_example",
-#     # "/command_line_argument_parsing/passthrough_example@raw",
-# ]
-# targets = [Path(t) for t in targets]
-print(targets)
+targets = [target for target in targets if str(target).endswith("@raw")]
+for t in targets:
+    print(all_targets[t].path.relative_to(src))
+print(f"{len(targets)} = ")
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
@@ -125,6 +115,7 @@ cxxver = os.getenv("CXXVER", "29")
 cxxpost = os.getenv("CXXPOST", "")
 
 failed = []
+durations = dict()
 for target in targets:
     path = all_targets[target].path
     relpath = path.relative_to(src)
@@ -165,9 +156,52 @@ for target in targets:
              repo_root / "ivl" / target.relative_to('/')] +
             cxxpost.split() + cxxaddedpost)
     print(" ".join([str(x) for x in args]))
+    start = time.perf_counter()
     p = subprocess.run(args, check=False)
+    elapsed = time.perf_counter() - start # + len(str(target))
+    durations[target] = elapsed
     if p.returncode != 0:
         failed.append(target)
+
+print()
+ordered = sorted(targets, key = lambda target: -durations[target])
+limit = 20
+print(f"Slowest {limit} files:")
+for t in ordered[:20]:
+    print(f"  {durations[t]:.2f}s -- {all_targets[t].path.relative_to(src)}")
+print()
+accumulated = dict()
+children = dict()
+for t in targets:
+    p = all_targets[t].path
+    while True:
+        accumulated[p] = 0.0
+        children[p] = set()
+        if p == src: break
+        p = p.parent
+for t in targets:
+    p = all_targets[t].path
+    while True:
+        accumulated[p] += durations[t]
+        if p == src: break
+        children[p.parent].add(p)
+        p = p.parent
+def dumpit(p, cs):
+    prefix = ""
+    for c in cs[:-1]:
+        prefix += "|   " if c else "    "
+    if cs:
+        prefix += "|-- " if cs[-1] else "`-- "
+    rel = p.relative_to(src)
+    print(prefix + (str(rel.name) if p != src else "<ROOT>"), f"-- {accumulated[p]:.2f}s")
+    nxt = sorted(list(children[p]), key = lambda x: -accumulated[x])
+    for child in nxt[:-1]:
+        dumpit(child, cs + [True])
+    if nxt:
+        dumpit(nxt[-1], cs + [False])
+print(f"Durations by filesystem tree structure:")
+dumpit(src, [])
+print()
 
 if not failed:
     print("all targets passed")
