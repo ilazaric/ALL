@@ -1,9 +1,9 @@
 #pragma once
 
+#include <ivl/format>
 #include <cmath>
 #include <complex>
 #include <fftw3.h>
-#include <print>
 #include <span>
 #include <vector>
 
@@ -61,10 +61,10 @@ std::vector<double> stft_amps(std::span<const double> in, size_t window_size, si
   std::vector<double> acc(window_size);
   // a.insert_range(a.begin(), std::views::repeat(0, window_size - 1));
   for (size_t i = 0; i + window_size <= in.size(); i += hop) {
-    std::print("{} / {}\r", i + window_size, in.size());
+    ivl::fmt::print("{} / {}\r", i + window_size, in.size());
     auto b = ex.amps(in.subspan(i, window_size));
     for (size_t j = 0; j < window_size; ++j) acc[j] += b[j];
   }
-  std::println();
+  ivl::fmt::println("");
   return acc;
 }

@@ -1,12 +1,12 @@
 #pragma once
 
+#include <ivl/format>
 #include <ivl/logger>
 #include "common"
 #include <raylib/raylib.h>
 #include <raylib/raymath.h>
 #include <algorithm>
 #include <cmath>
-#include <format>
 #include <ranges>
 #include <span>
 #include <vector>
@@ -156,7 +156,7 @@ struct plot {
 struct window {
   int width, height;
   window(int width, int height, std::string_view name) : width(width), height(height) {
-    InitWindow(width, height, std::format("{}", name).c_str());
+    InitWindow(width, height, ivl::fmt::format("{}", name).c_str());
   }
 
   void set_target_fps(int fps) { SetTargetFPS(fps); }
@@ -175,7 +175,7 @@ struct freq_plot : plot {
     x_axis_label = "frequency";
     render_x_axis_values = true;
     for (double freq : {20.0, 50.0, 100.0, 200.0, 500.0, 1'000.0, 2'000.0, 5'000.0, 10'000.0, 20'000.0}) {
-      x_axis_values.emplace_back(std::log(freq), std::format("{}Hz", freq));
+      x_axis_values.emplace_back(std::log(freq), ivl::fmt::format("{}Hz", freq));
     }
     x_range = {min_log_freq, max_log_freq};
   }

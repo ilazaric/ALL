@@ -1,4 +1,5 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
+#include <ivl/format>
 #include "bin"
 #include "common"
 #include "equalizer_config"
@@ -12,10 +13,6 @@
 #include <ranges>
 
 // IVL add_compiler_flags_tail("-lfftw3 -lm")
-
-// IVL add_compiler_flags("-fno-strict-aliasing")
-// IVL add_compiler_flags_tail("-L/home/ilazaric/repos/ALL/submodules/objdir/raylib/raylib/ -lraylib")
-// IVL add_compiler_flags_tail("-lm  -lpthread -lOpenGL  -lGLX  -lGLU  -lm  -lrt  -lm  -ldl")
 
 // IVL add_compiler_flags("-Wno-non-template-friend -Wsfinae-incomplete=0")
 
@@ -33,7 +30,7 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     auto v = channel_split(p);
     auto q = ivl::wav::channel_merge(v);
     contract_assert(q == p);
-    for (size_t i = 0; i < v.size(); ++i) save(v[i], std::format("channel_{}.wav", i));
+    for (size_t i = 0; i < v.size(); ++i) save(v[i], ivl::fmt::format("channel_{}.wav", i));
   }
 
   if (implicit_flag("synthesize_sine")) {
@@ -61,14 +58,14 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& file) 
     std::vector<double> acc(window_size);
     // a.insert_range(a.begin(), std::views::repeat(0, window_size - 1));
     for (size_t i = 0; i + window_size <= a.size(); ++i) {
-      std::print("{} / {}\r", i + window_size, a.size());
+      ivl::fmt::print("{} / {}\r", i + window_size, a.size());
       auto b = ex.amps(std::span(a).subspan(i, window_size));
       // auto m = std::ranges::max_element(b);
       // auto f = m - b.begin();
       // LOG(f, b[f]);
       for (size_t j = 0; j < window_size; ++j) acc[j] += b[j];
     }
-    std::println();
+    ivl::fmt::println("");
   }
 
   if (implicit_flag("stft_visualise")) {

@@ -2,8 +2,8 @@
 
 #include <ivl/command_line_argument_parsing/parser_one>
 #include <ivl/command_line_argument_parsing/parsers/floats>
+#include <ivl/format>
 #include <ivl/stl/string>
-#include <print>
 #include <vector>
 
 struct equalizer_config {
@@ -25,13 +25,13 @@ struct ivl::cmdline_parsing::parser<equalizer_config> : ivl::cmdline_parsing::pa
     auto pieces = ivl::split_py_view(arg);
     for (size_t i = 0; i < pieces.size(); ++i) {
       auto curr = pieces[i];
-      auto error = [=]<typename... Ts>(std::format_string<Ts...> fmt, Ts&&... args) {
-        std::println(
+      auto error = [=]<typename... Ts>(ivl::fmt::format_string<Ts...> fmt, Ts&&... args) {
+        ivl::fmt::println(
           "failed to parse equalizer_config\n"
           "- arg: {:?}\n"
           "- current piece: {:?}\n"
           "- {}",
-          arg, curr, std::format(fmt, args...)
+          arg, curr, ivl::fmt::format(fmt, args...)
         );
         return false;
       };

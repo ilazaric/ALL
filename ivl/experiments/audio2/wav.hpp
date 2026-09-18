@@ -65,7 +65,7 @@ payload load(const std::filesystem::path& file, bool silent = false) {
     auto id = rem.substr(0, 4);
     uint32_t len;
     memcpy(&len, rem.data() + 4, 4);
-    if (!silent) LOG(std::format("{:?}", id), len);
+    if (!silent) LOG(ivl::fmt::format("{:?}", id), len);
     rem.remove_prefix(8);
     contract_assert(rem.size() >= len);
     auto curr = rem.substr(0, len);
