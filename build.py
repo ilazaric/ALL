@@ -155,7 +155,7 @@ unprocessed_targets = set()
 for x in args.targets:
     y = repo_root / "ivl" / ("."+x) if x.startswith("/") else Path.cwd() / x
     y = y.resolve() # TODO: does it do good with symlinks?
-    assert repo_root / "ivl" in y.parents, x
+    assert repo_root / "ivl" in y.parents or repo_root / "ivl" == y, x
     z = "/" / y.relative_to(repo_root / "ivl")
     assert y.is_dir() or z in all_targets, z
     if z in all_targets:
