@@ -56,27 +56,29 @@ if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
     build_build_prep()
 subprocess.run([build_prep], check=True)
 
-modsrc = build_dir / "submodule_source_copy"
-modobj = build_dir / "submodule_objdir"
-modobj.mkdir(exist_ok=True)
-def cmake_submodule(m, target):
-    S = modsrc / m
-    B = modobj / m
-    if not (B / "build.ninja").exists():
-        subprocess.run(["cmake", "-DCMAKE_CXX_STANDARD=26", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-S", S, "-B", B, "-G", "Ninja"], check=True)
-    subprocess.run(["cmake", "--build", B, "--target", target, "--parallel", f"{args.jobs}"], check=True)
-cmake_submodule("fmt", "libfmt.a")
-cmake_submodule("pugixml", "libpugixml.a")
-# cmake_submodule("nlohmann-json") # no libraries
-cmake_submodule("raylib", "libraylib.a")
-
-libs = build_dir / "libraries"
-libs.mkdir(exist_ok=True)
-shutil.copy(modobj / "raylib/raylib/libraylib.a", libs / "libraylib.a")
-shutil.copy(modobj / "pugixml/libpugixml.a", libs / "libpugixml.a")
-shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
-# TODO: clean up
-libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
+if not args.syntax_only:
+    modsrc = build_dir / "submodule_source_copy"
+    modobj = build_dir / "submodule_objdir"
+    modobj.mkdir(exist_ok=True)
+    def cmake_submodule(m, target):
+        S = modsrc / m
+        B = modobj / m
+        if not (B / "build.ninja").exists():
+            subprocess.run(["cmake", "-DCMAKE_CXX_STANDARD=26", "-DCMAKE_BUILD_TYPE=RelWithDebInfo", "-S", S, "-B", B, "-G", "Ninja"], check=True)
+        subprocess.run(["cmake", "--build", B, "--target", target, "--parallel", f"{args.jobs}"], check=True)
+    cmake_submodule("fmt", "libfmt.a")
+    cmake_submodule("pugixml", "libpugixml.a")
+    # cmake_submodule("nlohmann-json") # no libraries
+    cmake_submodule("raylib", "libraylib.a")
+    libs = build_dir / "libraries"
+    libs.mkdir(exist_ok=True)
+    shutil.copy(modobj / "raylib/raylib/libraylib.a", libs / "libraylib.a")
+    shutil.copy(modobj / "pugixml/libpugixml.a", libs / "libpugixml.a")
+    shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
+    # TODO: clean up
+    libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
+else:
+    libs_link = []
 
 all_targets = dict()
 
@@ -149,8 +151,6 @@ for dirpath, _, filenames in src.walk():
         if filepath.suffix == ".cpp" or filepath.suffix == ".hpp":
             deduce_file_targets(filepath)
 
-# print(*all_targets.keys(), sep="\n")
-
 unprocessed_targets = set()
 for x in args.targets:
     y = repo_root / "ivl" / ("."+x) if x.startswith("/") else Path.cwd() / x
@@ -179,7 +179,7 @@ else:
     targets = [t for t in targets if not str(t).endswith("@syntax_only")]
 for t in targets:
     print(all_targets[t].path.relative_to(src))
-print(f"{len(targets)} = ")
+print(f"{len(targets) = }")
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
