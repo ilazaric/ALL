@@ -20,6 +20,7 @@ using namespace ivl::logger::default_logger;
 constexpr std::uint32_t Mod = 998'244'353;
 using Mint                  = ivl::nt::MultiMint<Mod>;
 
+// TODO: this takes 35s to compile
 auto factorials_storage = [] {
   std::array<Mint, 200'005> out{};
   out[0] = 1;
