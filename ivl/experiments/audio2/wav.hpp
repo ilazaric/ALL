@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ivl/linux/utility>
+#include <ivl/logger>
 #include <ivl/meta>
 #include <ivl/utility>
 #include <algorithm>
