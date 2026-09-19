@@ -4,6 +4,8 @@
 #include <ivl/utility>
 #include <map>
 #include <set>
+#include <ivl/format>
+#include <ivl/logger>
 
 struct args {
   std::filesystem::path log;
@@ -164,22 +166,22 @@ int ivl_main(const args& args) {
     ivl::panic("dont understand this: {:?}", line);
   }
 
-  LOG(std::format("{}", pids));
+  LOG(ivl::fmt::format("{}", pids));
   LOG(ivl::to_json(syscall_counts).dump(2));
 
-  if (parents.contains(root)) std::println("ERROR: root pid {} has parent {}", root, parents[root]);
+  if (parents.contains(root)) ivl::fmt::println("ERROR: root pid {} has parent {}", root, parents[root]);
 
   size_t orphans = 0;
   for (auto pid : pids)
     if (pid != root && !parents.contains(pid)) {
-      std::println("ERROR: pid {} has no parent", pid);
+      ivl::fmt::println("ERROR: pid {} has no parent", pid);
       ++orphans;
     }
 
   if (orphans) ivl::panic("ERROR: total orphans: {}", orphans);
 
   for (auto pid : pids)
-    if (!cause_of_death.contains(pid)) std::println("ERROR: unknown cause of death for {}", pid);
+    if (!cause_of_death.contains(pid)) ivl::fmt::println("ERROR: unknown cause of death for {}", pid);
 
   std::map<pid_t, std::vector<pid_t>> children;
   for (auto pid : pids)
@@ -197,14 +199,14 @@ int ivl_main(const args& args) {
 
   auto pid = 402428;
   while (pid != root) {
-    std::print("{}", pid);
-    for (auto&& ex : execs[pid]) std::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
-    std::println();
+    ivl::fmt::print("{}", pid);
+    for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
+    ivl::fmt::println("");
     pid = parents[pid];
   }
 
   for (auto pid : pids)
-    if (!execs[pid].empty() && threads.contains(pid)) std::println("ERROR: exec from thread {}", pid);
+    if (!execs[pid].empty() && threads.contains(pid)) ivl::fmt::println("ERROR: exec from thread {}", pid);
 
   std::set<pid_t> visited;
   auto recurse = [&](this const auto& self, pid_t pid, int depth) -> void {
@@ -214,20 +216,20 @@ int ivl_main(const args& args) {
 
     // if (exec_counts[pid] != 0)
     {
-      std::print(
+      ivl::fmt::print(
         "({: <{}}) ({}) {: <{}}{}", cause_of_death[pid], 10, threads.contains(pid) ? "...thrd" : "PROCESS", "", depth,
         pid
       );
     if (is_process)
-        for (auto&& ex : execs[pid]) std::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
-      std::println();
+      for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
+    ivl::fmt::println("");
     }
 
     for (auto child : children[pid]) self(child, depth + 2 * is_process);
   };
 
   recurse(root, 0);
-  if (visited.size() != pids.size()) std::println("ERROR: didnt visit everything");
+  if (visited.size() != pids.size()) ivl::fmt::println("ERROR: didnt visit everything");
 
   return 0;
 }
