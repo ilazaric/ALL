@@ -1,11 +1,11 @@
+#include <ivl/format>
 #include <ivl/linux/utility>
+#include <ivl/logger>
 #include <ivl/reflection/json>
 #include <ivl/stl/string>
 #include <ivl/utility>
 #include <map>
 #include <set>
-#include <ivl/format>
-#include <ivl/logger>
 
 struct args {
   std::filesystem::path log;
@@ -220,9 +220,9 @@ int ivl_main(const args& args) {
         "({: <{}}) ({}) {: <{}}{}", cause_of_death[pid], 10, threads.contains(pid) ? "...thrd" : "PROCESS", "", depth,
         pid
       );
-    if (is_process)
-      for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
-    ivl::fmt::println("");
+      if (is_process)
+        for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
+      ivl::fmt::println("");
     }
 
     for (auto child : children[pid]) self(child, depth + 2 * is_process);
