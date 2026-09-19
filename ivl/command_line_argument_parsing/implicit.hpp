@@ -13,7 +13,10 @@ namespace ivl::cmdline_parsing {
 namespace implicit_detail {
   template<typename>
   struct injection_declaration {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnon-template-friend"
     friend consteval auto injection_function(injection_declaration);
+#pragma GCC diagnostic pop
   };
 
   template<typename T, std::meta::info V>
