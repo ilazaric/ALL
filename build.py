@@ -228,6 +228,7 @@ def run_target(target):
            [f"-O{args.optimization}",
             f"-g{args.debug_info}",
             f"-std=c++{cxxver}",
+            "-Wsfinae-incomplete=0", # cmdline_parsing::implicit
             "-freflection",
             "-fcontracts",
             "-include",
