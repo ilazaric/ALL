@@ -206,7 +206,9 @@ def run_target(target):
     else:
         assert False, relpath
     assert incpath, relpath
-    incpath = regsrc / incpath
+    if incpath.suffix == ".cpp":
+        # otherwise running from root would find in-git file, not copy
+        incpath = regsrc / incpath
 
     cxxadded = all_targets[target].added_compiler_flags
     cxxaddedpost = all_targets[target].added_compiler_flags_tail
