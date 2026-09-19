@@ -177,6 +177,7 @@ if args.syntax_only:
     targets = [t for t in targets if str(t).endswith("@syntax_only")]
     targets = [t for t in targets if not str(t).startswith("/edg-reflection")]
     targets = [t for t in targets if not str(t).startswith("/cpp-parser")]
+    targets = [t for t in targets if not str(t).startswith("/alloc")]
     targets = [t for t in targets if not str(t).endswith("_X@syntax_only")]
     targets = [t for t in targets if str(t).endswith("@syntax_only")]
 else:
