@@ -6,11 +6,16 @@
 #include <dirent.h>
 #include <map>
 #include <string>
+#include <filesystem>
+#include <ivl/linux/throwing_syscalls>
+#include <ivl/linux/file_descriptor>
+#include <ivl/linux/utility>
+#include <ivl/utility>
 
 namespace ivl::build_system {
 // TODO: test this
 std::map<std::string, std::string> collect_cgroup_files(const std::filesystem::path& cgroup_dir) {
-  using sys = linux::throwing_syscalls;
+  namespace sys = linux::throwing_syscalls;
 
   linux::owned_file_descriptor fd(sys::open(cgroup_dir.c_str(), O_RDONLY | O_DIRECTORY, 0));
   std::map<std::string, std::string> ret;
@@ -34,7 +39,7 @@ std::map<std::string, std::string> collect_cgroup_files(const std::filesystem::p
       contract_assert(dent->d_reclen <= count);
 
       if (dent->d_type == DT_REG) {
-        auto raw_fd = linux::raw_syscalls::openat(fd.get(), dent->d_name, O_RDONLY);
+        auto raw_fd = linux::raw_syscalls::openat(fd.get(), dent->d_name, O_RDONLY, 0);
         if (raw_fd >= 0) {
           linux::owned_file_descriptor file_fd(raw_fd);
           ret[dent->d_name] = linux::read_file_slow(file_fd);
