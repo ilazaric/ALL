@@ -30,7 +30,8 @@ int main() {
     --running_count;
   };
 
-  auto launch_process = [&, &running_count](int arg) pre(running_count < parallelism_limit) {
+  auto launch_process = [&](int arg) pre(running_count < parallelism_limit) {
+    (void)running_count;
     alignas(16) char stack[1ULL << 12];
 
     int pidfd = -1;
@@ -60,7 +61,8 @@ int main() {
     add_fd(pidfd);
   };
 
-  auto wait_for_exit = [&, &running_count] pre(running_count > 0) {
+  auto wait_for_exit = [&] pre(running_count > 0) {
+    (void)running_count;
     epoll_event ev{};
     auto ret = sys::epoll_wait(efd.get(), &ev, 1, -1);
     // LOG(running_count, ret);
@@ -68,7 +70,8 @@ int main() {
     return ev.data.fd;
   };
 
-  auto reap_process = [&, &running_count](int pidfd) pre(running_count > 0) {
+  auto reap_process = [&](int pidfd) pre(running_count > 0) {
+    (void)running_count;
     // LOG(pidfd);
     siginfo_t info{};
     auto wait_ret = sys::waitid(P_PIDFD, pidfd, (siginfo*)&info, WEXITED | WNOHANG, nullptr);
