@@ -7,8 +7,8 @@
 #include <ivl/linux/terminate_syscalls>
 #include <ivl/linux/file_descriptor>
 
-#include <nlohmann/json.hpp>
-using json = nlohmann::json;
+#include <ivl/json>
+using json = ivl::json::value;
 
 uint64_t from_hex(char c) {
   if (c >= '0' && c <= '9') return c - '0';

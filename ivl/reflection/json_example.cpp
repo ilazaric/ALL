@@ -19,7 +19,7 @@ int main() {
   T t{};
   std::cout << ivl::to_json(t).dump(2) << std::endl;
 
-  auto j = nlohmann::json::object();
-  j["foo"] = nlohmann::json{};
-  std::cout << j.get<nlohmann::json>() << std::endl;
+  auto j = ivl::json::object();
+  j["foo"] = ivl::json::value{};
+  std::cout << j.get<ivl::json::value>() << std::endl;
 }

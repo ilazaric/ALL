@@ -1,11 +1,11 @@
 #include <fstream>
 
 // sudo apt install nlohmann-json3-dev
-#include <nlohmann/json.hpp>
+#include <ivl/json>
 
 #include <ivl/logger>
 
-using json = nlohmann::json;
+using json = ivl::json::value;
 
 template <typename T>
 T& unmove(T&& t) {
