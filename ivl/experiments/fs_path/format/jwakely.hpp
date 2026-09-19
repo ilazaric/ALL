@@ -1,13 +1,14 @@
 #pragma once
 
-#error "broken since gcc has path formatting, TODO"
-
 #include <filesystem>
 #include <format>
 
-namespace std {
+namespace ivl {
+  struct path : std::filesystem::path {};
+  using namespace ::std;
 namespace __format
 {
+  using namespace ::std::__format;
   template<__char _CharT>
   struct __formatter_fs_path
   {
@@ -105,9 +106,10 @@ namespace __format
   };
 } // namespace __format
 /// @endcond
+} // namespace ivl
 	
-template<__format::__char _CharT>
-struct formatter<filesystem::path, _CharT>
+template<std::__format::__char _CharT>
+struct std::formatter<ivl::path, _CharT>
 {
   formatter() = default;
 	
@@ -125,6 +127,5 @@ struct formatter<filesystem::path, _CharT>
   constexpr void set_debug_format() noexcept { _M_f.set_debug_format(); }
 	
 private:
-  __format::__formatter_fs_path<_CharT> _M_f;
+  ivl::__format::__formatter_fs_path<_CharT> _M_f;
 };
-} // namespace std
