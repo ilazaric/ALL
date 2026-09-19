@@ -8,7 +8,10 @@
 
 template<typename T>
 struct A {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wnon-template-friend"
   friend consteval auto fn(A);
+#pragma GCC diagnostic pop
 };
 
 template<typename T, auto V>
@@ -22,11 +25,12 @@ void bla() {
       long x = 1;
       static constexpr auto r = ^^x;
       consteval {
+        return; // dont work
         size_of(substitute((^^B), {(^^char), std::meta::reflect_constant(r)}));
       }
     }
     // [:fn(A<char>{}):] = 2;
-    __builtin_constexpr_diag(32, "", std::format("{}", [:fn(A<char>{}):]));
+    // __builtin_constexpr_diag(32, "", std::format("{}", [:fn(A<char>{}):]));
   }
 }
 

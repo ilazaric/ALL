@@ -29,10 +29,12 @@ void bla() {
     long x = 1;
     static constexpr auto r = ^^x;
     consteval {
+      return; // dont work
       store(^^S, r);
     }
     consteval {
-      [:load(^^S):] = 2;
+      return; // dont work
+      // [:load(^^S):] = 2;
     }
     __builtin_constexpr_diag(32, "", std::format("{}", x));
   }
