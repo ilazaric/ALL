@@ -9,6 +9,7 @@
 #include <sys/mman.h>
 #include <cstring>
 #include <immintrin.h>
+#include <ivl/format>
 
 // IVL add_compiler_flags("-static")
 
@@ -180,15 +181,15 @@ std::ostream& operator<<(std::ostream& out, ivl::tsc_duration d) { return out <<
 } // namespace ivl
 
 template<>
-struct std::formatter<ivl::tsc_time_point, char> {
-  std::formatter<int64_t> f;
+struct ivl::fmt::formatter<ivl::tsc_time_point, char> {
+  ivl::fmt::formatter<int64_t> f;
   constexpr auto parse(auto& ctx) { return f.parse(ctx); }
   constexpr auto format(ivl::tsc_time_point tp, auto& ctx) const { return f.format(tp.value, ctx); }
 };
 
 template<>
-struct std::formatter<ivl::tsc_duration, char> {
-  std::formatter<int64_t> f;
+struct ivl::fmt::formatter<ivl::tsc_duration, char> {
+  ivl::fmt::formatter<int64_t> f;
   constexpr auto parse(auto& ctx) { return f.parse(ctx); }
   constexpr auto format(ivl::tsc_duration d, auto& ctx) const { return f.format(d.value, ctx); }
 };
@@ -245,7 +246,7 @@ int ivl_main() {
     // auto cyc4 = multi_run4(&lines[0], 1000);
     // LOG(i, cyc - last);
     // LOG(i, cyc2 - last2);
-    std::println("cycle_length: {: >2}, rdtsc_delta_delta: {: >6}", i + 1, cyc3 - last3);
+    ivl::fmt::println("cycle_length: {: >2}, rdtsc_delta_delta: {: >6}", i + 1, cyc3 - last3);
     // LOG(i, i + 1, cyc3 - last3, cyc3 / (i + 1));
     // last = cyc;
     // last2 = cyc2;
