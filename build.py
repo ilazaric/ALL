@@ -181,6 +181,7 @@ if args.syntax_only:
     targets = [t for t in targets if not str(t).startswith("/langs/preprocessor")]
     targets = [t for t in targets if not str(t).endswith("_X@syntax_only")]
     targets = [t for t in targets if str(t).endswith("@syntax_only")]
+    targets = [t for t in targets if str(t) != "/experiments/implcit_args/bug2@syntax_only"] # gcc bug
 else:
     targets = [t for t in targets if not str(t).endswith("@syntax_only")]
 for t in targets:
