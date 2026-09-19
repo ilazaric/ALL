@@ -1,3 +1,5 @@
+// IVL add_compiler_flags("-fno-access-control")
+
 #include <span>
 
 #include <bits/requires_hosted.h>
