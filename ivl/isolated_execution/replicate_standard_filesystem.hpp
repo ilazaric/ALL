@@ -13,20 +13,25 @@ namespace ivl::isolated_execution {
 // Requires ability to `mount()`, likely from unshared user & mount namespaces.
 void replicate_standard_filesystem(const std::filesystem::path& directory) {
   namespace sys = linux::throwing_syscalls;
-  auto create_mount = [](const std::filesystem::path& directory, umode_t mode, char* type) {
+  // linux mount syscall is not really const correct, this is killing warnings
+  static constexpr auto mnt =
+    [](const char* dev_name, const char* dir_name, const char* type, unsigned long flags, void* data) {
+      return sys::mount((char*)dev_name, (char*)dir_name, (char*)type, flags, data);
+    };
+  auto create_mount = [](const std::filesystem::path& directory, umode_t mode, const char* type) {
     sys::mkdir(directory.c_str(), mode);
-    sys::mount(type, (char*)directory.c_str(), type, 0, nullptr);
+    mnt(type, directory.c_str(), type, 0, nullptr);
   };
   auto bind_mount = [](const std::filesystem::path& file, const std::filesystem::path& orig, umode_t mode) {
     sys::creat(file.c_str(), mode);
-    sys::mount((char*)orig.c_str(), (char*)file.c_str(), "none", MS_BIND, nullptr);
+    mnt(orig.c_str(), file.c_str(), "none", MS_BIND, nullptr);
   };
-  sys::mount("tmpfs", (char*)directory.c_str(), "tmpfs", 0, nullptr);
+  mnt("tmpfs", directory.c_str(), "tmpfs", 0, nullptr);
   create_mount(directory / "tmp", 0777, "tmpfs");
   // TODO: needs fork
   // create_mount(directory / "proc", 0707, "proc");
   create_mount(directory / "sys", 0707, "sysfs");
-  sys::mount("cgroup2", (char*)(directory / "sys/fs/cgroup").c_str(), "cgroup2", 0, nullptr);
+  mnt("cgroup2", (directory / "sys/fs/cgroup").c_str(), "cgroup2", 0, nullptr);
   sys::mkdir((directory / "dev").c_str(), 0755);
   bind_mount(directory / "dev/null", "/dev/null", 0770);
   bind_mount(directory / "dev/zero", "/dev/zero", 0770);
