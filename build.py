@@ -244,9 +244,11 @@ def run_target(target):
 
 failed = []
 durations = dict()
+total_seen = 0
 pool = multiprocessing.Pool(processes=args.jobs)
 for target, p, elapsed in pool.imap_unordered(run_target, targets):
     durations[target] = elapsed
+    total_seen += 1
     if p.returncode != 0:
         failed.append(target)
 
@@ -294,11 +296,13 @@ if args.report_durations:
 if not failed:
     print()
     print("all targets passed")
+    assert total_seen == len(targets)
     exit(0)
 
 print()
 print("seen failures:", len(failed))
 for target in failed:
     print(" ", target)
+assert total_seen == len(targets)
 exit(1)
 
