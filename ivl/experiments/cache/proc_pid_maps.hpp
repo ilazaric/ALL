@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <ivl/linux/throwing_syscalls>
 #include <linux/ioctl.h>
-
+#include <ivl/linux/file_descriptor>
 
 #define PROCFS_IOCTL_MAGIC 'f'
 
