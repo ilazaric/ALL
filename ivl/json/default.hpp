@@ -26,12 +26,13 @@ namespace json_owner = ::nlohmann;
 }
 namespace ivl::json {
 using value = ::nlohmann::json;
-inline auto array() { return ::nlohmann::json::array(); }
-inline auto object() { return ::nlohmann::json::object(); }
+inline decltype(auto) array(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::array(init); }
+inline decltype(auto) object(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::object(init); }
 template<typename T>
-auto parse(T&& arg) {
+decltype(auto) parse(T&& arg) {
   return ::nlohmann::json::parse(static_cast<T&&>(arg));
 }
+decltype(auto) diff(const value& left, const value& right) { return ::nlohmann::json::diff(left, right); }
 } // namespace ivl::json
 #endif // IVL_FMT_VIA_STD
 
