@@ -218,4 +218,4 @@ jobs:
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
     - name: fsyntax-only-global-test
-      run: ./build.py --report-durations --keep-going --verbose --jobs $(nproc) --syntax-only /
+      run: ./build.py --report-durations --keep-going --jobs $(nproc) --syntax-only /
