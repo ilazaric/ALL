@@ -1,3 +1,4 @@
+#define IVL_FMT_USE_FMT
 #include "utility"
 #include <vector>
 
