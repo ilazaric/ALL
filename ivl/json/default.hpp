@@ -23,7 +23,7 @@
 #include <nlohmann/json.hpp>
 namespace ivl {
 namespace json_owner = ::nlohmann;
-}
+} // namespace ivl
 namespace ivl::json {
 using value = ::nlohmann::json;
 inline decltype(auto) array(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::array(init); }
@@ -39,7 +39,15 @@ decltype(auto) diff(const value& left, const value& right) { return ::nlohmann::
 #ifdef IVL_JSON_VIA_BOOST
 #include <boost/json.hpp>
 namespace ivl {
-namespace json = ::boost::json;
 namespace json_owner = ::boost::json;
 } // namespace ivl
+namespace ivl::json {
+using value = ::boost::json::value;
+using array = ::boost::json::array;
+using object = ::boost::json::object;
+template<typename T>
+decltype(auto) parse(T&& arg) {
+  return ::boost::json::parse(static_cast<T&&>(arg));
+}
+} // namespace ivl::json
 #endif // IVL_FMT_VIA_FMT
