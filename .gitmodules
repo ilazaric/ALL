@@ -64,3 +64,6 @@
 [submodule "submodules/pipewire"]
 	path = submodules/pipewire
 	url = https://gitlab.freedesktop.org/pipewire/pipewire.git
+[submodule "submodules/bash"]
+	path = submodules/bash
+	url = https://https.git.savannah.gnu.org/git/bash.git
