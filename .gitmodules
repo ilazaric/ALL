@@ -67,3 +67,6 @@
 [submodule "submodules/bash"]
 	path = submodules/bash
 	url = https://https.git.savannah.gnu.org/git/bash.git
+[submodule "submodules/hyperfine"]
+	path = submodules/hyperfine
+	url = git@github.com:sharkdp/hyperfine.git
