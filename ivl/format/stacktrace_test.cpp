@@ -9,6 +9,6 @@
 static_assert(ivl::fmt::detail::has_formatter<std::stacktrace, char>());
 
 void use() {
-  ivl::fmt::formatter<std::stacktrace> fmt;
+  ivl::fmt_raw::formatter<std::stacktrace> fmt;
   (void)ivl::fmt::format("{}", std::stacktrace::current());
 }

@@ -26,7 +26,7 @@ struct point {
 };
 
 template<>
-struct ivl::fmt::formatter<point, char> {
+struct ivl::fmt_raw::formatter<point, char> {
   constexpr auto parse(auto& ctx) {
     if (ctx.begin() != ctx.end() && *ctx.begin() == '}') throw;
     return ctx.begin();

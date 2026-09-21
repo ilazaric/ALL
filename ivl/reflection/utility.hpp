@@ -8,9 +8,9 @@
 // TODO: maybe move to ivl/reflection/format , add prettier_types to it
 // doesnt work with ivl::fmt::print
 template<>
-struct ivl::fmt::formatter<std::meta::info, char> {
+struct ivl::fmt_raw::formatter<std::meta::info, char> {
   bool debug = false;
-  ivl::fmt::formatter<std::string_view, char> underlying;
+  ivl::fmt_raw::formatter<std::string_view, char> underlying;
 
   consteval auto parse(auto& ctx) {
     if (ctx.begin() == ctx.end() || *ctx.begin() == '}') return ctx.begin();

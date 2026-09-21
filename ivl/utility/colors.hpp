@@ -63,7 +63,7 @@ namespace colors {
 } // namespace ivl::terminal_graphical_rendition
 
 template <>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_reset, char> {
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::foreground_reset, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::foreground_reset, auto& ctx) const {
     return ivl::fmt::format_to(ctx.out(), "\x1B[39m");
@@ -71,7 +71,7 @@ struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_reset, 
 };
 
 template <>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_reset, char> {
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::background_reset, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::background_reset, auto& ctx) const {
     return ivl::fmt::format_to(ctx.out(), "\x1B[49m");
@@ -79,32 +79,32 @@ struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_reset, 
 };
 
 template <>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_color, char> {
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::foreground_color, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::foreground_color clr, auto& ctx) const {
     return ivl::fmt::format_to(ctx.out(), "\x1B[38;2;{};{};{}m", clr.r, clr.g, clr.b);
   }
   auto format_reset(auto& ctx) const {
-    return ivl::fmt::formatter<ivl::terminal_graphical_rendition::foreground_reset, char>{}.format({}, ctx);
+    return ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::foreground_reset, char>{}.format({}, ctx);
   }
 };
 
 template <>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_color, char> {
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::background_color, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::background_color clr, auto& ctx) const {
     return ivl::fmt::format_to(ctx.out(), "\x1B[48;2;{};{};{}m", clr.r, clr.g, clr.b);
   }
   auto format_reset(auto& ctx) const {
-    return ivl::fmt::formatter<ivl::terminal_graphical_rendition::background_reset, char>{}.format({}, ctx);
+    return ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::background_reset, char>{}.format({}, ctx);
   }
 };
 
 template <typename Wrapped, typename Fmt, typename... Args>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...>, char> {
   constexpr auto parse(auto& ctx) { return ctx.begin(); }
   auto format(ivl::terminal_graphical_rendition::detail::fmt_wrapper<Wrapped, Fmt, Args...> wrap, auto& ctx) const {
-    ivl::fmt::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ivl::fmt_raw::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
     ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     auto&& [... args] = wrap.args;
     ctx.advance_to(ivl::fmt::format_to(ctx.out(), wrap.fmt, args...));
@@ -113,11 +113,11 @@ struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::detail::fmt_wrappe
 };
 
 template <typename Wrapped, typename Arg>
-struct ivl::fmt::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg>, char> {
-  ivl::fmt::formatter<std::decay_t<Arg>> underlying;
+struct ivl::fmt_raw::formatter<ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg>, char> {
+  ivl::fmt_raw::formatter<std::decay_t<Arg>> underlying;
   constexpr auto parse(auto& ctx) { return underlying.parse(ctx); }
   auto format(ivl::terminal_graphical_rendition::detail::single_wrapper<Wrapped, Arg> wrap, auto& ctx) const {
-    ivl::fmt::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
+    ivl::fmt_raw::formatter<std::remove_const_t<Wrapped>> fmt_wrap;
     ctx.advance_to(fmt_wrap.format(wrap.wrapped, ctx));
     ctx.advance_to(underlying.format(wrap.arg, ctx));
     return fmt_wrap.format_reset(ctx);

@@ -181,15 +181,15 @@ std::ostream& operator<<(std::ostream& out, ivl::tsc_duration d) { return out <<
 } // namespace ivl
 
 template<>
-struct ivl::fmt::formatter<ivl::tsc_time_point, char> {
-  ivl::fmt::formatter<int64_t> f;
+struct ivl::fmt_raw::formatter<ivl::tsc_time_point, char> {
+  ivl::fmt_raw::formatter<int64_t> f;
   constexpr auto parse(auto& ctx) { return f.parse(ctx); }
   constexpr auto format(ivl::tsc_time_point tp, auto& ctx) const { return f.format(tp.value, ctx); }
 };
 
 template<>
-struct ivl::fmt::formatter<ivl::tsc_duration, char> {
-  ivl::fmt::formatter<int64_t> f;
+struct ivl::fmt_raw::formatter<ivl::tsc_duration, char> {
+  ivl::fmt_raw::formatter<int64_t> f;
   constexpr auto parse(auto& ctx) { return f.parse(ctx); }
   constexpr auto format(ivl::tsc_duration d, auto& ctx) const { return f.format(d.value, ctx); }
 };
