@@ -70,3 +70,9 @@
 [submodule "submodules/hyperfine"]
 	path = submodules/hyperfine
 	url = git@github.com:sharkdp/hyperfine.git
+[submodule "submodules/cvise"]
+	path = submodules/cvise
+	url = git@github.com:marxin/cvise.git
+[submodule "submodules/creduce"]
+	path = submodules/creduce
+	url = git@github.com:csmith-project/creduce.git
