@@ -16,9 +16,9 @@
 #define IVL_FMT_VIA_FMT_MANUAL
 #endif
 
-// default == fmtlib manual
+// default == fmtlib
 #if defined(IVL_FMT_USE_STD) + defined(IVL_FMT_USE_FMT) + defined(IVL_FMT_USE_FMT_MANUAL) == 0
-#define IVL_FMT_VIA_FMT_MANUAL
+#define IVL_FMT_VIA_FMT
 #endif
 
 #ifdef IVL_FMT_VIA_STD
