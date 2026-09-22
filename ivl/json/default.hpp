@@ -25,6 +25,8 @@ namespace ivl::json {
 struct value {
   ::nlohmann::json underlying;
 
+  bool operator==(const value&) const = default;
+
   value(const value&) = default;
   value(value&&) = default;
 
