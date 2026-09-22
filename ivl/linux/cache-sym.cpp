@@ -8,7 +8,6 @@
 #include <ivl/linux/file_descriptor>
 
 #include <ivl/json>
-using json = ivl::json::value;
 
 uint64_t from_hex(char c) {
   if (c >= '0' && c <= '9') return c - '0';
@@ -38,7 +37,7 @@ int main(int argc, char** argv) {
   }
 
   std::filesystem::path       json_file(argv[1]);
-  const auto                  j            = json::parse(std::ifstream(json_file));
+  const auto                  j            = ivl::json::parse(std::ifstream(json_file));
   const std::filesystem::path device       = j["device"];
   const uint64_t              device_start = from_hex(to_string(j["device_start"]));
   const uint64_t              device_end   = from_hex(to_string(j["device_end"]));

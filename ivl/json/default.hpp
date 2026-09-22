@@ -22,6 +22,23 @@ namespace ivl {
 namespace json_owner = ::nlohmann;
 } // namespace ivl
 namespace ivl::json {
+struct value;
+
+template<typename T>
+decltype(auto) degrade(T&& arg) {
+  if constexpr (std::is_same_v<value, std::remove_cvref_t<T>>) {
+    if constexpr (std::is_same_v<T, value&>) return reinterpret_cast<::nlohmann::json&>(arg);
+    else if constexpr (std::is_same_v<T, const value&>) return reinterpret_cast<const ::nlohmann::json&>(arg);
+    else if constexpr (std::is_same_v<T, value>)
+      return static_cast<::nlohmann::json&&>(reinterpret_cast<::nlohmann::json&>(arg));
+    else if constexpr (std::is_same_v<T, const value>)
+      return static_cast<const ::nlohmann::json&&>(reinterpret_cast<const ::nlohmann::json&>(arg));
+    else static_assert(false);
+  } else {
+    return static_cast<T&&>(arg);
+  }
+}
+
 struct value {
   ::nlohmann::json underlying;
 
@@ -34,6 +51,14 @@ struct value {
   value& operator=(value&&) = default;
 
   operator const ::nlohmann::json&() const { return underlying; }
+  // operator ::nlohmann::json&&() && { return static_cast<::nlohmann::json&&>(underlying); }
+  // operator ::nlohmann::json&() & { return underlying; }
+  // operator ::nlohmann::json() const { return underlying; }
+
+  template<typename T>
+  operator T() const {
+    return T{underlying};
+  }
 
   decltype(auto) dump(int indent = -1) const {
     contract_assert(indent >= -1);
@@ -57,9 +82,27 @@ struct value {
 
   template<typename... Ts>
   bool emplace(Ts&&... args) {
-    return underlying.emplace(static_cast<Ts&&>(args)...).second;
+    return underlying.emplace(degrade(static_cast<Ts&&>(args))...).second;
+  }
+
+  template<typename... Ts>
+  value& emplace_back(Ts&&... args) {
+    return reinterpret_cast<value&>(underlying.emplace_back(degrade(static_cast<Ts&&>(args))...));
+  }
+
+  template<typename T>
+  decltype(auto) get() {
+    if constexpr (std::is_same_v<T, value>) {
+      return value{underlying.get<::nlohmann::json>()};
+    } else {
+      return underlying.get<T>();
+    }
   }
 };
+
+std::ostream& operator<<(std::ostream& out, const value& v) { return out << v.underlying; }
+
+decltype(auto) to_string(const value& v) { return to_string(v.underlying); }
 
 inline value array(::nlohmann::json::initializer_list_t init = {}) { return value{::nlohmann::json::array(init)}; }
 inline value object(::nlohmann::json::initializer_list_t init = {}) { return value{::nlohmann::json::object(init)}; }
