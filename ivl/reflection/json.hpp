@@ -139,7 +139,7 @@ RetT from_to_json_impl(const InputT& arg) {
     return ret;
   } else if constexpr (
     is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) &&
-    !reflection::is_child_of(^^T, dealias(^^ivl::json_owner))
+    !is_same_type(^^T, ^^ivl::json::value)
   ) {
     static_assert(bases_of(^^T, std::meta::access_context::unchecked()).empty());
     // static_assert(false, display_string_of(^^T));
@@ -152,13 +152,14 @@ RetT from_to_json_impl(const InputT& arg) {
           ? reflection::nsdms(type_of(basic_member))[0]
           : basic_member;
       using X = [:type_of(member):];
-      auto&& mem = ret.[:member:];
       if constexpr (Direction == TO) {
+        auto&& mem = arg.[:member:];
         ret.emplace(
           identifier_of(member),
           from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(mem)
         );
       } else {
+        auto&& mem = ret.[:member:];
         mem = from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(
           arg[identifier_of(member)]
         );

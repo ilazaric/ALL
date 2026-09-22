@@ -2,7 +2,7 @@
 #include "default"
 #include <iostream>
 
-int ivl_main(int64_t indent) {
+int ivl_main(int indent) {
   auto v = ivl::json::parse(R"json(
     {
       "null": null,
@@ -20,6 +20,6 @@ int ivl_main(int64_t indent) {
       }
     }
   )json");
-  std::cout << "dumping:\n" << ivl::json::dump(v, (size_t)indent) << "\ndone\n";
+  std::cout << "dumping:\n" << v.dump(indent) << "\ndone\n";
   return 0;
 }

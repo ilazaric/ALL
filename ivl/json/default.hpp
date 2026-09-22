@@ -12,9 +12,8 @@
 #define IVL_JSON_VIA_BOOST
 #endif
 
-// default == boost
 #if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) == 0
-#define IVL_JSON_VIA_BOOST
+#define IVL_JSON_VIA_NLOHMANN
 #endif
 
 #ifdef IVL_JSON_VIA_NLOHMANN
@@ -23,17 +22,54 @@ namespace ivl {
 namespace json_owner = ::nlohmann;
 } // namespace ivl
 namespace ivl::json {
-using value = ::nlohmann::json;
-inline decltype(auto) array(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::array(init); }
-inline decltype(auto) object(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::object(init); }
+struct value {
+  ::nlohmann::json underlying;
+
+  value(const value&) = default;
+  value(value&&) = default;
+
+  value& operator=(const value&) = default;
+  value& operator=(value&&) = default;
+
+  operator const ::nlohmann::json&() const { return underlying; }
+
+  decltype(auto) dump(int indent = -1) const {
+    contract_assert(indent >= -1);
+    return underlying.dump(indent);
+  }
+
+  // UB, dont care
+  value& operator[](size_t i) & { return reinterpret_cast<value&>(underlying[i]); }
+  value&& operator[](size_t i) && { return std::move(reinterpret_cast<value&>(underlying[i])); }
+  const value& operator[](size_t i) const { return reinterpret_cast<const value&>(underlying[i]); }
+
+  value& operator[](std::string_view i) & { return reinterpret_cast<value&>(underlying[i]); }
+  value&& operator[](std::string_view i) && { return std::move(reinterpret_cast<value&>(underlying[i])); }
+  const value& operator[](std::string_view i) const { return reinterpret_cast<const value&>(underlying[i]); }
+
+  template<typename T>
+  value& operator=(T&& arg) {
+    underlying = static_cast<T&&>(arg);
+    return *this;
+  }
+
+  template<typename... Ts>
+  bool emplace(Ts&&... args) {
+    return underlying.emplace(static_cast<Ts&&>(args)...).second;
+  }
+};
+
+inline value array(::nlohmann::json::initializer_list_t init = {}) { return value{::nlohmann::json::array(init)}; }
+inline value object(::nlohmann::json::initializer_list_t init = {}) { return value{::nlohmann::json::object(init)}; }
+
 template<typename T>
-decltype(auto) parse(T&& arg) {
-  return ::nlohmann::json::parse(static_cast<T&&>(arg));
+value parse(T&& arg) {
+  return value{::nlohmann::json::parse(static_cast<T&&>(arg))};
 }
-decltype(auto) diff(const value& left, const value& right) { return ::nlohmann::json::diff(left, right); }
-decltype(auto) dump(const value& v, size_t indent = -1) { return v.dump(indent); }
+
+value diff(const value& left, const value& right) { return value{::nlohmann::json::diff(left, right)}; }
 } // namespace ivl::json
-#endif // IVL_FMT_VIA_STD
+#endif // IVL_JSON_VIA_NLOHMANN
 
 #ifdef IVL_JSON_VIA_BOOST
 #include <boost/json.hpp>
@@ -41,12 +77,16 @@ namespace ivl {
 namespace json_owner = ::boost::json;
 } // namespace ivl
 namespace ivl::json {
-using value = ::boost::json::value;
-using array = ::boost::json::array;
-using object = ::boost::json::object;
+struct value {
+  ::boost::json::value underlying;
+};
+struct value_ref {
+  ::boost::json::value_ref underlying;
+  value_ref(auto&&... args) : underlying() {}
+};
 template<typename T>
-decltype(auto) parse(T&& arg) {
-  return ::boost::json::parse(static_cast<T&&>(arg));
+value parse(T&& arg) {
+  return value{::boost::json::parse(static_cast<T&&>(arg))};
 }
 
 // https://www.boost.org/doc/libs/latest/libs/json/doc/html/examples.html#pretty
@@ -108,4 +148,4 @@ std::string dump(const value& v, size_t indent = static_cast<size_t>(-1)) {
   return ret;
 }
 } // namespace ivl::json
-#endif // IVL_FMT_VIA_FMT
+#endif // IVL_JSON_VIA_BOOST
