@@ -42,6 +42,7 @@ namespace fmt_raw = ::fmt;
 #endif // IVL_FMT_VIA_FMT
 
 #ifdef IVL_FMT_VIA_FMT_MANUAL
+#error "TODO"
 #include <fmt/compile.h>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
