@@ -1,10 +1,10 @@
 #pragma once
 
+#include <ivl/json>
 #include <ivl/meta>
 #include <ivl/reflection/json_annotations>
 #include <ivl/reflection/utility>
 #include <ivl/utility/hex>
-#include <ivl/json>
 #include <cassert>
 #include <map>
 #include <meta>
@@ -138,7 +138,8 @@ RetT from_to_json_impl(const InputT& arg) {
     }
     return ret;
   } else if constexpr (
-                       is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) && !reflection::is_child_of(^^T, dealias(^^ivl::json_owner))
+    is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) &&
+    !reflection::is_child_of(^^T, dealias(^^ivl::json_owner))
   ) {
     static_assert(bases_of(^^T, std::meta::access_context::unchecked()).empty());
     // static_assert(false, display_string_of(^^T));
@@ -150,18 +151,17 @@ RetT from_to_json_impl(const InputT& arg) {
         has_identifier(^^T) && identifier_of(^^T) == "rusage" && is_union_type(type_of(basic_member))
           ? reflection::nsdms(type_of(basic_member))[0]
           : basic_member;
+      using X = [:type_of(member):];
+      auto&& mem = ret.[:member:];
       if constexpr (Direction == TO) {
         ret.emplace(
           identifier_of(member),
-          from_to_json_impl<typename[:type_of(member):], Direction,
-                                                       !annotations_of_with_type(member, ^^json_serialize_as_array_t)
-                                                          .empty()>(arg.[:member:])
+          from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(mem)
         );
       } else {
-        ret.[:member:] = from_to_json_impl<
-                         typename[:type_of(member):], Direction,
-                                                    !annotations_of_with_type(member, ^^json_serialize_as_array_t)
-                                                       .empty()>(arg[identifier_of(member)]);
+        mem = from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(
+          arg[identifier_of(member)]
+        );
       }
     }
     return ret;
