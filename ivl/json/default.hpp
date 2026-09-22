@@ -94,30 +94,15 @@ void dump_impl(value const& jv, std::string& out, size_t indent, size_t inc) {
     break;
   }
 
-  case ::boost::json::kind::string: {
-    out += ::boost::json::serialize(jv.get_string());
-    break;
-  }
-
-  case ::boost::json::kind::uint64:
-  case ::boost::json::kind::int64:
-  case ::boost::json::kind::double_:
+  default:
     out += ::boost::json::serialize(jv);
-    break;
-
-  case ::boost::json::kind::bool_:
-    if (jv.get_bool()) out += "true";
-    else out += "false";
-    break;
-
-  case ::boost::json::kind::null:
-    out += "null";
     break;
   }
 }
 
 std::string dump(const value& v, size_t indent = static_cast<size_t>(-1)) {
   if (indent == static_cast<size_t>(-1)) return ::boost::json::serialize(v);
+  contract_assert((indent >> 63) == 0);
   std::string ret;
   dump_impl(v, ret, 0, indent);
   return ret;
