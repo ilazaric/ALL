@@ -1,6 +1,6 @@
 #pragma once
 
-#define IVL_JSON_USE_NLOHMANN // for now, TODO
+// #define IVL_JSON_USE_NLOHMANN // for now, TODO
 
 #if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) >= 2
 #error "at most one IVL_JSON_USE_<kind> can be defined"
