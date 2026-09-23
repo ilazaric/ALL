@@ -30,7 +30,7 @@ RetT from_to_json_impl(const InputT& arg) {
       return boost::json::value(util::hex(std::string_view((const char*)&arg, (const char*)(&arg + 1))));
     } else {
       T ret;
-      auto str = util::unhex(arg.template get<std::string>());
+      auto str = util::unhex(arg.as_string());
       contract_assert(sizeof(ret) == str.size());
       memcpy(&ret, str.c_str(), sizeof(ret));
       return ret;
@@ -47,8 +47,8 @@ RetT from_to_json_impl(const InputT& arg) {
         ret["value"] = from_to_json_impl<V, Direction>(std::get<V>(arg));
         return ret;
       } else {
-        if (arg["type"] != reflection::display_string_of(VI)) continue;
-        return T(std::in_place_type_t<V>{}, from_to_json_impl<V, Direction>(arg["value"]));
+        if (arg.at("type") != reflection::display_string_of(VI)) continue;
+        return T(std::in_place_type_t<V>{}, from_to_json_impl<V, Direction>(arg.at("value")));
       }
     }
     contract_assert(false);
@@ -68,20 +68,27 @@ RetT from_to_json_impl(const InputT& arg) {
     if constexpr (Direction == TO) return from_to_json_impl<DurT, Direction>(arg.time_since_epoch());
     else return RetT(from_to_json_impl<DurT, Direction>(arg));
   } else if constexpr (std::same_as<T, std::filesystem::path>) {
-    return from_to_json_impl<std::string, Direction>(arg);
+    if constexpr (Direction == TO) return from_to_json_impl<std::string, Direction>(arg.native());
+    else return from_to_json_impl<std::string, Direction>(arg);
   } else if constexpr (!is_class_type(^^T) || std::same_as<T, boost::json::value> || std::same_as<T, std::string>) {
     if constexpr (Direction == TO) return boost::json::value(arg);
-    else return arg.template get<T>();
+    else if constexpr (std::same_as<T, boost::json::value>) return arg;
+    else if constexpr (std::same_as<T, std::string>) return std::string(arg.as_string());
+    else if constexpr (std::same_as<T, bool>) return arg.as_bool();
+    else if constexpr (std::same_as<T, long int>) return arg.as_int64();
+    else static_assert(false, "boom");
   } else if constexpr (
     reflection::is_instantiation_of(^^T, ^^std::vector) || reflection::is_instantiation_of(^^T, ^^std::set)
   ) {
     using ElementT = T::value_type;
     auto ret = RetT{};
     if constexpr (Direction == TO) ret = boost::json::array();
-    for (auto&& el : arg) {
-      if constexpr (Direction == TO) {
+    if constexpr (Direction == TO) {
+      for (auto&& el : arg) {
         ret.as_array().emplace_back(from_to_json_impl<ElementT, Direction>(el));
-      } else {
+      }
+    } else {
+      for (auto&& el : arg.as_array()) {
         if constexpr (reflection::is_instantiation_of(^^T, ^^std::set))
           ret.emplace(from_to_json_impl<ElementT, Direction>(el));
         else ret.emplace_back(from_to_json_impl<ElementT, Direction>(el));
@@ -103,8 +110,10 @@ RetT from_to_json_impl(const InputT& arg) {
             })
           );
       } else {
-        for (auto&& kv : arg)
-          ret.emplace(from_to_json_impl<KeyT, Direction>(kv["key"]), from_to_json_impl<ValueT, Direction>(kv["value"]));
+        for (auto&& kv : arg.as_array())
+          ret.emplace(
+            from_to_json_impl<KeyT, Direction>(kv.at("key")), from_to_json_impl<ValueT, Direction>(kv.at("value"))
+          );
       }
     } else {
       if constexpr (Direction == TO) {
@@ -114,7 +123,7 @@ RetT from_to_json_impl(const InputT& arg) {
             dump(from_to_json_impl<KeyT, Direction>(key)), from_to_json_impl<ValueT, Direction>(value)
           );
       } else {
-        for (auto&& [key, value] : arg.items())
+        for (auto&& [key, value] : arg.as_object())
           ret.emplace(
             from_to_json_impl<KeyT, Direction>(boost::json::value(key)), from_to_json_impl<ValueT, Direction>(value)
           );
@@ -144,7 +153,7 @@ RetT from_to_json_impl(const InputT& arg) {
       } else {
         auto&& mem = ret.[:member:];
         mem = from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(
-          arg[identifier_of(member)]
+          arg.at(identifier_of(member))
         );
       }
     }
@@ -173,4 +182,4 @@ template<typename T>
 std::string to_json_string(const T& t) {
   return dump(to_json<T>(t), 2);
 }
-} // namespace ivl::boosty
+} // namespace ivl
