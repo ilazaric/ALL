@@ -95,7 +95,7 @@ if not args.syntax_only:
     shutil.copy(modobj / "pugixml/libpugixml.a", libs / "libpugixml.a")
     shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
     # TODO: clean up
-    libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
+    libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib", "-lboost_json"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
 else:
     libs_link = []
 
@@ -159,7 +159,7 @@ def deduce_file_targets(path):
         name = "/" / path.relative_to(src / "ivl").with_suffix('')
 
     if file_has_test_variant:
-        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, added_compiler_flags, libs_link + added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
+        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, ["-DIVL_KIND_TEST"] + added_compiler_flags, libs_link + added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
     if file_has_reg_variant:
         all_targets[name] = TargetState(path, added_compiler_flags, libs_link + added_compiler_flags_tail + (["-include", "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
     all_targets[name.parent / f"{name.name}@syntax_only"] = TargetState(path, ["-fsyntax-only"] + added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)

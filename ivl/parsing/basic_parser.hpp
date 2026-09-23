@@ -130,5 +130,10 @@ struct basic_parser {
     consume(sv);
     return true;
   }
+
+  std::string_view line() const {
+    auto loc = contents.find('\n');
+    return loc == std::string_view::npos ? contents : contents.substr(0, loc + 1);
+  }
 };
 } // namespace ivl::parsing

@@ -1,5 +1,6 @@
 #pragma once
 
+#ifdef IVL_KIND_TEST
 #include <ivl/reflection/json>
 #include <source_location>
 #include <string_view>
@@ -20,3 +21,4 @@ inline void contract_assert_json(
   contract_assert(actual_json == expected_json);
 }
 } // namespace ivl::testing
+#endif // IVL_KIND_TEST

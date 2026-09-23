@@ -545,6 +545,7 @@ inline state parse(const std::filesystem::path& file) {
 
 // IVL has_test_variant()
 
+#ifdef IVL_KIND_TEST
 [[= ivl::test]] inline void test_variables() {
   std::string_view text = R"ninja(
 a=A
@@ -715,4 +716,5 @@ default b c
      "c"]
   )json");
 }
+#endif // IVL_KIND_TEST
 } // namespace ivl::parsing::ninja
