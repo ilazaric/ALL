@@ -2,7 +2,7 @@
 #include <ivl/io/stlutils>
 #include <ivl/logger>
 #include <ivl/number_theory/rtmint>
-#include <ivl/pollpushpop/pollpushpop>
+#include <ivl/pollpushpop>
 #include <cassert>
 #include <deque>
 #include <map>
