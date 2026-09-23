@@ -11,6 +11,7 @@ from dataclasses import dataclass
 import time
 import argparse
 import multiprocessing
+import re
 
 def check_positive(value):
     ivalue = int(value)
@@ -33,6 +34,7 @@ class DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
 parser = argparse.ArgumentParser(
     formatter_class=DefaultsHelpFormatter,
 )
+parser.add_argument('--skip-known-failures', action=argparse.BooleanOptionalAction, default=True)
 parser.add_argument('-v', '--verbose', action='store_true')
 parser.add_argument('-j', '--jobs', '--parallel', default=1, type=check_positive)
 parser.add_argument('-k', '--keep-going', action='store_true')
@@ -189,21 +191,48 @@ while unprocessed_targets:
     for dep in all_targets[target].unordered_dependencies:
         if dep not in targets:
             unprocessed_targets.add(dep)
+targets = sorted(list(targets))
+
+known_failures = [
+    "/edg-reflection/", # these were deployed to godbolt, edg compiler w reflection
+    "/cpp-parser/",
+    "/alloc/",
+    "/langs/preprocessor/",
+    "/experiments/implcit_args/bug2",
+    "/reflection/fmt_manual_format_test",
+]
+
+ignored_targets = []
+if args.skip_known_failures:
+    for regex in known_failures:
+        pattern = re.compile(regex)
+        # re.match() has specific semantics, checks if prefix of string matches regex
+        ignored_targets += [t for t in targets if pattern.match(str(t))]
+        targets = [t for t in targets if not pattern.match(str(t))]
+ignored_targets = sorted(ignored_targets)
 
 if args.syntax_only:
     targets = [t for t in targets if str(t).endswith("@syntax_only")]
-    targets = [t for t in targets if not str(t).startswith("/edg-reflection")]
-    targets = [t for t in targets if not str(t).startswith("/cpp-parser")]
-    targets = [t for t in targets if not str(t).startswith("/alloc")]
-    targets = [t for t in targets if not str(t).startswith("/langs/preprocessor")]
     targets = [t for t in targets if not str(t).endswith("_X@syntax_only")]
-    targets = [t for t in targets if str(t).endswith("@syntax_only")]
-    targets = [t for t in targets if str(t) != "/experiments/implcit_args/bug2@syntax_only"] # gcc bug
 else:
     targets = [t for t in targets if not str(t).endswith("@syntax_only")]
-for t in targets:
-    print(all_targets[t].path.relative_to(src))
-print(f"{len(targets) = }")
+
+def print_table(ll):
+    widths = []
+    for l in ll:
+        ws = [len(str(el)) for el in l]
+        while len(widths) < len(ws): widths.append(0)
+        for i in range(len(ws)): widths[i] = max(widths[i], ws[i])
+    for l in ll:
+        print(" ".join(f"{str(x):<{w}}" for x, w in zip(l, widths)))
+
+print()
+print(f"Building {len(targets)} targets:")
+print_table([[t, "--", all_targets[t].path.relative_to(src)] for t in targets])
+print()
+if ignored_targets: print(f"Ignored {len(targets)} targets:")
+print_table([[t, "--", all_targets[t].path.relative_to(src)] for t in ignored_targets])
+if ignored_targets: print()
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
