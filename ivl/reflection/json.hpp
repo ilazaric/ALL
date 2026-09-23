@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/json>
+#include <ivl/json/boost>
 #include <ivl/meta>
 #include <ivl/reflection/json_annotations>
 #include <ivl/reflection/utility>
@@ -12,35 +12,13 @@
 #include <set>
 #include <vector>
 
-namespace ivl {
+namespace ivl::boosty {
 enum class from_to_json_impl_direction { FROM, TO };
-
-// template<typename>
-// struct json_serializer {
-//   static_assert(false, "not implemented");
-// };
-
-// template<typename T>
-// ivl::json::value to_json(const T& arg) {
-//   return json_serializer<T>{}.to_json(arg);
-// }
-// template<typename T>
-// T from_json(const ivl::json::value& arg) {
-//   return json_serializer<T>{}.from_json(arg);
-// }
-
-// template<typename T>
-// struct json_serializer<std::optional<T>> {
-//   ivl::json::value to_json(const std::optional<T>& arg) { return arg ? to_json(*arg) : ivl::json::value(); }
-//   std::optional<T> from_json(const ivl::json::value& arg) {
-//     return !arg.is_null() ? from_json<T>(arg) : std::optional<T>();
-//   }
-// };
 
 template<
   typename T, from_to_json_impl_direction Direction, bool SerializeAsArray = false,
-  typename InputT = std::conditional_t<Direction == from_to_json_impl_direction::TO, T, ivl::json::value>,
-  typename RetT = std::conditional_t<Direction == from_to_json_impl_direction::TO, ivl::json::value, T>>
+  typename InputT = std::conditional_t<Direction == from_to_json_impl_direction::TO, T, boost::json::value>,
+  typename RetT = std::conditional_t<Direction == from_to_json_impl_direction::TO, boost::json::value, T>>
 RetT from_to_json_impl(const InputT& arg) {
   static_assert(!is_pointer_type(^^T));
   static_assert(!is_reference_type(^^T));
@@ -49,7 +27,7 @@ RetT from_to_json_impl(const InputT& arg) {
 
   if constexpr (!annotations_of_with_type(^^T, ^^json_serialize_as_bytes_hex_t).empty()) {
     if constexpr (Direction == TO) {
-      return ivl::json::value(util::hex(std::string_view((const char*)&arg, (const char*)(&arg + 1))));
+      return boost::json::value(util::hex(std::string_view((const char*)&arg, (const char*)(&arg + 1))));
     } else {
       T ret;
       auto str = util::unhex(arg.template get<std::string>());
@@ -64,7 +42,7 @@ RetT from_to_json_impl(const InputT& arg) {
       using V = [:dealias(VI):];
       if constexpr (Direction == TO) {
         if (!std::holds_alternative<V>(arg)) continue;
-        auto ret = json::object();
+        auto ret = boost::json::object();
         ret["type"] = reflection::display_string_of(VI);
         ret["value"] = from_to_json_impl<V, Direction>(std::get<V>(arg));
         return ret;
@@ -91,19 +69,23 @@ RetT from_to_json_impl(const InputT& arg) {
     else return RetT(from_to_json_impl<DurT, Direction>(arg));
   } else if constexpr (std::same_as<T, std::filesystem::path>) {
     return from_to_json_impl<std::string, Direction>(arg);
-  } else if constexpr (!is_class_type(^^T) || std::same_as<T, ivl::json::value> || std::same_as<T, std::string>) {
-    if constexpr (Direction == TO) return ivl::json::value(arg);
+  } else if constexpr (!is_class_type(^^T) || std::same_as<T, boost::json::value> || std::same_as<T, std::string>) {
+    if constexpr (Direction == TO) return boost::json::value(arg);
     else return arg.template get<T>();
   } else if constexpr (
     reflection::is_instantiation_of(^^T, ^^std::vector) || reflection::is_instantiation_of(^^T, ^^std::set)
   ) {
     using ElementT = T::value_type;
     auto ret = RetT{};
-    if constexpr (Direction == TO) ret = json::array();
+    if constexpr (Direction == TO) ret = boost::json::array();
     for (auto&& el : arg) {
-      if constexpr (reflection::is_instantiation_of(^^T, ^^std::set) && Direction == FROM)
-        ret.emplace(from_to_json_impl<ElementT, Direction>(el));
-      else ret.emplace_back(from_to_json_impl<ElementT, Direction>(el));
+      if constexpr (Direction == TO) {
+        ret.as_array().emplace_back(from_to_json_impl<ElementT, Direction>(el));
+      } else {
+        if constexpr (reflection::is_instantiation_of(^^T, ^^std::set))
+          ret.emplace(from_to_json_impl<ElementT, Direction>(el));
+        else ret.emplace_back(from_to_json_impl<ElementT, Direction>(el));
+      }
     }
     return ret;
   } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::map)) {
@@ -112,10 +94,10 @@ RetT from_to_json_impl(const InputT& arg) {
     auto ret = RetT{};
     if constexpr (SerializeAsArray) {
       if constexpr (Direction == TO) {
-        ret = json::array();
+        ret = boost::json::array();
         for (auto&& [key, value] : arg)
-          ret.emplace_back(
-            json::object({
+          ret.as_array().emplace_back(
+            boost::json::object({
               {"key", from_to_json_impl<KeyT, Direction>(key)},
               {"value", from_to_json_impl<ValueT, Direction>(value)},
             })
@@ -126,25 +108,26 @@ RetT from_to_json_impl(const InputT& arg) {
       }
     } else {
       if constexpr (Direction == TO) {
-        ret = json::object();
+        ret = boost::json::object();
         for (auto&& [key, value] : arg)
-          ret.emplace(from_to_json_impl<KeyT, Direction>(key), from_to_json_impl<ValueT, Direction>(value));
+          ret.as_object().emplace(
+            dump(from_to_json_impl<KeyT, Direction>(key)), from_to_json_impl<ValueT, Direction>(value)
+          );
       } else {
         for (auto&& [key, value] : arg.items())
           ret.emplace(
-            from_to_json_impl<KeyT, Direction>(ivl::json::value(key)), from_to_json_impl<ValueT, Direction>(value)
+            from_to_json_impl<KeyT, Direction>(boost::json::value(key)), from_to_json_impl<ValueT, Direction>(value)
           );
       }
     }
     return ret;
   } else if constexpr (
-    is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) &&
-    !is_same_type(^^T, ^^ivl::json::value)
+    is_class_type(^^T) && !reflection::is_child_of(^^T, ^^std) && !is_same_type(^^T, ^^boost::json::value)
   ) {
     static_assert(bases_of(^^T, std::meta::access_context::unchecked()).empty());
     // static_assert(false, display_string_of(^^T));
     auto ret = RetT{};
-    if constexpr (Direction == TO) ret = json::object();
+    if constexpr (Direction == TO) ret = boost::json::object();
     template for (constexpr auto basic_member : reflection::nsdms(^^T)) {
       // TODO: this sucks
       constexpr auto member =
@@ -154,7 +137,7 @@ RetT from_to_json_impl(const InputT& arg) {
       using X = [:type_of(member):];
       if constexpr (Direction == TO) {
         auto&& mem = arg.[:member:];
-        ret.emplace(
+        ret.as_object().emplace(
           identifier_of(member),
           from_to_json_impl<X, Direction, !annotations_of_with_type(member, ^^json_serialize_as_array_t).empty()>(mem)
         );
@@ -172,22 +155,22 @@ RetT from_to_json_impl(const InputT& arg) {
 }
 
 template<typename T>
-T from_json(const ivl::json::value& j) {
+T from_json(const boost::json::value& j) {
   return from_to_json_impl<T, from_to_json_impl_direction::FROM>(j);
 }
 
 template<typename T>
-ivl::json::value to_json(const T& t) {
+boost::json::value to_json(const T& t) {
   return from_to_json_impl<T, from_to_json_impl_direction::TO>(t);
 }
 
 template<typename T>
 T from_json_string(std::string_view sv) {
-  return from_json<T>(json::parse(sv));
+  return from_json<T>(boost::json::parse(sv));
 }
 
 template<typename T>
 std::string to_json_string(const T& t) {
   return to_json<T>(t).dump(2);
 }
-} // namespace ivl
+} // namespace ivl::boosty
