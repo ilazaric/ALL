@@ -527,6 +527,7 @@ inline void parse_text_into(std::string_view contents, state& global_state) {
   if (contents.empty()) return;
   contents.ends_with("\n") || panic("file does not terminate with newline");
   parser parser(contents);
+  EXCEPTION_CONTEXT("file snippet:\n{}", parser.debug_context_file(5));
   EXCEPTION_CONTEXT("parser state -- {}", parser.debug_context());
   while (!parser.finished()) parser.parse_declaration(global_state);
 }
