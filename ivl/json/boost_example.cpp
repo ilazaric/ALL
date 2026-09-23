@@ -1,11 +1,8 @@
-#define IVL_JSON_USE_BOOST
 #include "default"
 #include <iostream>
 
-// IVL add_compiler_flags_tail("-lboost_json")
-
 int ivl_main(int64_t indent) {
-  auto v = ivl::json::parse(R"json(
+  auto v = boost::json::parse(R"json(
     {
       "null": null,
       "int": 123,
@@ -22,6 +19,6 @@ int ivl_main(int64_t indent) {
       }
     }
   )json");
-  std::cout << "dumping:\n" << ivl::json::dump(v, (size_t)indent) << "\ndone\n";
+  std::cout << "dumping:\n" << dump(v, (size_t)indent) << "\ndone\n";
   return 0;
 }
