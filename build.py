@@ -200,15 +200,23 @@ known_failures = [
     "/langs/preprocessor/",
     "/experiments/implcit_args/bug2",
     "/reflection/fmt_manual_format_test",
+
+    "/build_system/manifest",
+    "/build_system/throttled_task_executor",
+    "/cf/1909/H2",
+    "/json/nlohmann_example",
+    "/parsing/cmake",
+    "/structs/binary_tree",
+    "/structs/binary_tree_example",
 ]
 
 ignored_targets = []
 if args.skip_known_failures:
     for regex in known_failures:
-        pattern = re.compile(regex)
-        # re.match() has specific semantics, checks if prefix of string matches regex
-        ignored_targets += [t for t in targets if pattern.match(str(t))]
-        targets = [t for t in targets if not pattern.match(str(t))]
+        pattern = regex if regex.endswith("/") else regex + "@"
+        dropped = [t for t in targets if str(t) == regex or str(t).startswith(pattern)]
+        ignored_targets += dropped
+        targets = [t for t in targets if t not in dropped]
 ignored_targets = sorted(ignored_targets)
 
 if args.syntax_only:

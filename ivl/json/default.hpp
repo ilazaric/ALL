@@ -34,7 +34,7 @@ value parse(T&& arg) {
   return ::nlohmann::json::parse(static_cast<T&&>(arg));
 }
 value diff(const value& left, const value& right) { return ::nlohmann::json::diff(left, right); }
-}
+} // namespace ivl::json
 #endif // IVL_JSON_VIA_NLOHMANN_ALIAS
 
 #ifdef IVL_JSON_VIA_NLOHMANN
@@ -157,7 +157,7 @@ value parse(T&& arg) {
 }
 
 // https://www.boost.org/doc/libs/latest/libs/json/doc/html/examples.html#pretty
-void dump_impl(value const& jv, std::string& out, size_t indent, size_t inc) {
+void dump_impl(::boost::json::value const& jv, std::string& out, size_t indent, size_t inc) {
   switch (jv.kind()) {
   case ::boost::json::kind::object: {
     out += "{\n";
@@ -208,10 +208,10 @@ void dump_impl(value const& jv, std::string& out, size_t indent, size_t inc) {
 }
 
 std::string dump(const value& v, size_t indent = static_cast<size_t>(-1)) {
-  if (indent == static_cast<size_t>(-1)) return ::boost::json::serialize(v);
+  if (indent == static_cast<size_t>(-1)) return ::boost::json::serialize(v.underlying);
   contract_assert((indent >> 63) == 0);
   std::string ret;
-  dump_impl(v, ret, 0, indent);
+  dump_impl(v.underlying, ret, 0, indent);
   return ret;
 }
 } // namespace ivl::json
