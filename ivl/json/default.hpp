@@ -1,6 +1,6 @@
 #pragma once
 
-#if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) >= 2
+#if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) + defined(IVL_JSON_USE_NLOHMANN_ALIAS) >= 2
 #error "at most one IVL_JSON_USE_<kind> can be defined"
 #endif
 
@@ -12,11 +12,33 @@
 #define IVL_JSON_VIA_BOOST
 #endif
 
-#if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) == 0
-#define IVL_JSON_VIA_NLOHMANN
+#ifdef IVL_JSON_USE_NLOHMANN_ALIAS
+#define IVL_JSON_VIA_NLOHMANN_ALIAS
 #endif
 
+#if defined(IVL_JSON_USE_NLOHMANN) + defined(IVL_JSON_USE_BOOST) + defined(IVL_JSON_USE_NLOHMANN_ALIAS) == 0
+#define IVL_JSON_VIA_NLOHMANN_ALIAS
+#endif
+
+#ifdef IVL_JSON_VIA_NLOHMANN_ALIAS
+#include <nlohmann/json.hpp>
+namespace ivl {
+namespace json_owner = ::nlohmann;
+} // namespace ivl
+namespace ivl::json {
+using value = ::nlohmann::json;
+inline value array(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::array(init); }
+inline value object(::nlohmann::json::initializer_list_t init = {}) { return ::nlohmann::json::object(init); }
+template<typename T>
+value parse(T&& arg) {
+  return ::nlohmann::json::parse(static_cast<T&&>(arg));
+}
+value diff(const value& left, const value& right) { return ::nlohmann::json::diff(left, right); }
+}
+#endif // IVL_JSON_VIA_NLOHMANN_ALIAS
+
 #ifdef IVL_JSON_VIA_NLOHMANN
+#error "unfinished, and boring, TODO"
 #include <nlohmann/json.hpp>
 namespace ivl {
 namespace json_owner = ::nlohmann;
