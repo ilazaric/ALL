@@ -120,7 +120,7 @@ RetT from_to_json_impl(const InputT& arg) {
         ret = boost::json::object();
         for (auto&& [key, value] : arg)
           ret.as_object().emplace(
-            dump(from_to_json_impl<KeyT, Direction>(key)), from_to_json_impl<ValueT, Direction>(value)
+            (from_to_json_impl<KeyT, Direction>(key)).as_string(), from_to_json_impl<ValueT, Direction>(value)
           );
       } else {
         for (auto&& [key, value] : arg.as_object())
