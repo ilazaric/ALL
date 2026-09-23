@@ -18,7 +18,21 @@ def check_positive(value):
         raise argparse.ArgumentTypeError("%s is an invalid positive int value" % value)
     return ivalue
 
-parser = argparse.ArgumentParser()
+# chatgpt generated thing, to print cmdline arg defaults
+# argparse.ArgumentDefaultsHelpFormatter dont work if no help= set
+class DefaultsHelpFormatter(argparse.ArgumentDefaultsHelpFormatter):
+    def _format_action(self, action):
+        if action.help is None and action.default is not argparse.SUPPRESS and action.default is not None:
+            action.help = "(default: %(default)s)"
+            try:
+                return super()._format_action(action)
+            finally:
+                action.help = None
+        return super()._format_action(action)
+
+parser = argparse.ArgumentParser(
+    formatter_class=DefaultsHelpFormatter,
+)
 parser.add_argument('-v', '--verbose', action='store_true')
 parser.add_argument('-j', '--jobs', '--parallel', default=1, type=check_positive)
 parser.add_argument('-k', '--keep-going', action='store_true')
@@ -28,16 +42,21 @@ parser.add_argument('-O', '--optimization', default='3', choices=['0', '1', '2',
 parser.add_argument('-g', '--debug-info', default='1', choices=['0', '1', '2', '3'])
 parser.add_argument('--static', action='store_true')
 parser.add_argument('--cxx', default='g++')
-parser.add_argument('--cxx-pre', default='')
+parser.add_argument('--cxx-pre')
 parser.add_argument('--cxx-rpath')
 parser.add_argument('--cxx-version', default='29')
-parser.add_argument('--cxx-post', default='')
+parser.add_argument('--cxx-post')
 parser.add_argument('targets', nargs='*')
 args = parser.parse_args()
 if args.cxx_rpath is None:
     args.cxx_rpath = f"-Wl,-rpath={Path(shutil.which(args.cxx)).parent.parent / 'lib64'}"
-# print(args)
-# exit(1)
+# instead of default='' doing this, --help is nicer that way imo
+if args.cxx_post is None:
+    args.cxx_post = ""
+if args.cxx_pre is None:
+    args.cxx_pre = ""
+print(args)
+exit(1)
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
