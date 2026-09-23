@@ -167,7 +167,7 @@ int ivl_main(const args& args) {
   }
 
   LOG(ivl::fmt::format("{}", pids));
-  LOG(ivl::to_json(syscall_counts).dump(2));
+  LOG(dump(ivl::to_json(syscall_counts), 2));
 
   if (parents.contains(root)) ivl::fmt::println("ERROR: root pid {} has parent {}", root, parents[root]);
 

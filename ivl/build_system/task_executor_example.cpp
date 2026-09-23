@@ -65,7 +65,7 @@ int ivl_main() {
 
   //   while (executor.active_task_count) {
   //     auto outcome = executor.wait_for_death();
-  //     std::cout << ivl::to_json(outcome).dump(2) << std::endl;
+  //     std::cout << dump(ivl::to_json(outcome), 2) << std::endl;
   //   }
   // }
 

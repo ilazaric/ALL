@@ -171,6 +171,6 @@ T from_json_string(std::string_view sv) {
 
 template<typename T>
 std::string to_json_string(const T& t) {
-  return to_json<T>(t).dump(2);
+  return dump(to_json<T>(t), 2);
 }
 } // namespace ivl::boosty

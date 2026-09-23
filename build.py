@@ -238,7 +238,7 @@ print()
 print(f"Building {len(targets)} targets:")
 print_table([[t, "--", all_targets[t].path.relative_to(src)] for t in targets])
 print()
-if ignored_targets: print(f"Ignored {len(targets)} targets:")
+if ignored_targets: print(f"Ignored {len(ignored_targets)} targets:")
 print_table([[t, "--", all_targets[t].path.relative_to(src)] for t in ignored_targets])
 if ignored_targets: print()
 

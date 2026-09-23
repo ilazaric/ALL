@@ -17,9 +17,9 @@ struct T {
 
 int main() {
   T t{};
-  std::cout << ivl::to_json(t).dump(2) << std::endl;
+  std::cout << dump(ivl::to_json(t), 2) << std::endl;
 
   auto j = boost::json::object();
   j["foo"] = boost::json::value{};
-  std::cout << j.get<boost::json::value>() << std::endl;
+  std::cout << j << std::endl;
 }

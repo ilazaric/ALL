@@ -17,7 +17,7 @@ const json recipes = json::parse(std::ifstream{"factorio-recipes.json"});
 // const json all = json::parse(std::ifstream{"all.json"});
 
 int main() {
-  // std::cout << recipes.dump(2) << std::endl;
+  // std::cout << dump(recipes, 2) << std::endl;
   // LOG(recipes[0]);
   for (auto& el : recipes)
     LOG(el["name"]);

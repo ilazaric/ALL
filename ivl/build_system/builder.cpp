@@ -325,7 +325,7 @@ int main(int argc, char* argv[], char* envp[]) {
 
   ivl::util::scope_exit _{[&] {
     std::ofstream of(manifest_file);
-    of << ivl::to_json(manifest).dump(2) << std::endl;
+    of << dump(ivl::to_json(manifest), 2) << std::endl;
   }};
 
   cxx_cfg_part_t cxx_cfg;
@@ -357,7 +357,7 @@ int main(int argc, char* argv[], char* envp[]) {
 
   {
     auto artifacts_dir =
-      build_dir / "artifacts" / ivl::util::hex(ivl::crypto::blake3::hash(ivl::to_json(cxx_cfg).dump()).as_view());
+      build_dir / "artifacts" / ivl::util::hex(ivl::crypto::blake3::hash(dump(ivl::to_json(cxx_cfg))).as_view());
     LOG(artifacts_dir);
     create_directories(artifacts_dir);
     auto& curr_manifest = manifest.parts[cxx_cfg];
@@ -380,7 +380,7 @@ int main(int argc, char* argv[], char* envp[]) {
   }
 
   auto artifacts_dir =
-    build_dir / "artifacts" / ivl::util::hex(ivl::crypto::blake3::hash(ivl::to_json(cxx_cfg).dump()).as_view());
+    build_dir / "artifacts" / ivl::util::hex(ivl::crypto::blake3::hash(dump(ivl::to_json(cxx_cfg))).as_view());
   LOG(artifacts_dir);
   create_directories(artifacts_dir);
 

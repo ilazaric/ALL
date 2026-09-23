@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
       for (auto&& test_dependency : target.test_dependencies) LOG(test_dependency);
     }
     std::ofstream of("/home/ilazaric/repos/ALL/ivl/build_system/dump.json");
-    of << ivl::to_json(targets).dump(2) << std::endl;
+    of << dump(ivl::to_json(targets), 2) << std::endl;
   } catch (const ivl::base_exception& e) {
     e.dump(stderr);
   }
