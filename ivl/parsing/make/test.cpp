@@ -4,6 +4,7 @@
 
 // IVL test_only()
 
+#ifdef IVL_KIND_TEST
 [[= ivl::test]] void test1() {
   auto state = ivl::parsing::make::parse_text(R"make(
 a=1
@@ -35,3 +36,4 @@ d=x\
      }]
   )json");
 }
+#endif // IVL_KIND_TEST
