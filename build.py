@@ -55,8 +55,6 @@ if args.cxx_post is None:
     args.cxx_post = ""
 if args.cxx_pre is None:
     args.cxx_pre = ""
-print(args)
-exit(1)
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
