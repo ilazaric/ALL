@@ -76,3 +76,6 @@
 [submodule "submodules/creduce"]
 	path = submodules/creduce
 	url = git@github.com:csmith-project/creduce.git
+[submodule "submodules/cmake"]
+	path = submodules/cmake
+	url = git@github.com:Kitware/CMake.git
