@@ -79,3 +79,6 @@
 [submodule "submodules/cmake"]
 	path = submodules/cmake
 	url = git@github.com:Kitware/CMake.git
+[submodule "submodules/ccache"]
+	path = submodules/ccache
+	url = git@github.com:ccache/ccache.git
