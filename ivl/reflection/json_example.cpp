@@ -19,7 +19,7 @@ int main() {
   T t{};
   std::cout << ivl::to_json(t).dump(2) << std::endl;
 
-  auto j = ivl::json::object();
-  j["foo"] = ivl::json::value{};
-  std::cout << j.get<ivl::json::value>() << std::endl;
+  auto j = boost::json::object();
+  j["foo"] = boost::json::value{};
+  std::cout << j.get<boost::json::value>() << std::endl;
 }

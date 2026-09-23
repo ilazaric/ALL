@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/json/boost>
+#include <ivl/json>
 #include <ivl/meta>
 #include <ivl/reflection/json_annotations>
 #include <ivl/reflection/utility>
@@ -12,7 +12,7 @@
 #include <set>
 #include <vector>
 
-namespace ivl::boosty {
+namespace ivl {
 enum class from_to_json_impl_direction { FROM, TO };
 
 template<

@@ -1,22 +1,23 @@
 #pragma once
 
 #ifdef IVL_KIND_TEST
+#include <ivl/format>
 #include <ivl/reflection/json>
 #include <source_location>
 #include <string_view>
-#include <ivl/format>
 
 namespace ivl::testing {
 inline void contract_assert_json(
   const auto& actual, std::string_view expected, std::source_location loc = std::source_location::current()
 ) noexcept {
   auto actual_json = ivl::to_json(actual);
-  auto expected_json = json::parse(expected);
+  auto expected_json = boost::json::parse(expected);
   if (actual_json != expected_json) {
     ivl::fmt::println(stderr, "!!! ERROR: FAILED CHECK AT {}:{}", loc.file_name(), loc.line());
-    ivl::fmt::println(stderr, "actual:\n{}", actual_json.dump(2));
-    ivl::fmt::println(stderr, "expected:\n{}", expected_json.dump(2));
-    ivl::fmt::println(stderr, "diff:\n{}", json::diff(actual_json, expected_json).dump(2));
+    ivl::fmt::println(stderr, "actual:\n{}", dump(actual_json, 2));
+    ivl::fmt::println(stderr, "expected:\n{}", dump(expected_json, 2));
+    // TODO: nlohmann had diff, switched to boost, need to implement diff
+    // ivl::fmt::println(stderr, "diff:\n{}", json::diff(actual_json, expected_json).dump(2));
   }
   contract_assert(actual_json == expected_json);
 }

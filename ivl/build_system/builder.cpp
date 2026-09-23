@@ -319,7 +319,7 @@ int main(int argc, char* argv[], char* envp[]) {
     if (!exists(manifest_file)) goto manifest_load_end;
     is_regular_file(manifest_file) || ivl::panic("Manifest file `{}` is not a regular file", manifest_file);
     // not catching anything bc a malformed manifest is a bug, would prefer to first look at it
-    manifest = ivl::from_json<manifest_t>(ivl::json::parse(ivl::linux::read_file(manifest_file)));
+    manifest = ivl::from_json<manifest_t>(boost::json::parse(ivl::linux::read_file(manifest_file)));
   manifest_load_end:;
   }
 

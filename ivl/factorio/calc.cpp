@@ -5,7 +5,7 @@
 
 #include <ivl/logger>
 
-using json = ivl::json::value;
+using json = boost::json::value;
 
 template <typename T>
 T& unmove(T&& t) {
