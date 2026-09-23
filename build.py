@@ -242,6 +242,8 @@ if ignored_targets: print(f"Ignored {len(targets)} targets:")
 print_table([[t, "--", all_targets[t].path.relative_to(src)] for t in ignored_targets])
 if ignored_targets: print()
 
+print(flush=True)
+
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
 
@@ -309,6 +311,8 @@ for target, p, elapsed in pool.imap_unordered(run_target, targets):
     total_seen += 1
     if p.returncode != 0:
         failed.append(target)
+
+print(flush=True)
 
 if args.report_durations:
     print()
