@@ -37,12 +37,13 @@ int main(int argc, char** argv) {
   }
 
   std::filesystem::path       json_file(argv[1]);
-  const auto                  j            = boost::json::parse(std::ifstream(json_file));
-  const std::filesystem::path device       = j["device"];
-  const uint64_t              device_start = from_hex(to_string(j["device_start"]));
-  const uint64_t              device_end   = from_hex(to_string(j["device_end"]));
-  const uint64_t              purge_start  = from_hex(to_string(j["purge_start"]));
-  const uint64_t              purge_end    = from_hex(to_string(j["purge_end"]));
+  const auto                  jb            = boost::json::parse(std::ifstream(json_file));
+  auto&& j = jb.as_object();
+  const std::filesystem::path device       = std::string_view(j.at("device").as_string());
+  const uint64_t              device_start = from_hex(to_string(j.at("device_start")));
+  const uint64_t              device_end   = from_hex(to_string(j.at("device_end")));
+  const uint64_t              purge_start  = from_hex(to_string(j.at("purge_start")));
+  const uint64_t              purge_end    = from_hex(to_string(j.at("purge_end")));
 
   ivl::linux::owned_file_descriptor fd{ivl::linux::terminate_syscalls::open(device.c_str(), O_RDWR, 0)};
   auto       virt_start =

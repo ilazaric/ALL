@@ -65,6 +65,10 @@ std::string dump(const value& v, int indent = -1) {
   ivl_detail::dump_impl(v, ret, 0, (size_t)indent);
   return ret;
 }
+
+value parse(std::istream&& is) { return parse(is); }
+
+std::string to_string(const value& v) { return dump(v); }
 } // namespace boost::json
 
 template<>
