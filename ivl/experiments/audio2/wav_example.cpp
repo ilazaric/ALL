@@ -1,3 +1,4 @@
+#include <ivl/audio/wav>
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
 #include "bin"
@@ -6,7 +7,6 @@
 #include "limiter"
 #include "stft"
 #include "visuals"
-#include "wav"
 #include <algorithm>
 #include <cmath>
 #include <numbers>
