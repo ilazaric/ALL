@@ -167,7 +167,7 @@ int main() {
     auto p = build_dir / "submodule_source_copy" / m / inc;
     if (exists(p)) rsp_file << "-I " << p << std::endl;
   };
-  sync_submodule("nlohmann-json", "include");
+  // sync_submodule("nlohmann-json", "include");
   sync_submodule("raylib");
   sync_submodule("pugixml");
   sync_submodule("fmt", "include");
