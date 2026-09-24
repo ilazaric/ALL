@@ -35,7 +35,7 @@ jobs:
     - name: install gcc
       run: |
         git submodule update --init --depth=1 -- submodules/gcc
-        submodules/build-gcc.sh --install
+        submodules/build-gcc.sh --install --dont-extend-paths-with-checking
       if: steps.cache-gcc.outputs.cache-hit != 'true'
 
 
