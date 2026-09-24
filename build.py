@@ -48,6 +48,7 @@ parser.add_argument('--cxx-pre')
 parser.add_argument('--cxx-rpath')
 parser.add_argument('--cxx-version', default='29')
 parser.add_argument('--cxx-post')
+parser.add_argument('--with-system-libstdcxx')
 parser.add_argument('targets', nargs='*')
 args = parser.parse_args()
 if args.cxx_rpath is None:
@@ -114,7 +115,12 @@ class TargetState:
 common_test_dependencies = set() # {Path("/build_system/run_test")}
     
 def deduce_file_targets(path):
-    added_compiler_flags = []
+    added_compiler_flags = [] if args.with_system_libstdcxx is None else [
+        "-nostdinc++",
+        f"-I/usr/include/c++/{args.with_system_libstdcxx}",
+        f"-I/usr/include/x86_64-linux-gnu/c++/{args.with_system_libstdcxx}",
+        f"-I/usr/include/c++/{args.with_system_libstdcxx}/backward",
+    ]
     added_compiler_flags_tail = []
     unordered_dependencies = set()
     unordered_test_dependencies = set()
