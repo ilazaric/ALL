@@ -126,8 +126,8 @@ def deduce_file_targets(path):
     added_compiler_flags += [] if args.with_custom_libstdcxx is None else [
         "-nostdinc++",
         f"-I{args.with_custom_libstdcxx}",
-        f"-I{args.with_system_libstdcxx}/x86_64-pc-linux-gnu",
-        f"-I{args.with_system_libstdcxx}/backward",
+        f"-I{args.with_custom_libstdcxx}/x86_64-pc-linux-gnu",
+        f"-I{args.with_custom_libstdcxx}/backward",
     ]
     added_compiler_flags_tail = []
     unordered_dependencies = set()
