@@ -1,22 +1,18 @@
-#include <cstdint>
-#include <cstddef>
 #include <debug/assertions.h>
+#include <cstddef>
+#include <cstdint>
 
 // IVL disable_ivl_main_handler()
 
-template<typename _Tp, std::size_t _Nm>
+template<typename T, size_t N>
 struct array {
-  _Tp _M_elems[_Nm];
+  T _M_elems[N];
 
-  [[__gnu__::__const__, __gnu__::__always_inline__]]
-  constexpr size_t
-  size() const noexcept { return _Nm; }
+  constexpr size_t size() const noexcept { return N; }
 
-  constexpr _Tp
-  operator[](size_t __n) const noexcept
-  {
-    __glibcxx_requires_subscript(__n);
-    return _M_elems[__n];
+  constexpr T operator[](size_t n) const noexcept {
+    __glibcxx_requires_subscript(n);
+    return _M_elems[n];
   }
 };
 
@@ -33,9 +29,9 @@ auto factorials_storage = [] {
 
 /*
 ver == 14.4.0
-IVL: constexpr_ops_count: 2080472
+IVL: constexpr_ops_count: 2100477
 ver == 15.1.0
-IVL: constexpr_ops_count: 3680812
+IVL: constexpr_ops_count: 3700817
 ver == 16.1.0
-IVL: constexpr_ops_count: 3680812
+IVL: constexpr_ops_count: 3700817
  */
