@@ -6,10 +6,8 @@
 struct Mint {
   std::array<uint32_t, 1> data;
 
-  constexpr uint32_t operator[](uint32_t idx) const { return data[idx]; }
-
   friend constexpr Mint operator*(const Mint& a, const Mint& b) {
-    return Mint{.data{a[0] + b[0]}};
+    return Mint{.data{a.data[0] + b.data[0]}};
   }
 };
 
@@ -22,9 +20,9 @@ auto factorials_storage = [] {
 
 /*
 ver == 14.4.0
-IVL: constexpr_ops_count: 3400713
+IVL: constexpr_ops_count: 2960625
 ver == 15.1.0
-IVL: constexpr_ops_count: 5001033
+IVL: constexpr_ops_count: 4560945
 ver == 16.1.0
-IVL: constexpr_ops_count: 5001033
+IVL: constexpr_ops_count: 4560945
  */
