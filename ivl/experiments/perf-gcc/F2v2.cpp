@@ -1,6 +1,7 @@
 #include <debug/assertions.h>
 
 // IVL disable_ivl_main_handler()
+// IVL add_compiler_flags("-fconstexpr-ops-limit=1000000000000")
 
 #define AT(arr, idx) arr[idx] // regular
 // #define AT(arr, idx) arr.elems[idx] // inlined
