@@ -32,4 +32,12 @@ ver == 15.1.0
 IVL: constexpr_ops_count: 19986462
 ver == 16.1.0
 IVL: constexpr_ops_count: 19986462
+
+.elems[] instead of []
+ver == 14.4.0
+IVL: constexpr_ops_count: 2960733
+ver == 15.1.0
+IVL: constexpr_ops_count: 2960733
+ver == 16.1.0
+IVL: constexpr_ops_count: 2960733
  */
