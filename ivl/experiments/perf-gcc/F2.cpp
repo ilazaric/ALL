@@ -7,7 +7,7 @@ struct Mint {
   std::array<uint32_t, 1> data;
 
   friend constexpr Mint operator*(const Mint& a, const Mint& b) {
-    return Mint{.data{a.data[0] + b.data[0]}};
+    return Mint{a.data[0] + b.data[0]};
   }
 };
 
