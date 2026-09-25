@@ -14,12 +14,14 @@ struct array {
   }
 };
 
-constexpr auto factorials_storage = [] {
-  array<array<unsigned, 100>, 100> out{};
+constexpr unsigned N = 300;
+
+constexpr auto storage = [] {
+  array<array<unsigned, N>, N> out{};
   out[0][0] = 1;
-  for (unsigned i = 1; i < 100; ++i) out[i][0] = out[0][i] = 1;
-  for (unsigned i = 1; i < 100; ++i)
-    for (unsigned j = 1; j < 100; ++j) out[i][j] = out[i - 1][j] + out[i][j - 1];
+  for (unsigned i = 1; i < N; ++i) out[i][0] = out[0][i] = 1;
+  for (unsigned i = 1; i < N; ++i)
+    for (unsigned j = 1; j < N; ++j) out[i][j] = out[i - 1][j] + out[i][j - 1];
   return out;
 }();
 
