@@ -49,6 +49,7 @@ parser.add_argument('--cxx-rpath')
 parser.add_argument('--cxx-version', default='29')
 parser.add_argument('--cxx-post')
 parser.add_argument('--with-system-libstdcxx')
+parser.add_argument('--with-custom-libstdcxx')
 parser.add_argument('targets', nargs='*')
 args = parser.parse_args()
 if args.cxx_rpath is None:
@@ -58,6 +59,7 @@ if args.cxx_post is None:
     args.cxx_post = ""
 if args.cxx_pre is None:
     args.cxx_pre = ""
+assert args.with_system_libstdcxx is None or args.with_custom_libstdcxx is None
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
@@ -120,6 +122,12 @@ def deduce_file_targets(path):
         f"-I/usr/include/c++/{args.with_system_libstdcxx}",
         f"-I/usr/include/x86_64-linux-gnu/c++/{args.with_system_libstdcxx}",
         f"-I/usr/include/c++/{args.with_system_libstdcxx}/backward",
+    ]
+    added_compiler_flags += [] if args.with_custom_libstdcxx is None else [
+        "-nostdinc++",
+        f"-I{args.with_custom_libstdcxx}",
+        f"-I{args.with_system_libstdcxx}/x86_64-pc-linux-gnu",
+        f"-I{args.with_system_libstdcxx}/backward",
     ]
     added_compiler_flags_tail = []
     unordered_dependencies = set()
