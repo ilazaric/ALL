@@ -2,6 +2,9 @@
 
 // IVL disable_ivl_main_handler()
 
+#define AT(arr, idx) arr[idx] // regular
+// #define AT(arr, idx) arr.elems[idx] // inlined
+
 template<typename T, unsigned N>
 struct array {
   T elems[N];
@@ -14,30 +17,31 @@ struct array {
   }
 };
 
-constexpr unsigned N = 300;
+constexpr unsigned N = 400;
 
 constexpr auto storage = [] {
   array<array<unsigned, N>, N> out{};
-  out[0][0] = 1;
-  for (unsigned i = 1; i < N; ++i) out[i][0] = out[0][i] = 1;
+  AT(AT(out, 0), 0) = 1;
+  for (unsigned i = 1; i < N; ++i) AT(AT(out, i), 0) = AT(AT(out, 0), i) = 1;
   for (unsigned i = 1; i < N; ++i)
-    for (unsigned j = 1; j < N; ++j) out[i][j] = out[i - 1][j] + out[i][j - 1];
+    for (unsigned j = 1; j < N; ++j) AT(AT(out, i), j) = AT(AT(out, i - 1), j) + AT(AT(out, i), j - 1);
   return out;
 }();
 
 /*
+regular:
 ver == 14.4.0
-IVL: constexpr_ops_count: 12460001
+IVL: constexpr_ops_count: 22173301
 ver == 15.1.0
-IVL: constexpr_ops_count: 19986462
+IVL: constexpr_ops_count: 35568562
 ver == 16.1.0
-IVL: constexpr_ops_count: 19986462
+IVL: constexpr_ops_count: 35568562
 
-.elems[] instead of []
+inlined:
 ver == 14.4.0
-IVL: constexpr_ops_count: 2960733
+IVL: constexpr_ops_count: 5267633
 ver == 15.1.0
-IVL: constexpr_ops_count: 2960733
+IVL: constexpr_ops_count: 5267633
 ver == 16.1.0
-IVL: constexpr_ops_count: 2960733
+IVL: constexpr_ops_count: 5267633
  */
