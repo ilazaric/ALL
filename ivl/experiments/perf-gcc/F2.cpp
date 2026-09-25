@@ -1,37 +1,33 @@
 #include <debug/assertions.h>
-#include <cstddef>
-#include <cstdint>
 
 // IVL disable_ivl_main_handler()
 
-template<typename T, size_t N>
+template<typename T, unsigned N>
 struct array {
-  T _M_elems[N];
+  T elems[N];
 
-  constexpr size_t size() const noexcept { return N; }
+  constexpr unsigned size() const { return N; }
 
-  constexpr T operator[](size_t n) const noexcept {
+  constexpr T& operator[](unsigned n) {
     __glibcxx_requires_subscript(n);
-    return _M_elems[n];
+    return elems[n];
   }
 };
 
-struct Mint {
-  array<uint32_t, 1> data;
-};
-
-auto factorials_storage = [] {
-  array<Mint, 20'005> out{};
-  out[0] = {1};
-  for (uint32_t i = 1u; i < out.size(); ++i) out[i] = Mint{out[i - 1].data[0] * Mint{i}.data[0]};
+constexpr auto factorials_storage = [] {
+  array<array<unsigned, 100>, 100> out{};
+  out[0][0] = 1;
+  for (unsigned i = 1; i < 100; ++i) out[i][0] = out[0][i] = 1;
+  for (unsigned i = 1; i < 100; ++i)
+    for (unsigned j = 1; j < 100; ++j) out[i][j] = out[i - 1][j] + out[i][j - 1];
   return out;
 }();
 
 /*
 ver == 14.4.0
-IVL: constexpr_ops_count: 2100477
+IVL: constexpr_ops_count: 1373401
 ver == 15.1.0
-IVL: constexpr_ops_count: 3700817
+IVL: constexpr_ops_count: 2202262
 ver == 16.1.0
-IVL: constexpr_ops_count: 3700817
+IVL: constexpr_ops_count: 2202262
  */
