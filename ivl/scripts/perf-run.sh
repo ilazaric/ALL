@@ -13,9 +13,7 @@ QUOTED="$(printf '%q' "$REMOTEDIR")"
 
 # TODO: lock host so i cant accidentally run two of these at same time
 
-# TODO: ship files needed for run
-# UPDT: added `--copy SRC DST`, might be nice if DST was not needed,
-# ....: copies to /tmp/, and command can somehow refer to the path
+# TODO: copying of shared libs needed (ldd to find them, LD_LIBRARY_PATH to force them)
 
 function print_help() {
     echo 'perf-run -- script to execute on remote host configured for low variance
