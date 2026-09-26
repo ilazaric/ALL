@@ -5,12 +5,12 @@ set -euo pipefail
 RUNCOUNT=5
 
 function compile_check() {
-    g++ ${CXXOPTS-} F2v3.cpp -DCHOICE="$1" -fconstexpr-ops-limit=1000000000000 -std=c++23 -o "F2v3.$1" \
+    g++ ${CXXOPTS-} F2v3.cpp -DCHOICE="$1" -fconstexpr-ops-limit=1000000000000 -std=c++23 -o "F2v3.$1.exe" \
         && echo "compiles: PASS" || { echo "compiles: FAIL"; return 1; }
 }
 
 function runtime_check() {
-    bash -c "./F2v3.$1 && exit 0 || exit 1" &> /dev/null \
+    bash -c "./F2v3.$1.exe && exit 0 || exit 1" &> /dev/null \
         && echo "runtime out-of-bounds test: FAIL"  \
         || echo "runtime out-of-bounds test: PASS"
 }
