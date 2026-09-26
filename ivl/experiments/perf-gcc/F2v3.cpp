@@ -3,6 +3,7 @@
 
 // IVL disable_ivl_main_handler()
 // IVL add_compiler_flags("-fconstexpr-ops-limit=1000000000000")
+// IVL add_compiler_flags("-DCHOICE=BASELINE")
 
 namespace std
 {
