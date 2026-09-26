@@ -5,7 +5,7 @@ set -euo pipefail
 RUNCOUNT=5
 
 function compile_check() {
-    g++ F2v3.cpp -DCHOICE="$1" -fconstexpr-ops-limit=1000000000000 -std=c++23 -o "F2v3.$1" \
+    g++ ${CXXOPTS-} F2v3.cpp -DCHOICE="$1" -fconstexpr-ops-limit=1000000000000 -std=c++23 -o "F2v3.$1" \
         && echo "compiles: PASS" || { echo "compiles: FAIL"; return 1; }
 }
 
@@ -23,7 +23,7 @@ function perf_sanity_check() {
     echo "perf sanity check: PASS"
 }
 
-for CHOICE in BASELINE SEMICOLON STDLIB_{REL,DBG{,_V{2,3,4,5,6}}} IVL_{CONSTEVAL,ALWAYS{,_SIZE,_COND},BUILTIN}
+for CHOICE in BASELINE SEMICOLON STDLIB_{REL,DBG{,_V{2,3,4,5,6}}} IVL_{CONSTEVAL,ALWAYS{,_SIZE,_COND},BUILTIN,FUNCTION,ALWAYS_V2,ALWAYS_EXPECT}
 do
     echo
     echo "evaluating CHOICE=$CHOICE ..."
@@ -31,7 +31,7 @@ do
     runtime_check "$CHOICE"
     ivl script perf-run --copy F2v3.cpp --repeat "$RUNCOUNT" -- \
         IVL_GCC_DUMP_CONSTEXPR_OPS_COUNT= \
-        g++ F2v3.cpp -DCHOICE="$CHOICE" -fsyntax-only -fconstexpr-ops-limit=1000000000000 -std=c++23 \
+        g++ ${CXXOPTS-} F2v3.cpp -DCHOICE="$CHOICE" -fsyntax-only -fconstexpr-ops-limit=1000000000000 -std=c++23 \
         > "F2v3.$CHOICE.out"
     perf_sanity_check "$CHOICE" || continue
     OPS="$(cat "F2v3.$CHOICE.out" | grep IVL | head -1 | rev | cut -d ' ' -f 1 | rev)"

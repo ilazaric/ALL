@@ -73,11 +73,20 @@ namespace std
 // 4.3056s, 34611753ops
 #define IVL_ALWAYS_SIZE if (n >= this->size()) { STDLIB_DBG }
 
-// 4.2978s, 34611753ops
-#define IVL_ALWAYS_COND if (!bool(n <= this->size())) { STDLIB_DBG }
+// 4.2948s, 34611753ops
+#define IVL_ALWAYS_COND if (!bool(n < this->size())) { STDLIB_DBG }
 
 // 3.4878s, 27914125ops
 #define IVL_BUILTIN if (!__builtin_is_constant_evaluated()) { STDLIB_DBG }
+
+// 3.6548s, 28870934ops
+#define IVL_FUNCTION if (!std::__is_constant_evaluated()) { STDLIB_DBG }
+
+// 3.5574s, 28870929ops
+#define IVL_ALWAYS_V2 if (true) if (n >= N) { STDLIB_DBG }
+
+// 4.1028s, 30784537ops
+#define IVL_ALWAYS_EXPECT if (__builtin_expect(n >= N, false)) { STDLIB_DBG }
 
 template<typename T, unsigned N>
 struct array {

@@ -75,11 +75,29 @@ evaluating CHOICE=IVL_ALWAYS_COND ...
 compiles: PASS
 runtime out-of-bounds test: PASS
 perf sanity check: PASS
-4.2978s, 34611753ops
+4.2948s, 34611753ops
 
 evaluating CHOICE=IVL_BUILTIN ...
 compiles: PASS
 runtime out-of-bounds test: PASS
 perf sanity check: PASS
 3.4878s, 27914125ops
+
+evaluating CHOICE=IVL_FUNCTION ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.6548s, 28870934ops
+
+evaluating CHOICE=IVL_ALWAYS_V2 ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.5574s, 28870929ops
+
+evaluating CHOICE=IVL_ALWAYS_EXPECT ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+4.1028s, 30784537ops
 
