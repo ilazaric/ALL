@@ -82,3 +82,6 @@
 [submodule "submodules/ccache"]
 	path = submodules/ccache
 	url = git@github.com:ccache/ccache.git
+[submodule "submodules/openssh-portable"]
+	path = submodules/openssh-portable
+	url = git@github.com:openssh/openssh-portable.git
