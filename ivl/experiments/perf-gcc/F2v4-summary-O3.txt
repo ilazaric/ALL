@@ -1,0 +1,55 @@
+
+evaluating CHOICE=BASELINE ...
+compiles: PASS
+runtime out-of-bounds test: FAIL
+perf sanity check: PASS
+3.3494s, 12460001ops
+
+evaluating CHOICE=STDLIB_DBG ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.6288s, 14610417ops
+
+evaluating CHOICE=IVL_CONSTEVAL ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.5816s, 15148018ops
+
+evaluating CHOICE=IVL_ALWAYS ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.6082s, 14610417ops
+
+evaluating CHOICE=IVL_ALWAYS_SIZE ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+4.4802s, 18373645ops
+
+evaluating CHOICE=IVL_ALWAYS_COND ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+4.471s, 18373645ops
+
+evaluating CHOICE=IVL_BUILTIN ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.727s, 16223226ops
+
+evaluating CHOICE=IVL_ALWAYS_V2 ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+3.6786s, 15148021ops
+
+evaluating CHOICE=IVL_ALWAYS_EXPECT ...
+compiles: PASS
+runtime out-of-bounds test: PASS
+perf sanity check: PASS
+4.2482s, 16223229ops
+
