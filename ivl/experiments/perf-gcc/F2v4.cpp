@@ -41,7 +41,7 @@ constexpr auto storage = [] {
   for (unsigned i = 1; i < N; ++i)
     for (unsigned j = 1; j < N; ++j) out[i][j] = out[i - 1][j] + out[i][j - 1];
   return out;
-}();
+};
 
 int main() {
   array<unsigned, 5> a;
