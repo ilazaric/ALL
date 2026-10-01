@@ -8,6 +8,7 @@ on:
 
 jobs:
   build-gcc:
+    name: Build GCC
     runs-on: ubuntu-latest
     # only one compiler build at same time, so no weird cache behaviour happens
     concurrency:
@@ -40,6 +41,7 @@ jobs:
 
 
   test-gcc-ivl:
+    name: Test my GCC extensions
     needs: build-gcc
     runs-on: ubuntu-latest
     steps:
@@ -72,6 +74,7 @@ jobs:
 
 
   test-libstdcxx-ivl:
+    name: Test my libstdc++ extensions
     needs: build-gcc
     runs-on: ubuntu-latest
     steps:
@@ -105,6 +108,7 @@ jobs:
 
 
   build:
+    name: Build & Test
     needs: build-gcc
     runs-on: ubuntu-latest
     steps:
@@ -179,6 +183,7 @@ jobs:
 
 
   check_ivl_headers_for_pragma_once:
+    name: Check headers for pragma once
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
@@ -188,6 +193,7 @@ jobs:
       run: ./check_headers_for_pragma_once.py
 
   fsyntax_only_global_test:
+    name: -fsyntax-only test
     needs: build-gcc
     runs-on: ubuntu-latest
     steps:
