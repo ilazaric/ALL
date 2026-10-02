@@ -45,11 +45,12 @@ parser.add_argument('-g', '--debug-info', default='1', choices=['0', '1', '2', '
 parser.add_argument('--static', action='store_true')
 parser.add_argument('--cxx', default='g++')
 parser.add_argument('--cxx-pre')
-parser.add_argument('--cxx-rpath')
+parser.add_argument('--cxx-rpath', help="default: {cxx}/../../lib64")
 parser.add_argument('--cxx-version', default='29')
 parser.add_argument('--cxx-post')
 parser.add_argument('--with-system-libstdcxx')
 parser.add_argument('--with-custom-libstdcxx')
+parser.add_argument('--edg', action='store_true')
 parser.add_argument('targets', nargs='*')
 args = parser.parse_args()
 if args.cxx_rpath is None:
@@ -60,6 +61,9 @@ if args.cxx_post is None:
 if args.cxx_pre is None:
     args.cxx_pre = ""
 assert args.with_system_libstdcxx is None or args.with_custom_libstdcxx is None
+assert not args.edg or not args.with_custom_libstdcxx
+assert not args.edg or not args.with_system_libstdcxx
+assert not args.edg or not args.static
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
@@ -77,6 +81,65 @@ if build_prep.with_suffix(".cpp").stat().st_mtime > build_prep.stat().st_mtime:
     print(f"Build prep binary {build_prep} older than sources, rebuilding it ...")
     build_build_prep()
 subprocess.run([build_prep], check=True)
+
+if args.edg:
+    # TODO: copy submodule first
+    subprocess.run([repo_root / "submodules/build-edg.sh"], check=True)
+    edg_dir = str(repo_root / "submodules/edg-compiler")
+    with (build_dir / "edg_eccp_config").open("w", encoding="utf-8") as f:
+        f.write(f'''
+# inspired by submodules/edg-compiler/bases/docker/dev-env/gcc/edg_eccp_config
+
+EDG_DEFAULT_DEFINES="-D__CHAR_BIT__=8"
+EDG_DEFAULT_CPP_DEFINES="-D_POSIX_SOURCE"
+
+# Use GCC.
+EDG_C_TO_OBJ_COMPILER={args.cxx!r}
+
+EDG_GCC_INCL_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc --lang c++ includes)"
+EDG_GCC_CINCL_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc --lang c includes)"
+EDG_GCC_VER_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc version)"
+
+EDG_USE_SYSTEM_HEADERS=1
+EDG_INCLDIR="$EDG_GCC_INCL_SCRAPE"
+EDG_CINCLDIR="$EDG_GCC_CINCL_SCRAPE"
+# Inject --gnu_version to the scraped GCC version.
+EDG_CPFE_DEFAULT_OPTIONS="--gnu_version=$EDG_GCC_VER_SCRAPE $EDG_CPFE_DEFAULT_OPTIONS"
+EDG_C_TO_OBJ_LIBRARIES="$EDG_C_TO_OBJ_LIBRARIES -lstdc++ -lgcc_s -lpthread"
+
+# Get rid of the annoying "nm: stubs.o: no symbols" errors:
+EDG_PRELINK_DEFAULT_OPTIONS='-c "nm -og 2>/dev/null" '$EDG_PRELINK_DEFAULT_OPTIONS
+
+default_opts=$(printf '%s' \
+  "$EDG_C_TO_OBJ_DEFAULT_OPTIONS " \
+  '-w -Dva_copy=__va_copy -falign-functions=4 -fdiagnostics-plain-output'
+)
+
+if [ $EDG_GCC_VER_SCRAPE -ge 140000 ] ; then
+  #
+  # As of GCC 14 the following flags are required to prevent spurious
+  # errors when compiling the generated C code.
+  #
+  # See https://gcc.gnu.org/gcc-14/porting_to.html for more information.
+  #
+  warnings_to_disable=$(printf '%s' \
+    '-Wno-error=implicit-function-declaration ' \
+    '-Wno-error=incompatible-pointer-types ' \
+    '-Wno-error=int-conversion ' \
+    '-Wno-error=return-mismatch '
+  )
+  default_opts="$default_opts $warnings_to_disable"
+fi
+
+EDG_C_TO_OBJ_DEFAULT_OPTIONS=$default_opts
+EDG_C_TO_OBJ_DEFAULT_OPTIONS_linux_x86_64="$default_opts -m64 -march=x86-64"
+
+EDG_SUPPRESS_PATCH_MUNCH=1
+EDG_STD_LIBS=""
+COLLECT_NO_DEMANGLE=1
+export COLLECT_NO_DEMANGLE
+''')
+    
 
 if not args.syntax_only:
     modsrc = build_dir / "submodule_source_copy"
@@ -115,6 +178,9 @@ class TargetState:
 
 # TODO: revert when build is caching
 common_test_dependencies = set() # {Path("/build_system/run_test")}
+
+cmdline_include = "-include" if not args.edg else "--preinclude"
+fsyntax_only = "-fsyntax-only" if not args.edg else "--prelink_objects"
     
 def deduce_file_targets(path):
     added_compiler_flags = [] if args.with_system_libstdcxx is None else [
@@ -173,10 +239,10 @@ def deduce_file_targets(path):
         name = "/" / path.relative_to(src / "ivl").with_suffix('')
 
     if file_has_test_variant:
-        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, ["-DIVL_KIND_TEST"] + added_compiler_flags, libs_link + added_compiler_flags_tail + ["-include", "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
+        all_targets[name.parent / f"{name.name}@test"] = TargetState(path, ["-DIVL_KIND_TEST"] + added_compiler_flags, libs_link + added_compiler_flags_tail + [cmdline_include, "ivl/reflection/test_runner"], unordered_dependencies | unordered_test_dependencies | common_test_dependencies)
     if file_has_reg_variant:
-        all_targets[name] = TargetState(path, added_compiler_flags, libs_link + added_compiler_flags_tail + (["-include", "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
-    all_targets[name.parent / f"{name.name}@syntax_only"] = TargetState(path, ["-fsyntax-only"] + added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
+        all_targets[name] = TargetState(path, added_compiler_flags, libs_link + added_compiler_flags_tail + ([cmdline_include, "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
+    all_targets[name.parent / f"{name.name}@syntax_only"] = TargetState(path, [fsyntax_only] + added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
 
 for dirpath, _, filenames in src.walk():
     for filename in filenames:
@@ -259,16 +325,26 @@ if ignored_targets: print()
 print(flush=True)
 
 cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
-cxxfmap = [f"-ffile-prefix-map={repo_root}/="]
+cxxfmap = [f"-ffile-prefix-map={repo_root}/="] if not args.edg else []
 
 # TODO: add gcc repo as submodule, build it, default to using it
 # UPDT: use the reflection repo: https://forge.sourceware.org/marek/gcc.git
 # UPDT: reflection merged upstream, also submodules/build-gcc.sh installs it to /opt/GCC
-cxx = args.cxx
+cxx = args.cxx if not args.edg else str(repo_root / "submodules/objdir/edg/bin/eccp")
 cxxpre = args.cxx_pre
-cxxrpath = args.cxx_rpath
+cxxrpath = [args.cxx_rpath] if not args.edg else ["--c_to_obj_option", args.cxx_rpath]
 cxxver = args.cxx_version
 cxxpost = args.cxx_post
+cxxrefl = ["-freflection"] if not args.edg else ["--set_flag", "reflection"]
+cxxcontr = ["-fcontracts"] if not args.edg else []
+cxxstd = f"-std=c++{cxxver}" if not args.edg else f"--c++{cxxver}"
+cxxkind = "-xc++" if not args.edg else "--c++"
+# cmdline_parsing::implicit
+cxxwarn = ["-Wsfinae-incomplete=0"] if not args.edg else []
+
+env = os.environ.copy()
+if args.edg:
+    env["EDG_BASE"] = str(build_dir)
 
 def run_target(target):
     path = all_targets[target].path
@@ -291,28 +367,28 @@ def run_target(target):
     cxxaddedpost = all_targets[target].added_compiler_flags_tail
     cmd = ([cxx] +
            cxxpre.split() +
-           [cxxrpath] +
+           cxxrpath +
            cxxadded +
            cxxinc +
            cxxfmap +
+           cxxrefl +
+           cxxcontr +
+           [cxxstd] +
+           [cxxkind] +
+           cxxwarn +
            ["-DIVL_LOCAL", f"-DIVL_FILE=\"{relpath}\""] +
            (["-static"] if args.static else []) +
            [f"-O{args.optimization}",
             f"-g{args.debug_info}",
-            f"-std=c++{cxxver}",
-            "-Wsfinae-incomplete=0", # cmdline_parsing::implicit
-            "-freflection",
-            "-fcontracts",
-            "-include",
+            cmdline_include,
             incpath,
-            "-xc++",
             "/dev/null",
             "-o",
             repo_root / "ivl" / target.relative_to('/')] +
            cxxpost.split() + cxxaddedpost)
     if args.verbose: print(" ".join([str(x) for x in cmd]))
     start = time.perf_counter()
-    p = subprocess.run(cmd, check=not args.keep_going)
+    p = subprocess.run(cmd, env=env, check=not args.keep_going)
     elapsed = time.perf_counter() - start
     return (target, p, elapsed)
 
