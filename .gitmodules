@@ -87,4 +87,4 @@
 	url = git@github.com:openssh/openssh-portable.git
 [submodule "submodules/edg-compiler"]
 	path = submodules/edg-compiler
-	url = git@github.com:edgcpp/compiler.git
+	url = git@github.com:ilazaric/edg-compiler.git
