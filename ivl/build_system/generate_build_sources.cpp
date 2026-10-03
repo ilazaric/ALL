@@ -165,7 +165,7 @@ int main() {
     sync_dir(root / "submodules" / m, build_dir / "submodule_source_copy" / m);
     if (inc.empty()) return;
     auto p = build_dir / "submodule_source_copy" / m / inc;
-    if (exists(p)) rsp_file << "-I " << p << std::endl;
+    if (exists(p)) rsp_file << "-isystem " << p << std::endl;
   };
   // sync_submodule("nlohmann-json", "include");
   sync_submodule("raylib");
@@ -177,7 +177,7 @@ int main() {
     create_directory(inc);
     create_directory_symlink("../submodule_source_copy/raylib/src", inc / "raylib");
     create_directory_symlink("../submodule_source_copy/pugixml/src", inc / "pugixml");
-    rsp_file << "-I " << inc << std::endl;
+    rsp_file << "-isystem " << inc << std::endl;
   }
 
   auto files = find_sources(copy_dir / "ivl");

@@ -139,6 +139,7 @@ cmdline_include = "-include" if not args.edg else "--preinclude"
 fsyntax_only = "-fsyntax-only" if not args.edg else "--prelink_objects"
     
 def deduce_file_targets(path):
+    # TODO: should be --sys_include for EDG?
     added_compiler_flags = [] if args.with_system_libstdcxx is None else [
         "-nostdinc++",
         f"-I/usr/include/c++/{args.with_system_libstdcxx}",
@@ -285,7 +286,13 @@ print(flush=True)
 # exit(0)
 
 argsrsp = build_dir / "include_dirs/args.rsp"
-cxxinc = [f"@{argsrsp}"] if not args.edg else sum([["-I", l[4:-1]] for l in argsrsp.read_text().split('\n')[:-1]], [])
+cxxinc = []
+isystem = "-isystem" if not args.edg else "--sys_include"
+for line in argsrsp.read_text().strip().split('\n'):
+    if line.startswith("-I "): cxxinc += ["-I", line[4:-1]]
+    elif line.startswith("-isystem "): cxxinc += [isystem, line[10:-1]]
+    else: assert False, line
+
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="] if not args.edg else []
 
 # TODO: add gcc repo as submodule, build it, default to using it
