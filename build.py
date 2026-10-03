@@ -46,13 +46,15 @@ parser.add_argument('--static', action='store_true')
 parser.add_argument('--cxx', default='g++')
 parser.add_argument('--cxx-pre')
 parser.add_argument('--cxx-rpath', help="default: {cxx}/../../lib64")
-parser.add_argument('--cxx-version', default='29')
+parser.add_argument('--cxx-version', help="defaults: gcc==29, edg==26")
 parser.add_argument('--cxx-post')
 parser.add_argument('--with-system-libstdcxx')
 parser.add_argument('--with-custom-libstdcxx')
 parser.add_argument('--edg', action='store_true')
 parser.add_argument('targets', nargs='*')
 args = parser.parse_args()
+if args.cxx_version is None:
+    args.cxx_version = "26" if args.edg else "29"
 if args.cxx_rpath is None:
     args.cxx_rpath = f"-Wl,-rpath={Path(shutil.which(args.cxx)).parent.parent / 'lib64'}"
 # instead of default='' doing this, --help is nicer that way imo
