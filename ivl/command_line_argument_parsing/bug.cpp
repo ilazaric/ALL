@@ -4,8 +4,6 @@ struct base_exception {
   inline static thread_local std::vector<int> inflight_exceptions{};
 
   inline base_exception() { inflight_exceptions.emplace_back(0); }
-
-  // inline ~base_exception() { inflight_exceptions.pop_back(); }
 };
 
 // IVL disable_ivl_main_handler()
