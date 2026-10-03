@@ -1,11 +1,9 @@
 #include <vector>
 
 struct base_exception {
-  struct detail_handle {};
+  inline static thread_local std::vector<int> inflight_exceptions{};
 
-  inline static thread_local std::vector<detail_handle> inflight_exceptions{};
-
-  inline base_exception() { inflight_exceptions.emplace_back(); }
+  inline base_exception() { inflight_exceptions.emplace_back(0); }
 
   inline ~base_exception() { inflight_exceptions.pop_back(); }
 };
@@ -13,3 +11,5 @@ struct base_exception {
 // IVL disable_ivl_main_handler()
 
 int main() {}
+
+// /home/ilazaric/repos/ALL/submodules/objdir/edg/bin/eccp --c++26 -O3 --preinclude bug.cpp -o bug /home/ilazaric/repos/ALL/build/empty.cpp
