@@ -124,8 +124,10 @@ int main_template(int argc, char** argv) {
 
 #ifdef __EDG__
 namespace std::meta {
+#pragma diag_suppress extern_inline_never_defined
 consteval void queue_injection(info, info);
 consteval info nearest_token_queuing_context();
+#pragma diag_default extern_inline_never_defined
 } // namespace std::meta
 
 consteval {
