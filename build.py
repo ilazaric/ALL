@@ -113,6 +113,9 @@ if not args.syntax_only:
     shutil.copy(modobj / "fmt/libfmt.a", libs / "libfmt.a")
     # TODO: clean up
     libs_link = [f"-L{libs}", "-lfmt", "-lpugixml", "-lraylib", "-lboost_json"] + "-lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl".split()
+    if args.edg:
+        # for system installed boost_json
+        libs_link = ["-L/usr/lib/x86_64-linux-gnu"] + libs_link
 else:
     libs_link = []
 
