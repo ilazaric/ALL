@@ -146,6 +146,45 @@ jobs:
       run: ./run_built_tests.py
 
 
+  build-with-edg:
+    name: Build (with EDG)
+    needs: build-gcc
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+    - name: install apt packages
+      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess
+    - uses: webfactory/ssh-agent@v0.10.0
+      with:
+        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+    - name: fetch submodules
+      run: |
+        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib,boost}
+        git -C submodules/boost submodule update --init --depth=1 -- libs/json
+    - name: get gcc commit
+      id: get-gcc-commit
+      run: |
+        echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
+      shell: bash
+    - name: restore gcc install
+      uses: actions/cache/restore@v5
+      id: cache-gcc
+      with:
+        path: /opt/GCC
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
+        fail-on-cache-miss: true
+    - name: activate gcc
+      run: |
+        echo "/opt/GCC/bin" >> $GITHUB_PATH
+        echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
+    - name: validate gcc
+      run: echo | g++ -xc++ -E --verbose -
+    - name: build
+      run: ./build.py --report-durations --keep-going --verbose --jobs $(nproc) # nothing for now, just EDG itself
+    - name: test
+      run: ./run_built_tests.py
+
+
   build2:
     if: ${{ false }} # too broken, and dont care atm, TODO: fix
     needs: build-gcc
