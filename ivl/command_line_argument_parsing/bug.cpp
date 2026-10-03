@@ -1,9 +1,13 @@
+// #include <string>
 #include <vector>
 
 struct E {
+  // TODO
+  // inline static thread_local std::string t = "";
+  
   inline static thread_local std::vector<int> t{};
 
-  inline E() { t.emplace_back(0); }
+  E() { auto&& _ = t; }
 };
 
 // IVL disable_ivl_main_handler()
