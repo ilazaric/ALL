@@ -1,16 +1,13 @@
-// template<typename... Args>
-struct panic {
-  [[noreturn]] constexpr explicit panic() {
-    if consteval {
-      throw 123;
-    } else {
-      throw 456;
-    }
-  }
+struct A {
+  [[noreturn]] A() { throw 123; }
 };
 
-struct todo {
-  [[noreturn]] constexpr explicit todo() { panic(); }
+[[noreturn]] void f() { throw 456; }
+
+struct B {
+#pragma diag_suppress noreturn_function_does_return
+  [[noreturn]] B() { A{}; }
+#pragma diag_default noreturn_function_does_return
 };
 
 // IVL disable_ivl_main_handler()

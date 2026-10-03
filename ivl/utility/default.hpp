@@ -146,17 +146,29 @@ panic() -> panic<>;
 
 template <typename... Args>
 struct todo {
+#ifdef __EDG__
+#pragma diag_suppress noreturn_function_does_return
+#endif
   [[noreturn]] constexpr explicit todo(Args&&... args, std::source_location loc = std::source_location::current()) {
     panic<Args...>(FWD(args)..., "!!! TODO PANIC !!!", loc);
   }
+#ifdef __EDG__
+#pragma diag_default noreturn_function_does_return
+#endif
   constexpr operator bool() const noexcept { return true; };
 };
 
 template <>
 struct todo<> {
+#ifdef __EDG__
+#pragma diag_suppress noreturn_function_does_return
+#endif
   [[noreturn]] constexpr explicit todo(std::source_location loc = std::source_location::current()) {
     panic<ivl::fmt::format_string<>>("TODO not implemented", "!!! TODO PANIC !!!", loc);
   }
+#ifdef __EDG__
+#pragma diag_default noreturn_function_does_return
+#endif
   constexpr operator bool() const noexcept { return true; };
 };
 
