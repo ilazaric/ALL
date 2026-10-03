@@ -10,5 +10,4 @@ struct E {
 
 int main() {}
 
-// /home/ilazaric/repos/ALL/submodules/objdir/edg/bin/eccp --c++26 -O3 --preinclude bug.cpp -o bug
-// /home/ilazaric/repos/ALL/build/empty.cpp
+// /home/ilazaric/repos/ALL/submodules/objdir/edg/bin/eccp --c++26 -O3 -o bug bug.cpp
