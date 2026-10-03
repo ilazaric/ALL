@@ -23,7 +23,11 @@ struct base_exception : std::exception {
     inline detail_handle(base_exception& e) : ptr(&e), idx(std::uncaught_exceptions()) {}
   };
 
-  inline static thread_local std::vector<detail_handle> inflight_exceptions{};
+  // EDG doesnt like thread_local class-scope vars
+  static auto& inflight_exceptions() {
+    thread_local std::vector<detail_handle> x{};
+    return x;
+  }
 
   struct context {
     std::source_location location;
@@ -39,13 +43,13 @@ struct base_exception : std::exception {
     std::string_view throw_text = "", std::source_location throw_location = std::source_location::current()
   )
       : throw_text(throw_text), throw_location(throw_location) {
-    inflight_exceptions.emplace_back(*this);
+    inflight_exceptions().emplace_back(*this);
   }
 
-  inline ~base_exception() { inflight_exceptions.pop_back(); }
+  inline ~base_exception() { inflight_exceptions().pop_back(); }
 
   inline static bool is_in_flight() {
-    return !inflight_exceptions.empty() && inflight_exceptions.back().idx + 1 == std::uncaught_exceptions();
+    return !inflight_exceptions().empty() && inflight_exceptions().back().idx + 1 == std::uncaught_exceptions();
   }
 
   inline void dump(std::FILE* stream = stdout) const {
@@ -91,7 +95,7 @@ struct base_exception : std::exception {
       if (                                                                                                             \
         std::uncaught_exceptions() == EXCEPTION_CONTEXT_exception_count + 1 && ::ivl::base_exception::is_in_flight()   \
       )                                                                                                                \
-        ::ivl::base_exception::inflight_exceptions.back().ptr->added_context.emplace_back(                             \
+        ::ivl::base_exception::inflight_exceptions().back().ptr->added_context.emplace_back(                             \
           std::source_location::current(), ivl::fmt::format(__VA_ARGS__)                                                    \
         );                                                                                                             \
     }                                                                                                                  \
