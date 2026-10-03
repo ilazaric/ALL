@@ -1,11 +1,15 @@
 // #include <string>
-#include <vector>
+
+struct S {
+  S(){}
+  ~S(){}
+};
 
 struct E {
   // TODO
   // inline static thread_local std::string t = "";
   
-  inline static thread_local std::vector<int> t{};
+  inline static thread_local S t{};
 
   E() { auto&& _ = t; }
 };
