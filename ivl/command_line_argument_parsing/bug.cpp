@@ -41,38 +41,9 @@ struct base_exception : std::exception {
   }
 
   inline void dump(std::FILE* stream = stdout) const {
-    ivl::fmt::println(
-      stream, "ivl::base_exception thrown from {}:{}:`{}`", throw_location.file_name(), throw_location.line(),
-      throw_location.function_name()
-    );
-    if (!throw_text.empty()) ivl::fmt::println(stream, " | text: {}", throw_text);
-    for (auto&& ctx : added_context) {
-      ivl::fmt::println(
-        stream, " | added context from {}:'{}':{}", ctx.location.file_name(), ctx.location.function_name(),
-        ctx.location.line()
-      );
-      if (!ctx.text.empty()) ivl::fmt::println(stream, " | | text: {}", ctx.text);
-    }
   }
 
   virtual inline const char* what() const noexcept {
-    if (cached_what) return cached_what->c_str();
-    std::string what;
-    auto out = std::back_inserter(what);
-    out = ivl::fmt::format_to(
-      out, "ivl::base_exception thrown from {}:{}:`{}`\n", throw_location.file_name(), throw_location.line(),
-      throw_location.function_name()
-    );
-    if (!throw_text.empty()) out = ivl::fmt::format_to(out, " | text: {}\n", throw_text);
-    for (auto&& ctx : added_context) {
-      out = ivl::fmt::format_to(
-        out, " | added context from {}:'{}':{}\n", ctx.location.file_name(), ctx.location.function_name(),
-        ctx.location.line()
-      );
-      if (!ctx.text.empty()) out = ivl::fmt::format_to(out, " | | text: {}\n", ctx.text);
-    }
-    cached_what = std::make_unique<std::string>(std::move(what));
-    return cached_what->c_str();
   }
 };
 } // namespace ivl
