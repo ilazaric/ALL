@@ -1,8 +1,5 @@
-#include <ivl/utility/scope_exit>
 #include <exception>
-#include <ivl/format>
 #include <memory>
-#include <ivl/format>
 #include <source_location>
 #include <vector>
 
@@ -35,16 +32,6 @@ struct base_exception : std::exception {
   }
 
   inline ~base_exception() { inflight_exceptions.pop_back(); }
-
-  inline static bool is_in_flight() {
-    return !inflight_exceptions.empty() && inflight_exceptions.back().idx + 1 == std::uncaught_exceptions();
-  }
-
-  inline void dump(std::FILE* stream = stdout) const {
-  }
-
-  virtual inline const char* what() const noexcept {
-  }
 };
 } // namespace ivl
 
