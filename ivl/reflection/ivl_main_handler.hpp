@@ -5,8 +5,8 @@
 
 #include <ivl/command_line_argument_parsing/parsers>
 #include <ivl/command_line_argument_parsing/print_help>
-#include <meta>
 #include <ivl/format>
+#include <meta>
 #include <string>
 #include <string_view>
 #include <tuple>
@@ -42,7 +42,8 @@ struct search_result_t {
 consteval search_result_t find_main_declarations() {
   std::vector<std::meta::info> main_decls;
   std::vector<std::meta::info> ivl_main_decls;
-  for (auto member : members_of(^^::, std::meta::access_context::unchecked())) {
+  auto mems = members_of(^^::, std::meta::access_context::unchecked());
+  for (auto member : mems) {
     if (!is_function(member)) continue;
     if (!has_identifier(member)) continue;
     auto id = identifier_of(member);
@@ -121,6 +122,24 @@ int main_template(int argc, char** argv) {
 }
 } // namespace ivl::main_synthesis
 
+#ifdef __EDG__
+namespace std::meta {
+consteval void queue_injection(info, info);
+consteval info nearest_token_queuing_context();
+} // namespace std::meta
+
+consteval {
+  if (!ivl::main_synthesis::search_result.emit_main) return;
+  queue_injection(std::meta::nearest_token_queuing_context(), ^^{
+int main(int argc, char** argv) {
+  return ivl::main_synthesis::main_template<
+    ivl::main_synthesis::search_result.emit_main, typename[:ivl::main_synthesis::search_result.ivl_main_type:]>(
+    argc, argv
+  );
+}
+});
+}
+#elifdef __GNUC__
 namespace {
 namespace hide_decl {
   int main(int, char**);
@@ -135,3 +154,4 @@ int[:ivl::main_synthesis::search_result.emit_main ? ^^:: : ^^hide_decl:] ::main(
     argc, argv
   );
 }
+#endif
