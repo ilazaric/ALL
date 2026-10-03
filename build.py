@@ -294,7 +294,8 @@ cxxpre = args.cxx_pre
 cxxrpath = [args.cxx_rpath] if not args.edg else ["--c_to_obj_option", args.cxx_rpath]
 cxxver = args.cxx_version
 cxxpost = args.cxx_post
-cxxrefl = ["-freflection"] if not args.edg else ["--set_flag", "reflection"]
+# injection is for ivl_main_handler edg-specific main synthesis
+cxxrefl = ["-freflection"] if not args.edg else ["--set_flag", "reflection", "--set_flag", "injection"]
 cxxcontr = ["-fcontracts"] if not args.edg else ["-Dcontract_assert(...)=assert(__VA_ARGS__)"]
 cxxstd = f"-std=c++{cxxver}" if not args.edg else f"--c++{cxxver}"
 cxxkind = "-xc++" if not args.edg else "--c++"
