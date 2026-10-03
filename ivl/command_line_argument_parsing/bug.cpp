@@ -1,4 +1,4 @@
-template<typename... Args>
+// template<typename... Args>
 struct panic {
   [[noreturn]] constexpr explicit panic() {
     if consteval {
@@ -10,7 +10,7 @@ struct panic {
 };
 
 struct todo {
-  [[noreturn]] constexpr explicit todo() { panic<>(); }
+  [[noreturn]] constexpr explicit todo() { panic(); }
 };
 
 // IVL disable_ivl_main_handler()
