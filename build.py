@@ -64,11 +64,17 @@ assert args.with_system_libstdcxx is None or args.with_custom_libstdcxx is None
 assert not args.edg or not args.with_custom_libstdcxx
 assert not args.edg or not args.with_system_libstdcxx
 assert not args.edg or not args.static
+assert not args.edg or args.cxx == 'g++'
 
 repo_root = Path(__file__).parent.resolve()
 build_dir = repo_root / "build"
 src = build_dir / "source_copy"
 regsrc = build_dir / "include_dirs" / "regular"
+empty = build_dir / "empty.cpp"
+edg_cfg = build_dir / "edg_gcc"
+build_dir.mkdir(exist_ok=True)
+with empty.open("w", encoding="utf-8") as f:
+    f.write("")
 
 build_prep = repo_root / "ivl/build_system/generate_build_sources"
 assert build_prep.with_suffix(".cpp").exists(), build_prep
@@ -85,61 +91,6 @@ subprocess.run([build_prep], check=True)
 if args.edg:
     # TODO: copy submodule first
     subprocess.run([repo_root / "submodules/build-edg.sh"], check=True)
-    edg_dir = str(repo_root / "submodules/edg-compiler")
-    with (build_dir / "edg_eccp_config").open("w", encoding="utf-8") as f:
-        f.write(f'''
-# inspired by submodules/edg-compiler/bases/docker/dev-env/gcc/edg_eccp_config
-
-EDG_DEFAULT_DEFINES="-D__CHAR_BIT__=8"
-EDG_DEFAULT_CPP_DEFINES="-D_POSIX_SOURCE"
-
-# Use GCC.
-EDG_C_TO_OBJ_COMPILER={args.cxx!r}
-
-EDG_GCC_INCL_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc --lang c++ includes)"
-EDG_GCC_CINCL_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc --lang c includes)"
-EDG_GCC_VER_SCRAPE="$({edg_dir!r}/dev_tools/bin/edg-scrape-compiler --compiler-path {args.cxx!r} gcc version)"
-
-EDG_USE_SYSTEM_HEADERS=1
-EDG_INCLDIR="$EDG_GCC_INCL_SCRAPE"
-EDG_CINCLDIR="$EDG_GCC_CINCL_SCRAPE"
-# Inject --gnu_version to the scraped GCC version.
-EDG_CPFE_DEFAULT_OPTIONS="--gnu_version=$EDG_GCC_VER_SCRAPE $EDG_CPFE_DEFAULT_OPTIONS"
-EDG_C_TO_OBJ_LIBRARIES="$EDG_C_TO_OBJ_LIBRARIES -lstdc++ -lgcc_s -lpthread"
-
-# Get rid of the annoying "nm: stubs.o: no symbols" errors:
-EDG_PRELINK_DEFAULT_OPTIONS='-c "nm -og 2>/dev/null" '$EDG_PRELINK_DEFAULT_OPTIONS
-
-default_opts=$(printf '%s' \
-  "$EDG_C_TO_OBJ_DEFAULT_OPTIONS " \
-  '-w -Dva_copy=__va_copy -falign-functions=4 -fdiagnostics-plain-output'
-)
-
-if [ $EDG_GCC_VER_SCRAPE -ge 140000 ] ; then
-  #
-  # As of GCC 14 the following flags are required to prevent spurious
-  # errors when compiling the generated C code.
-  #
-  # See https://gcc.gnu.org/gcc-14/porting_to.html for more information.
-  #
-  warnings_to_disable=$(printf '%s' \
-    '-Wno-error=implicit-function-declaration ' \
-    '-Wno-error=incompatible-pointer-types ' \
-    '-Wno-error=int-conversion ' \
-    '-Wno-error=return-mismatch '
-  )
-  default_opts="$default_opts $warnings_to_disable"
-fi
-
-EDG_C_TO_OBJ_DEFAULT_OPTIONS=$default_opts
-EDG_C_TO_OBJ_DEFAULT_OPTIONS_linux_x86_64="$default_opts -m64 -march=x86-64"
-
-EDG_SUPPRESS_PATCH_MUNCH=1
-EDG_STD_LIBS=""
-COLLECT_NO_DEMANGLE=1
-export COLLECT_NO_DEMANGLE
-''')
-    
 
 if not args.syntax_only:
     modsrc = build_dir / "submodule_source_copy"
@@ -324,7 +275,12 @@ if ignored_targets: print()
 
 print(flush=True)
 
-cxxinc = [f"@{build_dir / "include_dirs/args.rsp"}"]
+# argsrsp = build_dir / "include_dirs/args.rsp"
+# print(sum([["-I", l[4:-1]] for l in argsrsp.read_text().split('\n')[:-1]], []))
+# exit(0)
+
+argsrsp = build_dir / "include_dirs/args.rsp"
+cxxinc = [f"@{argsrsp}"] if not args.edg else sum([["-I", l[4:-1]] for l in argsrsp.read_text().split('\n')[:-1]], [])
 cxxfmap = [f"-ffile-prefix-map={repo_root}/="] if not args.edg else []
 
 # TODO: add gcc repo as submodule, build it, default to using it
@@ -336,15 +292,28 @@ cxxrpath = [args.cxx_rpath] if not args.edg else ["--c_to_obj_option", args.cxx_
 cxxver = args.cxx_version
 cxxpost = args.cxx_post
 cxxrefl = ["-freflection"] if not args.edg else ["--set_flag", "reflection"]
-cxxcontr = ["-fcontracts"] if not args.edg else []
+cxxcontr = ["-fcontracts"] if not args.edg else ["-Dcontract_assert(...)=assert(__VA_ARGS__)"]
 cxxstd = f"-std=c++{cxxver}" if not args.edg else f"--c++{cxxver}"
 cxxkind = "-xc++" if not args.edg else "--c++"
 # cmdline_parsing::implicit
 cxxwarn = ["-Wsfinae-incomplete=0"] if not args.edg else []
 
+def foo(a):
+    return subprocess.run([f"{repo_root}/submodules/edg-compiler/dev_tools/bin/edg-scrape-compiler", "gcc"] + a, check=True, capture_output=True).stdout.decode("utf-8").strip()
+
 env = os.environ.copy()
+env["LC_ALL"] = "C"
 if args.edg:
-    env["EDG_BASE"] = str(build_dir)
+    # env["EDG_BASE"] = str(edg_cfg)
+    # env["PATH"] = "/bin:/usr/bin"
+    env["EDG_USE_SYSTEM_HEADERS"] = "1"
+    # str(repo_root / "submodules/edg-compiler/bases/docker/dev-env/gcc/include") + ":" + 
+    env["EDG_GCC_INCL_SCRAPE"] = foo(["--lang", "c++", "includes"])
+    # str(repo_root / "submodules/edg-compiler/bases/docker/dev-env/gcc/include_c99") + ":" + 
+    env["EDG_GCC_CINCL_SCRAPE"] = foo(["--lang", "c", "includes"])
+    env["EDG_GCC_VER_SCRAPE"] = foo(["version"])
+
+# print(env)
 
 def run_target(target):
     path = all_targets[target].path
@@ -382,10 +351,11 @@ def run_target(target):
             f"-g{args.debug_info}",
             cmdline_include,
             incpath,
-            "/dev/null",
             "-o",
             repo_root / "ivl" / target.relative_to('/')] +
-           cxxpost.split() + cxxaddedpost)
+           [f"{empty}"] +
+           cxxpost.split() + cxxaddedpost
+           )
     if args.verbose: print(" ".join([str(x) for x in cmd]))
     start = time.perf_counter()
     p = subprocess.run(cmd, env=env, check=not args.keep_going)
