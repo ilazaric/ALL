@@ -81,6 +81,7 @@ struct ivl::fmt_raw::formatter<boost::json::value> {
     if (!res) ivl::panic("failed to parse number");
     if (res.ptr == ctx.end() || *res.ptr == '}') return res.ptr;
     ivl::panic("failed to parse boost::json::value spec");
+    std::unreachable(); // EDG doesnt undestand panic() throws
   }
 
   auto format(const boost::json::value& v, auto& ctx) const {
