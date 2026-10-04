@@ -397,6 +397,8 @@ if args.report_durations:
     print()
     accumulated = dict()
     children = dict()
+    accumulated[src] = 0.0
+    children[src] = []
     for t in targets:
         p = all_targets[t].path
         while True:
