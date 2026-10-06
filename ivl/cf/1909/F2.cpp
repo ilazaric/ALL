@@ -21,7 +21,8 @@ constexpr std::uint32_t Mod = 998'244'353;
 using Mint                  = ivl::nt::MultiMint<Mod>;
 
 // TODO: this takes 35s to compile
-auto factorials_storage = [] {
+// UPDT: param trick to kill useless folding
+auto factorials_storage = [] (int x = 1) {
   std::array<Mint, 200'005> out{};
   out[0] = 1;
   for (auto i : std::views::iota(1_u32, out.size()))
