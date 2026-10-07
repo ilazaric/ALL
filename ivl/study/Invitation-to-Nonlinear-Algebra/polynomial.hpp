@@ -106,18 +106,62 @@ struct Poly {
     return a;
   }
 
-  // TODO: operator/
+  K& back() { return coefs.back(); }
+  const K& back() const { return coefs.back(); }
+
+  Poly& operator/=(const Poly& o)
+    requires div_ring<K>
+  {
+    contract_assert(!o.empty());
+    if (o.size() > size()) {
+      coefs.clear();
+      return *this;
+    }
+    for (size_t i = size() - 1; i - o.size() + 2; --i) {
+      auto c = coefs[i] / o.back();
+      for (size_t j = 0; j < o.size(); ++j) coefs[i - j] -= o[o.size() - j - 1] * c;
+      coefs[i] = std::move(c);
+    }
+    coefs.erase(coefs.begin(), coefs.begin() + o.size() - 1);
+    shrink();
+    return *this;
+  }
+
+  Poly& operator/=(const K& o)
+    requires div_ring<K>
+  {
+    contract_assert(o != K{});
+    for (auto& el : coefs) el /= o;
+    shrink();
+    return *this;
+  }
+
+  friend Poly operator/(Poly a, const Poly& b)
+    requires div_ring<K>
+  {
+    a /= b;
+    return a;
+  }
+
+  friend Poly operator/(Poly a, const K& b)
+    requires div_ring<K>
+  {
+    a /= b;
+    return a;
+  }
 };
 
-// template<field K>
-// Poly<K> gcd(Poly<K> a, Poly<K> b) {
-//   if (a.empty()) return b;
-//   if (b.empty()) return a;
-//   while (!b.empty()) {
-
-//   }
-//   return a;
-// }
+template<field K>
+Poly<K> gcd(Poly<K> a, Poly<K> b) {
+again:
+  if (b.size() > a.size()) std::swap(a, b);
+  if (b.empty()) return a;
+  K c = a.back() / b.back();
+  for (size_t i = 0; i < b.size(); ++i) a[a.size() - b.size() + i] -= b[i] * c;
+  contract_assert(a.back() == K{});
+  a.shrink();
+  goto again;
+}
 
 template<typename K>
 struct ivl::fmt_raw::formatter<Poly<K>> {
