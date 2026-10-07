@@ -1,7 +1,7 @@
 #include "concepts"
 #include "polynomial"
 #include "rings"
-#include "synth_field"
+#include "ratio"
 
 static_assert(gcd_ring<Z>);
 static_assert(field<Q>);
