@@ -10,7 +10,13 @@ template<ring K>
 struct Poly {
   std::vector<K> coefs;
 
-  static Poly identity() { return Poly{{identity<K>()}}; }
+  bool operator==(const Poly&) const = default;
+
+  static Poly identity() {
+    Poly p;
+    p.coefs.emplace_back(::identity<K>());
+    return p;
+  }
 
   K& operator[](size_t i) { return coefs[i]; }
   const K& operator[](size_t i) const { return coefs[i]; }

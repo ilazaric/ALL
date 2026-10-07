@@ -8,6 +8,8 @@ template<gcd_ring K>
 struct Ratio {
   using is_field = void;
 
+  bool operator==(const Ratio&) const = default;
+
   K up;
   K down;
 
@@ -17,11 +19,11 @@ struct Ratio {
     down /= g;
   }
 
-  Ratio() : up(), down(identity<K>()) {}
-  Ratio(const K& x) : up(x), down(identity<K>()) {}
+  Ratio() : up(), down(::identity<K>()) {}
+  Ratio(const K& x) : up(x), down(::identity<K>()) {}
   Ratio(const K& x, const K& y) : up(x), down(y) { reduce(); }
 
-  static Ratio identity() { return Ratio(identity<K>()); }
+  static Ratio identity() { return Ratio(::identity<K>()); }
 
   Ratio& operator*=(const Ratio& o) {
     up *= o.up;
