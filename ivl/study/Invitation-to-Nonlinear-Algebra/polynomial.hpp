@@ -155,7 +155,10 @@ template<field K>
 Poly<K> gcd(Poly<K> a, Poly<K> b) {
 again:
   if (b.size() > a.size()) std::swap(a, b);
-  if (b.empty()) return a;
+  if (b.empty()) {
+    a.normalize();
+    return a;
+  }
   K c = a.back() / b.back();
   for (size_t i = 0; i < b.size(); ++i) a[a.size() - b.size() + i] -= b[i] * c;
   contract_assert(a.back() == K{});

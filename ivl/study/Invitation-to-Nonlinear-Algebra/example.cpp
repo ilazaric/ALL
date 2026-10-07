@@ -28,5 +28,10 @@ int ivl_main() {
     Poly<Ratio<Z>> p{{{-3, 2}, {2, 1}}};
     ivl::fmt::println("{}", p * p * p);
   }
+  {
+    Poly<Q> a{{1, 3, 2}};
+    Poly<Q> b{{1, 2, 1}};
+    ivl::fmt::println("{}", gcd(a, b));
+  }
   return 0;
 }
