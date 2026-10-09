@@ -1,15 +1,16 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 #include <cassert>
 #include <cstring>
-#include <fcntl.h>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <ranges>
 #include <string_view>
-#include <unistd.h>
 #include <vector>
+#include <set>
 
 // This program has to be buildable without any ivl headers accessible,
 // because this program is the one that sets up the directory hierarchy of headers.
@@ -39,6 +40,14 @@ inline bool is_cpp_file(const std::filesystem::path& p) {
 }
 
 std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir) {
+  std::vector<std::filesystem::path> ret;
+  for (auto&& p : find_files(dir)) {
+    if (is_cpp_file(p) || p.extension() == ".sh" || p.extension() == ".py") ret.push_back(p);
+  }
+  return ret;
+}
+
+std::vector<std::filesystem::path> find_cpp_sources(const std::filesystem::path& dir) {
   std::vector<std::filesystem::path> ret;
   for (auto&& p : find_files(dir)) {
     if (is_cpp_file(p)) ret.push_back(p);
@@ -97,19 +106,23 @@ void sync_file(
   last_write_time(target, lwt_end);
 }
 
-void purge_outdated(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
+void purge_outdated(
+  const std::filesystem::path& indir, const std::filesystem::path& outdir,
+  const std::set<std::filesystem::path>& infiles
+) {
   if (!exists(outdir)) return;
   for (auto&& existing : find_files(outdir)) {
     auto original = indir / existing.lexically_relative(outdir);
-    if (!exists(original) || last_write_time(original) != last_write_time(existing)) remove(existing);
+    if (!infiles.count(original) || last_write_time(original) != last_write_time(existing)) remove(existing);
   }
 }
 
 void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
   assert(exists(indir));
-  purge_outdated(indir, outdir);
+  auto infiles = find_files(indir);
+  purge_outdated(indir, outdir, std::set(std::from_range, infiles));
   create_directories(outdir);
-  for (auto&& file : find_files(indir)) {
+  for (auto&& file : infiles) {
     auto target = outdir / file.lexically_relative(indir);
     if (is_cpp_file(file)) sync_file(file, target, "#line 1 \"" + file.native() + "\"\n");
     else sync_file(file, target);
@@ -118,11 +131,13 @@ void sync_dir(const std::filesystem::path& indir, const std::filesystem::path& o
 
 void sync_sources(const std::filesystem::path& indir, const std::filesystem::path& outdir) {
   assert(exists(indir));
-  purge_outdated(indir, outdir);
+  auto infiles = find_sources(indir);
+  purge_outdated(indir, outdir, std::set(std::from_range, infiles));
   create_directories(outdir);
-  for (auto&& file : find_sources(indir)) {
+  for (auto&& file : infiles) {
     auto target = outdir / file.lexically_relative(indir);
-    sync_file(file, target, "#line 1 \"" + file.native() + "\"\n");
+    if (is_cpp_file(file)) sync_file(file, target, "#line 1 \"" + file.native() + "\"\n");
+    else sync_file(file, target);
   }
 }
 
@@ -180,7 +195,7 @@ int main() {
     rsp_file << "-isystem " << inc << std::endl;
   }
 
-  auto files = find_sources(copy_dir / "ivl");
+  auto files = find_cpp_sources(copy_dir / "ivl");
 
   {
     auto dir = include_meta_dir / "regular";
