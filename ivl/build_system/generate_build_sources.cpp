@@ -8,9 +8,9 @@
 #include <fstream>
 #include <iostream>
 #include <ranges>
+#include <set>
 #include <string_view>
 #include <vector>
-#include <set>
 
 // This program has to be buildable without any ivl headers accessible,
 // because this program is the one that sets up the directory hierarchy of headers.
@@ -42,7 +42,8 @@ inline bool is_cpp_file(const std::filesystem::path& p) {
 std::vector<std::filesystem::path> find_sources(const std::filesystem::path& dir) {
   std::vector<std::filesystem::path> ret;
   for (auto&& p : find_files(dir)) {
-    if (is_cpp_file(p) || p.extension() == ".sh" || p.extension() == ".py") ret.push_back(p);
+    if (is_cpp_file(p) || p.extension() == ".sh" || p.extension() == ".py" || p.filename() == ".ivlbuild")
+      ret.push_back(p);
   }
   return ret;
 }
