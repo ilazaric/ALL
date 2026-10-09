@@ -201,9 +201,19 @@ def deduce_file_targets(path):
         all_targets[name] = TargetState(path, added_compiler_flags, libs_link + added_compiler_flags_tail + ([cmdline_include, "ivl/reflection/ivl_main_handler"] if ivl_main_handler else []), unordered_dependencies)
     all_targets[name.parent / f"{name.name}@syntax_only"] = TargetState(path, [fsyntax_only] + added_compiler_flags, added_compiler_flags_tail, unordered_dependencies)
 
+ignored_files = set()
 for dirpath, _, filenames in src.walk():
+    ivlbuild = dirpath / ".ivlbuild"
+    if ivlbuild.exists():
+        with ivlbuild.open() as f:
+            for l in f:
+                l = l.strip()
+                if l == "": continue
+                assert l.startswith("ignore "), l
+                ignored_files.add(dirpath / l[7:])
     for filename in filenames:
         filepath = dirpath / filename
+        if filepath in ignored_files: continue
         if filepath.suffix == ".cpp" or filepath.suffix == ".hpp":
             deduce_file_targets(filepath)
 

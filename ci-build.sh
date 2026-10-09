@@ -6,7 +6,6 @@ set -x
 
 bad=(
     /cf
-    /exception
     /experiments
     /spoj
 )
