@@ -8,6 +8,6 @@
 namespace ivl {
 struct test_t {};
 inline constexpr test_t test;
-// struct test_fail_t {};
-// inline constexpr test_fail_t test_fail;
+struct test_fail_t {};
+inline constexpr test_fail_t test_fail;
 } // namespace ivl
