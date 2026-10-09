@@ -8,7 +8,6 @@ bad=(
     /cf
     /exception
     /experiments
-    /gitfs
     /spoj
 )
 
