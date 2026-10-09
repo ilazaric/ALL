@@ -3,6 +3,7 @@
 #include <ivl/format>
 #include <ivl/linux/raw_syscalls>
 #include <ivl/reflection/test_attribute>
+#include <ivl/reflection/test_matrix>
 #include <ivl/reflection/utility>
 #include <cassert>
 #include <cstring>

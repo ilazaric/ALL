@@ -39,6 +39,10 @@ namespace ivl {
 namespace fmt = ::fmt;
 namespace fmt_raw = ::fmt;
 } // namespace ivl
+namespace fmt {
+inline void println(FILE* f) { ::fmt::println(f, ""); }
+inline void println() { ::fmt::println(""); }
+} // namespace fmt
 #endif // IVL_FMT_VIA_FMT
 
 #ifdef IVL_FMT_VIA_FMT_MANUAL
