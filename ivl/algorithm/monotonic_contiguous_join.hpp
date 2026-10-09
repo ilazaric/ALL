@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <compare>
 #include <span>
+#include <utility>
 #include <vector>
 
 namespace ivl::algorithm {

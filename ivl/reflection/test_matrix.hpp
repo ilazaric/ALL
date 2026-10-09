@@ -1,6 +1,7 @@
 #pragma once
 
 #include <meta>
+#include <ranges>
 
 namespace ivl {
 template<typename T>

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <ivl/format>
+#include "concepts"
 #include <gmpxx.h>
 #include <stdexcept>
 
