@@ -114,7 +114,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
-      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess
+      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -141,7 +141,7 @@ jobs:
     - name: validate gcc
       run: echo | g++ -xc++ -E --verbose -
     - name: build
-      run: ./build.py --report-durations --keep-going --verbose --jobs $(nproc) /build_system /linux /process /algos /meta /utility /stl /reflection /parsing /frankl /context /isolated_execution /command_line_argument_parsing
+      run: ./ci-build.sh
     - name: test
       run: ./run_built_tests.py
 
@@ -153,7 +153,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: install apt packages
-      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess
+      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
