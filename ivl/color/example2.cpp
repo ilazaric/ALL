@@ -1,8 +1,8 @@
 #include "24bit"
-
+#include <curses.h>
 #include <iostream>
 
-#include <curses.h>
+// IVL add_compiler_flags_tail("-lcurses")
 
 int main() {
   setlocale(LC_ALL, "");
@@ -13,7 +13,7 @@ int main() {
   while (true) {
   }
 
-  uint32_t width  = 50;
+  uint32_t width = 50;
   uint32_t height = 150;
 
   for (uint32_t i = 0; i < width; ++i) {
