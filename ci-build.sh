@@ -5,7 +5,6 @@ set -euo pipefail
 set -x
 
 bad=(
-    /cf
     /experiments
     /spoj
 )
