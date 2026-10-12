@@ -35,6 +35,16 @@ struct bundle {
 
   [[= ivl::test]] void test_5() { assert(test({95, 12, 85}, 1)); }
 
+  [[= ivl::test]] void test_6() { assert(test({61, 11}, 1)); }
+
+  [[= ivl::test]] void test_7() { assert(test({33, 73, 12}, 2)); }
+
+  [[= ivl::test]] void test_8() { assert(test({57, 23, 47, 51}, 1)); }
+
+  [[= ivl::test]] void test_9() { assert(test({65, 75, 15, 55, 59}, 2)); }
+
+  [[= ivl::test]] void test_10() { assert(test({9, 15, 38, 80, 0, 7, 27}, 4)); }
+
   [[= ivl::test]] void test_wide() {
     srand(1337);
     size_t last_fail_size = -1;
@@ -59,7 +69,10 @@ struct bundle {
 };
 
 constexpr ivl::test_matrix impls{
-  ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2
+  ^^ivl::algorithm::monotonic_contiguous_join_v1,
+  ^^ivl::algorithm::monotonic_contiguous_join_v2,
+  // ^^ivl::algorithm::monotonic_contiguous_join_v3,
+  ^^ivl::algorithm::monotonic_contiguous_join_v4,
 };
 
 constexpr ivl::test_broadcast bundles(^^bundle, impls);
