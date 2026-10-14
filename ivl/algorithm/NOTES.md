@@ -95,3 +95,5 @@ sliding(p,m,k) . cycle[p+k+x,p+m+k>
 ```
 
 need to figure out how to reduce `k`
+
+always can flatten state in `O(m+k)`
