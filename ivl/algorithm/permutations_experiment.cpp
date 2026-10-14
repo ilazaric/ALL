@@ -7,6 +7,8 @@
 
 using perm = std::vector<size_t>;
 
+perm id(size_t n) { return perm(std::from_range, std::views::iota(0UZ, n)); }
+
 perm cycle(size_t n) {
   perm p(n);
   for (size_t i = 0; i < n; ++i) p[i] = i + 1;
@@ -26,7 +28,38 @@ perm inv(const perm& p) {
   return q;
 }
 
-perm id(size_t n) { return perm(std::from_range, std::views::iota(0UZ, n)); }
+void compose_into(perm& p, const perm& q) {
+  for (size_t i = 0; i < p.size(); ++i) p[i] = q[p[i]];
+}
+
+perm compose(perm p, const perm& q) {
+  compose_into(p, q);
+  return p;
+}
+
+perm compose(perm p, const auto&... qs) {
+  (compose_into(p, qs), ...);
+  return p;
+}
+
+perm power(perm p, size_t k) {
+  perm ret = id(p.size());
+  while (k) {
+    if (k & 1) compose_into(ret, p);
+    p = compose(p, p);
+    k >>= 1;
+  }
+  return ret;
+}
+
+perm cycle(size_t n, size_t a, size_t b) {
+  // if (a == b) return id(n);
+  contract_assert(a < b);
+  perm p = id(n);
+  for (size_t i = a; i < b; ++i) p[i] = i + 1;
+  p[b - 1] = a;
+  return p;
+}
 
 using cycles = std::vector<std::vector<size_t>>;
 cycles cycle_decomp(const perm& p) {
@@ -196,6 +229,7 @@ auto chosen_algo() -> swap_seq (*)(size_t, size_t, size_t) {
 // cycle=[0, 3, 1, 4, 6, 2, 7, 5]
 // cycle=[0, 2, 1, 3, 5, 4, 7, 6]
 // cycle=[0, 1, 2, 3, 4, 5, 6, 7]
+// therefore f(i,p) does not exist
 
 std::vector<std::vector<char>> search_taken;
 std::vector<std::vector<char>> search_taken2;
@@ -242,6 +276,14 @@ bool search_for_tilings_rec1(size_t pc) {
   return false;
 }
 
+perm sliding_cycle_comp1(size_t n, size_t m, size_t k) {
+  perm p = id(n);
+  for (size_t i = 0; i < k; ++i) compose_into(p, cycle(n, i, i + m));
+  return p;
+}
+
+perm sliding_cycle_comp2(size_t n, size_t m, size_t k) { return power(cycle(n, 0, m + k - 1), k); }
+
 void search_for_tilings(size_t n) {
   search_taken = std::vector(n, std::vector(n, '\0'));
   search_taken2 = std::vector(n, std::vector(n, '\0'));
@@ -277,6 +319,23 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
   }
   if (implicit_flag("search_tilings")) {
     search_for_tilings(implicit_value("n", 4UZ));
+  }
+  if (implicit_flag("sliding_cycles")) {
+    auto n = implicit_value("n", 20UZ);
+    auto m = implicit_value("m", 5UZ);
+    auto p = id(n);
+    auto c = cycle(m);
+    auto full = cycle(n);
+    auto fulli = inv(full);
+    while (c.size() != n) c.push_back(c.size());
+    for (size_t i = m; i <= n; ++i) {
+      compose_into(p, c);
+      // ivl::fmt::println("cycle={} ... p={} ... p={}", cycle_decomp(c)[0], p, cycle_decomp(p));
+      ivl::fmt::println("{}", cycle_decomp(p));
+      ivl::fmt::println("{}", cycle_decomp(sliding_cycle_comp1(n, m, i - m + 1)));
+      ivl::fmt::println("{}", cycle_decomp(sliding_cycle_comp2(n, m, i - m + 1)));
+      c = compose(fulli, c, full);
+    }
   }
   return 0;
 }
