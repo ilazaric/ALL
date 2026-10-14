@@ -347,5 +347,15 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
         cycle_decomp(compose(power(cycle(n, 0, i + delta), m), inv(power(cycle(n, 0, i), m))))
       );
   }
+  if (implicit_flag("sliding_delta")) {
+    auto n = implicit_value("n", 20UZ);
+    auto m = implicit_value("m", 5UZ);
+    auto delta = implicit_value("delta", 1UZ);
+    for (size_t i = 1; i + delta <= n; ++i)
+      ivl::fmt::println(
+        "i={}\tvs j={}\tdelta={}", i, i + delta,
+        cycle_decomp(compose(power(cycle(n, 0, i + delta), m), inv(power(cycle(n, 0, i), m))))
+      );
+  }
   return 0;
 }
