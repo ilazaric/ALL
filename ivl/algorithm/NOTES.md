@@ -26,5 +26,72 @@ suppose `sliding(m, k)` is product of `m`-length cycles, each starting one spot 
 sliding(m, k + 1) = sliding(m, k) * cycle[k, k + m>
 ```
 then `sliding(m, k) == cycle[0, m+k-1> ^ k`
+therefore `cycle[0, m> . cycle[1, m+k>^k == cycle[0, m+k-1>^k . cycle[k, k+m>`
+
+```
+sliding(m, a+b)
+== cycle[0,m+a+b-1>^(a+b) 
+== cycle[0,m+a+b-1>^a . cycle[0,m+a+b-1>^b
+== sliding(m+b, a) . sliding(m+a, b)
+```
 
 ---
+
+generalize
+`sliding(p, m, k)` is same just starting from `p` instead of `0`
+`sliding(p, m, k) == cycle[p, p+m+k-1>^k`
+
+```
+sliding(p,m,a) . sliding(p+a,m,b) == sliding(p,m,a+b)
+cycle[p, p+m+a-1>^a . cycle[p+a, p+a+m+b-1>^b == cycle[p+a, p+a+m+a+b-1>^(a+b)
+```
+
+```
+R = cycle[0,max>
+sliding(p+q,m,a) == R^-q sliding(p,m,a) R^q
+sliding(p+q,m,a) == sliding(p,m,a)^-1 sliding(p,m,a+q)
+```
+
+```
+sliding(p,m,a*b)
+== cycle[p,p+m+a*b-1>^(a*b)
+== (cycle[p,p+m+a*b-1>^a)^b
+== sliding(p,m+a*b-a,a)^b
+```
+
+```
+sliding(p,m,k)(x)     == x+k   if p <= x < p+m-1 ;; x-m+1 if p+m-1 <= x < p+m+k-1
+sliding(p,m,k)^-1 (x) == x+m-1 if p <= x < p+k   ;; x-k   if p+k   <= x < p+m+k-1
+```
+
+```
+sliding(p,m,k)^-1 == cycle[p, p+m+k-1>^k^-1 == cycle[p, p+m+k-1>^(m-1) == sliding(p,k+1,m-1)
+```
+
+```
+sliding(p,m,k) . cycle[a,b> == ?
+
+a == p+k, b == p+m+k: sliding(p,m,k+1)
+
+a == p+k+x, b == p+m+k, 0<x<m-1:
+sliding(p,m,k) . cycle[p+k+x,p+m+k>
+== sliding(p,m,k) . cycle[p+k+x,p+m+k-1> . (p+k+x p+m+k-1)
+== cycle[p+x,p+m-1> . sliding(p,m,k) . (p+k+x p+m+k-1)
+== cycle[p+x,p+m-1> . (p+x p+m+k-1) . sliding(p,m,k)
+== (p+m-2 p+m+k-1) . cycle[p+x,p+m-1> . sliding(p,m,k) ;; O(m-x)
+
+sliding(p,m,k) . cycle[p+k+x,p+m+k>
+== sliding(p,m,k) . cycle[p+k+x,p+m+k> . cycle[p+k,p+m+k>^-1 . cycle[p+k,p+m+k>
+== sliding(p,m,k) . (p+m+k-1 p+k+x-1 p+k+x-2 ... p+k+1 p+k) . cycle[p+k,p+m+k>
+== (p+m-1 p+x-1 p+x-2 ... p+1 p) . sliding(p,m,k) . cycle[p+k,p+m+k>
+== (p+m-1 p+x-1 p+x-2 ... p+1 p) . sliding(p,m,k+1) ;; O(x)
+
+sliding(p,m,k) . cycle[p+k+x,p+m+k>
+== sliding(p,m,k) . sliding(p+y,m-x,k-y+x)^-1 . sliding(p+y,m-x,k-y+x) . cycle[p+k+x,p+m+k>
+== sliding(p,m,k) . sliding(p+y,m-x,k-y+x)^-1 . sliding(p+y,m-x,k-y+x+1)
+=? sliding(p,m,k) . sliding(p+x,m-x,k)^-1 . sliding(p+x,m-x,k+1)
+   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+     identity on [p+x,p+m-1>, so O(x+k)
+```
+
+need to figure out how to reduce `k`

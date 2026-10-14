@@ -194,6 +194,21 @@ void monotonic_contiguous_join_v4(It a, It b, It c) {
   // (m a-k-1 a-k-2 ... 1 0) . (0 ... m+k)^k+1
   // (m 0) . (a-k-1 ... 0) . (0 ... m+k)^k+1 ;; if a >  k
   //                         (0 ... m+k)^k+1 ;; if a == k
-  
+
+  // (a ... 0)^k (b ... 0) ;; b >= a
+  // (a ... 0)^k+1         ;; b == a
+  // (a ... 0)^k (b ... 0) ;; b >  a ?
+  // (a ... 0)^k (b ... a+1 a ... 0)
+  // (a ... 0)^k (b ... a+1 0) (a ... 0)
+  // (b ... a+1 k%(a+1)) (a ... 0)^k (a ... 0) ;; a >= k so mod useless
+  // (b ... a+1 k) (a ... 0)^k+1 ;; left is reasonably small, but right ought to shift to (b ... 0)^k+1 somehow
+
+  // (0 ... a+b) (0 ... a)^-1
+  // (a a+1 ... a+b)
+
+  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k)
+  // (a ... a+b+k)^k+1 ;; offset == 0
+  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k) ;; offset > 0
+  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k)
 }
 } // namespace ivl::algorithm
