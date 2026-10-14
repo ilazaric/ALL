@@ -1,71 +1,18 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
+#include <ivl/permutation>
 #include <algorithm>
 #include <ranges>
 #include <set>
 #include <vector>
 
-using perm = std::vector<size_t>;
-
-perm id(size_t n) { return perm(std::from_range, std::views::iota(0UZ, n)); }
-
-perm cycle(size_t n) {
-  perm p(n);
-  for (size_t i = 0; i < n; ++i) p[i] = i + 1;
-  p.back() = 0;
-  return p;
-}
-
-perm rnd(size_t n) {
-  perm p(std::from_range, std::views::iota(0UZ, n));
-  for (size_t i = 0; i < n; ++i) std::swap(p[i], p[i + rand() % (n - i)]);
-  return p;
-}
-
-perm inv(const perm& p) {
-  perm q(p.size());
-  for (size_t i = 0; i < p.size(); ++i) q[p[i]] = i;
-  return q;
-}
-
-void compose_into(perm& p, const perm& q) {
-  for (size_t i = 0; i < p.size(); ++i) p[i] = q[p[i]];
-}
-
-perm compose(perm p, const perm& q) {
-  compose_into(p, q);
-  return p;
-}
-
-perm compose(perm p, const auto&... qs) {
-  (compose_into(p, qs), ...);
-  return p;
-}
-
-perm power(perm p, size_t k) {
-  perm ret = id(p.size());
-  while (k) {
-    if (k & 1) compose_into(ret, p);
-    p = compose(p, p);
-    k >>= 1;
-  }
-  return ret;
-}
-
-perm cycle(size_t n, size_t a, size_t b) {
-  // if (a == b) return id(n);
-  contract_assert(a < b);
-  perm p = id(n);
-  for (size_t i = a; i < b; ++i) p[i] = i + 1;
-  p[b - 1] = a;
-  return p;
-}
+using perm = ivl::permutation;
 
 using cycles = std::vector<std::vector<size_t>>;
 cycles cycle_decomp(const perm& p) {
   cycles ret;
-  std::vector<bool> seen(p.size(), false);
-  for (size_t i = 0; i < p.size(); ++i) {
+  std::vector<bool> seen(p.v.size(), false);
+  for (size_t i = 0; i < p.v.size(); ++i) {
     if (seen[i]) continue;
     if (p[i] == i) continue;
     ret.emplace_back();
@@ -79,9 +26,9 @@ cycles cycle_decomp(const perm& p) {
 }
 
 bool rand_test(size_t n, auto&& algo) {
-  perm p = rnd(n);
-  perm x = id(n);
-  perm q = inv(p);
+  perm p = perm::rnd(n);
+  perm x;
+  perm q = p.inverse();
 
   for (size_t i = 0; i < n; ++i)
     for (auto [a, b] : algo(i, p[i], q[i])) std::swap(x[a], x[b]);
@@ -96,14 +43,14 @@ bool rand_test(size_t n, auto&& algo) {
 }
 
 bool unique_test(size_t n, auto&& algo) {
-  perm p = rnd(n);
-  perm q = inv(p);
-  perm x = id(n);
-  perm y = id(n);
+  perm p = perm::rnd(n);
+  perm q = p.inverse();
+  perm x;
+  perm y;
 
-  for (auto i : rnd(n))
+  for (auto i : perm::rnd(n))
     for (auto [a, b] : algo(i, p[i], q[i])) std::swap(x[a], x[b]);
-  for (auto i : rnd(n))
+  for (auto i : perm::rnd(n))
     for (auto [a, b] : algo(i, p[i], q[i])) std::swap(y[a], y[b]);
 
   if (x == y) return true;
@@ -117,17 +64,18 @@ bool unique_test(size_t n, auto&& algo) {
 }
 
 void cycle_exp(size_t n, auto&& algo) {
-  perm p = cycle(n);
-  perm q = inv(p);
+  perm p = perm::cycle(n);
+  perm q = p.inverse();
   std::set<perm> outcomes;
 
-  perm order = id(n);
+  perm order;
+  order.extend(n);
   do {
-    perm x = id(n);
+    perm x;
     for (auto i : order)
       for (auto [a, b] : algo(i, p[i], q[i])) std::swap(x[a], x[b]);
     outcomes.insert(x);
-  } while (std::ranges::next_permutation(order).found);
+  } while (std::ranges::next_permutation(order.v).found);
 
   ivl::fmt::println("possible outcomes for n={}", n);
   for (auto&& el : outcomes) ivl::fmt::println("    p={}  {}", el, cycle_decomp(el));
@@ -277,12 +225,12 @@ bool search_for_tilings_rec1(size_t pc) {
 }
 
 perm sliding_cycle_comp1(size_t n, size_t m, size_t k) {
-  perm p = id(n);
-  for (size_t i = 0; i < k; ++i) compose_into(p, cycle(n, i, i + m));
+  perm p;
+  for (size_t i = 0; i < k; ++i) p *= perm::cycle(i, i + m);
   return p;
 }
 
-perm sliding_cycle_comp2(size_t n, size_t m, size_t k) { return power(cycle(n, 0, m + k - 1), k); }
+perm sliding_cycle_comp2(size_t n, size_t m, size_t k) { return perm::cycle(m + k - 1).power(k); }
 
 void search_for_tilings(size_t n) {
   search_taken = std::vector(n, std::vector(n, '\0'));
@@ -290,7 +238,7 @@ void search_for_tilings(size_t n) {
   // wlog (0 1 2 ... n-1)
   for (size_t i = 0; i + 1 < n; ++i) search_taken[i][i + 1] = 1;
   search_taken[n - 1][0] = 1;
-  if (search_for_tilings_rec1(1)) ivl::fmt::println("  cycle={}\n", cycle_decomp(cycle(n))[0]);
+  if (search_for_tilings_rec1(1)) ivl::fmt::println("  cycle={}\n", cycle_decomp(perm::cycle(n))[0]);
   else ivl::fmt::println("no tilings for n={}\n", n);
 }
 
@@ -323,13 +271,12 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
   if (implicit_flag("sliding_cycles")) {
     auto n = implicit_value("n", 20UZ);
     auto m = implicit_value("m", 5UZ);
-    auto p = id(n);
-    auto c = cycle(m);
-    auto full = cycle(n);
-    auto fulli = inv(full);
-    while (c.size() != n) c.push_back(c.size());
+    perm p;
+    auto c = perm::cycle(m);
+    auto full = perm::cycle(n);
+    auto fulli = full.inverse();
     for (size_t i = m; i <= n; ++i) {
-      compose_into(p, c);
+      p *= c;
       // ivl::fmt::println("cycle={} ... p={} ... p={}", cycle_decomp(c)[0], p, cycle_decomp(p));
       ivl::fmt::println("{}", cycle_decomp(p));
       ivl::fmt::println("{}", cycle_decomp(sliding_cycle_comp1(n, m, i - m + 1)));
@@ -344,7 +291,7 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
     for (size_t i = 1; i + delta <= n; ++i)
       ivl::fmt::println(
         "i={}\tvs j={}\tdelta={}", i, i + delta,
-        cycle_decomp(compose(power(cycle(n, 0, i + delta), m), inv(power(cycle(n, 0, i), m))))
+        cycle_decomp(perm::cycle(i + delta).power(m) * perm::cycle(i).power(m).inverse())
       );
   }
   if (implicit_flag("sliding_delta")) {
@@ -354,14 +301,15 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
     for (size_t i = 1; i + delta <= n; ++i)
       ivl::fmt::println(
         "i={}\tvs j={}\tdelta={}", i, i + delta,
-        cycle_decomp(compose(power(cycle(n, 0, i + delta), m), inv(power(cycle(n, 0, i), m))))
+        cycle_decomp(perm::cycle(i + delta).power(m) * perm::cycle(i).power(m).inverse())
       );
   }
   if (implicit_flag("interleaved")) {
     auto n = implicit_value("n", 20UZ);
-    auto p = id(2 * n);
+    perm p;
     for (size_t i = 0; i < n; ++i) {
-      compose_into(p, cycle(2 * n, 2 * i + 1, n + i + 1));
+      p *= perm::cycle(2 * i + 1, n + i + 1);
+      // ivl::fmt::println("{}", p);
       ivl::fmt::println("{}", cycle_decomp(p));
     }
   }
