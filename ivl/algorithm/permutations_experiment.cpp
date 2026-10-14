@@ -357,5 +357,13 @@ int ivl_main(ivl::cmdline_parsing::implicit) {
         cycle_decomp(compose(power(cycle(n, 0, i + delta), m), inv(power(cycle(n, 0, i), m))))
       );
   }
+  if (implicit_flag("interleaved")) {
+    auto n = implicit_value("n", 20UZ);
+    auto p = id(2 * n);
+    for (size_t i = 0; i < n; ++i) {
+      compose_into(p, cycle(2 * n, 2 * i + 1, n + i + 1));
+      ivl::fmt::println("{}", cycle_decomp(p));
+    }
+  }
   return 0;
 }

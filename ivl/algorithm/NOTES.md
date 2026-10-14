@@ -97,3 +97,20 @@ sliding(p,m,k) . cycle[p+k+x,p+m+k>
 need to figure out how to reduce `k`
 
 always can flatten state in `O(m+k)`
+
+## random math
+
+```
+2^k * 1 + 2^(k-1) * 2 + 2^(k-2) * 3 + ... + 2^0 * (k + 1) = ?
+= f(k)
+
+f(0) = 1
+f(1) = 4
+f(2) = 11
+
+f(k+1) = 2f(k) + k+2
+f(k+1) = f(k) + [ 2^(k+1) + 2^k + 2^(k-1) + ... + 1 ]
+= f(k) + 2^(k+2) - 1
+
+f(k) = 2^(k+2) - k - 3
+```
