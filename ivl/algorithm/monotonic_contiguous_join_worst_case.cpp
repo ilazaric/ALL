@@ -42,39 +42,35 @@ struct state {
     return end - start;
   }
 
+  bool try_run() {
+    auto dur = run();
+    if (dur > best_duration) {
+      best = curr;
+      best_duration = dur;
+      return true;
+    } else {
+      curr = best;
+      return false;
+    }
+  }
+
   void find_worst_case(size_t n_, size_t rep) {
     n = n_;
     curr.resize(0);
     curr.resize(n, false);
     best = curr;
-    best_duration.value = std::numeric_limits<int64_t>::max();
+    best_duration.value = 0;
     data.resize(n);
     double flip_p = 0.5;
     double shift_p = 0.5;
     for (size_t i = 0; i < rep; ++i) {
-      {
-        mutate_flip(flip_p);
-        auto dur = run();
-        if (dur < best_duration) {
-          best = curr;
-          best_duration = dur;
-        } else {
-          curr = best;
-          flip_p /= 1.005;
-        }
-      }
-      {
-        mutate_shift(shift_p);
-        auto dur = run();
-        if (dur < best_duration) {
-          best = curr;
-          best_duration = dur;
-        } else {
-          curr = best;
-          shift_p /= 1.005;
-        }
-      }
+      mutate_flip(flip_p);
+      if (!try_run()) flip_p /= 1.005;
+      mutate_shift(shift_p);
+      if (!try_run()) shift_p /= 1.005;
     }
+    for (size_t i = 0; i < n; ++i) curr[i] = i % 2 == 0;
+    try_run();
   }
 };
 
@@ -87,10 +83,10 @@ void blah() {
 }
 
 /*
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v1(It, It, It) -> 200674
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v2(It, It, It) -> 299876
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v5(It, It, It) -> 1246432
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v6(It, It, It) -> 533806
+template<class It> void ivl::algorithm::monotonic_contiguous_join_v1(It, It, It) -> 274630
+template<class It> void ivl::algorithm::monotonic_contiguous_join_v2(It, It, It) -> 301090
+template<class It> void ivl::algorithm::monotonic_contiguous_join_v5(It, It, It) -> 1329390
+template<class It> void ivl::algorithm::monotonic_contiguous_join_v6(It, It, It) -> 583666
  */
 
 int ivl_main() {
