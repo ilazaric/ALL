@@ -73,8 +73,6 @@ struct bundle {
 constexpr ivl::test_matrix impls{
   ^^ivl::algorithm::monotonic_contiguous_join_v1,
   ^^ivl::algorithm::monotonic_contiguous_join_v2,
-  // ^^ivl::algorithm::monotonic_contiguous_join_v3,
-  // ^^ivl::algorithm::monotonic_contiguous_join_v4,
   ^^ivl::algorithm::monotonic_contiguous_join_v5,
   ^^ivl::algorithm::monotonic_contiguous_join_v6,
 };

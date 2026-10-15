@@ -147,7 +147,7 @@ void monotonic_contiguous_join_v6(It a, It b, It c) {
   }
 
   std::rotate(b, mp, ep);
-  monotonic_contiguous_join_v6(b, ep, bp);
+  monotonic_contiguous_join_v6(b + rem, ep, bp);
   monotonic_contiguous_join_v6(b, bp, c);
 }
 } // namespace ivl::algorithm
