@@ -8,6 +8,8 @@
 #include <vector>
 
 namespace ivl::algorithm {
+// O(N) time
+// O(N) memory
 template<typename It>
 void monotonic_contiguous_join_v1(It a, It b, It c) {
   while (a != b && b != c) {
@@ -41,6 +43,8 @@ void monotonic_contiguous_join_v1(It a, It b, It c) {
   }
 }
 
+// O(N) time
+// O(N) memory
 template<typename It>
 void monotonic_contiguous_join_v2(It a, It b, It c) {
   if (a == b || b == c) return;
@@ -63,155 +67,8 @@ void monotonic_contiguous_join_v2(It a, It b, It c) {
   }
 }
 
-template<typename It>
-void monotonic_contiguous_join_v4(It a, It b, It c) {
-  if (a == b || b == c) return;
-  if (*(b - 1) <= *b) return;
-  while (*a <= *b) ++a;
-  while (*(c - 1) >= *(b - 1)) --c;
-
-  if (c - b > 3) return monotonic_contiguous_join_v1(a, b, c);
-
-  std::vector<std::pair<size_t, size_t>> rots;
-
-  It low = a;
-  for (It high = b; high != c; ++high) {
-    while (*low <= *high) ++low;
-    auto x = low - a + (high - b);
-    auto y = high - a;
-    rots.emplace_back(x, y);
-  }
-
-  auto rot = [&](size_t lo, size_t hi, size_t n) {
-    contract_assert(lo <= hi);
-    if (lo == hi) return;
-    std::rotate(a + lo, a + hi - n % (hi - lo), a + hi);
-  };
-
-  auto swp = [&](size_t lo, size_t hi) { std::iter_swap(a + lo, a + hi); };
-
-  if (rots.size() == 1) {
-    auto [x, y] = rots[0];
-    rot(x, y + 1, 1);
-  }
-
-  if (rots.size() == 2) {
-    auto [x, y] = rots[0];
-    auto [z, w] = rots[1];
-    rot(x, z, 1);
-    swp(x, y);
-    rot(z, y + 1, 2);
-    swp(z, w);
-  }
-
-  if (rots.size() == 3) {
-    auto [x, y] = rots[0];
-    auto [z, w] = rots[1];
-    auto [t, u] = rots[2];
-    rot(x, z, 1);
-    swp(x, y);
-    if (y < t) {
-      if (z == y) swp(y, w);
-      else swp(y - 1, w);
-      rot(z, y + 1, 2);
-      rot(t, u + 1, 1);
-    } else {
-      if (z == y) swp(y, w);
-      else swp(y - 1, w);
-      rot(z, t, 2);
-      if (y - z == 1) {
-      } else if (t - z == 1) {
-        swp(z, y - 1);
-        swp(y - 1, y);
-      } else if (y - t == 0) {
-        swp(z, y);
-        swp(z, z + 1);
-      } else {
-        swp(z, y - 1);
-        swp(z + 1, y);
-      }
-      rot(t, y + 1, 3);
-      swp(t, u);
-      rot(y + 1, u + 1, 1);
-    }
-  }
-
-  // (a b c ... x y z)
-  // (a b c ... x y) (a z)
-  // (y z) (a b c ... x y)
-
-  // (a b c ... x y z)^N
-  // [ (a b c ... x y) (a z) ]^N
-  // (a b c ... x y)^N f^(N-1) (a z) f^(N-2) (a z) ... f^(0) (a z)
-  // f(p) = c^-1 p c
-  // f^X(a z) = (c^X(a) z)
-
-  // (a b c ... l m n o ... x y z)
-  // (a b c ... l m) (n o ... x y z a)
-  // (a b c ... l m z) (n o ... x y z)
-
-  // (0 1 2 ... N-3 N-2 N-1)
-  // (0 1 2 ... N-3 N-2 N-1)^A
-  // (0 A 2A ... A(N-3) A(N-2) A(N-1))
-
-  // (a z) (b z) (c z) (d z)
-  // (a b c d z)
-
-  // (a b c ... l m n ... x y z) (m n ... x y z w)
-  // (z a b c ... l) (m n ... x y z) (m n ... x y z) (w m)
-  // (z a b c ... l) (m n ... x y z)^2 (w m)
-  // (z a b c ... l) (w y) (m n ... x y z)^2
-
-  // (a b c ... l m n ... x y z)^N (m n ... x y z w)
-  // (a b c ... l m n ... x y z)^N (w z) (m n ... x y z)
-  // (w z)conjN (a b c ... l m n ... x y z)^N (m n ... x y z)
-  // (w z)conjN (a b c ... l m n ... x y z)^N (a b c ... l z)^-1 (a b c ... l z) (m n ... x y z)
-
-  // (a b c ... l m n ... x y z)^N
-  // [ (a z) (b c ... l m n ... x y z) ]^N
-  // (a z) (a z)conj (a z)conj2 ... (a z)conjN-1 (b c ... l m n ... x y z) ]^N
-  // (a z) (a y) (a x) ... (a z_prevN-1) (b c ... l m n ... x y z) ]^N
-  // (a z y x ... z_prevN-1) (b c ... l m n ... x y z) ]^N
-  // (a z y x ... z_prevN-1) (b z y x ... z_prevN-1) (c ... l m n ... x y z) ]^N
-  // (a z_prevN-1) (z y x ... z_prevN-1) (b z_prevN-1)  (z y x ... z_prevN-1) (c ... l m n ... x y z) ]^N
-
-  // (l m n ... p q r)
-  // (a b c ... x y z) (a b c ... l)^-1 (r ... x y z)^-1 (z r) ?
-
-  // (a b c ... l m n ... p q r ... x y z)
-  // (a b c ... l q) (m n ... p q) (m r ... x y z)
-  // (a b c ... l) (a q) (m n ... p q) (m z) (r ... x y z)
-
-  // (m n ... p q)
-  // [ (a b c ... l) (a q) ]^-1 (a b c ... x y z) [ (m z) (r ... x y z) ]^-1
-  // (a q) (l ... a) (a b c ... x y z) (z ... r) (m z)
-
-  // (0 ... m+k-1)^k . (a ... m+k) ;; a >= k
-  // (0 ... m+k-1)^k . (a ... m+k) . (k ... m+k)^-1 . (k ... m+k)
-  // (0 ... m+k-1)^k . (a ... m+k) . (k k+1 ... a-1 a a+1 ... m+k)^-1 . (k ... m+k)
-  // (0 ... m+k-1)^k . (m+k a-1 a-2 ... k+1 k) . (k ... m+k)
-  // (m a-k-1 a-k-2 ... 1 0) . (0 ... m+k-1)^k . (k ... m+k)
-  // (m a-k-1 a-k-2 ... 1 0) . (0 ... m+k)^k+1
-  // (m 0) . (a-k-1 ... 0) . (0 ... m+k)^k+1 ;; if a >  k
-  //                         (0 ... m+k)^k+1 ;; if a == k
-
-  // (a ... 0)^k (b ... 0) ;; b >= a
-  // (a ... 0)^k+1         ;; b == a
-  // (a ... 0)^k (b ... 0) ;; b >  a ?
-  // (a ... 0)^k (b ... a+1 a ... 0)
-  // (a ... 0)^k (b ... a+1 0) (a ... 0)
-  // (b ... a+1 k%(a+1)) (a ... 0)^k (a ... 0) ;; a >= k so mod useless
-  // (b ... a+1 k) (a ... 0)^k+1 ;; left is reasonably small, but right ought to shift to (b ... 0)^k+1 somehow
-
-  // (0 ... a+b) (0 ... a)^-1
-  // (a a+1 ... a+b)
-
-  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k)
-  // (a ... a+b+k)^k+1 ;; offset == 0
-  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k) ;; offset > 0
-  // (a ... a+b+k-1)^k . (a+k+offset ... a+b+k)
-}
-
+// O(N log N) time
+// O(log N) memory
 template<typename It>
 void monotonic_contiguous_join_v5(It a, It b, It c) {
   if (a == b || b == c) return;
@@ -232,5 +89,65 @@ void monotonic_contiguous_join_v5(It a, It b, It c) {
   std::rotate(d, b, e);
   monotonic_contiguous_join_v5(a, d, d + (e - b));
   monotonic_contiguous_join_v5(e - (b - d), e, c);
+}
+
+template<typename It>
+void monotonic_contiguous_join_v6(It a, It b, It c) {
+  if (a == b || b == c) return;
+  if (*(b - 1) <= *b) return;
+  while (*a <= *b) ++a;
+  while (*(c - 1) >= *(b - 1)) --c;
+
+  std::iter_swap(a, b);
+  It ap = a + 1;
+  It bp = b + 1;
+  It mp = b;
+  It ep = b + 1;
+  size_t rem = 1;
+  while (ap != b && bp != c) {
+    if (*bp <= *mp) {
+      std::iter_swap(bp, ap);
+      if (ep == bp && mp == b) ++ep, ++rem;
+      ++bp;
+      ++ap;
+      continue;
+    }
+
+    std::iter_swap(ap, mp);
+    ++ap;
+    ++mp;
+    --rem;
+    if (mp == ep) mp = b;
+    if (rem == 0) {
+      if (ep != bp) {
+        std::rotate(b, mp, ep);
+        monotonic_contiguous_join_v6(b, ep, bp);
+        mp = b;
+        ep = bp;
+      }
+      rem = bp - b;
+    }
+  }
+
+  while (ap != b) {
+    std::iter_swap(ap, mp);
+    ++ap;
+    ++mp;
+    --rem;
+    if (mp == ep) mp = b;
+    if (rem == 0) {
+      if (ep != bp) {
+        std::rotate(b, mp, ep);
+        monotonic_contiguous_join_v6(b, ep, bp);
+        mp = b;
+        ep = bp;
+      }
+      rem = bp - b;
+    }
+  }
+
+  std::rotate(b, mp, ep);
+  monotonic_contiguous_join_v6(b, ep, bp);
+  monotonic_contiguous_join_v6(b, bp, c);
 }
 } // namespace ivl::algorithm
