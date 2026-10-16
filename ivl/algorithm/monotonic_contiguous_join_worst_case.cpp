@@ -74,25 +74,30 @@ struct state {
   }
 };
 
-template<auto impl>
+template<auto... impls>
 void blah() {
-  state<impl> s;
-  s.find_worst_case(10'000, 10'000);
-  constexpr auto foo = display_string_of(impl);
-  ivl::fmt::println("{} -> {}", foo, s.best_duration.value);
+  std::tuple<state<impls>...> st;
+  auto&& [... s] = st;
+  (s.find_worst_case(10'000, 10'000), ...);
+  auto bestt = std::tuple{s.best...};
+  auto&& [... best] = bestt;
+  std::vector<bool> curr;
+  ((curr = best, ((s.curr = curr, s.try_run()), ...)), ...);
+  static constexpr auto foot = std::tuple{identifier_of(impls)...};
+  static constexpr auto [... foo] = foot;
+  (ivl::fmt::println("{} -> {}", foo, s.best_duration.value), ...);
 }
 
 /*
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v1(It, It, It) -> 274630
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v2(It, It, It) -> 301090
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v5(It, It, It) -> 1329390
-template<class It> void ivl::algorithm::monotonic_contiguous_join_v6(It, It, It) -> 583666
+monotonic_contiguous_join_v1 -> 335064
+monotonic_contiguous_join_v2 -> 362684
+monotonic_contiguous_join_v5 -> 1355674
+monotonic_contiguous_join_v6 -> 599012
  */
 
 int ivl_main() {
-  blah<^^ivl::algorithm::monotonic_contiguous_join_v1>();
-  blah<^^ivl::algorithm::monotonic_contiguous_join_v2>();
-  blah<^^ivl::algorithm::monotonic_contiguous_join_v5>();
-  blah<^^ivl::algorithm::monotonic_contiguous_join_v6>();
+  blah<
+    ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2,
+    ^^ivl::algorithm::monotonic_contiguous_join_v5, ^^ivl::algorithm::monotonic_contiguous_join_v6>();
   return 0;
 }
