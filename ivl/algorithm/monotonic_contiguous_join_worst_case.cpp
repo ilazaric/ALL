@@ -2,6 +2,7 @@
 #include <ivl/format>
 #include <ivl/metaheuristics/pseudo_boolean>
 #include <ivl/utility/tsc>
+#include <ivl/utility/tuple_broadcast>
 #include "monotonic_contiguous_join"
 #include <algorithm>
 #include <cassert>
@@ -76,26 +77,11 @@ struct state {
 };
 
 template<auto... impls>
-struct states {
-  size_t n;
-  size_t rep;
-  template<size_t I>
-  auto get() const {
-    return state<impls... [I]> { n, rep };
-  }
-};
-
-template<auto... impls>
-struct std::tuple_size<states<impls...>> : std::integral_constant<std::size_t, sizeof...(impls)> {};
-
-template<std::size_t I, auto... impls>
-struct std::tuple_element<I, states<impls...>> {
-  using type = state<impls...[I]>;
-};
-
-template<auto... impls>
 void blah() {
-  auto [... s] = states<impls...>(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ));
+  auto [... s] = ivl::tuple_broadcast_values<impls...>([]<auto impl> {
+    return state<impl>(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ));
+  });
+  // auto [... s] = states<impls...>(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ));
   auto bestt = std::tuple{s.o.best...};
   auto&& [... best] = bestt;
   std::vector<bool> curr;
