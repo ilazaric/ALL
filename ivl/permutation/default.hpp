@@ -125,6 +125,22 @@ struct permutation {
 
   auto begin() const { return v.begin(); }
   auto end() const { return v.end(); }
+
+  std::vector<std::vector<size_t>> cycle_decomp() const {
+    std::vector<std::vector<size_t>> ret;
+    std::vector<bool> seen(v.size(), false);
+    for (size_t i = 0; i < v.size(); ++i) {
+      if (seen[i]) continue;
+      if (v[i] == i) continue;
+      ret.emplace_back();
+      auto& curr = ret.back();
+      for (size_t j = i; !seen[j]; j = v[j]) {
+        curr.push_back(j);
+        seen[j] = true;
+      }
+    }
+    return ret;
+  }
 };
 } // namespace ivl
 
