@@ -1,3 +1,4 @@
+#include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
 #include <ivl/utility/tsc>
 #include "monotonic_contiguous_join"
@@ -25,6 +26,15 @@ struct state {
     std::bernoulli_distribution dist(p);
     for (size_t i = 0; i + i < curr.size(); ++i)
       if (dist(gen)) swap(curr[i], curr[i + 1]);
+  }
+
+  void mutate_rotate(bool dir) {
+    std::uniform_int_distribution<size_t> dist(0, n);
+    auto lo = dist(gen);
+    auto hi = dist(gen);
+    if (lo == hi) return;
+    if (lo > hi) std::swap(lo, hi);
+    std::rotate(curr.begin() + lo, curr.begin() + (dir ? lo + 1 : hi - 1), curr.begin() + hi);
   }
 
   ivl::tsc_duration run() {
@@ -68,9 +78,32 @@ struct state {
       if (!try_run()) flip_p /= 1.005;
       mutate_shift(shift_p);
       if (!try_run()) shift_p /= 1.005;
+      mutate_rotate(true);
+      try_run();
+      mutate_rotate(false);
+      try_run();
     }
     for (size_t i = 0; i < n; ++i) curr[i] = i % 2 == 0;
     try_run();
+    for (size_t i = 0; i < n; ++i) curr[i] = i % 2 == 1;
+    try_run();
+  }
+
+  void dump() {
+    static constexpr auto foo = identifier_of(impl);
+    if (!implicit_flag("dump_opts")) return;
+    ivl::fmt::println("{} -> {}", foo, best_duration.value);
+    size_t cnt = 0;
+    bool kind = best[0];
+    for (auto&& el : best) {
+      if (kind == el) ++cnt;
+      else {
+        ivl::fmt::print("{}{} ", cnt, kind ? 'A' : 'B');
+        cnt = 1;
+        kind = !kind;
+      }
+    }
+    ivl::fmt::println("{}{}\n", cnt, kind ? 'A' : 'B');
   }
 };
 
@@ -78,14 +111,12 @@ template<auto... impls>
 void blah() {
   std::tuple<state<impls>...> st;
   auto&& [... s] = st;
-  (s.find_worst_case(10'000, 10'000), ...);
+  (s.find_worst_case(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ)), ...);
   auto bestt = std::tuple{s.best...};
   auto&& [... best] = bestt;
   std::vector<bool> curr;
   ((curr = best, ((s.curr = curr, s.try_run()), ...)), ...);
-  static constexpr auto foot = std::tuple{identifier_of(impls)...};
-  static constexpr auto [... foo] = foot;
-  (ivl::fmt::println("{} -> {}", foo, s.best_duration.value), ...);
+  ((s.dump()), ...);
 }
 
 /*
@@ -95,7 +126,7 @@ monotonic_contiguous_join_v5 -> 1355674
 monotonic_contiguous_join_v6 -> 599012
  */
 
-int ivl_main() {
+int ivl_main(ivl::cmdline_parsing::implicit) {
   blah<
     ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2,
     ^^ivl::algorithm::monotonic_contiguous_join_v5, ^^ivl::algorithm::monotonic_contiguous_join_v6>();
