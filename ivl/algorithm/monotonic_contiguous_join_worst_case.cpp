@@ -23,16 +23,16 @@ struct runner {
 
   ivl::tsc_duration run(std::span<const bool> curr) {
     size_t n = curr.size();
-    contract_assert(data.size() == n);
+    // contract_assert(data.size() == n);
     size_t foo = 0;
     size_t bar = 0;
     for (size_t i = 0; i < n; ++i) {
       if (curr[i]) data[foo++] = i;
       else data[n - 1 - (bar++)] = i;
     }
-    std::reverse(data.begin() + foo, data.end());
+    std::reverse(data.begin() + foo, data.begin() + n);
     auto start = ivl::tsc_now();
-    do_run(data.begin(), data.begin() + foo, data.end());
+    do_run(data.begin(), data.begin() + foo, data.begin() + n);
     auto end = ivl::tsc_now();
     return end - start;
   }
@@ -46,6 +46,9 @@ struct state {
   ivl::pseudo_boolean_optimize_t<runner<impl>> o;
 
   state(size_t n, size_t rep) : r(n), o{n, rep, r} {
+    o.big_run2();
+    contract_assert(o.best.size() == n);
+    contract_assert(o.curr.size() == n);
     o.big_run();
     for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 0;
     o.try_run();
@@ -94,7 +97,12 @@ monotonic_contiguous_join_v1 -> 300820
 monotonic_contiguous_join_v2 -> 387768
 monotonic_contiguous_join_v5 -> 1345530
 monotonic_contiguous_join_v6 -> 602110
- */
+
+monotonic_contiguous_join_v1 -> 649004
+monotonic_contiguous_join_v2 -> 290756
+monotonic_contiguous_join_v5 -> 1182552
+monotonic_contiguous_join_v6 -> 696630
+*/
 
 int ivl_main(ivl::cmdline_parsing::implicit) {
   blah<

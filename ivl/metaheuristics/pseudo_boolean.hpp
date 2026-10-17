@@ -95,6 +95,29 @@ struct pseudo_boolean_optimize_t {
     }
   }
 
+  void big_run2() {
+    best.clear();
+    for (size_t i = 0; i < n; ++i) {
+      auto c = best;
+      auto try_at = [&](size_t pos, bool value) {
+        curr = c;
+        curr.insert(curr.begin() + pos, value);
+        try_run();
+      };
+      best.push_back(false);
+      best_eval = run(best);
+      try_at(0, true);
+      try_at(0, false);
+      try_at(i, true);
+      try_at(i, false);
+      std::uniform_int_distribution<size_t> dist(0, i);
+      for (size_t j = 0; j < 10; ++j) {
+        try_at(dist(gen), true);
+        try_at(dist(gen), false);
+      }
+    }
+  }
+
   auto done() { return std::pair{std::move(best), std::move(best_eval)}; }
 
   auto operator()() {
