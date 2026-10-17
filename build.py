@@ -369,6 +369,8 @@ def run_target(target):
            [cxxkind] +
            cxxwarn +
            ["-DIVL_LOCAL", f"-DIVL_FILE=\"{relpath}\""] +
+           ["-D_IVL_MURDER_VECTOR_BOOL_SPECIALIZATION"] +
+           ["-D_STL_BVECTOR_H=1"] +
            (["-static"] if args.static else []) +
            [f"-O{args.optimization}",
             f"-g{args.debug_info}",
