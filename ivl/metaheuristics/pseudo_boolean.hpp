@@ -22,6 +22,24 @@ struct pseudo_boolean_optimize_t {
       if (dist(gen)) el = !el;
   }
 
+  void mutate_flip_2() {
+    std::uniform_int_distribution<size_t> dist(0, n);
+    auto lo = dist(gen);
+    auto hi = dist(gen);
+    if (lo == hi) return;
+    if (lo > hi) std::swap(lo, hi);
+    for (size_t i = lo; i < hi; ++i) curr[i] = !curr[i];
+  }
+
+  void mutate_set(bool v) {
+    std::uniform_int_distribution<size_t> dist(0, n);
+    auto lo = dist(gen);
+    auto hi = dist(gen);
+    if (lo == hi) return;
+    if (lo > hi) std::swap(lo, hi);
+    for (size_t i = lo; i < hi; ++i) curr[i] = v;
+  }
+
   void mutate_shift(double p) {
     std::bernoulli_distribution dist(p);
     for (size_t i = 0; i + i < curr.size(); ++i)
@@ -58,11 +76,21 @@ struct pseudo_boolean_optimize_t {
     for (size_t i = 0; i < rep; ++i) {
       mutate_flip(flip_p);
       if (!try_run()) flip_p /= 1.005;
+      mutate_flip_2();
+      try_run();
+      mutate_set(true);
+      try_run();
+      mutate_set(false);
+      try_run();
       mutate_shift(shift_p);
       if (!try_run()) shift_p /= 1.005;
       mutate_rotate(true);
       try_run();
       mutate_rotate(false);
+      try_run();
+    }
+    for (size_t i = 0; i < n; ++i) {
+      curr[i] = !curr[i];
       try_run();
     }
   }
