@@ -1,5 +1,6 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
+#include <ivl/metaheuristics/pseudo_boolean>
 #include <ivl/utility/tsc>
 #include "monotonic_contiguous_join"
 #include <algorithm>
@@ -8,36 +9,20 @@
 #include <ranges>
 
 template<auto impl>
-struct state {
-  std::mt19937 gen{1337};
-  size_t n;
-  std::vector<bool> curr;
-  std::vector<bool> best;
+struct runner {
   std::vector<size_t> data;
-  ivl::tsc_duration best_duration;
 
-  void mutate_flip(double p) {
-    std::bernoulli_distribution dist(p);
-    for (auto&& el : curr)
-      if (dist(gen)) el = !el;
+  runner(size_t n) : data(n, 0) {}
+
+  [[gnu::noinline]]
+  void do_run(auto... args) {
+    [:impl:](args...);
+    asm volatile("" ::"m"(data));
   }
 
-  void mutate_shift(double p) {
-    std::bernoulli_distribution dist(p);
-    for (size_t i = 0; i + i < curr.size(); ++i)
-      if (dist(gen)) swap(curr[i], curr[i + 1]);
-  }
-
-  void mutate_rotate(bool dir) {
-    std::uniform_int_distribution<size_t> dist(0, n);
-    auto lo = dist(gen);
-    auto hi = dist(gen);
-    if (lo == hi) return;
-    if (lo > hi) std::swap(lo, hi);
-    std::rotate(curr.begin() + lo, curr.begin() + (dir ? lo + 1 : hi - 1), curr.begin() + hi);
-  }
-
-  ivl::tsc_duration run() {
+  ivl::tsc_duration run(std::span<const bool> curr) {
+    size_t n = curr.size();
+    contract_assert(data.size() == n);
     size_t foo = 0;
     size_t bar = 0;
     for (size_t i = 0; i < n; ++i) {
@@ -46,56 +31,34 @@ struct state {
     }
     std::reverse(data.begin() + foo, data.end());
     auto start = ivl::tsc_now();
-    [:impl:](data.begin(), data.begin() + foo, data.end());
-    asm volatile("" ::"m"(data));
+    do_run(data.begin(), data.begin() + foo, data.end());
     auto end = ivl::tsc_now();
     return end - start;
   }
 
-  bool try_run() {
-    auto dur = run();
-    if (dur > best_duration) {
-      best = curr;
-      best_duration = dur;
-      return true;
-    } else {
-      curr = best;
-      return false;
-    }
-  }
+  auto operator()(std::span<const bool> curr) { return run(curr); }
+};
 
-  void find_worst_case(size_t n_, size_t rep) {
-    n = n_;
-    curr.resize(0);
-    curr.resize(n, false);
-    best = curr;
-    best_duration.value = 0;
-    data.resize(n);
-    double flip_p = 0.5;
-    double shift_p = 0.5;
-    for (size_t i = 0; i < rep; ++i) {
-      mutate_flip(flip_p);
-      if (!try_run()) flip_p /= 1.005;
-      mutate_shift(shift_p);
-      if (!try_run()) shift_p /= 1.005;
-      mutate_rotate(true);
-      try_run();
-      mutate_rotate(false);
-      try_run();
-    }
-    for (size_t i = 0; i < n; ++i) curr[i] = i % 2 == 0;
-    try_run();
-    for (size_t i = 0; i < n; ++i) curr[i] = i % 2 == 1;
-    try_run();
+template<auto impl>
+struct state {
+  runner<impl> r;
+  ivl::pseudo_boolean_optimize_t<runner<impl>> o;
+
+  state(size_t n, size_t rep) : r(n), o{n, rep, r} {
+    o.big_run();
+    for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 0;
+    o.try_run();
+    for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 1;
+    o.try_run();
   }
 
   void dump() {
     static constexpr auto foo = identifier_of(impl);
+    ivl::fmt::println("{} -> {}", foo, o.best_eval.value);
     if (!implicit_flag("dump_opts")) return;
-    ivl::fmt::println("{} -> {}", foo, best_duration.value);
     size_t cnt = 0;
-    bool kind = best[0];
-    for (auto&& el : best) {
+    bool kind = o.best[0];
+    for (auto&& el : o.best) {
       if (kind == el) ++cnt;
       else {
         ivl::fmt::print("{}{} ", cnt, kind ? 'A' : 'B');
@@ -109,13 +72,13 @@ struct state {
 
 template<auto... impls>
 void blah() {
-  std::tuple<state<impls>...> st;
+  std::tuple<state<impls>...> st(state<impls>(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ))...);
   auto&& [... s] = st;
-  (s.find_worst_case(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ)), ...);
-  auto bestt = std::tuple{s.best...};
+  // (s.find_worst_case(implicit_value("n", 10'000UZ), implicit_value("rep", 10'000UZ)), ...);
+  auto bestt = std::tuple{s.o.best...};
   auto&& [... best] = bestt;
   std::vector<bool> curr;
-  ((curr = best, ((s.curr = curr, s.try_run()), ...)), ...);
+  ((curr = best, ((s.o.curr = curr, s.o.try_run()), ...)), ...);
   ((s.dump()), ...);
 }
 
