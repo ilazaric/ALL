@@ -50,21 +50,21 @@ struct state {
   ivl::pseudo_boolean_optimize_t o;
 
   state(size_t n, size_t rep) : r(n), o{n, r} {
-    o.big_run2();
+    o.incremental_init_search();
     contract_assert(o.best.size() == n);
     contract_assert(o.curr.size() == n);
-    ivl::fmt::println("big_run(): {}", o.big_run(rep));
-    // for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 0;
-    // o.try_run();
-    // for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 1;
-    // o.try_run();
-    ivl::fmt::println("single_flip_run(): {}", o.single_flip_run());
-    ivl::fmt::println("repeat_flip_run(): {}", o.repeat_flip_run());
+    ivl::fmt::println("complex_search(): {}", o.complex_search(rep));
+    ivl::fmt::println("single_flip_search(): {}", o.single_flip_search());
+    ivl::fmt::println("repeat_flip_search(): {}", o.repeat_flip_search());
   }
 
   void dump() {
     static constexpr auto foo = identifier_of(impl);
     ivl::fmt::println("{} -> {}", foo, o.best_eval);
+    if (implicit_flag("dump_stats")) {
+      ivl::fmt::println("run count: {}", r.count);
+      ivl::fmt::println("run sum: {}", r.sum);
+    }
     if (!implicit_flag("dump_opts")) return;
     size_t cnt = 0;
     bool kind = o.best[0];

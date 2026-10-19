@@ -84,7 +84,7 @@ struct pseudo_boolean_optimize_t {
     }
   }
 
-  size_t single_flip_run() {
+  size_t single_flip_search() {
     size_t count = 0;
     for (size_t i = 0; i < n; ++i) {
       curr[i] = !curr[i];
@@ -93,7 +93,7 @@ struct pseudo_boolean_optimize_t {
     return count;
   }
 
-  size_t repeat_flip_run() {
+  size_t repeat_flip_search() {
     size_t ret = 0;
     std::vector<std::pair<evaluation, size_t>> flips(n);
     for (size_t i = 0; i < n; ++i) {
@@ -110,7 +110,7 @@ struct pseudo_boolean_optimize_t {
     return ret;
   }
 
-  size_t big_run(size_t rep) {
+  size_t complex_search(size_t rep) {
     size_t ret = 0;
     double flip_p = 0.5;
     double shift_p = 0.5;
@@ -132,11 +132,11 @@ struct pseudo_boolean_optimize_t {
       mutate_rotate(false);
       ret += try_run();
     }
-    ret += single_flip_run();
+    ret += single_flip_search();
     return ret;
   }
 
-  void big_run2() {
+  void incremental_init_search() {
     best.clear();
     for (size_t i = 0; i < n; ++i) {
       auto c = best;
@@ -162,7 +162,7 @@ struct pseudo_boolean_optimize_t {
   auto done() { return std::pair{std::move(best), std::move(best_eval)}; }
 
   auto operator()(size_t rep) {
-    big_run(rep);
+    complex_search(rep);
     return done();
   }
 };
