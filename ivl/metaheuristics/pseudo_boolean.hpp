@@ -5,16 +5,18 @@
 #include <vector>
 
 namespace ivl {
-template<typename T>
 struct pseudo_boolean_optimize_t {
+  using solution = std::vector<bool>;
+  using solution_ref = std::span<const bool>;
+  using evaluation = double;
+
   size_t n;
-  size_t rep;
-  T& callable;
+  std::function_ref<double(solution_ref)> callable;
   size_t seed = 1337;
   std::mt19937 gen{seed};
-  std::vector<bool> curr = std::vector<bool>(n, false);
-  std::vector<bool> best = std::vector<bool>(n, false);
-  decltype(callable(std::span<const bool>{})) best_eval{run(best)};
+  solution curr = solution(n, false);
+  solution best = solution(n, false);
+  evaluation best_eval = run(best);
 
   void mutate_flip(double p) {
     std::bernoulli_distribution dist(p);
@@ -55,8 +57,20 @@ struct pseudo_boolean_optimize_t {
     std::rotate(curr.begin() + lo, curr.begin() + (dir ? lo + 1 : hi - 1), curr.begin() + hi);
   }
 
-  auto run(const std::vector<bool>& vec) { return callable(std::span<const bool>(vec.data(), n)); }
-  auto run() { return run(curr); }
+  evaluation run(solution_ref sol) { return callable(sol); }
+  evaluation run(const solution& sol) { return callable(solution_ref(sol.data(), sol.size())); }
+  evaluation run() { return run(curr); }
+
+  bool try_run_no_revert() {
+    auto eval = run();
+    if (eval > best_eval) {
+      best = curr;
+      best_eval = eval;
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   bool try_run() {
     auto eval = run();
@@ -70,29 +84,56 @@ struct pseudo_boolean_optimize_t {
     }
   }
 
-  void big_run() {
+  size_t single_flip_run() {
+    size_t count = 0;
+    for (size_t i = 0; i < n; ++i) {
+      curr[i] = !curr[i];
+      if (try_run()) ++count;
+    }
+    return count;
+  }
+
+  size_t repeat_flip_run() {
+    size_t ret = 0;
+    std::vector<std::pair<evaluation, size_t>> flips(n);
+    for (size_t i = 0; i < n; ++i) {
+      curr[i] = !curr[i];
+      flips[i] = {run(), i};
+      curr[i] = !curr[i];
+    }
+    std::ranges::sort(flips, std::greater<>{});
+    for (size_t i = 0; i < n; ++i) {
+      curr[flips[i].second] = !curr[flips[i].second];
+      if (try_run_no_revert()) ret = i + 1;
+    }
+    curr = best;
+    return ret;
+  }
+
+  size_t big_run(size_t rep) {
+    size_t ret = 0;
     double flip_p = 0.5;
     double shift_p = 0.5;
     for (size_t i = 0; i < rep; ++i) {
       mutate_flip(flip_p);
       if (!try_run()) flip_p /= 1.005;
+      else ++ret;
       mutate_flip_2();
-      try_run();
+      ret += try_run();
       mutate_set(true);
-      try_run();
+      ret += try_run();
       mutate_set(false);
-      try_run();
+      ret += try_run();
       mutate_shift(shift_p);
       if (!try_run()) shift_p /= 1.005;
+      else ++ret;
       mutate_rotate(true);
-      try_run();
+      ret += try_run();
       mutate_rotate(false);
-      try_run();
+      ret += try_run();
     }
-    for (size_t i = 0; i < n; ++i) {
-      curr[i] = !curr[i];
-      try_run();
-    }
+    ret += single_flip_run();
+    return ret;
   }
 
   void big_run2() {
@@ -120,13 +161,13 @@ struct pseudo_boolean_optimize_t {
 
   auto done() { return std::pair{std::move(best), std::move(best_eval)}; }
 
-  auto operator()() {
-    big_run();
+  auto operator()(size_t rep) {
+    big_run(rep);
     return done();
   }
 };
 
 auto pseudo_boolean_optimize(size_t n, size_t rep, auto&& callable) {
-  return pseudo_boolean_optimize_t{n, rep, callable}();
+  return pseudo_boolean_optimize_t{n, callable}(rep);
 }
 } // namespace ivl

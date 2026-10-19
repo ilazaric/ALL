@@ -12,6 +12,8 @@
 template<auto impl>
 struct runner {
   std::vector<size_t> data;
+  size_t count = 0;
+  size_t sum = 0;
 
   runner(size_t n) : data(n, 0) {}
 
@@ -21,9 +23,11 @@ struct runner {
     asm volatile("" ::"m"(data));
   }
 
-  ivl::tsc_duration run(std::span<const bool> curr) {
+  double run(std::span<const bool> curr) {
+    contract_assert(curr.size() <= data.size());
+    ++count;
     size_t n = curr.size();
-    // contract_assert(data.size() == n);
+    sum += n;
     size_t foo = 0;
     size_t bar = 0;
     for (size_t i = 0; i < n; ++i) {
@@ -34,7 +38,7 @@ struct runner {
     auto start = ivl::tsc_now();
     do_run(data.begin(), data.begin() + foo, data.begin() + n);
     auto end = ivl::tsc_now();
-    return end - start;
+    return (double)((end - start).value);
   }
 
   auto operator()(std::span<const bool> curr) { return run(curr); }
@@ -43,27 +47,24 @@ struct runner {
 template<auto impl>
 struct state {
   runner<impl> r;
-  ivl::pseudo_boolean_optimize_t<runner<impl>> o;
+  ivl::pseudo_boolean_optimize_t o;
 
-  state(size_t n, size_t rep) : r(n), o{n, rep, r} {
+  state(size_t n, size_t rep) : r(n), o{n, r} {
     o.big_run2();
     contract_assert(o.best.size() == n);
     contract_assert(o.curr.size() == n);
-    o.big_run();
-    for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 0;
-    o.try_run();
-    for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 1;
-    o.try_run();
+    ivl::fmt::println("big_run(): {}", o.big_run(rep));
+    // for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 0;
+    // o.try_run();
+    // for (size_t i = 0; i < n; ++i) o.curr[i] = i % 2 == 1;
+    // o.try_run();
+    ivl::fmt::println("single_flip_run(): {}", o.single_flip_run());
+    ivl::fmt::println("repeat_flip_run(): {}", o.repeat_flip_run());
   }
-
-  // state(const state&) = delete;
-  // state(state&&) = delete;
-  // state& operator=(const state&) = delete;
-  // state& operator=(state&&) = delete;
 
   void dump() {
     static constexpr auto foo = identifier_of(impl);
-    ivl::fmt::println("{} -> {}", foo, o.best_eval.value);
+    ivl::fmt::println("{} -> {}", foo, o.best_eval);
     if (!implicit_flag("dump_opts")) return;
     size_t cnt = 0;
     bool kind = o.best[0];
@@ -102,6 +103,11 @@ monotonic_contiguous_join_v1 -> 649004
 monotonic_contiguous_join_v2 -> 290756
 monotonic_contiguous_join_v5 -> 1182552
 monotonic_contiguous_join_v6 -> 696630
+
+monotonic_contiguous_join_v1 -> 651002
+monotonic_contiguous_join_v2 -> 299416
+monotonic_contiguous_join_v5 -> 1347812
+monotonic_contiguous_join_v6 -> 615150
 */
 
 int ivl_main(ivl::cmdline_parsing::implicit) {
