@@ -127,8 +127,23 @@ bool invoke_function(test_thing t) noexcept {
 // ....: this re-exec could be not forkish, not vforkish
 // TODO: cmdline args to execute individual tests, mayhaps verbose
 int main(int argc, char* argv[]) {
+  if (argc != 1 && argc != 2) {
+    ivl::fmt::println(stderr, "unrecognized args");
+    return 1;
+  }
+  if (argc == 2 && strcmp(argv[1], "--no_fork") != 0) {
+    ivl::fmt::println(stderr, "unrecognized args");
+    return 1;
+  }
+  bool no_fork = argc == 2;
   bool ret = true;
   constexpr auto foo = define_static_array(all_test_functions());
-  for (auto t : foo) ret &= invoke_function(t);
+  for (auto t : foo) {
+    if (no_fork) {
+      t.call();
+    } else {
+      ret &= invoke_function(t);
+    }
+  }
   return !ret;
 }
