@@ -8,8 +8,8 @@
 namespace ivl::algorithm {
 // O(N) time
 // O(N) memory
-template<typename It>
-void monotonic_join_v2(It a, It b, It c) {
+template<typename It, typename Cmp = std::compare_three_way>
+void monotonic_join_v2(It a, It b, It c, Cmp&& order = {}) {
   if (a == b || b == c) return;
   std::vector<size_t> perm(c - a);
   {
@@ -17,7 +17,7 @@ void monotonic_join_v2(It a, It b, It c) {
     It p = a;
     It q = b;
     while (p != b && q != c) {
-      if (*p <= *q) perm[i++] = p++ - a;
+      if (order(*p, *q) <= 0) perm[i++] = p++ - a;
       else perm[i++] = q++ - a;
     }
     while (p != b) perm[i++] = p++ - a;
