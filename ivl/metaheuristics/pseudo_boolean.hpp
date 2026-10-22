@@ -1,5 +1,8 @@
 #pragma once
 
+#include <ivl/format>
+#include <algorithm>
+#include <functional>
 #include <random>
 #include <span>
 #include <vector>
