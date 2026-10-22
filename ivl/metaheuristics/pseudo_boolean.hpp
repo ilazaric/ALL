@@ -136,6 +136,27 @@ struct pseudo_boolean_optimize_t {
     return ret;
   }
 
+  std::vector<evaluation> sample(size_t cnt) {
+    std::vector<evaluation> ret(cnt);
+    for (auto& el : ret) el = run(best);
+    return ret;
+  }
+
+  void dump_statistics(size_t cnt) {
+    auto samples = sample(cnt);
+    double sum = 0;
+    for (auto el : samples) sum += el;
+    auto avg = sum / cnt;
+    ivl::fmt::println("avg: {}", avg);
+    double var = 0;
+    for (auto el : samples) var += (el - avg) * (el - avg);
+    var /= cnt;
+    auto stddev = std::sqrt(var);
+    ivl::fmt::println("stddev: {}", stddev);
+    auto varcoef = stddev / avg;
+    ivl::fmt::println("varcoef: {:.2f}%", varcoef * 100);
+  }
+
   void incremental_init_search() {
     best.clear();
     for (size_t i = 0; i < n; ++i) {

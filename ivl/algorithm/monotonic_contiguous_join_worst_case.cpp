@@ -64,19 +64,22 @@ struct state {
     if (implicit_flag("dump_stats")) {
       ivl::fmt::println("run count: {}", r.count);
       ivl::fmt::println("run sum: {}", r.sum);
+      o.dump_statistics(100);
     }
-    if (!implicit_flag("dump_opts")) return;
-    size_t cnt = 0;
-    bool kind = o.best[0];
-    for (auto&& el : o.best) {
-      if (kind == el) ++cnt;
-      else {
-        ivl::fmt::print("{}{} ", cnt, kind ? 'A' : 'B');
-        cnt = 1;
-        kind = !kind;
+    if (implicit_flag("dump_opts")) {
+      size_t cnt = 0;
+      bool kind = o.best[0];
+      for (auto&& el : o.best) {
+        if (kind == el) ++cnt;
+        else {
+          ivl::fmt::print("{}{} ", cnt, kind ? 'A' : 'B');
+          cnt = 1;
+          kind = !kind;
+        }
       }
+      ivl::fmt::println("{}{}", cnt, kind ? 'A' : 'B');
     }
-    ivl::fmt::println("{}{}\n", cnt, kind ? 'A' : 'B');
+    ivl::fmt::println();
   }
 };
 
@@ -111,8 +114,10 @@ monotonic_contiguous_join_v6 -> 615150
 */
 
 int ivl_main(ivl::cmdline_parsing::implicit) {
-  blah<
-    ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2,
-    ^^ivl::algorithm::monotonic_contiguous_join_v5, ^^ivl::algorithm::monotonic_contiguous_join_v6>();
+  for (int i = 0; i < implicit_value("full_repeat", 1); ++i) {
+    blah<
+      ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2,
+      ^^ivl::algorithm::monotonic_contiguous_join_v5, ^^ivl::algorithm::monotonic_contiguous_join_v6>();
+  }
   return 0;
 }
