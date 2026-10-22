@@ -11,7 +11,7 @@ namespace ivl::algorithm {
 // O(N) time
 // O(N) memory
 template<typename It>
-void monotonic_contiguous_join_v1(It a, It b, It c) {
+void monotonic_join_v1(It a, It b, It c) {
   while (a != b && b != c) {
     std::vector<std::remove_cvref_t<decltype(*a)>> vec;
     size_t vec_end = 0;
@@ -46,7 +46,7 @@ void monotonic_contiguous_join_v1(It a, It b, It c) {
 // O(N) time
 // O(N) memory
 template<typename It>
-void monotonic_contiguous_join_v2(It a, It b, It c) {
+void monotonic_join_v2(It a, It b, It c) {
   if (a == b || b == c) return;
   std::vector<size_t> perm(c - a);
   {
@@ -70,7 +70,7 @@ void monotonic_contiguous_join_v2(It a, It b, It c) {
 // O(N log N) time
 // O(log N) memory
 template<typename It>
-void monotonic_contiguous_join_v5(It a, It b, It c) {
+void monotonic_join_v5(It a, It b, It c) {
   if (a == b || b == c) return;
   if (*(b - 1) <= *b) return;
   while (*a <= *b) ++a;
@@ -87,12 +87,12 @@ void monotonic_contiguous_join_v5(It a, It b, It c) {
   }
 
   std::rotate(d, b, e);
-  monotonic_contiguous_join_v5(a, d, d + (e - b));
-  monotonic_contiguous_join_v5(e - (b - d), e, c);
+  monotonic_join_v5(a, d, d + (e - b));
+  monotonic_join_v5(e - (b - d), e, c);
 }
 
 template<typename It>
-void monotonic_contiguous_join_v6(It a, It b, It c) {
+void monotonic_join_v6(It a, It b, It c) {
   if (a == b || b == c) return;
   if (*(b - 1) <= *b) return;
   while (*a <= *b) ++a;
@@ -121,7 +121,7 @@ void monotonic_contiguous_join_v6(It a, It b, It c) {
     if (rem == 0) {
       if (ep != bp) {
         std::rotate(b, mp, ep);
-        monotonic_contiguous_join_v6(b, ep, bp);
+        monotonic_join_v6(b, ep, bp);
         mp = b;
         ep = bp;
       }
@@ -138,7 +138,7 @@ void monotonic_contiguous_join_v6(It a, It b, It c) {
     if (rem == 0) {
       if (ep != bp) {
         std::rotate(b, mp, ep);
-        monotonic_contiguous_join_v6(b, ep, bp);
+        monotonic_join_v6(b, ep, bp);
         mp = b;
         ep = bp;
       }
@@ -147,7 +147,7 @@ void monotonic_contiguous_join_v6(It a, It b, It c) {
   }
 
   std::rotate(b, mp, ep);
-  monotonic_contiguous_join_v6(b + rem, ep, bp);
-  monotonic_contiguous_join_v6(b, bp, c);
+  monotonic_join_v6(b + rem, ep, bp);
+  monotonic_join_v6(b, bp, c);
 }
 } // namespace ivl::algorithm

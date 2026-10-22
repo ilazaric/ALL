@@ -3,7 +3,7 @@
 #include <ivl/metaheuristics/pseudo_boolean>
 #include <ivl/utility/tsc>
 #include <ivl/utility/tuple_broadcast>
-#include "monotonic_contiguous_join"
+#include "default"
 #include <algorithm>
 #include <cassert>
 #include <random>
@@ -97,27 +97,27 @@ void blah() {
 }
 
 /*
-monotonic_contiguous_join_v1 -> 300820
-monotonic_contiguous_join_v2 -> 387768
-monotonic_contiguous_join_v5 -> 1345530
-monotonic_contiguous_join_v6 -> 602110
+monotonic_join_v1 -> 300820
+monotonic_join_v2 -> 387768
+monotonic_join_v5 -> 1345530
+monotonic_join_v6 -> 602110
 
-monotonic_contiguous_join_v1 -> 649004
-monotonic_contiguous_join_v2 -> 290756
-monotonic_contiguous_join_v5 -> 1182552
-monotonic_contiguous_join_v6 -> 696630
+monotonic_join_v1 -> 649004
+monotonic_join_v2 -> 290756
+monotonic_join_v5 -> 1182552
+monotonic_join_v6 -> 696630
 
-monotonic_contiguous_join_v1 -> 651002
-monotonic_contiguous_join_v2 -> 299416
-monotonic_contiguous_join_v5 -> 1347812
-monotonic_contiguous_join_v6 -> 615150
+monotonic_join_v1 -> 651002
+monotonic_join_v2 -> 299416
+monotonic_join_v5 -> 1347812
+monotonic_join_v6 -> 615150
 */
 
 int ivl_main(ivl::cmdline_parsing::implicit) {
   for (int i = 0; i < implicit_value("full_repeat", 1); ++i) {
     blah<
-      ^^ivl::algorithm::monotonic_contiguous_join_v1, ^^ivl::algorithm::monotonic_contiguous_join_v2,
-      ^^ivl::algorithm::monotonic_contiguous_join_v5, ^^ivl::algorithm::monotonic_contiguous_join_v6>();
+      ^^ivl::algorithm::monotonic_join_v1, ^^ivl::algorithm::monotonic_join_v2,
+      ^^ivl::algorithm::monotonic_join_v5, ^^ivl::algorithm::monotonic_join_v6>();
   }
   return 0;
 }

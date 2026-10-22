@@ -4,7 +4,7 @@
 #include <ivl/stl/string>
 #include <ivl/utility/tsc>
 #include <ivl/utility/tuple_broadcast>
-#include "monotonic_contiguous_join"
+#include "default"
 #include <algorithm>
 #include <cassert>
 #include <random>
@@ -79,7 +79,7 @@ struct output_t {
 
 [[gnu::noinline]]
 void raw_run(std::vector<size_t>& data, size_t m) {
-  ivl::algorithm::monotonic_contiguous_join_v6(data.begin(), data.begin() + m, data.end());
+  ivl::algorithm::monotonic_join_v6(data.begin(), data.begin() + m, data.end());
   asm volatile("" ::"m"(data));
 }
 

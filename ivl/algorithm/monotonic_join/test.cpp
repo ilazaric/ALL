@@ -1,7 +1,7 @@
 #include <ivl/format>
 #include <ivl/reflection/test_attribute>
 #include <ivl/reflection/test_matrix>
-#include "monotonic_contiguous_join"
+#include "default"
 #include <algorithm>
 #include <cassert>
 #include <ranges>
@@ -71,10 +71,10 @@ struct bundle {
 };
 
 constexpr ivl::test_matrix impls{
-  ^^ivl::algorithm::monotonic_contiguous_join_v1,
-  ^^ivl::algorithm::monotonic_contiguous_join_v2,
-  ^^ivl::algorithm::monotonic_contiguous_join_v5,
-  ^^ivl::algorithm::monotonic_contiguous_join_v6,
+  ^^ivl::algorithm::monotonic_join_v1,
+  ^^ivl::algorithm::monotonic_join_v2,
+  ^^ivl::algorithm::monotonic_join_v5,
+  ^^ivl::algorithm::monotonic_join_v6,
 };
 
 constexpr ivl::test_broadcast bundles(^^bundle, impls);
