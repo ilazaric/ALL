@@ -1,7 +1,7 @@
 #include <ivl/format>
 #include <ivl/reflection/test_attribute>
 #include <ivl/reflection/test_matrix>
-#include "default"
+#include "all"
 #include <algorithm>
 #include <cassert>
 #include <ranges>

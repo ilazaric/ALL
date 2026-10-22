@@ -4,46 +4,11 @@
 #include <ivl/stl/string>
 #include <ivl/utility/tsc>
 #include <ivl/utility/tuple_broadcast>
-#include "default"
+#include "v6"
 #include <algorithm>
 #include <cassert>
 #include <random>
 #include <ranges>
-
-template<auto impl>
-struct runner {
-  std::vector<size_t> data;
-  size_t count = 0;
-  size_t sum = 0;
-
-  runner(size_t n) : data(n, 0) {}
-
-  [[gnu::noinline]]
-  void do_run(auto... args) {
-    [:impl:](args...);
-    asm volatile("" ::"m"(data));
-  }
-
-  double run(std::span<const bool> curr) {
-    contract_assert(curr.size() <= data.size());
-    ++count;
-    size_t n = curr.size();
-    sum += n;
-    size_t foo = 0;
-    size_t bar = 0;
-    for (size_t i = 0; i < n; ++i) {
-      if (curr[i]) data[foo++] = i;
-      else data[n - 1 - (bar++)] = i;
-    }
-    std::reverse(data.begin() + foo, data.begin() + n);
-    auto start = ivl::tsc_now();
-    do_run(data.begin(), data.begin() + foo, data.begin() + n);
-    auto end = ivl::tsc_now();
-    return (double)((end - start).value);
-  }
-
-  auto operator()(std::span<const bool> curr) { return run(curr); }
-};
 
 struct input_t {
   std::vector<size_t> data;

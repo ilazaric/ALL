@@ -3,7 +3,7 @@
 #include <ivl/metaheuristics/pseudo_boolean>
 #include <ivl/utility/tsc>
 #include <ivl/utility/tuple_broadcast>
-#include "default"
+#include "all"
 #include <algorithm>
 #include <cassert>
 #include <random>
@@ -116,8 +116,8 @@ monotonic_join_v6 -> 615150
 int ivl_main(ivl::cmdline_parsing::implicit) {
   for (int i = 0; i < implicit_value("full_repeat", 1); ++i) {
     blah<
-      ^^ivl::algorithm::monotonic_join_v1, ^^ivl::algorithm::monotonic_join_v2,
-      ^^ivl::algorithm::monotonic_join_v5, ^^ivl::algorithm::monotonic_join_v6>();
+      ^^ivl::algorithm::monotonic_join_v1, ^^ivl::algorithm::monotonic_join_v2, ^^ivl::algorithm::monotonic_join_v5,
+      ^^ivl::algorithm::monotonic_join_v6>();
   }
   return 0;
 }
