@@ -150,4 +150,9 @@ void monotonic_join_v6(It a, It b, It c) {
   monotonic_join_v6(b + rem, ep, bp);
   monotonic_join_v6(b, bp, c);
 }
+
+template<typename It>
+void monotonic_join(It a, It b, It c) {
+  return monotonic_join_2(a, b, c);
+}
 } // namespace ivl::algorithm
