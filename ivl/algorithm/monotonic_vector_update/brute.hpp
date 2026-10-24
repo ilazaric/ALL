@@ -1,11 +1,12 @@
 #pragma once
 
+#include "collision_resolution"
 #include <algorithm>
 #include <vector>
 
 namespace ivl::algorithm {
 template<typename T>
-void monotonic_vector_update_brute(std::vector<T>& a, const std::vector<T>& b, auto&& order, auto&& transform_or_skip) {
+void monotonic_vector_update_brute(std::vector<T>& a, const std::vector<T>& b, auto&& order, auto&& combine_or_erase) {
   auto ap = a.begin();
   auto bp = b.begin();
   std::vector<T> ret;
@@ -21,7 +22,7 @@ void monotonic_vector_update_brute(std::vector<T>& a, const std::vector<T>& b, a
       ++bp;
       continue;
     }
-    if (!transform_or_skip(*ap, *bp)) ret.push_back(*ap);
+    if (combine_or_erase(*ap, *bp) == monotonic_vector_update_collision_resolution::preserve) ret.push_back(*ap);
     ++ap;
     ++bp;
   }

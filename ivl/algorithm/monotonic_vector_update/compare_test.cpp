@@ -11,8 +11,9 @@ bool compare(std::vector<std::pair<int, int>> a, std::vector<std::pair<int, int>
   auto a2 = a;
   auto order = [](const auto& l, const auto& r) { return l.first <=> r.first; };
   auto transform_or_skip = [](auto& l, const auto& r) {
+    using CR = ivl::algorithm::monotonic_vector_update_collision_resolution;
     l.second += r.second;
-    return l.second == 0;
+    return l.second == 0 ? CR::erase : CR::preserve;
   };
   ivl::algorithm::monotonic_vector_update_brute(a1, b, order, transform_or_skip);
   ivl::algorithm::monotonic_vector_update(a2, b, order, transform_or_skip);

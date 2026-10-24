@@ -1,14 +1,10 @@
 #pragma once
 
 #include <ivl/algorithm/monotonic_join>
+#include "collision_resolution"
 #include <algorithm>
 #include <compare>
 #include <vector>
-
-template<typename Comp, typename T, typename Order = std::strong_ordering>
-concept compare3_for = requires(const T& t, Comp c) {
-  { c(t, t) } -> std::same_as<Order>;
-};
 
 namespace ivl::algorithm {
 // Vectors are assumed to be sorted wrt. three-way comparison `order` defines.
@@ -17,7 +13,7 @@ namespace ivl::algorithm {
 // In case of same keys, `transform_or_skip()` is invoked, to either combine them inplace,
 // or return `true` if this key should be dropped altogether.
 template<typename T>
-void monotonic_vector_update(std::vector<T>& a, const std::vector<T>& b, auto&& order, auto&& transform_or_skip) {
+void monotonic_vector_update(std::vector<T>& a, const std::vector<T>& b, auto&& order, auto&& combine_or_erase) {
   if (a.empty()) {
     a = b;
     return;
@@ -41,7 +37,7 @@ void monotonic_vector_update(std::vector<T>& a, const std::vector<T>& b, auto&& 
       ++bp;
       continue;
     }
-    if (transform_or_skip(a[ap], *bp)) {
+    if (combine_or_erase(a[ap], *bp) == monotonic_vector_update_collision_resolution::erase) {
       ++ap;
       ++bp;
     } else {
