@@ -1,30 +1,29 @@
 #pragma once
 
 #include <ivl/exception>
-#include <ivl/utility/scope_exit>
+#include <ivl/format/stacktrace>
+#include <ivl/format>
+#include "forward"
+#include "hex"
+#include "scope_exit"
 #include <cassert>
 #include <filesystem>
-#include <ivl/format>
 #include <source_location>
 #include <sstream>
 #include <stacktrace>
 #include <string>
 #include <string_view>
 #include <utility>
-#include <ivl/utility/hex>
-#include <ivl/format/stacktrace>
 
 #pragma IVL add_compiler_flags "-g"
 #pragma IVL add_compiler_flags_tail "-lstdc++exp"
 
-#define FWD(x) std::forward<decltype(x)>(x)
-
 // TODO: flatten to just ivl
 namespace ivl::util {
-template <typename T>
+template<typename T>
 using const_span = std::span<const T>;
 
-template <typename T>
+template<typename T>
 constexpr std::string_view typestr() {
   // only works with gcc, only care about gcc atm
   // TODO: add #error on non-gcc
@@ -41,38 +40,38 @@ constexpr std::string str(auto&&... args) {
   return std::move(ss).str();
 }
 
-template <typename... Ts>
+template<typename... Ts>
 struct Overload : Ts... {
   using Ts::operator()...;
 };
-template <typename... Ts>
+template<typename... Ts>
 Overload(const Ts&...) -> Overload<Ts...>;
 
-template <typename T>
+template<typename T>
 struct convert_t {
   T operator()(auto&& arg) const { return T{FWD(arg)}; }
 };
 
-template <typename T>
+template<typename T>
 inline constexpr convert_t<T> convert;
 
 namespace detail {
-  template <typename, typename>
+  template<typename, typename>
   struct lazy_construct_conversion;
-  template <typename T, size_t... Is>
+  template<typename T, size_t... Is>
   struct lazy_construct_conversion<T, std::index_sequence<Is...>> {
     operator T(this auto&& self) { return T(std::get<Is>(FWD(self).args)...); }
   };
 } // namespace detail
 
 // TODO: lazy_construct might not be good terminology, think
-template <typename T, typename... Args>
+template<typename T, typename... Args>
 struct lazy_construct_t : detail::lazy_construct_conversion<T, std::make_index_sequence<sizeof...(Args)>> {
   std::tuple<Args...> args;
   lazy_construct_t(Args... args) : args(args...) {}
 };
 
-template <typename T>
+template<typename T>
 auto lazy_construct(auto&&... args) {
   return lazy_construct_t<T, decltype(args)...>(FWD(args)...);
 }
@@ -97,7 +96,7 @@ struct panic_exception : base_exception {
 
 #pragma IVL add_compiler_flags_tail "-lstdc++exp"
 
-template <typename... Args>
+template<typename... Args>
 struct panic {
   [[noreturn]] constexpr explicit panic(
     Args&&... args, std::string_view header = "!!! PANIC !!!",
@@ -105,13 +104,14 @@ struct panic {
   ) {
     if consteval {
       throw panic_exception(
-        ivl::fmt::format("{}\n\n{}\n\nin {}:{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(), loc.line()), loc
+        ivl::fmt::format("{}\n\n{}\n\nin {}:{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(), loc.line()),
+        loc
       );
     } else {
       throw panic_exception(
         ivl::fmt::format(
-          "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(), loc.line(),
-          std::stacktrace::current()
+          "{}\n\n{}\n\nin {}:{}\nstacktrace:\n{}\n", header, ivl::fmt::format(FWD(args)...), loc.file_name(),
+          loc.line(), std::stacktrace::current()
         ),
         loc
       );
@@ -120,7 +120,7 @@ struct panic {
   constexpr operator bool() const noexcept { return true; };
 };
 
-template <>
+template<>
 struct panic<> {
   [[noreturn]] constexpr explicit panic(
     std::string_view header = "!!! PANIC !!!", std::source_location loc = std::source_location::current()
@@ -139,12 +139,12 @@ struct panic<> {
   constexpr operator bool() const noexcept { return true; };
 };
 
-template <typename... Args>
+template<typename... Args>
 panic(auto&&, Args&&...) -> panic<ivl::fmt::format_string<Args...>, Args...>;
-template <typename = void>
+template<typename = void>
 panic() -> panic<>;
 
-template <typename... Args>
+template<typename... Args>
 struct todo {
 #ifdef __EDG__
 #pragma diag_suppress noreturn_function_does_return
@@ -158,7 +158,7 @@ struct todo {
   constexpr operator bool() const noexcept { return true; };
 };
 
-template <>
+template<>
 struct todo<> {
 #ifdef __EDG__
 #pragma diag_suppress noreturn_function_does_return
@@ -172,8 +172,8 @@ struct todo<> {
   constexpr operator bool() const noexcept { return true; };
 };
 
-template <typename... Args>
+template<typename... Args>
 todo(auto&&, Args&&...) -> todo<ivl::fmt::format_string<Args...>, Args...>;
-template <typename = void>
+template<typename = void>
 todo() -> todo<>;
 } // namespace ivl
