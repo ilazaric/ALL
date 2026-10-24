@@ -19,10 +19,10 @@ bool compare(std::vector<std::pair<int, int>> a, std::vector<std::pair<int, int>
   ivl::algorithm::monotonic_vector_update(a2, b, order, transform_or_skip);
   if (a1 == a2) return true;
   if (loud) {
-    ivl::fmt::println(stderr, "FAIL ON a={}\n", a);
-    ivl::fmt::println(stderr, "        b={}\n", b);
-    ivl::fmt::println(stderr, "       brute={}\n", a1);
-    ivl::fmt::println(stderr, "        algo={}\n\n", a2);
+    ivl::fmt::println(stderr, "FAIL ON a={}", a);
+    ivl::fmt::println(stderr, "        b={}", b);
+    ivl::fmt::println(stderr, "       brute={}", a1);
+    ivl::fmt::println(stderr, "        algo={}\n", a2);
   }
   return false;
 }
