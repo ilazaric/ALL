@@ -5,6 +5,7 @@
 #include <ivl/reflection/test_attribute>
 #include <ivl/reflection/test_matrix>
 #include <ivl/reflection/utility>
+#include <ivl/utility/tsc>
 #include <cassert>
 #include <cstring>
 #include <meta>
@@ -94,7 +95,7 @@ consteval std::vector<test_thing> all_test_functions() {
 }
 
 // `true` means that the test passed.
-bool invoke_function(test_thing t) noexcept {
+bool invoke_function_fork(test_thing t) noexcept {
   ivl::fmt::println("... RUNNING TEST {}", t.name());
   fflush(stdout);
   auto pid = ivl::linux::raw_syscalls::fork();
@@ -122,28 +123,50 @@ bool invoke_function(test_thing t) noexcept {
   }
 }
 
+bool invoke_function(test_thing t, bool no_fork) noexcept {
+  if (no_fork) {
+    ivl::fmt::println("... RUNNING TEST {}", t.name());
+    t.call();
+    ivl::fmt::println("... TEST PASSED  {}", t.name());
+    return true;
+  } else {
+    return invoke_function_fork(t);
+  }
+}
+
+bool invoke_function(test_thing t, bool no_fork, bool time_it) noexcept {
+  if (time_it) {
+    auto start = ivl::tsc_now();
+    auto ret = invoke_function(t, no_fork);
+    auto end = ivl::tsc_now();
+    ivl::fmt::println("... TIME OF TEST {}: {}", t.name(), (end - start).value);
+    return ret;
+  } else {
+    return invoke_function(t, no_fork);
+  }
+}
+
 // TODO: re-exec under run_test
 // ....: or should every test be re-exec'd as safe?
 // ....: this re-exec could be not forkish, not vforkish
 // TODO: cmdline args to execute individual tests, mayhaps verbose
 int main(int argc, char* argv[]) {
-  if (argc != 1 && argc != 2) {
-    ivl::fmt::println(stderr, "unrecognized args");
-    return 1;
+  bool no_fork = false;
+  bool time_it = false;
+  for (int i = 1; i < argc; ++i) {
+    if (strcmp(argv[i], "--no_fork") == 0) {
+      no_fork = true;
+      continue;
+    }
+    if (strcmp(argv[i], "--time_it") == 0) {
+      time_it = true;
+      continue;
+    }
+    ivl::fmt::println(stderr, "unrecognized arg: {}", argv[i]);
+    return 2;
   }
-  if (argc == 2 && strcmp(argv[1], "--no_fork") != 0) {
-    ivl::fmt::println(stderr, "unrecognized args");
-    return 1;
-  }
-  bool no_fork = argc == 2;
   bool ret = true;
   constexpr auto foo = define_static_array(all_test_functions());
-  for (auto t : foo) {
-    if (no_fork) {
-      t.call();
-    } else {
-      ret &= invoke_function(t);
-    }
-  }
+  for (auto t : foo) ret &= invoke_function(t, no_fork, time_it);
   return !ret;
 }
