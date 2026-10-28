@@ -1,6 +1,9 @@
 #pragma once
 
+#include <ivl/contracts>
 #include <ivl/format>
+#include <ivl/linux/utility>
+#include <ivl/stl/string>
 #include <ivl/utility/pair_access>
 #include <algorithm>
 #include <iterator>
@@ -95,21 +98,21 @@ std::string serialize(const std::vector<node>& v, size_t indent = 0) {
 }
 
 void describe(const node& f, size_t n = 20) {
-  ivl::fmt::println("node count: {}", f.size());
+  fmt::println("node count: {}", f.size());
   auto occ = f.occurrences();
-  ivl::fmt::println("number of distinct functions: {}", occ.size());
-  ivl::fmt::println("{} most common functions:", n);
+  fmt::println("number of distinct functions: {}", occ.size());
+  fmt::println("{} most common functions:", n);
   std::vector<std::pair<std::string, size_t>> occ_vec(std::from_range, occ);
-  std::ranges::sort(occ_vec, std::greater{}, ivl::second);
-  for (auto&& [name, count] : std::views::take(occ_vec, n)) ivl::fmt::println("  {}: {}", name, count);
-  ivl::fmt::println();
+  std::ranges::sort(occ_vec, std::greater{}, second);
+  for (auto&& [name, count] : std::views::take(occ_vec, n)) fmt::println("  {}: {}", name, count);
+  fmt::println();
 }
 
 node parse_replay_text(std::string_view contents, bool desc = true, bool verify = false) {
-  if (desc) ivl::fmt::println("describing uftrace parse from text of size: {}", contents.size());
+  if (desc) fmt::println("describing uftrace parse from text of size: {}", contents.size());
   node root{.name = "~~~ ROOT ~~~"};
   std::vector<node*> stack{&root};
-  for (auto&& line : ivl::split(contents, "\n")) {
+  for (auto&& line : split(contents, "\n")) {
     if (line.empty()) continue;
     if (line.ends_with("*/")) {
       stack.pop_back();
@@ -128,7 +131,7 @@ node parse_replay_text(std::string_view contents, bool desc = true, bool verify 
 }
 
 node parse_replay_file(const std::filesystem::path& p, bool desc = true, bool verify = false) {
-  if (desc) ivl::fmt::println("describing uftrace parse from: {}", p);
+  if (desc) fmt::println("describing uftrace parse from: {}", p);
   return parse_replay_text(linux::read_file(p), desc, verify);
 }
 } // namespace ivl::uftrace
