@@ -95,7 +95,7 @@ std::string serialize(const std::vector<node>& v, size_t indent = 0) {
 }
 
 void describe(const node& f, size_t n = 20) {
-  ivl::fmt::println("size: {}", f.size());
+  ivl::fmt::println("node count: {}", f.size());
   auto occ = f.occurrences();
   ivl::fmt::println("number of distinct functions: {}", occ.size());
   ivl::fmt::println("{} most common functions:", n);
@@ -105,7 +105,8 @@ void describe(const node& f, size_t n = 20) {
   ivl::fmt::println();
 }
 
-node parse_replay(std::string_view contents) {
+node parse_replay_text(std::string_view contents, bool desc = true, bool verify = false) {
+  if (desc) ivl::fmt::println("describing uftrace parse from text of size: {}", contents.size());
   node root{.name = "~~~ ROOT ~~~"};
   std::vector<node*> stack{&root};
   for (auto&& line : ivl::split(contents, "\n")) {
@@ -121,6 +122,13 @@ node parse_replay(std::string_view contents) {
   }
   contract_assert(stack.size() == 1);
   contract_assert(stack[0] == &root);
+  if (desc) describe(root);
+  if (verify) assert_text_equal(contents, serialize(root.calls));
   return root;
+}
+
+node parse_replay_file(const std::filesystem::path& p, bool desc = true, bool verify = false) {
+  if (desc) ivl::fmt::println("describing uftrace parse from: {}", p);
+  return parse_replay_text(linux::read_file(p), desc, verify);
 }
 } // namespace ivl::uftrace
