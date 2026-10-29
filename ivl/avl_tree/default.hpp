@@ -73,6 +73,7 @@ bool check_invariant(const node<T>& root, size_t depth = 0) {
   if (!root) return true;
   auto l = root->left.depth();
   auto r = root->right.depth();
+  if (depth && root.depth() != 1 + std::max(l, r)) return false;
   if (l > r + 1 || r > l + 1) return false;
   if (depth == 0) return true;
   return check_invariant(root->left, depth - 1) && check_invariant(root->right, depth - 1);
@@ -122,6 +123,7 @@ void insert(node<T>& root, const T& value) {
   auto cmp = root->value <=> value;
   if (cmp == 0) return;
   insert(cmp > 0 ? root->left : root->right, value);
+  update_depth(root);
   fix_invariant(root);
 }
 
