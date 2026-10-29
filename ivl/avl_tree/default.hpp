@@ -18,7 +18,7 @@ struct node {
   bool empty() const { return !value; }
   operator bool() const { return (bool)value; }
 
-  // bool leaf() const { return value && !value->left && !value->right; }
+  bool leaf() const { return !empty() && value->left.empty() && value->right.empty(); }
 
   node_struct<T>& operator*() { return *value; }
   const node_struct<T>& operator*() const { return *value; }
@@ -28,6 +28,8 @@ struct node {
 
   node& operator()(child c) { return c == child::left ? value->left : value->right; }
   const node& operator()(child c) const { return c == child::left ? value->left : value->right; }
+
+  void reset() { value.reset(); }
 };
 
 template<typename T>
@@ -128,8 +130,45 @@ void insert(node<T>& root, const T& value) {
 }
 
 template<typename T>
+void steal_first(node<T>& root, T& out) {
+  contract_assert(root);
+  if (root->left.empty()) {
+    out = std::move(root->value);
+    auto p = std::move(root->right);
+    root = std::move(p);
+    return;
+  }
+  steal_first(root->left, out);
+  update_depth(root);
+  fix_invariant(root);
+}
+
+template<typename T>
+void erase(node<T>& root, const T& value) {
+  if (!root) return;
+  auto cmp = root->value <=> value;
+  if (cmp == 0) {
+    if (root.leaf()) return root.reset();
+    if (root->left.empty()) {
+      auto p = std::move(root->right);
+      root = std::move(p);
+      return;
+    }
+    if (root->right.empty()) {
+      auto p = std::move(root->left);
+      root = std::move(p);
+      return;
+    }
+    steal_first(root->right, root->value);
+  } else erase(cmp > 0 ? root->left : root->right, value);
+  update_depth(root);
+  fix_invariant(root);
+}
+
+template<typename T>
 struct tree {
   node<T> root;
   void insert(const T& value) { ::ivl::avl::insert(root, value); }
+  void erase(const T& value) { ::ivl::avl::erase(root, value); }
 };
 } // namespace ivl::avl

@@ -21,12 +21,22 @@ std::vector<T> flatten(const ivl::avl::tree<T>& t) {
   return ret;
 }
 
-bool test(const std::vector<int>& inserts, bool loud = true) {
+struct op {
+  int value;
+  bool erase;
+};
+
+bool test(const std::vector<op>& ops, bool loud = true) {
   std::set<int> expected;
   ivl::avl::tree<int> actual;
-  for (auto i : inserts) {
-    expected.insert(i);
-    actual.insert(i);
+  for (auto [v, e] : ops) {
+    if (e) {
+      expected.erase(v);
+      actual.erase(v);
+    } else {
+      expected.insert(v);
+      actual.insert(v);
+    }
   }
   std::vector expected_vec(std::from_range, expected);
   auto actual_vec = flatten(actual);
@@ -34,17 +44,22 @@ bool test(const std::vector<int>& inserts, bool loud = true) {
   bool inv = check_invariant(actual.root, -1);
   if (order && inv) return true;
   if (!loud) return false;
-  ivl::fmt::println(stderr, "FAIL ON inserts={}", inserts);
+  ivl::fmt::println(stderr, "FAIL ON ops={::s}", std::views::transform(ops, [](op o) {
+                      return std::format("{}{}", o.erase ? '-' : '+', o.value);
+                    }));
   return false;
 }
 
-bool test_wide(size_t n, size_t m, size_t k) {
+bool test_wide(size_t n, size_t m, size_t k, bool erases = false) {
   srand(1337);
   size_t last_fail_size = -1;
   size_t fail_count = 0;
   for (size_t i = 0; i < n; ++i) {
-    std::vector<int> a(rand() % m);
-    for (auto& e : a) e = rand() % k;
+    std::vector<op> a(rand() % m);
+    for (auto& [v, e] : a) {
+      v = rand() % k;
+      e = rand() % (erases + 1);
+    }
     bool smaller = a.size() < last_fail_size;
     if (test(a, smaller)) continue;
     ++fail_count;
@@ -59,3 +74,7 @@ bool test_wide(size_t n, size_t m, size_t k) {
 [[= ivl::test]] void test_wide_1() { contract_assert(test_wide(200000, 100, 50)); }
 
 [[= ivl::test]] void test_wide_2() { contract_assert(test_wide(20000, 1000, 1000)); }
+
+[[= ivl::test]] void test_wide_3() { contract_assert(test_wide(200000, 100, 20, true)); }
+
+[[= ivl::test]] void test_wide_4() { contract_assert(test_wide(20000, 1000, 300, true)); }
