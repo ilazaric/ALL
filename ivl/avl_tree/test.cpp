@@ -78,3 +78,5 @@ bool test_wide(size_t n, size_t m, size_t k, bool erases = false) {
 [[= ivl::test]] void test_wide_3() { contract_assert(test_wide(200000, 100, 20, true)); }
 
 [[= ivl::test]] void test_wide_4() { contract_assert(test_wide(20000, 1000, 300, true)); }
+
+[[= ivl::test]] void test_wide_5() { contract_assert(test_wide(1000000, 20, 10, true)); }
