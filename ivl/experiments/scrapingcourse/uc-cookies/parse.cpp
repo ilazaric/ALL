@@ -2,7 +2,7 @@
 #include <ivl/linux/utility>
 #include <ivl/logger>
 #include <ivl/reflection/json>
-#include <ivl/stl/string>
+#include <ivl/string/split>
 #include <ivl/utility>
 #include <map>
 #include <set>
@@ -37,7 +37,7 @@ int ivl_main(const args& args) {
   const auto& log = args.log;
   auto contents = ivl::linux::read_file(log);
   LOG(contents.size());
-  auto lines = ivl::split_view(contents, "\n");
+  auto lines = ivl::string::split_view(contents, "\n");
   LOG(lines.size());
 
   std::set<pid_t> pids;
@@ -200,7 +200,7 @@ int ivl_main(const args& args) {
   auto pid = 402428;
   while (pid != root) {
     ivl::fmt::print("{}", pid);
-    for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
+    for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::string::split_view(ex, "\"")[1]);
     ivl::fmt::println("");
     pid = parents[pid];
   }
@@ -221,7 +221,7 @@ int ivl_main(const args& args) {
         pid
       );
       if (is_process)
-        for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::split_view(ex, "\"")[1]);
+        for (auto&& ex : execs[pid]) ivl::fmt::print(" -> {:?}", ivl::string::split_view(ex, "\"")[1]);
       ivl::fmt::println("");
     }
 

@@ -1,7 +1,7 @@
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
 #include <ivl/metaheuristics/pseudo_boolean>
-#include <ivl/stl/string>
+#include <ivl/ranges/split_py>
 #include <ivl/utility/tsc>
 #include <ivl/utility/tuple_broadcast>
 #include "v6"
@@ -18,7 +18,7 @@ struct input_t {
 input_t parse_input(std::string_view sv) {
   std::vector<size_t> a, b;
   size_t cnt = 0;
-  for (auto&& piece : ivl::split_py(sv)) {
+  for (auto&& piece : ivl::views::split_py(sv)) {
     contract_assert(!piece.empty());
     contract_assert(piece.back() == 'A' || piece.back() == 'B');
     auto& ref = piece.back() == 'A' ? a : b;

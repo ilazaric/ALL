@@ -1,6 +1,5 @@
 #include <ivl/linux/cgroups>
 #include <ivl/process>
-#include <ivl/stl/string>
 #include <ivl/format>
 #include <cstdio>
 #include <cstring>

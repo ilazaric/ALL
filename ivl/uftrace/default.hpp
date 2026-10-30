@@ -3,7 +3,7 @@
 #include <ivl/contracts>
 #include <ivl/format>
 #include <ivl/linux/utility>
-#include <ivl/stl/string>
+#include <ivl/ranges/split>
 #include <ivl/utility/pair_access>
 #include <algorithm>
 #include <iterator>
@@ -112,7 +112,7 @@ node parse_replay_text(std::string_view contents, bool desc = true, bool verify 
   if (desc) fmt::println("describing uftrace parse from text of size: {}", contents.size());
   node root{.name = "~~~ ROOT ~~~"};
   std::vector<node*> stack{&root};
-  for (auto&& line : split(contents, "\n")) {
+  for (auto&& line : views::split(contents, "\n")) {
     if (line.empty()) continue;
     if (line.ends_with("*/")) {
       stack.pop_back();
@@ -120,7 +120,7 @@ node parse_replay_text(std::string_view contents, bool desc = true, bool verify 
     }
     contract_assert(line.ends_with(" {"));
     size_t indent = stack.size() * 2 - 2;
-    stack.back()->calls.emplace_back(line.substr(indent, line.size() - 2 - indent));
+    stack.back()->calls.emplace_back(std::string(line.substr(indent, line.size() - 2 - indent)));
     stack.push_back(&stack.back()->calls.back());
   }
   contract_assert(stack.size() == 1);

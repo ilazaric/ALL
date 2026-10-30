@@ -3,7 +3,7 @@
 #include <ivl/command_line_argument_parsing/parser_one>
 #include <ivl/command_line_argument_parsing/parsers/floats>
 #include <ivl/format>
-#include <ivl/stl/string>
+#include <ivl/string/split_py>
 #include <vector>
 
 struct equalizer_config {
@@ -22,7 +22,7 @@ struct equalizer_config {
 template<>
 struct ivl::cmdline_parsing::parser<equalizer_config> : ivl::cmdline_parsing::parser_one {
   bool parse_one(equalizer_config& cfg, std::string_view arg) const {
-    auto pieces = ivl::split_py_view(arg);
+    auto pieces = ivl::string::split_py_view(arg);
     for (size_t i = 0; i < pieces.size(); ++i) {
       auto curr = pieces[i];
       auto error = [=]<typename... Ts>(ivl::fmt::format_string<Ts...> fmt, Ts&&... args) {

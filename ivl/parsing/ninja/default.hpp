@@ -5,7 +5,6 @@
 #include <ivl/linux/utility>
 #include <ivl/parsing/basic_parser>
 #include <ivl/reflection/test_attribute>
-#include <ivl/stl/string>
 #include <ivl/testing>
 #include <ivl/utility>
 #include <filesystem>
