@@ -1,7 +1,7 @@
 #include <ivl/build_system/parse_codebase>
 #include <ivl/linux/utility>
 #include <ivl/process>
-#include <ivl/ranges/split_py>
+#include <ivl/string/split_py>
 #include <ivl/reflection/json>
 #include <ivl/utility>
 #include <filesystem>
@@ -109,7 +109,7 @@ struct pp_info_t {
 
     cxx_cfg.argv.push_back(libs);
     cxx_cfg.argv.insert_range(
-      cxx_cfg.argv.end(), ivl::views::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
+      cxx_cfg.argv.end(), ivl::string::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
     );
 
     LOG(ivl::fmt::format("{}", cxx_cfg.argv));
@@ -157,7 +157,7 @@ struct pp_info_t {
 
     cxx_cfg.argv.push_back(libs);
     cxx_cfg.argv.insert_range(
-      cxx_cfg.argv.end(), ivl::views::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
+      cxx_cfg.argv.end(), ivl::string::split_py("-lfmt -lpugixml -lraylib -lm  -lpthread  -lGLU  -lm  -lrt  -lm  -ldl")
     );
 
     LOG(ivl::fmt::format("{}", cxx_cfg.argv));

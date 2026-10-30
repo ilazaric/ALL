@@ -22,7 +22,7 @@ struct split_py_iterator {
   std::string_view operator*() const { return data.substr(0, cursor); }
 
   split_py_iterator& operator++() {
-    data = trim_prefix_view(data.substr(cursor));
+    data = string::trim_prefix_view(data.substr(cursor));
     for (cursor = 0; cursor < data.size() && !std::isspace(data[cursor]); ++cursor);
     return *this;
   }
@@ -44,6 +44,9 @@ struct split_py_view : std::ranges::view_interface<split_py_view> {
   split_py_sentinel end() const { return split_py_sentinel{}; }
 };
 } // namespace ivl::ranges
+
+template<>
+constexpr bool std::ranges::enable_borrowed_range<ivl::ranges::split_py_view> = true;
 
 static_assert(std::ranges::forward_range<ivl::ranges::split_py_view>);
 static_assert(std::ranges::borrowed_range<ivl::ranges::split_py_view>);

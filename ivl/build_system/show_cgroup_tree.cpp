@@ -1,11 +1,11 @@
 #include <ivl/command_line_argument_parsing/annotations>
 #include <ivl/linux/utility>
-#include <ivl/ranges/split_py>
+#include <ivl/string/split_py>
 #include <filesystem>
 #include <map>
 
 std::vector<std::string> controllers(const std::filesystem::path& cgroup_dir) {
-  return ivl::views::split_py(ivl::linux::read_file_slow(cgroup_dir / "cgroup.controllers"));
+  return ivl::string::split_py(ivl::linux::read_file_slow(cgroup_dir / "cgroup.controllers"));
 }
 
 struct[[= ivl::cmdline_parsing::class_basic]] args {
