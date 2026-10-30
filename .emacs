@@ -21,7 +21,7 @@
             default-text-scale dockerfile-mode ejson-mode
             exec-path-from-shell go-mode impatient-mode
             latex-preview-pane magit markdown-mode meson-mode
-            org-modern pdf-tools rust-mode yaml-mode)))
+            org-modern pdf-tools rust-mode shfmt yaml-mode)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
@@ -87,6 +87,17 @@ Removes LaTeX preview overlays in region or entire buffer."
   ;; Now bind our interactive wrapper to C-c C-x C-r in Org buffers
   (define-key org-mode-map (kbd "M-2") #'my/org-clear-latex-preview))
 
+;; shfmt is shite
+;; (require 'shfmt)
+;; (defun my-shfmt-and-save ()
+;;   "Format the current buffer with shfmt, then save it."
+;;   (interactive)
+;;   (shfmt-buffer)
+;;   (save-buffer))
+;; (add-hook 'sh-mode-hook
+;;           (lambda ()
+;;             (local-set-key (kbd "M-1")
+;;                            #'my-shfmt-and-save)))
 
 ;;  ─── ~/.emacs or ~/.config/emacs/init.el ───
 (require 'clang-format)                 ; make sure the function exists first
