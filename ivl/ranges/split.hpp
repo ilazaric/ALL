@@ -10,8 +10,8 @@ struct split_iterator {
   using iterator_category = std::forward_iterator_tag;
   using value_type = std::string_view;
   using difference_type = ptrdiff_t;
-  using pointer = const std::string_view*;
-  using reference = const std::string_view&;
+  using pointer = void;
+  using reference = std::string_view;
 
   std::string_view data{};
   std::string_view by{};
