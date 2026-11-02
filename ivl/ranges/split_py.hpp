@@ -34,7 +34,6 @@ struct split_py_iterator {
   }
 
   bool operator==(split_py_sentinel) const { return data.empty(); }
-  friend bool operator==(split_py_sentinel, const split_py_iterator& it) { return it.data.empty(); }
   bool operator==(const split_py_iterator&) const = default;
 };
 

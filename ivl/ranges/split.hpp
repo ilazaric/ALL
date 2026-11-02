@@ -45,7 +45,6 @@ struct split_iterator {
   bool reached_end() const { return data.data() == nullptr; }
 
   bool operator==(split_sentinel) const { return reached_end(); }
-  friend bool operator==(split_sentinel, const split_iterator& it) { return it.reached_end(); }
   bool operator==(const split_iterator&) const = default;
 };
 
