@@ -12,19 +12,18 @@
 
 namespace uf = ivl::uftrace;
 
-template<typename T>
-std::vector<std::pair<size_t, size_t>> longest_common_subsequence(const std::vector<T>& l, const std::vector<T>& r) {
-  std::vector<size_t> cache((l.size() + 1) * (r.size() + 1), 0);
-  std::mdspan dp(cache.data(), l.size() + 1, r.size() + 1);
-  for (size_t i = l.size() - 1; i + 1; --i)
-    for (size_t j = r.size() - 1; j + 1; --j) {
-      if (l[i] == r[j]) dp[i, j] = 1 + dp[i + 1, j + 1];
+std::vector<std::pair<size_t, size_t>> longest_common_subsequence(size_t n, size_t m, auto&& pred) {
+  std::vector<size_t> cache((n + 1) * (m + 1), 0);
+  std::mdspan dp(cache.data(), n + 1, m + 1);
+  for (size_t i = n - 1; i + 1; --i)
+    for (size_t j = m - 1; j + 1; --j) {
+      if (pred(i, j)) dp[i, j] = 1 + dp[i + 1, j + 1];
       else dp[i, j] = std::max(dp[i + 1, j], dp[i, j + 1]);
     }
   std::vector<std::pair<size_t, size_t>> ret;
   size_t i = 0, j = 0;
-  while (i < l.size() && j < r.size()) {
-    if (l[i] == r[j]) {
+  while (i < n && j < m) {
+    if (pred(i, j)) {
       ret.emplace_back(i++, j++);
       continue;
     }
@@ -32,6 +31,11 @@ std::vector<std::pair<size_t, size_t>> longest_common_subsequence(const std::vec
     else ++j;
   }
   return ret;
+}
+
+template<typename T>
+std::vector<std::pair<size_t, size_t>> longest_common_subsequence(const std::vector<T>& l, const std::vector<T>& r) {
+  return longest_common_subsequence(l.size(), r.size(), [&](size_t i, size_t j) { return l[i] == r[j]; });
 }
 
 // void diff(uf::compressor& c, uf::compressor_handle l, uf::compressor_handle r, size_t indent = 0) {
