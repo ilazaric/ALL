@@ -12,6 +12,9 @@ CLEAN_FIRST=0
 ARG_ERRORS=0
 CHECKING=yes
 EXTEND_PATHS=1
+USE_CCACHE=0
+ADDED_SUFFIX=""
+NO_BUILD=0
 
 function print_help() {
     echo './build-gcc.sh -- script to compile g++
@@ -23,8 +26,18 @@ options:
   --install
     run `make install` after successful build
 
+  --no-build
+    does not run `make`, terminates after configure
+
   --clean-first
     fully purge objdir before building
+
+  --add-suffix <string>
+    installs to /opt/GCC-<string>... instead of /opt/GCC
+
+  --use-ccache
+    wrap compilations with ccache
+    (adds `/usr/lib/ccache` to `PATH`)
 
   --checking <string>
     argument for `--enable-checking=`
@@ -56,14 +69,24 @@ do
             PARALLELISM="$1"
             shift
             ;;
+        "--add-suffix")
+            ADDED_SUFFIX="$1"
+            shift
+            ;;
         "--install")
             INSTALL=1
+            ;;
+        "--no-build")
+            NO_BUILD=1
             ;;
         "--dont-extend-paths-with-checking")
             EXTEND_PATHS=0
             ;;
         "--clean-first")
             CLEAN_FIRST=1
+            ;;
+        "--use-ccache")
+            USE_CCACHE=1
             ;;
         "--checking")
             CHECKING="$1"
@@ -87,16 +110,29 @@ fi
 
 set -x
 
-which gcc g++
+if [ "$ADDED_SUFFIX" != "" ]
+then
+    OBJ_DIR="$OBJ_DIR-$ADDED_SUFFIX"
+    PREFIX="$PREFIX-$ADDED_SUFFIX"
+fi
 
 if [ $EXTEND_PATHS -eq 1 ]
 then
-   OBJ_DIR="$OBJ_DIR-$CHECKING"
-   PREFIX="$PREFIX-$CHECKING"
+    OBJ_DIR="$OBJ_DIR-$CHECKING"
+    PREFIX="$PREFIX-$CHECKING"
 fi
 
+if [ $USE_CCACHE -eq 1 ]
+then
+    export PATH="/usr/lib/ccache:$PATH"
+    OBJ_DIR="$OBJ_DIR-ccache"
+fi
+
+echo "general info:"
 echo "OBJ_DIR = $OBJ_DIR"
 echo "PREFIX  = $PREFIX"
+which gcc g++
+echo
 
 if [ $CLEAN_FIRST -eq 1 ]
 then
@@ -132,6 +168,12 @@ then
         --enable-checking="$CHECKING"
 else
     cd "$OBJ_DIR"
+fi
+
+if [ $NO_BUILD -eq 1 ]
+then
+    echo "terminating without building ..."
+    exit 0
 fi
 
 # TODO: would be better to not unset it in first place
