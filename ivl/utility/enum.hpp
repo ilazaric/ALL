@@ -36,10 +36,10 @@ consteval bool all_enumerators_different() {
 template<typename E>
   requires(std::is_enum_v<E> && all_enumerators_different<E>())
 constexpr std::string enum_to_string(E e) {
-  template for (auto enumerator : define_static_array(enumerators_of(^^E))) {
+  template for (constexpr auto enumerator : define_static_array(enumerators_of(^^E))) {
     if (e == extract<E>(enumerator)) return std::string(identifier_of(enumerator));
   }
-  return "<not-enumerator[" + to_string(std::to_underlying(e)) + "]>";
+  return "<not-enumerator[" + std::to_string(std::to_underlying(e)) + "]>";
 }
 
 // checks if value is equal to one of the enumerators
