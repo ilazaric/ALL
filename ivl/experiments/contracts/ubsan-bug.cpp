@@ -19,3 +19,6 @@ int main() {
   E e = E::B;
   (void)enum_to_string(e);
 }
+
+// compile with:
+// g++ -std=c++26 -freflection ubsan-bug.cpp -fsyntax-only -fsanitize=undefined
