@@ -2,34 +2,29 @@ namespace std::meta {
 using info = decltype(^^int);
 }
 
-enum class E { A, B, C };
-
-template<typename T>
-struct my_span {
-  T* data;
+struct refl_span {
+  const std::meta::info* data;
   int length;
-  // constexpr my_span(std::span<T> s) : data(s.data()), length(s.size()) {}
-  constexpr my_span(T* data, int length) : data(data), length(length) {}
-  constexpr const T* begin() const { return data; }
-  constexpr const T* end() const { return data + length; }
+  constexpr auto begin() const { return data; }
+  constexpr auto end() const { return data + length; }
 };
 
 constexpr std::meta::info els[] = {^^int, ^^float, ^^char};
-constexpr auto Ers = my_span<const std::meta::info>(els, 3);
+constexpr auto Ers = refl_span{els, 3};
 
 template<typename = void>
-constexpr E foo(E e) {
+constexpr int foo(int x) {
   template for (constexpr auto er : Ers) {}
-  return E::C;
+  return x;
+}
+
+int main() {
+  int x = 1;
+  (void)foo(x);
 }
 
 // IVL add_compiler_flags("-fsanitize=undefined")
 // IVL disable_ivl_main_handler()
-
-int main() {
-  E e = E::B;
-  (void)foo(e);
-}
 
 // compile with:
 // g++ -std=c++26 -freflection ubsan-bug.cpp -fsyntax-only -fsanitize=undefined
