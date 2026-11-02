@@ -1,4 +1,3 @@
-#include <contracts>
 #include <meta>
 #include <string>
 #include <utility>
@@ -11,9 +10,12 @@ constexpr std::string enum_to_string(E e) {
   return "<not-enumerator[" + std::to_string(std::to_underlying(e)) + "]>";
 }
 
-void handle_contract_violation(const std::contracts::contract_violation& v) { (void)enum_to_string(v.kind()); }
-
 // IVL add_compiler_flags("-fsanitize=undefined")
 // IVL disable_ivl_main_handler()
 
-int main() {}
+enum class E { A, B, C };
+
+int main() {
+  E e = E::B;
+  (void)enum_to_string(e);
+}
