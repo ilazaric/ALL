@@ -1,13 +1,15 @@
-#include <meta>
+namespace std::meta {
+using info = decltype(^^int);
+}
 
 enum class E { A, B, C };
 
 template<typename T>
 struct my_span {
   T* data;
-  size_t length;
+  int length;
   // constexpr my_span(std::span<T> s) : data(s.data()), length(s.size()) {}
-  constexpr my_span(T* data, size_t length) : data(data), length(length) {}
+  constexpr my_span(T* data, int length) : data(data), length(length) {}
   constexpr const T* begin() const { return data; }
   constexpr const T* end() const { return data + length; }
 };
