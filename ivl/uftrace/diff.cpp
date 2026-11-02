@@ -1,3 +1,4 @@
+#include <ivl/algorithm/longest_common_subsequence>
 #include <ivl/command_line_argument_parsing/implicit_exposed>
 #include <ivl/format>
 #include <ivl/logger>
@@ -6,37 +7,10 @@
 #include "default"
 #include <algorithm>
 #include <filesystem>
-#include <mdspan>
 #include <ranges>
 #include <set>
 
 namespace uf = ivl::uftrace;
-
-std::vector<std::pair<size_t, size_t>> longest_common_subsequence(size_t n, size_t m, auto&& pred) {
-  std::vector<size_t> cache((n + 1) * (m + 1), 0);
-  std::mdspan dp(cache.data(), n + 1, m + 1);
-  for (size_t i = n - 1; i + 1; --i)
-    for (size_t j = m - 1; j + 1; --j) {
-      if (pred(i, j)) dp[i, j] = 1 + dp[i + 1, j + 1];
-      else dp[i, j] = std::max(dp[i + 1, j], dp[i, j + 1]);
-    }
-  std::vector<std::pair<size_t, size_t>> ret;
-  size_t i = 0, j = 0;
-  while (i < n && j < m) {
-    if (pred(i, j)) {
-      ret.emplace_back(i++, j++);
-      continue;
-    }
-    if (dp[i + 1, j] >= dp[i, j + 1]) ++i;
-    else ++j;
-  }
-  return ret;
-}
-
-template<typename T>
-std::vector<std::pair<size_t, size_t>> longest_common_subsequence(const std::vector<T>& l, const std::vector<T>& r) {
-  return longest_common_subsequence(l.size(), r.size(), [&](size_t i, size_t j) { return l[i] == r[j]; });
-}
 
 // void diff(uf::compressor& c, uf::compressor_handle l, uf::compressor_handle r, size_t indent = 0) {
 //   if (l == r) return;
