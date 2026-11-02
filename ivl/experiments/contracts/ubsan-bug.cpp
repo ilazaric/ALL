@@ -2,7 +2,16 @@
 
 enum class E { A, B, C };
 
-constexpr auto Ers = define_static_array(enumerators_of(^^E));
+template<typename T>
+struct my_span {
+  T* data;
+  size_t length;
+  constexpr my_span(std::span<T> s) : data(s.data()), length(s.size()) {}
+  constexpr const T* begin() const { return data; }
+  constexpr const T* end() const { return data + length; }
+};
+
+constexpr auto Ers = my_span<const std::meta::info>(define_static_array(enumerators_of(^^E)));
 
 template<typename = void>
 constexpr E foo(E e) {
