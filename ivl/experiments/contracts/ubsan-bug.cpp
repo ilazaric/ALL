@@ -1,20 +1,18 @@
-namespace std::meta {
 using info = decltype(^^int);
-}
 
 struct refl_span {
-  const std::meta::info* data;
+  const info* data;
   int length;
   constexpr auto begin() const { return data; }
   constexpr auto end() const { return data + length; }
 };
 
-constexpr std::meta::info els[] = {^^int, ^^float, ^^char};
-constexpr auto Ers = refl_span{els, 3};
+constexpr info arr[] = {^^int, ^^float, ^^char};
+constexpr refl_span sp{arr, 3};
 
 template<typename = void>
 constexpr int foo(int x) {
-  template for (constexpr auto er : Ers) {}
+  template for (constexpr auto _ : sp) {}
   return x;
 }
 
