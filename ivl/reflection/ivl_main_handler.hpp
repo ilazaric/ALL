@@ -5,6 +5,7 @@
 
 #include <ivl/command_line_argument_parsing/parsers>
 #include <ivl/command_line_argument_parsing/print_help>
+#include <ivl/contracts/violation_handler>
 #include <ivl/format>
 #include <meta>
 #include <string>
@@ -107,6 +108,9 @@ int wrap_ivl_main(int argc, char** argv)
 #ifdef __cpp_exceptions
 catch (const std::exception& e) {
   ivl::fmt::println(stderr, "exception reached main\n{}", e.what());
+  return 1;
+} catch (const ivl::contract_assertion_exception&) {
+  ivl::fmt::println(stderr, "contract violation exception reached main");
   return 1;
 }
 #endif
