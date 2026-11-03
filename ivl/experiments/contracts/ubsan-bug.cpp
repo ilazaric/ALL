@@ -3,8 +3,8 @@ using info = decltype(^^int);
 struct refl_span {
   const info* data;
   int length;
-  constexpr auto begin() const { return data; }
-  constexpr auto end() const { return data + length; }
+  consteval auto begin() const { return data; }
+  consteval auto end() const { return data + length; }
 };
 
 constexpr info arr[] = {^^int, ^^float, ^^char};
