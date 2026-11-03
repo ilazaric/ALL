@@ -46,13 +46,13 @@ options:
   --checking <string>
     argument for `--enable-checking=`
     default: yes
-    description of `--enable-checking` from gcc/configure:
+    description of `--enable-checking` from gcc/configure (`**` emph mine):
       --enable-checking[=LIST]
                           enable expensive run-time checks. With LIST, enable
                           only specific categories of checks. Categories are:
-                          yes,no,all,none,release. Flags are:
-                          assert,df,extra,fold,gc,gcac,gimple,misc,
-                          rtlflag,rtl,runtime,tree,valgrind,types
+                          ** yes,no,all,none,release **. Flags are:
+                          ** assert,df,extra,fold,gc,gcac,gimple,misc, **
+                          ** rtlflag,rtl,runtime,tree,valgrind,types   **
 
   --dont-extend-paths-with-checking
     usually OBJ_DIR and PREFIX get extended with "-$CHECKING"
