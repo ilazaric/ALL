@@ -1,7 +1,4 @@
-using info = decltype(^^int);
-
-struct refl_span {
-  const info* data;
-  int length;
-  consteval auto begin() const { return data; }
+struct ptr {
+  int* p;
+  consteval auto get() const { return p; }
 };
