@@ -1,4 +1,4 @@
 struct ptr {
   int* p;
-  consteval auto get() const { return p; }
+  int* get() const { return p; }
 };
