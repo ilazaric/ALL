@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-uftrace record -P mark_exp_read \
+uftrace record -v -P mark_exp_read \
         /usr/libexec/gcc/x86_64-linux-gnu/13/cc1plus -quiet -imultiarch \
         x86_64-linux-gnu -D_GNU_SOURCE ubsan-bug.cpp -mtune=generic -march=x86-64 \
         -fasynchronous-unwind-tables -fstack-protector-strong -Wformat -Wformat-security \

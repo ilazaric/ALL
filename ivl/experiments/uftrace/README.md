@@ -8,3 +8,5 @@ ubsan-bug.cpp:3:39: internal compiler error: Segmentation fault
 WARN: child terminated by signal: 11: Segmentation fault
 PROGRAM FAILED WITH EXIT CODE 2
 ```
+
+TODO: reduced to filtered-wide-record.sh , continue chasing why it segfaults
