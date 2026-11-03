@@ -15,6 +15,7 @@ EXTEND_PATHS=1
 USE_CCACHE=0
 ADDED_SUFFIX=""
 NO_BUILD=0
+PURGE_OLD_INSTALL=0
 
 function print_help() {
     echo './build-gcc.sh -- script to compile g++
@@ -24,7 +25,10 @@ options:
     number of processes allowed to run in parallel, defaults to $(nproc)
 
   --install
-    run `make install` after successful build
+    run `make install` after successful build, fail if install already exists
+
+  --reinstall
+    run `make install` after successful build, but also remove old install if exists
 
   --no-build
     does not run `make`, terminates after configure
@@ -75,6 +79,10 @@ do
             ;;
         "--install")
             INSTALL=1
+            ;;
+        "--reinstall")
+            INSTALL=1
+            PURGE_OLD_INSTALL=1
             ;;
         "--no-build")
             NO_BUILD=1
@@ -128,11 +136,15 @@ then
     OBJ_DIR="$OBJ_DIR-ccache"
 fi
 
+set +x
+echo
 echo "general info:"
 echo "OBJ_DIR = $OBJ_DIR"
 echo "PREFIX  = $PREFIX"
-which gcc g++
+echo "CC      = $(which gcc)"
+echo "CXX     = $(which g++)"
 echo
+set -x
 
 if [ $CLEAN_FIRST -eq 1 ]
 then
@@ -184,8 +196,20 @@ DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
   env -u DBUS_SESSION_BUS_ADDRESS -u INVOCATION_ID -- \
   make -j "$PARALLELISM"
 
+if [ $PURGE_OLD_INSTALL -eq 1 ]
+then
+    echo "purging old install ..."
+    rm -rf "$PREFIX"
+fi
+
 if [ $INSTALL -eq 1 ]
 then
     echo "installing ..."
+    if [ -e "$PREFIX" ]
+    then
+        echo "error, cannot install as directory already exists: $PREFIX"
+        echo "note: consider using --reinstall"
+        exit 1
+    fi
     make install
 fi
