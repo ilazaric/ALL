@@ -1,3 +1,4 @@
 ubsan-bug.s
 uftrace.*
 attempt.sh
+.gdb_history
