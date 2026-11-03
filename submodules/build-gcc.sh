@@ -2,6 +2,9 @@
 
 set -euo pipefail
 
+export HOME="$(getent passwd "$(id -u)" | cut -d: -f6)"
+export XDG_RUNTIME_DIR="/run/user/$(id -u)"
+
 SCRIPT_DIR="$(dirname "$(realpath "$0")")"
 OBJ_DIR="$SCRIPT_DIR/objdir/gcc"
 SRC_DIR="$SCRIPT_DIR/gcc"
@@ -16,6 +19,9 @@ USE_CCACHE=0
 ADDED_SUFFIX=""
 NO_BUILD=0
 PURGE_OLD_INSTALL=0
+TARGETS=""
+LINKER=""
+ADDED_CONFIG_OPTIONS=()
 
 function print_help() {
     echo './build-gcc.sh -- script to compile g++
@@ -23,6 +29,16 @@ function print_help() {
 options:
   -j NUM
     number of processes allowed to run in parallel, defaults to $(nproc)
+
+  --targets <string>
+    pass string to `make`, expands without quotes,
+    so `--targets "foo bar"` makes sense
+
+  --linker <string>
+    passes to `--fuse-ld={}`
+
+  --mold
+    as-if `--linker mold`
 
   --install
     run `make install` after successful build, fail if install already exists
@@ -71,6 +87,17 @@ do
     case "$OPTION" in
         "-j")
             PARALLELISM="$1"
+            shift
+            ;;
+        "--targets")
+            TARGETS="$1"
+            shift
+            ;;
+        "--mold")
+            LINKER="mold"
+            ;;
+        "--linker")
+            LINKER="$1"
             shift
             ;;
         "--add-suffix")
@@ -124,6 +151,12 @@ then
     PREFIX="$PREFIX-$ADDED_SUFFIX"
 fi
 
+if [ "$LINKER" != "" ]
+then
+    OBJ_DIR="$OBJ_DIR-$LINKER"
+    ADDED_CONFIG_OPTIONS+=("--with-stage1-ldflags=-fuse-ld=$LINKER")
+fi
+
 if [ $EXTEND_PATHS -eq 1 ]
 then
     OBJ_DIR="$OBJ_DIR-$CHECKING"
@@ -139,10 +172,11 @@ fi
 set +x
 echo
 echo "general info:"
-echo "OBJ_DIR = $OBJ_DIR"
-echo "PREFIX  = $PREFIX"
-echo "CC      = $(which gcc)"
-echo "CXX     = $(which g++)"
+echo "OBJ_DIR              = $OBJ_DIR"
+echo "PREFIX               = $PREFIX"
+echo "CC                   = $(which gcc)"
+echo "CXX                  = $(which g++)"
+echo "ADDED_CONFIG_OPTIONS = ${ADDED_CONFIG_OPTIONS[@]}"
 echo
 set -x
 
@@ -169,7 +203,7 @@ then
         --disable-multilib               \
         --prefix="$PREFIX"               \
         --enable-languages=c,c++         \
-        --enable-libstdcxx-debug         \
+        --disable-libstdcxx-debug        \
         --enable-libstdcxx-backtrace     \
         --disable-bootstrap              \
         --disable-libvtv                 \
@@ -177,7 +211,12 @@ then
         --disable-libffi                 \
         --with-system-zlib               \
         --without-isl                    \
-        --enable-checking="$CHECKING"
+        --disable-libstdcxx-pch          \
+        --disable-libgomp                \
+        --disable-libquadmath            \
+        --disable-nls                    \
+        --enable-checking="$CHECKING"    \
+        "${ADDED_CONFIG_OPTIONS[@]}"
 else
     cd "$OBJ_DIR"
 fi
@@ -194,7 +233,7 @@ DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
   -p OOMPolicy=kill \
   choom -n 1000 -- \
   env -u DBUS_SESSION_BUS_ADDRESS -u INVOCATION_ID -- \
-  make -j "$PARALLELISM"
+  make -j "$PARALLELISM" $TARGETS
 
 if [ $PURGE_OLD_INSTALL -eq 1 ]
 then
