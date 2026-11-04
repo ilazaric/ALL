@@ -3,3 +3,6 @@ uftrace.*
 attempt.sh
 .gdb_history
 !Dockerfile
+gdb-15.1*
+gdb_15.1*
+gdb_dyn_info*
