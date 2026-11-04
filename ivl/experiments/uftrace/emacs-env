@@ -1,4 +1,6 @@
 # scraped from gdb running under emacs
+# fails: ( set -a; source emacs-env; set +a; ./iconv-bug; )
+# but just ./iconv-bug works
 
 PWD="/home/ilazaric/repos/ALL/ivl/experiments/uftrace"
 DISPLAY=":0"
