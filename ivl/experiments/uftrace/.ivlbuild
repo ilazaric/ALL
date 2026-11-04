@@ -1,1 +1,2 @@
 ignore ubsan-bug.cpp
+ignore foo.c
