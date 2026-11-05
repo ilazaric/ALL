@@ -97,3 +97,6 @@
 [submodule "submodules/tree-sitter"]
 	path = submodules/tree-sitter
 	url = git@github.com:tree-sitter/tree-sitter.git
+[submodule "submodules/tree-sitter-latex"]
+	path = submodules/tree-sitter-latex
+	url = git@github.com:latex-lsp/tree-sitter-latex.git

@@ -1,1 +1,1 @@
-../../submodules/tree-sitter/lib/include/tree_sitter/api.h
+../../../submodules/tree-sitter/lib/include/tree_sitter/api.h
