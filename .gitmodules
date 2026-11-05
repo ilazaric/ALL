@@ -94,3 +94,6 @@
 [submodule "submodules/utfcpp"]
 	path = submodules/utfcpp
 	url = git@github.com:nemtrif/utfcpp.git
+[submodule "submodules/tree-sitter"]
+	path = submodules/tree-sitter
+	url = git@github.com:tree-sitter/tree-sitter.git
