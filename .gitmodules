@@ -91,3 +91,6 @@
 [submodule "submodules/emacs"]
 	path = submodules/emacs
 	url = git@github.com:emacs-mirror/emacs.git
+[submodule "submodules/utfcpp"]
+	path = submodules/utfcpp
+	url = https://github.com/nemtrif/utfcpp.git
