@@ -88,3 +88,6 @@
 [submodule "submodules/edg-compiler"]
 	path = submodules/edg-compiler
 	url = git@github.com:ilazaric/edg-compiler.git
+[submodule "submodules/emacs"]
+	path = submodules/emacs
+	url = git@github.com:emacs-mirror/emacs.git
