@@ -66,3 +66,9 @@ that feels heavy/bloated though
 we eventually only use one of them
 
 i also need to jmp to correct instruction addr
+
+## git stuff
+
+slow `git status` ?
+maybe do `for mod in $(ls submodules | grep -v -e build- -e generate- -e linux-patch); do git config submodule.submodules/$mod.ignore dirty; done`
+also `GIT_TRACE_PERFORMANCE=1 git status`
