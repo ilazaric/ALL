@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ivl/format>
 #include <ivl/utility/scope_exit>
 #include <exception>
