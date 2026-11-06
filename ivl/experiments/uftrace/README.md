@@ -10,3 +10,7 @@ PROGRAM FAILED WITH EXIT CODE 2
 ```
 
 TODO: reduced to filtered-wide-record.sh , continue chasing why it segfaults
+
+conclusion:
+`uftrace` overwrites some bytes of `mark_exp_read`,
+but a later jmp wants to go to those bytes
