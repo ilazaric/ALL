@@ -1,3 +1,13 @@
+#pragma once
+
+#include <algorithm>
+#include <meta>
+#include <ranges>
+#include <tuple>
+#include <vector>
+
+// TODO: failed experiment, but maybe can be recovered with
+// ....: https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2017/p0672r0.pdf
 
 template<typename... Ts>
 struct vector_tie {
@@ -64,16 +74,13 @@ struct vector_tie {
     bool operator==(const const_reference&) const = default;
   };
 
-  friend reference& operator=(reference& a, const_reference b) {
-    
-    return a;
-  }
+  friend reference& operator=(reference& a, const_reference b) { return a; }
 
   struct iterator {
     iterator_layout l;
 
     reference operator*() const {
-      auto&& [...its] = l;
+      auto&& [... its] = l;
       return reference{*its...};
     }
 
@@ -83,8 +90,8 @@ struct vector_tie {
       if constexpr (sizeof...(Ts) == 0) {
         return std::strong_ordering::equal;
       } else {
-        auto&& [...its] = l;
-        auto&& [...oits] = o.l;
+        auto&& [... its] = l;
+        auto&& [... oits] = o.l;
         return its...[0] <=> oits...[0];
       }
     }
