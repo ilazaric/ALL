@@ -128,7 +128,7 @@ using namespace ivl::logger::default_logger;
 #include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include <ivl/algos/fft>
+#include <ivl/algorithm/fft>
 #include <ivl/number_theory/multimint>
 #include <ivl/number_theory/util>
 
