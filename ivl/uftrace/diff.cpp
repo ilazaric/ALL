@@ -3,6 +3,7 @@
 #include <ivl/format>
 #include <ivl/logger>
 #include <ivl/ranges/split>
+#include <ivl/utility/colors>
 #include "compress"
 #include "default"
 #include <algorithm>
@@ -72,6 +73,60 @@ size_t deep_size(uf::compressor& c, uf::compressor_handle h) {
   return ret;
 }
 
+void smart_diff(uf::compressor& c, uf::compressor_handle l, uf::compressor_handle r, size_t indent = 0) {
+  contract_assert(c[l].name == c[r].name);
+  std::string_view name = c[l].name;
+  namespace term = ivl::terminal_graphical_rendition;
+  if (l == r) {
+    if (!implicit_flag("smart_diff_suppress_equal"))
+      ivl::fmt::println(
+        "{}{:s}{};{}", term::foreground_color{80, 80, 80}, std::views::repeat(' ', indent), name,
+        term::foreground_reset{}
+      );
+    return;
+  }
+
+  ivl::fmt::println(
+    "{}{:s}{} {{{}", term::foreground_color{255, 255, 0}, std::views::repeat(' ', indent), name,
+    term::foreground_reset{}
+  );
+
+  auto common =
+    ivl::algorithm::longest_common_subsequence(c[l].calls.size(), c[r].calls.size(), [&](size_t i, size_t j) {
+      return c[c[l].calls[i]].name == c[c[r].calls[j]].name;
+    });
+
+  size_t i = 0, j = 0;
+  auto advance_to = [&](size_t x, size_t y) {
+    for (; i != x; ++i) {
+      ivl::fmt::println(
+        "{}{:s}{};{}", term::foreground_color{255, 0, 0}, std::views::repeat(' ', indent + 2), c[c[l].calls[i]].name,
+        term::foreground_reset{}
+      );
+    }
+    for (; j != y; ++j) {
+      ivl::fmt::println(
+        "{}{:s}{};{}", term::foreground_color{0, 255, 0}, std::views::repeat(' ', indent + 2), c[c[r].calls[j]].name,
+        term::foreground_reset{}
+      );
+    }
+  };
+
+  for (auto [x, y] : common) {
+    advance_to(x, y);
+    smart_diff(c, c[l].calls[x], c[r].calls[y], indent + 2);
+    ++i;
+    ++j;
+  }
+
+  advance_to(c[l].calls.size(), c[r].calls.size());
+  if (name.ends_with("()")) name.remove_suffix(2);
+  ivl::fmt::println(
+    "{}{:s}}} /* {} */{}", term::foreground_color{255, 255, 0}, std::views::repeat(' ', indent), name,
+    term::foreground_reset{}
+  );
+}
+
 int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& lpath, const std::filesystem::path& rpath) {
   auto lroot = uf::parse_replay_file(lpath, implicit_flag("parse_describe"), implicit_flag("parse_verify"));
   auto rroot = uf::parse_replay_file(rpath, implicit_flag("parse_describe"), implicit_flag("parse_verify"));
@@ -116,5 +171,6 @@ int ivl_main(ivl::cmdline_parsing::implicit, const std::filesystem::path& lpath,
 
   if (implicit_flag("diff")) diff(c, l, r);
   if (implicit_flag("diff_r")) diff(c, r, l);
+  if (implicit_flag("smart_diff")) smart_diff(c, l, r);
   return 0;
 }
