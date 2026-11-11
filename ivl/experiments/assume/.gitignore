@@ -1,3 +1,4 @@
 *.s
-etrace.vars*
-inherit.*.cpp
+etrace.*
+inherit.*.cpp*
+array.*.cpp
