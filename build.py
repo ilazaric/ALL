@@ -390,7 +390,7 @@ def run_target(target):
 failed = []
 durations = dict()
 total_seen = 0
-pool = multiprocessing.Pool(processes=args.jobs)
+pool = multiprocessing.get_context("fork").Pool(processes=args.jobs)
 for target, p, elapsed in pool.imap_unordered(run_target, targets):
     durations[target] = elapsed
     total_seen += 1
