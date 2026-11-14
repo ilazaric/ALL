@@ -5,6 +5,9 @@
 #include <ivl/linux/throwing_syscalls>
 #include <linux/ioctl.h>
 #include <ivl/linux/file_descriptor>
+#include <linux/fs.h>
+
+#ifndef PROCFS_IOCTL_MAGIC
 
 #define PROCFS_IOCTL_MAGIC 'f'
 
@@ -162,8 +165,7 @@ struct procmap_query {
 	__u64 build_id_addr;		/* in */
 };
 
-
-
+#endif // !PROCFS_IOCTL_MAGIC
 
 procmap_query query(const void* addr) {
   namespace sys = ivl::linux::throwing_syscalls;
