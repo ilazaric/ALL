@@ -33,14 +33,6 @@ struct is_unique_impl<Head, Tail...> {
 template<typename... Ts>
 concept is_unique = is_unique_impl<Ts...>::value;
 
-// don't put this on the heap
-template<typename T>
-union uninitialized {
-  T data;
-  uninitialized() {}
-  ~uninitialized() {}
-};
-
 template<typename T, typename U>
 concept is_unqualified = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 
