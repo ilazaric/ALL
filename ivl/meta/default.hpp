@@ -33,9 +33,6 @@ struct is_unique_impl<Head, Tail...> {
 template<typename... Ts>
 concept is_unique = is_unique_impl<Ts...>::value;
 
-template<typename T>
-concept is_trivially_destructible = std::is_trivially_destructible_v<T>;
-
 // don't put this on the heap
 template<typename T>
 union uninitialized {
