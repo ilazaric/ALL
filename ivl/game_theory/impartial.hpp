@@ -1,48 +1,42 @@
 #pragma once
 
+#include <ivl/ranges/input_range_over>
+#include <boost/unordered/unordered_flat_map.hpp>
 #include <concepts>
 #include <ranges>
 #include <type_traits>
 
-#include <boost/unordered/unordered_flat_map.hpp>
-
-namespace ivl::gt {
-
-template<typename T, typename U>
-concept range_of = std::ranges::range<T> && std::same_as<U, std::ranges::range_value_t<T>>;
-
+namespace ivl::game_theory {
 template<typename G>
-concept ImpartialGame = requires(const G& g) {
-  { g.moves() } -> range_of<G>;
+concept impartial_game = requires(const G& g) {
+  { g.moves() } -> ranges::input_range_over<G>;
 };
 
-template<ImpartialGame G>
-struct Grundifier {
-  boost::unordered_flat_map<G, std::size_t> cache;
+template<impartial_game G>
+struct grundifier {
+  boost::unordered_flat_map<G, size_t> cache;
 
-  std::size_t grundify(const G& g) {
+  size_t grundify(const G& g) {
     if (auto it = cache.find(g); it != cache.end()) {
       return it->second;
     }
 
-    std::vector<std::size_t> moves_grundys;
+    std::vector<size_t> moves_grundys;
     for (const G& child : g.moves()) moves_grundys.push_back(grundify(child));
 
     std::vector<char> mex(moves_grundys.size() + 1, 0);
     for (auto mg : moves_grundys)
       if (mg < mex.size()) mex[mg] = 1;
 
-    for (std::size_t idx : std::views::iota(0ull, mex.size()))
+    for (size_t idx : std::views::iota(0ull, mex.size()))
       if (mex[idx] == 0) {
         cache.emplace(g, idx);
         return idx;
       }
 
-    // std::unreachable();
-    throw;
+    std::unreachable();
   }
 
-  std::size_t operator()(const G& g) { return grundify(g); }
+  size_t operator()(const G& g) { return grundify(g); }
 };
-
-} // namespace ivl::gt
+} // namespace ivl::game_theory
