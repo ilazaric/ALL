@@ -2,6 +2,9 @@
 
 // Metaprogramming utilities.
 
+// TODO: <ivl/meta> should relate to <meta>, as in reflection
+// ....: either kill this or move it somewhere
+
 #include <concepts>
 #include <cstddef>
 #include <type_traits>
