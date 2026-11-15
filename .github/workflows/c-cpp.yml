@@ -111,7 +111,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Install APT packages
-      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev python3-multiprocess libfftw3-dev libbenchmark-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -149,7 +149,7 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     - name: Install APT packages
-      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
+      run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev python3-multiprocess libfftw3-dev libbenchmark-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -204,7 +204,7 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
     - name: Fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
+        git submodule update --init --depth=1 -- submodules/{fmt,pugixml,raylib}
     - name: Get GCC commit
       id: get-gcc-commit
       run: |
