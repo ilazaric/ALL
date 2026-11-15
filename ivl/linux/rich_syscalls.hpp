@@ -4,6 +4,7 @@
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
 #include <ivl/meta>
+#include <ivl/concepts/same_as_one_of>
 #include <ivl/utility>
 #include <cstdint>
 #include <utility>
@@ -66,7 +67,7 @@ struct or_rich_error {
   // TODO: probably shouldn't go through generic tag, just have a specific rich::tag
   explicit or_rich_error(meta::tag<std::monostate>, auto&&...) : raw(encode(nullptr, 0)) {}
   explicit or_rich_error(meta::tag<T>, auto&&... args) : success(FWD(args)...) {}
-  template<meta::same_as_one_of<Errors...> E>
+  template<same_as_one_of<Errors...> E>
   explicit or_rich_error(meta::tag<E>, auto&&... args) {
     auto ptr = new E(FWD(args)...);
 

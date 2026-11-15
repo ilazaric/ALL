@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/meta>
+#include <ivl/concepts/same_as_one_of>
 #include "../parser_declaration"
 #include "../parser_one"
 #include "../raw_arguments"
@@ -9,7 +9,7 @@
 #include <string_view>
 
 namespace ivl::cmdline_parsing {
-template<meta::same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
+template<same_as_one_of<std::string_view, std::string, std::filesystem::path> Str>
 struct parser<Str> : parser_one {
   inline bool parse_one(Str& arg, std::string_view sv) const {
     arg = sv;

@@ -1,5 +1,5 @@
 #include <ivl/linux/raw_syscalls>
-#include <ivl/meta>
+#include <ivl/concepts/same_as_one_of>
 // #include <ivl/utility>
 
 #include <atomic>
@@ -44,14 +44,14 @@ void print_hex(unsigned long num) {
 }
 
 void print(auto* ptr)
-  requires(!ivl::meta::same_as_one_of<std::remove_cvref_t<decltype(ptr)>, char*, const char*>)
+  requires(!ivl::same_as_one_of<std::remove_cvref_t<decltype(ptr)>, char*, const char*>)
 {
   print("0x");
   print_hex(reinterpret_cast<uintptr_t>(ptr));
 }
 
 void __attribute__((noinline)) print(
-  ivl::meta::same_as_one_of<
+  ivl::same_as_one_of<
     short, unsigned short, int, unsigned int, long, unsigned long, long long, unsigned long long> auto num
 ) {
   char memory[30]; // len(str(2**64)) == 20, should be good enough

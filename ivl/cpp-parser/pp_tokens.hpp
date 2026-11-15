@@ -1,15 +1,15 @@
 #pragma once
 
+#include <ivl/concepts/same_as_one_of>
 #include <ivl/cpp-parser/spliced_cxx_file>
+#include <ivl/format>
 #include <ivl/logger>
-#include <ivl/meta>
 #include <ivl/reflection/test_attribute>
 #include <ivl/utility/enum>
 #include <ivl/utility>
 #include <algorithm>
 #include <cassert>
 #include <cctype>
-#include <ivl/format>
 #include <optional>
 #include <set>
 #include <stdexcept>
@@ -234,7 +234,7 @@ struct c_char {
   // TODO: all the rest
   std::variant<basic_c_char, simple_escape_sequence> payload;
   auto operator<=>(const c_char&) const = default;
-  c_char(meta::same_as_one_of<basic_c_char, simple_escape_sequence> auto arg) : payload(arg) {}
+  c_char(same_as_one_of<basic_c_char, simple_escape_sequence> auto arg) : payload(arg) {}
   static std::optional<c_char> try_parse(spliced_cxx_file::parsing_state& state) {
     std::optional<c_char> ret;
     if (!ret) ret = basic_c_char::try_parse(state);
@@ -291,8 +291,7 @@ struct s_char {
   // TODO: all the rest
   std::variant<basic_s_char, simple_escape_sequence, hexadecimal_escape_sequence> payload;
   auto operator<=>(const s_char&) const = default;
-  s_char(meta::same_as_one_of<basic_s_char, simple_escape_sequence, hexadecimal_escape_sequence> auto arg)
-      : payload(arg) {}
+  s_char(same_as_one_of<basic_s_char, simple_escape_sequence, hexadecimal_escape_sequence> auto arg) : payload(arg) {}
   static std::optional<s_char> try_parse(spliced_cxx_file::parsing_state& state) {
     std::optional<s_char> ret;
     if (!ret) ret = basic_s_char::try_parse(state);
@@ -648,7 +647,9 @@ std::vector<pp_token> top_level_parse(spliced_cxx_file::parsing_state& state) {
 
     if (!parsed) parsed = try_parse_identifier_or_worded_op_or_punc(state);
 
-    if (!parsed) { throw std::runtime_error(ivl::fmt::format("ICE: parsing failed\n{}", state.debug_context())); }
+    if (!parsed) {
+      throw std::runtime_error(ivl::fmt::format("ICE: parsing failed\n{}", state.debug_context()));
+    }
 
     // a big like this can blow up memory
     assert(copy_state.begin() != state.begin());

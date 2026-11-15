@@ -18,9 +18,6 @@ struct tag {
   using type = T;
 };
 
-template<typename T, typename... Ts>
-concept same_as_one_of = (std::same_as<T, Ts> || ...);
-
 // Are all types different?
 template<typename...>
 struct is_unique_impl;

@@ -1,8 +1,8 @@
 #pragma once
 
+#include <ivl/concepts/same_as_one_of>
 #include <ivl/linux/utility>
 #include <ivl/logger>
-#include <ivl/meta>
 #include <ivl/utility>
 #include <algorithm>
 #include <cstring>
@@ -119,7 +119,7 @@ void save(const payload& p, const std::filesystem::path& file) {
 
   auto write = [&](auto x) {
     std::string_view y;
-    if constexpr (ivl::meta::same_as_one_of<decltype(x), const char*, std::string, std::string_view>) {
+    if constexpr (ivl::same_as_one_of<decltype(x), const char*, std::string, std::string_view>) {
       y = std::string_view(x);
     } else {
       y = std::string_view((const char*)&x, (const char*)(&x + 1));
