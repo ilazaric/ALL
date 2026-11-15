@@ -1,5 +1,5 @@
 #include <ivl/logger>
-#include <ivl/proc>
+#include "default"
 
 int main() {
   auto counts = ivl::proc::CtxtSwitchCounts::self();
