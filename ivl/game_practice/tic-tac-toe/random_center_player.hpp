@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/game-practice/tic-tac-toe/random_player>
+#include <ivl/game_practice/tic-tac-toe/random_player>
 
 namespace ivl::game_practice::tic_tac_toe {
 struct random_center_player : random_player {

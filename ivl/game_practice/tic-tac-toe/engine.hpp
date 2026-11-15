@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/game-practice/tic-tac-toe/player>
+#include <ivl/game_practice/tic-tac-toe/player>
 #include <cstdint>
 #include <utility>
 

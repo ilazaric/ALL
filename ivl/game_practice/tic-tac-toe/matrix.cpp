@@ -1,8 +1,8 @@
-#include <ivl/game-practice/tic-tac-toe/engine>
-#include <ivl/game-practice/tic-tac-toe/random_center_player>
-#include <ivl/game-practice/tic-tac-toe/random_player>
-#include <ivl/game-practice/tic-tac-toe/blah_player>
-#include <ivl/game-practice/tic-tac-toe/truc_player>
+#include <ivl/game_practice/tic-tac-toe/engine>
+#include <ivl/game_practice/tic-tac-toe/random_center_player>
+#include <ivl/game_practice/tic-tac-toe/random_player>
+#include <ivl/game_practice/tic-tac-toe/blah_player>
+#include <ivl/game_practice/tic-tac-toe/truc_player>
 #include <meta>
 #include <ivl/format>
 

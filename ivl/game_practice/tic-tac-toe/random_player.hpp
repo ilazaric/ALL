@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/game-practice/tic-tac-toe/player>
+#include <ivl/game_practice/tic-tac-toe/player>
 #include <random>
 
 namespace ivl::game_practice::tic_tac_toe {
