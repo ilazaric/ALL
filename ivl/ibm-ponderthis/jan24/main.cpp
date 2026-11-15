@@ -8,7 +8,7 @@
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/timer/timer>
+#include <ivl/timer>
 
 namespace v1 {
   std::vector<int>                  stack;

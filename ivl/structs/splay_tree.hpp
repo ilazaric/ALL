@@ -6,7 +6,7 @@
 #include <utility>
 
 #include <ivl/debug>
-#include <ivl/timer/timer>
+#include <ivl/timer>
 
 namespace ivl::structs {
 

@@ -14,7 +14,7 @@ using namespace ivl::logger::default_logger;
 #include <ivl/literals/ints>
 using namespace ivl::literals::ints_exact;
 
-#include <ivl/timer/timer>
+#include <ivl/timer>
 
 std::vector<std::uint64_t> sieve(std::uint64_t bound) {
   std::vector<std::uint64_t> out;

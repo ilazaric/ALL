@@ -1,4 +1,4 @@
-#include <ivl/timer/timer>
+#include <ivl/timer>
 #include <memory>
 #include <vector>
 #include <ivl/format>

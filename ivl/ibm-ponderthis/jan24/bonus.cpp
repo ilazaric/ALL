@@ -8,7 +8,7 @@
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/timer/timer>
+#include <ivl/timer>
 
 constexpr std::array<std::array<int, 4>, 4> row_signs{+1, +1, -1, -1, +1, +1, +1, -1, +1, -1, +1, +1, +1, -1, +1, -1};
 constexpr std::array<std::array<int, 4>, 4> col_signs{+1, +1, +1, -1, +1, +1, -1, -1, +1, -1, -1, +1, +1, +1, +1, +1};

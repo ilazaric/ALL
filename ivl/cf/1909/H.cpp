@@ -23,7 +23,7 @@ using ivl::io::conversion::cin;
 #include <ivl/logger/logger>
 using namespace ivl::logger::default_logger;
 
-#include <ivl/timer/timer>
+#include <ivl/timer>
 
 auto dists(std::uint32_t n) {
   using Perm = std::vector<std::uint32_t>;

@@ -1,5 +1,5 @@
 #include <ivl/linux/utility>
-#include <ivl/timer/timer>
+#include <ivl/timer>
 #include <memory>
 #include <ivl/format>
 #include <vector>

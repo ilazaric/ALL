@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/timer/timer>
+#include <ivl/timer>
 #include <ivl/literals/ints>
 #include <ranges>
 
