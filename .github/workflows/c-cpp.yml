@@ -1,10 +1,7 @@
 name: C/C++ CI
 
 on:
-  push:
-    branches: [ "master" ]
-  # pull_request:
-  #   branches: [ "master" ]
+  push
 
 jobs:
   build-gcc:
@@ -17,23 +14,23 @@ jobs:
     steps:
     - uses: actions/checkout@v6
     # TODO: skip if cache hit
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: get gcc commit
+    - name: Get GCC commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-    - name: cache gcc install
+    - name: Cache GCC install
       id: cache-gcc
       uses: actions/cache@v5
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-gcc-${{ steps.get-gcc-commit.outputs.commit }}
-    - name: install gcc
+    - name: Build & Install GCC
       run: |
         git submodule update --init --depth=1 -- submodules/gcc
         submodules/build-gcc.sh --install --dont-extend-paths-with-checking
@@ -46,30 +43,30 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential python3 python3-pytest tcl dejagnu expect
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: restore gcc install
+    - name: Restore GCC install
       uses: actions/cache/restore@v5
       id: cache-gcc
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-    - name: fetch gcc submodule
+    - name: Fetch GCC submodule
       run: git submodule update --init --depth=1 -- submodules/gcc
-    - name: run tests
+    - name: Test
       run: |
         mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
         cd /tmp/gcc-scratch
         "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)" -- --all dg.exp='ivl/*'
-    - name: dump log on failure
+    - name: Dump log on failure
       if: ${{ failure() }}
       run: cat /tmp/gcc-scratch/g++.log && exit 1
-    - name: dump log on success
+    - name: Dump log on success
       run: cat /tmp/gcc-scratch/g++.log
 
 
@@ -79,31 +76,31 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install g++-14 bzip2 flex build-essential python3 python3-pytest tcl dejagnu expect
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: restore gcc install
+    - name: Restore GCC install
       uses: actions/cache/restore@v5
       id: cache-gcc
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-    - name: fetch gcc submodule
+    - name: Fetch GCC submodule
       run: git submodule update --init --depth=1 -- submodules/gcc
-    - name: run tests
+    - name: Test
       run: |
         mkdir -p /tmp/gcc-scratch
         SRCDIR="$(realpath submodules/gcc)"
         cd /tmp/gcc-scratch
         "$SRCDIR/contrib/test_installed" --prefix=/opt/GCC --without-{gfortran,objc,gcc,g++} --with-auto-host-h="$(find /opt/GCC -name auto-host.h)"
         PATH="/opt/GCC/bin:$PATH" runtest --all --tool libstdc++ --srcdir "$SRCDIR/libstdc++-v3/testsuite" conformance.exp='ivl/*'
-    - name: dump log on failure
+    - name: Dump log on failure
       if: ${{ failure() }}
       run: cat /tmp/gcc-scratch/libstdc++.log && exit 1
-    - name: dump log on success
+    - name: Dump log on success
       run: cat /tmp/gcc-scratch/libstdc++.log
 
 
@@ -113,36 +110,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: fetch submodules
+    - name: Fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib,boost}
-        git -C submodules/boost submodule update --init --depth=1 -- libs/json
-    - name: get gcc commit
+        git submodule update --init --depth=1 -- submodules/{fmt,pugixml,raylib}
+    - name: Get GCC commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-    - name: restore gcc install
+    - name: Restore GCC install
       uses: actions/cache/restore@v5
       id: cache-gcc
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-    - name: activate gcc
+    - name: Activate GCC
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-    - name: validate gcc
+    - name: Validate GCC
       run: echo | g++ -xc++ -E --verbose -
-    - name: build
+    - name: Build
       run: ./ci-build.sh
-    - name: test
+    - name: Test
       run: ./run_built_tests.py
 
 
@@ -152,73 +148,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev python3-multiprocess libncurses-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: fetch submodules
+    - name: Fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib,boost}
-        git -C submodules/boost submodule update --init --depth=1 -- libs/json
-    - name: get gcc commit
+        git submodule update --init --depth=1 -- submodules/{fmt,pugixml,raylib}
+    - name: Get GCC commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-    - name: restore gcc install
+    - name: Restore GCC install
       uses: actions/cache/restore@v5
       id: cache-gcc
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-    - name: activate gcc
+    - name: Activate GCC
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-    - name: validate gcc
+    - name: Validate GCC
       run: echo | g++ -xc++ -E --verbose -
-    - name: build
-      run: ./build.py --report-durations --keep-going --verbose --jobs $(nproc) # nothing for now, just EDG itself
-    - name: test
+    - name: Build
+      run: ./build.py --report-durations --keep-going --verbose --jobs $(nproc) # nothing for now, just EDG itself, TODO: revisit when EDG has template for
+    - name: Test
       run: ./run_built_tests.py
-
-
-  build2:
-    if: ${{ false }} # too broken, and dont care atm, TODO: fix
-    needs: build-gcc
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-    - name: install apt packages
-      run: sudo apt update && sudo apt install --fix-missing libboost-all-dev libgit2-dev libfuse3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev libgl-dev libopengl-dev libglu1-mesa-dev libfftw3-dev libbenchmark-dev libglx-dev libopengl0 libgl1-mesa-dev mesa-common-dev libglu1-mesa-dev
-    - uses: webfactory/ssh-agent@v0.10.0
-      with:
-        ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: fetch submodules
-      run: |
-        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
-    - name: get gcc commit
-      id: get-gcc-commit
-      run: |
-        echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
-      shell: bash
-    - name: restore gcc install
-      uses: actions/cache/restore@v5
-      id: cache-gcc
-      with:
-        path: /opt/GCC
-        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
-        fail-on-cache-miss: true
-    - name: activate gcc
-      run: |
-        echo "/opt/GCC/bin" >> $GITHUB_PATH
-        echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-    - name: validate gcc
-      run: echo | g++ -xc++ -E --verbose -
-    - name: build2
-      run: ./bootstrap.sh /ivl/build_system /ivl/linux /ivl/process /ivl/algos /ivl/meta /ivl/utility /ivl/stl /ivl/reflection /ivl/parsing /ivl/frankl /ivl/context /ivl/isolated_execution  /ivl/command_line_argument_parsing
 
 
   check_ivl_headers_for_pragma_once:
@@ -226,43 +185,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install python3-more-itertools
-    - name: test
+    - name: Test
       run: ./check_headers_for_pragma_once.py
 
+
   fsyntax_only_global_test:
-    name: -fsyntax-only test
+    name: Syntax only compilation test
     needs: build-gcc
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
-    - name: install apt packages
+    - name: Install APT packages
       run: sudo apt update && sudo apt install libboost-all-dev libgit2-dev libfuse3-dev python3-multiprocess libfftw3-dev libbenchmark-dev
     - uses: webfactory/ssh-agent@v0.10.0
       with:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-    - name: fetch submodules
+    - name: Fetch submodules
       run: |
-        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib,boost}
-        git -C submodules/boost submodule update --init --depth=1 -- libs/json
-    - name: get gcc commit
+        git submodule update --init --depth=1 -- submodules/{nlohmann-json,fmt,pugixml,raylib}
+    - name: Get GCC commit
       id: get-gcc-commit
       run: |
         echo "commit=$(git rev-parse HEAD:submodules/gcc)" >> $GITHUB_OUTPUT
       shell: bash
-    - name: restore gcc install
+    - name: Restore GCC install
       uses: actions/cache/restore@v5
       id: cache-gcc
       with:
         path: /opt/GCC
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
         fail-on-cache-miss: true
-    - name: activate gcc
+    - name: Activate GCC
       run: |
         echo "/opt/GCC/bin" >> $GITHUB_PATH
         echo "LD_RUN_PATH=/opt/GCC/lib64" >> $GITHUB_ENV
-    - name: validate gcc
+    - name: Validate GCC
       run: echo | g++ -xc++ -E --verbose -
-    - name: fsyntax-only-global-test
+    - name: Test
       run: ./build.py --report-durations --keep-going --jobs $(nproc) --syntax-only /
