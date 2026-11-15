@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/concepts/same_as_one_of>
+#include <ivl/type_traits/same_as_one_of>
 #include <ivl/linux/utility>
 #include <ivl/logger>
 #include <ivl/utility>

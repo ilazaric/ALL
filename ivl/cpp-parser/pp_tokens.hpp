@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/concepts/same_as_one_of>
+#include <ivl/type_traits/same_as_one_of>
 #include <ivl/cpp-parser/spliced_cxx_file>
 #include <ivl/format>
 #include <ivl/logger>

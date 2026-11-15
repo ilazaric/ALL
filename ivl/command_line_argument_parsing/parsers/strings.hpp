@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/concepts/same_as_one_of>
+#include <ivl/type_traits/same_as_one_of>
 #include "../parser_declaration"
 #include "../parser_one"
 #include "../raw_arguments"

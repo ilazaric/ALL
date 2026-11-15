@@ -11,11 +11,6 @@
 #include <utility>
 
 namespace ivl::meta {
-
-// TODO: when we get universal template params, think how stuff can improve here
-template<typename...>
-struct type_list {};
-
 template<typename T>
 struct tag {
   using type = T;
@@ -38,5 +33,4 @@ concept is_unique = is_unique_impl<Ts...>::value;
 
 template<typename T, typename U>
 concept is_unqualified = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
-
 } // namespace ivl::meta

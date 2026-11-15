@@ -4,7 +4,7 @@
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
 #include <ivl/meta>
-#include <ivl/concepts/same_as_one_of>
+#include <ivl/type_traits/same_as_one_of>
 #include <ivl/utility>
 #include <cstdint>
 #include <utility>
