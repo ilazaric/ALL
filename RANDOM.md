@@ -72,3 +72,19 @@ i also need to jmp to correct instruction addr
 slow `git status` ?
 maybe do `for mod in $(ls submodules | grep -v -e build- -e generate- -e linux-patch); do git config submodule.submodules/$mod.ignore dirty; done`
 also `GIT_TRACE_PERFORMANCE=1 git status`
+
+## podman repo
+
+```
+podman run \
+       -it --rm --hostname dev \
+       --mount type=bind,src=/opt,dst=/opt,ro \
+       --mount type=bind,src=/home/ilazaric/repos/ALL,dst=/home/ilazaric/repos/ALL,ro \
+       --mount type=tmpfs,tmpfs-size=1G,dst=/home/ilazaric/repos/ALL/build,notmpcopyup \
+       --mount type=tmpfs,tmpfs-size=1G,dst=/home/ilazaric/repos/ALL/submodules/objdir,notmpcopyup \
+       --mount type=tmpfs,tmpfs-size=128M,dst=/home/ilazaric/repos/ALL/ivl/thomson \
+       --workdir /home/ilazaric/repos/ALL \
+       --env PATH="/opt/GCC-release/bin:/bin:/usr/bin" \
+       ubuntu:26.04
+```
+
