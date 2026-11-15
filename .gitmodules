@@ -103,3 +103,6 @@
 [submodule "submodules/uftrace"]
 	path = submodules/uftrace
 	url = git@github.com:namhyung/uftrace.git
+[submodule "submodules/draft"]
+	path = submodules/draft
+	url = git@github.com:cplusplus/draft.git
