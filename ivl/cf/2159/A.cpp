@@ -1,5 +1,4 @@
 #include <ivl/io/conversion>
-#include <ivl/meta>
 #include <cstdint>
 #include <iostream>
 #include <vector>
@@ -7,7 +6,7 @@
 using ivl::io::conversion::cin;
 
 int main() {
-  ivl::meta::repeat(size_t{cin}, [] {
+  for (size_t rep{cin}; rep; --rep) {
     uint32_t n{cin};
 
     std::vector<uint32_t> query_arg;
@@ -46,5 +45,5 @@ int main() {
     for (auto el : answer)
       std::cout << " " << el;
     std::cout << std::endl;
-  });
+  }
 }

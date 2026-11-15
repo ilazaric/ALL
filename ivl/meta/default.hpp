@@ -36,12 +36,6 @@ concept is_unique = is_unique_impl<Ts...>::value;
 template<typename T>
 concept is_trivially_destructible = std::is_trivially_destructible_v<T>;
 
-// TODO: add callable(index) variant
-// UPDT: probably actually just remove this
-void repeat(size_t n, auto&& callable) {
-  for (size_t i = 0; i < n; ++i) callable();
-}
-
 // don't put this on the heap
 template<typename T>
 union uninitialized {
