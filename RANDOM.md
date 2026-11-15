@@ -88,3 +88,6 @@ podman run \
        ubuntu:26.04
 ```
 
+## apt
+
+to disable asking for random stuff (like tzdata): `DEBIAN_FRONTEND=noninteractive`
