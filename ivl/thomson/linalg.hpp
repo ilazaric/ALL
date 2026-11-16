@@ -1,6 +1,6 @@
 #pragma once
 
-#include <ivl/meta>
+#include <ivl/type_traits/same_as_sans_cvref>
 #include <memory>
 #include <span>
 #include <variant>
@@ -109,7 +109,7 @@ struct shape_t {
   static shape_t field() { return shape_t{.total_size = 1, .data{field_t{}}}; }
   static shape_t vector(std::size_t n) { return shape_t{.total_size = n, .data{vector_t{n}}}; }
 
-  template<ivl::meta::is_unqualified<shape_t>... Ts>
+  template<ivl::same_as_sans_cvref<shape_t>... Ts>
   static shape_t cartesian_product(Ts&&... args) {
     return shape_t{
       .total_size = (args.size() + ...),
@@ -117,12 +117,12 @@ struct shape_t {
     };
   }
 
-  template<ivl::meta::is_unqualified<shape_t> T>
+  template<ivl::same_as_sans_cvref<shape_t> T>
   static shape_t linear_operator(T&& from) {
     return std::forward<T>(from);
   }
 
-  template<ivl::meta::is_unqualified<shape_t> T, ivl::meta::is_unqualified<shape_t> U>
+  template<ivl::same_as_sans_cvref<shape_t> T, ivl::same_as_sans_cvref<shape_t> U>
   static shape_t linear_operator(T&& from, U&& to) {
     return shape_t{
       .total_size = from.size() * to.size(),
@@ -133,7 +133,7 @@ struct shape_t {
     };
   }
 
-  template<ivl::meta::is_unqualified<shape_t> T, ivl::meta::is_unqualified<shape_t>... Us>
+  template<ivl::same_as_sans_cvref<shape_t> T, ivl::same_as_sans_cvref<shape_t>... Us>
     requires(sizeof...(Us) >= 2)
   static shape_t linear_operator(T&& from, Us&&... to) {
     return linear_operator(std::forward<T>(from), linear_operator(std::forward<Us>(to)...));
