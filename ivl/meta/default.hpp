@@ -11,11 +11,6 @@
 #include <utility>
 
 namespace ivl::meta {
-template<typename T>
-struct tag {
-  using type = T;
-};
-
 template<typename T, typename U>
 concept is_unqualified = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<U>>;
 } // namespace ivl::meta

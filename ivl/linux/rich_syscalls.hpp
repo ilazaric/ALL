@@ -3,7 +3,7 @@
 #include <ivl/linux/file_descriptor>
 #include <ivl/linux/kernel_result>
 #include <ivl/linux/raw_syscalls>
-#include <ivl/meta>
+#include <ivl/type_traits/tag_type>
 #include <ivl/type_traits/same_as_one_of>
 #include <ivl/utility>
 #include <cstdint>
@@ -66,14 +66,14 @@ struct or_rich_error {
   // TODO: normal constructors
 
   // TODO: probably shouldn't go through generic tag, just have a specific rich::tag
-  explicit or_rich_error(meta::tag<std::monostate>, auto&&...) : raw(encode(nullptr, 0)) {}
-  explicit or_rich_error(meta::tag<T>, auto&&... args) : success(FWD(args)...) {}
+  explicit or_rich_error(tag_type<std::monostate>, auto&&...) : raw(encode(nullptr, 0)) {}
+  explicit or_rich_error(tag_type<T>, auto&&... args) : success(FWD(args)...) {}
   template<same_as_one_of<Errors...> E>
-  explicit or_rich_error(meta::tag<E>, auto&&... args) {
+  explicit or_rich_error(tag_type<E>, auto&&... args) {
     auto ptr = new E(FWD(args)...);
 
     uint8_t tag = 0;
-    template for (constexpr auto error_tag : {meta::tag<Errors>{}...}) {
+    template for (constexpr auto error_tag : {tag_type<Errors>{}...}) {
       if (std::same_as<E, typename decltype(error_tag)::type>) break;
       ++tag;
     }
@@ -81,12 +81,12 @@ struct or_rich_error {
     std::construct_at(&raw, encode(ptr, tag));
   }
 
-  explicit or_rich_error() : or_rich_error(meta::tag<std::monostate>{}) {}
+  explicit or_rich_error() : or_rich_error(tag_type<std::monostate>{}) {}
 
   explicit or_rich_error(long value, auto&&... args)
     requires(sizeof...(Errors) == 1)
   {
-    using E = typename meta::tag<Errors...>::type;
+    using E = typename tag_type<Errors...>::type;
     if (value >= 0) [[likely]] {
       std::construct_at(&success, value);
     } else {
@@ -143,7 +143,7 @@ struct or_rich_error {
     uint8_t tag = decode_tag(get_raw());
     uint8_t error_index = 0;
 
-    template for (constexpr auto error_tag : {meta::tag<Errors>{}...}) {
+    template for (constexpr auto error_tag : {tag_type<Errors>{}...}) {
       if (error_index == tag) {
         delete static_cast<typename decltype(error_tag)::type*>(ptr);
         return;
@@ -167,7 +167,7 @@ struct or_rich_error {
     uint8_t tag = decode_tag(self.get_raw());
     uint8_t error_index = 0;
 
-    template for (constexpr auto error_tag : {meta::tag<Errors>{}...}) {
+    template for (constexpr auto error_tag : {tag_type<Errors>{}...}) {
       if (error_index == tag) {
         return FWD(callable)(std::forward_like<decltype(self)>(*static_cast<typename decltype(error_tag)::type*>(ptr)));
       }
@@ -187,7 +187,7 @@ struct or_rich_error {
     uint8_t tag = decode_tag(self.get_raw());
     uint8_t error_index = 0;
 
-    template for (constexpr auto error_tag : {meta::tag<Errors>{}...}) {
+    template for (constexpr auto error_tag : {tag_type<Errors>{}...}) {
       if (error_index == tag) {
         // Moves even from a const& or_rich_error.
         // TODO: it's already on heap, is it posible to avoid exception allocation?

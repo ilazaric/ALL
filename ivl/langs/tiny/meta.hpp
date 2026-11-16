@@ -5,6 +5,7 @@
 #include <type_traits>
 
 // TODO: move to ivl/util
+// UPDT: everything is in ivl/type_traits, kill this
 
 namespace ivl::langs::tiny::meta {
 
