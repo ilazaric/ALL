@@ -1,3 +1,5 @@
+#pragma once
+
 #include <ivl/utility/forward>
 
 // TODO: name might be too generic in such a wide namespace
