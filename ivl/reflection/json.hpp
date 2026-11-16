@@ -1,7 +1,7 @@
 #pragma once
 
 #include <ivl/json>
-#include <ivl/meta>
+#include <ivl/type_traits/all_different>
 #include <ivl/reflection/json_annotations>
 #include <ivl/reflection/utility>
 #include <ivl/utility/hex>
@@ -37,7 +37,7 @@ RetT from_to_json_impl(const InputT& arg) {
     }
   } else if constexpr (reflection::is_instantiation_of(^^T, ^^std::variant)) {
     // TODO: technically we could do non-unique as well
-    static_assert(extract<bool>(substitute(^^meta::is_unique, template_arguments_of(^^T))));
+    static_assert(extract<bool>(substitute(^^all_different, template_arguments_of(^^T))));
     template for (constexpr auto VI : define_static_array(template_arguments_of(^^T))) {
       using V = [:dealias(VI):];
       if constexpr (Direction == TO) {
